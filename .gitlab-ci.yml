@@ -27,7 +27,7 @@ deploy_quizlink:
       git pull origin main
 
       # 2. Installer les dépendances
-      pnpm ci
+      pnpm install --frozen-lockfile
 
       # 3. Générer le client Prisma (OBLIGATOIRE avant le build)
       echo 'Génération du client Prisma...'
