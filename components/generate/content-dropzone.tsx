@@ -123,7 +123,10 @@ export function ContentDropzone({
               <div className="text-center">
                 <p className="font-medium">{file.name}</p>
                 <p className="text-sm text-muted-foreground">
-                  {(file.size / 1024).toFixed(2)} KB
+                  {(file.size / 1024 / 1024).toFixed(2)} MB
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {t(locale, "generate.costInfo", { cost: "2" })}
                 </p>
               </div>
               <Button
@@ -147,6 +150,9 @@ export function ContentDropzone({
                 </p>
                 <p className="text-sm text-muted-foreground mt-2">
                   {t(locale, "generate.pdfFilesOnly")}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1 text-yellow-600 dark:text-yellow-400">
+                  {t(locale, "generate.pdfScannedWarning")}
                 </p>
               </div>
             </div>

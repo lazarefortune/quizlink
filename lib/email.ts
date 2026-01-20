@@ -20,7 +20,7 @@ const getTransporter = () => {
   // Production: use configured SMTP
   return nodemailer.createTransport({
     host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT || "587"),
+    port: parseInt(process.env.SMTP_PORT || "465"),
     secure: process.env.SMTP_SECURE === "true",
     auth: {
       user: process.env.SMTP_USER,
@@ -32,7 +32,7 @@ const getTransporter = () => {
 const transporter = getTransporter();
 
 const getFromEmail = () => {
-  return process.env.SMTP_FROM || "noreply@quizsnap.com";
+  return process.env.SMTP_FROM || "noreply@quizlink.fr";
 };
 
 export async function sendEmail({

@@ -15,6 +15,7 @@ import { ContentDropzone } from "@/components/generate/content-dropzone";
 import { GenerationOptionsModal } from "@/components/generate/generation-options-modal";
 import { getAiLimits, validateTextLength, validateQuestionCount } from "@/lib/ai/ai-limits";
 import { generateQuizAction } from "@/app/generate/actions";
+import { generateQuizFromPdf } from "@/app/generate/pdf-actions";
 import { createQuizBuilderFromAiQuestions } from "@/lib/ai-quiz-adapter";
 import { saveQuiz } from "@/app/builder/actions";
 import { useToast } from "@/components/ui/toast";
@@ -70,11 +71,97 @@ export function GeneratePage() {
   const handleGenerate = async () => {
     setError(null);
 
+    // Handle PDF generation
     if (activeTab === "DOCUMENT") {
-      setError(t(locale, "errors.pdfNotSupported"));
+      if (!file) {
+        setError(t(locale, "errors.noFile"));
+        return;
+      }
+
+      if (file.type !== "application/pdf") {
+        setError(t(locale, "errors.invalidFileType"));
+        return;
+      }
+
+      const questionValidation = validateQuestionCount(options.maxQuestions, limits);
+      if (!questionValidation.valid) {
+        const errorKey = options.maxQuestions < 1
+          ? "errors.atLeastOneQuestion"
+          : "errors.invalidQuestionCount";
+        setError(t(locale, errorKey, {
+          max: limits.maxQuestions.toString(),
+        }));
+        return;
+      }
+
+      setIsLoading(true);
+
+      try {
+        // Create FormData for PDF upload
+        const formData = new FormData();
+        formData.append("pdf", file);
+
+        const result = await generateQuizFromPdf(formData, {
+          questionType: options.questionType,
+          maxQuestions: options.maxQuestions,
+          language: options.language,
+        });
+
+        if (!result.success) {
+          const errorMessage = result.error.startsWith("errors.")
+            ? t(locale, result.error as string)
+            : result.error;
+          setError(errorMessage);
+          return;
+        }
+
+        const quizBuilder = createQuizBuilderFromAiQuestions(result.questions, {
+          name: result.title || t(locale, "generate.title"),
+          visibility: options.visibility,
+          settings: {
+            showAnswerImmediately: options.showAnswerImmediately,
+            randomizeQuestions: options.randomizeQuestions,
+            timeLimitPerQuestion: options.timeLimitPerQuestion,
+          },
+        });
+
+        // Save quiz to database
+        const saveResult = await saveQuiz(quizBuilder);
+
+        if (!saveResult.success) {
+          setError(saveResult.error || t(locale, "builder.saveError"));
+          return;
+        }
+
+        // Update session to refresh coin balance in header
+        try {
+          await updateSession();
+          await new Promise((resolve) => setTimeout(resolve, 200));
+        } catch (error) {
+          console.error("Error updating session:", error);
+        }
+
+        router.refresh();
+        showToast(t(locale, "builder.quizCreated"), "success");
+
+        if (saveResult.quizId) {
+          router.push(`/builder/${saveResult.quizId}`);
+        } else {
+          router.push("/builder");
+        }
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : t(locale, "errors.generationFailed")
+        );
+      } finally {
+        setIsLoading(false);
+      }
       return;
     }
 
+    // Handle text generation (existing logic)
     if (activeTab === "TEXT" && !textContent.trim()) {
       setError(t(locale, "errors.noTextContent"));
       return;
