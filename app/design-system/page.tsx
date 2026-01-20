@@ -2,6 +2,8 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 import {
   Card,
   CardContent,
@@ -438,6 +440,42 @@ export default function DesignSystemPage() {
                   <SelectItem value="option3">Option 3</SelectItem>
                 </SelectContent>
               </Select>
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* Switch Component Section */}
+        <section className="space-y-6">
+          <h2 className="text-2xl font-semibold">Switch</h2>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Switch Toggle</CardTitle>
+              <CardDescription>
+                Toggle switch component for boolean settings
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <label className="text-sm font-medium">Enable notifications</label>
+                  <InfoTooltip content="Receive notifications about important updates" />
+                </div>
+                <Switch />
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <label className="text-sm font-medium">Dark mode</label>
+                  <InfoTooltip content="Switch between light and dark theme" />
+                </div>
+                <Switch defaultChecked />
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <label className="text-sm font-medium">Disabled switch</label>
+                </div>
+                <Switch disabled />
+              </div>
             </CardContent>
           </Card>
         </section>

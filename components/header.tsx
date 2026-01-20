@@ -1,0 +1,379 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Menu, X, Home, Sparkles, Plus, LayoutDashboard, LogIn, UserPlus, Settings, LogOut, FileText, Coins, Shield } from "lucide-react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
+import { LocaleSwitcher } from "@/components/locale-switcher";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { UserMenu } from "@/components/user-menu";
+import { Button } from "@/components/ui/button";
+import { useLocale } from "@/lib/i18n/use-locale";
+import { t } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
+import { useSession, signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+export function Header() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const { locale, setLocale } = useLocale();
+  const { data: session, update: updateSession } = useSession();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  // Listen for session update events
+  useEffect(() => {
+    const handleSessionUpdate = async () => {
+      // Update session to get latest data from server
+      if (updateSession) {
+        try {
+          await updateSession();
+        } catch (error) {
+          console.error("Error updating session in Header:", error);
+        }
+      }
+      // Force router refresh to get new session data
+      router.refresh();
+    };
+
+    window.addEventListener("session:update", handleSessionUpdate);
+    return () => {
+      window.removeEventListener("session:update", handleSessionUpdate);
+    };
+  }, [router, updateSession]);
+
+  const handleOpenSidebar = () => {
+    setMobileMenuOpen(true);
+    // Trigger animation after a tiny delay to ensure the element is rendered
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setIsAnimating(true);
+      });
+    });
+  };
+
+  const handleCloseSidebar = () => {
+    setIsAnimating(false);
+    setIsClosing(true);
+    setTimeout(() => {
+      setMobileMenuOpen(false);
+      setIsClosing(false);
+    }, 300); // Match animation duration
+  };
+
+  const navItems: Array<{ href: string; label: string; icon: typeof Home }> = [];
+
+  // Add dashboard link for authenticated users only
+  if (session?.user) {
+    navItems.push({ href: "/dashboard", label: t(locale, "nav.dashboard"), icon: LayoutDashboard });
+    // Add admin link for admins only
+    if (session.user.role === "ADMIN") {
+      navItems.push({ href: "/admin", label: t(locale, "nav.admin"), icon: Shield });
+    }
+  } else {
+    // Only show home link for non-authenticated users
+    navItems.push({ href: "/", label: t(locale, "nav.home"), icon: Home });
+  }
+
+  const isActive = (href: string) => {
+    if (href === "/") {
+      return pathname === "/";
+    }
+    return pathname?.startsWith(href);
+  };
+
+  return (
+    <header className="sticky top-0 z-[100] w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container mx-auto px-4">
+        <div className="flex h-14 items-center justify-between">
+          {/* Logo / Brand */}
+          <div className="flex items-center">
+            <Link href="/" className="text-lg font-bold">
+              QuizLink
+            </Link>
+          </div>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex md:items-center md:gap-6">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "text-base font-medium transition-colors hover:text-primary",
+                  isActive(item.href)
+                    ? "text-foreground"
+                    : "text-muted-foreground"
+                )}
+              >
+                {item.label}
+              </Link>
+            ))}
+            {/* Create button with dropdown for all users */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="primary" size="sm" className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  {t(locale, "nav.create")}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link href={session?.user ? "/builder" : "/builder/preview"} className="flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    {t(locale, "nav.createManually")}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href={session?.user ? "/generate" : "/generate/preview"} className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4" />
+                    {t(locale, "nav.createWithAI")}
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </nav>
+
+              {/* Right side controls */}
+              <div className="flex items-center gap-2">
+                {session?.user && (
+                  <Link href="/pricing" className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
+                    <Coins className="h-4 w-4" />
+                    <span className="text-sm font-medium">{session.user.coinBalance || 0}</span>
+                  </Link>
+                )}
+                <div className="hidden md:block">
+                  <LocaleSwitcher />
+                </div>
+                <ThemeToggle />
+                <div className="hidden md:block">
+                  <UserMenu />
+                </div>
+
+            {/* Mobile menu button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden"
+              onClick={() => {
+                if (mobileMenuOpen) {
+                  handleCloseSidebar();
+                } else {
+                  handleOpenSidebar();
+                }
+              }}
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? (
+                <X className="h-5 w-5" />
+              ) : (
+                <Menu className="h-5 w-5" />
+              )}
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Sidebar - Rendered via Portal */}
+      {typeof window !== "undefined" && (mobileMenuOpen || isClosing) && createPortal(
+        <>
+          {/* Overlay */}
+          <div
+            className={cn(
+              "fixed inset-0 bg-black/50 z-[110] md:hidden transition-opacity duration-300",
+              mobileMenuOpen && !isClosing ? "opacity-100" : "opacity-0"
+            )}
+            onClick={handleCloseSidebar}
+          />
+          {/* Sidebar */}
+          <div
+            className={cn(
+              "fixed top-0 left-0 h-full w-64 bg-background border-r shadow-xl z-[120] md:hidden transition-transform duration-300 ease-out",
+              isAnimating && !isClosing ? "translate-x-0" : "-translate-x-full"
+            )}
+          >
+            <div className="flex flex-col h-full">
+              {/* Sidebar Header */}
+              <div className="flex items-center justify-between p-4 border-b">
+                <Link
+                  href="/"
+                  onClick={handleCloseSidebar}
+                  className="text-lg font-bold"
+                >
+                  QuizLink
+                </Link>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleCloseSidebar}
+                  aria-label="Close menu"
+                >
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+
+              {/* Sidebar Navigation */}
+              <nav className="flex-1 overflow-y-auto p-4">
+                <div className="flex flex-col space-y-1">
+                  {navItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={handleCloseSidebar}
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2 text-base font-medium transition-colors rounded-md",
+                          isActive(item.href)
+                            ? "bg-accent text-accent-foreground"
+                            : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                        )}
+                      >
+                        <Icon className="h-5 w-5" />
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+
+                  {/* Create options for mobile - show for all users */}
+                  <>
+                    <Link
+                      href={session?.user ? "/builder" : "/builder/preview"}
+                      onClick={handleCloseSidebar}
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2 text-base font-medium transition-colors rounded-md",
+                        isActive("/builder")
+                          ? "bg-accent text-accent-foreground"
+                          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                      )}
+                    >
+                      <FileText className="h-5 w-5" />
+                      {t(locale, "nav.createManually")}
+                    </Link>
+                    <Link
+                      href={session?.user ? "/generate" : "/generate/preview"}
+                      onClick={handleCloseSidebar}
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2 text-base font-medium transition-colors rounded-md",
+                        isActive("/generate")
+                          ? "bg-accent text-accent-foreground"
+                          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                      )}
+                    >
+                      <Sparkles className="h-5 w-5" />
+                      {t(locale, "nav.createWithAI")}
+                    </Link>
+                  </>
+                </div>
+
+                {/* Auth buttons for mobile - only show if not authenticated */}
+                {!session?.user && (
+                  <div className="border-t pt-4 mt-4 space-y-2">
+                    <Link
+                      href="/auth/signin"
+                      onClick={handleCloseSidebar}
+                      className="flex items-center gap-3 px-3 py-2 text-base font-medium transition-colors rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    >
+                      <LogIn className="h-5 w-5" />
+                      {t(locale, "auth.signIn.button")}
+                    </Link>
+                    <Link
+                      href="/auth/signup"
+                      onClick={handleCloseSidebar}
+                      className="flex items-center gap-3 px-3 py-2 text-base font-medium transition-colors rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
+                    >
+                      <UserPlus className="h-5 w-5" />
+                      {t(locale, "auth.signUp.button")}
+                    </Link>
+                  </div>
+                )}
+
+                  {/* User menu for mobile - only show if authenticated */}
+                  {session?.user && (
+                    <div className="border-t pt-4 mt-4">
+                      <div className="px-3 py-2 text-sm font-medium border-b mb-2">
+                        {session.user.name || session.user.email}
+                      </div>
+                      <Link
+                        href="/pricing"
+                        onClick={handleCloseSidebar}
+                        className="flex items-center gap-3 w-full px-3 py-2 text-base font-medium transition-colors rounded-md text-left hover:bg-accent hover:text-accent-foreground"
+                      >
+                        <Coins className="h-5 w-5" />
+                        {t(locale, "nav.coins")}: {session.user.coinBalance || 0}
+                      </Link>
+                    <Link
+                      href="/account"
+                      onClick={handleCloseSidebar}
+                      className="flex items-center gap-3 w-full px-3 py-2 text-base font-medium transition-colors rounded-md text-left text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    >
+                      <Settings className="h-5 w-5" />
+                      {t(locale, "userMenu.settings")}
+                    </Link>
+                    <button
+                      onClick={async () => {
+                        await signOut({ redirect: false });
+                        handleCloseSidebar();
+                        router.push("/");
+                        router.refresh();
+                      }}
+                      className="flex items-center gap-3 w-full px-3 py-2 text-base font-medium transition-colors rounded-md text-left hover:bg-accent hover:text-accent-foreground mt-1"
+                    >
+                      <LogOut className="h-5 w-5" />
+                      {t(locale, "auth.signOut")}
+                    </button>
+                  </div>
+                )}
+
+                {/* Language selector in sidebar */}
+                <div className="border-t pt-4 mt-4">
+                  <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    {t(locale, "nav.language")}
+                  </div>
+                  <button
+                    onClick={() => {
+                      setLocale("fr");
+                      handleCloseSidebar();
+                    }}
+                    className={cn(
+                      "w-full px-3 py-2 text-base font-medium transition-colors rounded-md text-left",
+                      locale === "fr"
+                        ? "bg-accent text-accent-foreground"
+                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    )}
+                  >
+                    Français
+                  </button>
+                  <button
+                    onClick={() => {
+                      setLocale("en");
+                      handleCloseSidebar();
+                    }}
+                    className={cn(
+                      "w-full px-3 py-2 text-base font-medium transition-colors rounded-md text-left",
+                      locale === "en"
+                        ? "bg-accent text-accent-foreground"
+                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    )}
+                  >
+                    English
+                  </button>
+                </div>
+              </nav>
+            </div>
+          </div>
+        </>,
+        document.body
+      )}
+    </header>
+  );
+}
