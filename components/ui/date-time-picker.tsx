@@ -87,7 +87,7 @@ export function DateTimePicker({
           {displayValue}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
+      <PopoverContent className="w-auto p-0 z-[103]" align="start">
         <div className="p-3 space-y-3">
           <DayPicker
             mode="single"

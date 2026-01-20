@@ -57,7 +57,13 @@ import {
 } from "./actions";
 import { createParticipantLink } from "../actions";
 import { getUserQuizzes } from "@/app/builder/actions";
-import { Combobox } from "@/components/ui/combobox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
@@ -780,15 +786,28 @@ export function ParticipantDetailsContent({
               <label className="text-sm font-medium mb-2 block">
                 {t(locale, "dashboard.selectQuiz")} *
               </label>
-              <Combobox
-                options={quizzes.map((q) => ({ value: q.id, label: q.name }))}
+              <Select
                 value={selectedQuizId}
                 onValueChange={setSelectedQuizId}
-                placeholder={t(locale, "dashboard.selectQuiz")}
-                searchPlaceholder={t(locale, "dashboard.searchQuiz")}
-                emptyText={t(locale, "dashboard.noQuizFound")}
                 disabled={isSubmitting}
-              />
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={t(locale, "dashboard.selectQuiz")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {quizzes.length === 0 ? (
+                    <div className="py-6 text-center text-sm text-muted-foreground">
+                      {t(locale, "dashboard.noQuizFound")}
+                    </div>
+                  ) : (
+                    quizzes.map((q) => (
+                      <SelectItem key={q.id} value={q.id}>
+                        {q.name}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex items-center justify-between">
               <Label htmlFor="allow-multiple" className="text-sm font-medium">
