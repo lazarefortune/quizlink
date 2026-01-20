@@ -41,6 +41,10 @@ export const fr = {
     insufficientCoinsTitle: "Coins insuffisants",
     insufficientCoinsDescription: "Vous avez besoin de 2 coins pour générer un quiz avec l'IA. Visitez la page Tarifs pour obtenir des coins.",
     getCoins: "Obtenir des coins",
+    costInfo: "Cette génération coûtera {cost} coins",
+    currentBalance: "Solde actuel : {balance} coins",
+    notEnoughCoins: "Vous n'avez plus assez de coins",
+    viewOffers: "Voir les offres",
   },
 
   // Generation options modal
@@ -190,6 +194,18 @@ export const fr = {
       newPassword: "Nouveau mot de passe",
       confirmPassword: "Confirmer le nouveau mot de passe",
       changePassword: "Modifier le mot de passe",
+    },
+    coins: {
+      title: "Mes Coins",
+      subtitle: "Consultez votre solde et l'historique de vos transactions",
+      currentBalance: "Solde actuel",
+      coins: "coins",
+      transactionHistory: "Historique des transactions",
+      transactionHistoryDescription: "Toutes vos transactions de coins",
+      date: "Date",
+      amount: "Montant",
+      reason: "Raison",
+      noTransactions: "Aucune transaction pour le moment",
     },
     dangerZone: {
       title: "Zone de danger",

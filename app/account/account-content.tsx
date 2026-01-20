@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,7 +35,7 @@ import {
   verifyEmailChange,
   deleteAccount,
 } from "./actions";
-import { Eye, EyeOff, AlertTriangle } from "lucide-react";
+import { Eye, EyeOff, AlertTriangle, Coins } from "lucide-react";
 
 type User = {
   id: string;
@@ -231,9 +232,17 @@ export function AccountContent({ user: initialUser }: AccountContentProps) {
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="max-w-4xl mx-auto space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">{t(locale, "account.title")}</h1>
-          <p className="text-muted-foreground mt-2">{t(locale, "account.description")}</p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">{t(locale, "account.title")}</h1>
+            <p className="text-muted-foreground mt-2">{t(locale, "account.description")}</p>
+          </div>
+          <Link href="/account/coins">
+            <Button variant="outline" className="flex items-center gap-2">
+              <Coins className="h-4 w-4" />
+              {t(locale, "account.coins.title")}
+            </Button>
+          </Link>
         </div>
 
         {/* Profile Section */}

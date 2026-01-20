@@ -22,6 +22,7 @@ import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { useSession } from "next-auth/react";
 import { Alert } from "@/components/ui/alert";
+import { Card, CardContent } from "@/components/ui/card";
 import { CoinsRequiredOverlay } from "@/components/coins-required-overlay";
 import type { QuizVisibility } from "@/types/quiz-builder";
 
@@ -392,6 +393,36 @@ export function GeneratePage() {
               </TabsContent>
             </Tabs>
 
+            {/* Coin Cost Info - Only show for authenticated users */}
+            {session?.user && session.user.role !== "ADMIN" && (
+              <Card className="bg-muted/50">
+                <CardContent className="pt-6">
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">
+                      {t(locale, "generate.costInfo", { cost: "2" })}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {t(locale, "generate.currentBalance", {
+                        balance: (session.user.coinBalance || 0).toString(),
+                      })}
+                    </p>
+                    {!hasEnoughCoins && (
+                      <div className="mt-3 pt-3 border-t">
+                        <p className="text-sm text-destructive font-medium mb-2">
+                          {t(locale, "generate.notEnoughCoins")}
+                        </p>
+                        <Link href="/pricing">
+                          <Button variant="primary" size="sm">
+                            {t(locale, "generate.viewOffers")}
+                          </Button>
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {error && (
               <Alert variant="error">
                 <div>
@@ -414,7 +445,7 @@ export function GeneratePage() {
                 onClick={handleGenerate}
                 disabled={
                   isLoading ||
-                  (session?.user && (session.user.coinBalance || 0) < 2) ||
+                  (session?.user && (session.user.coinBalance || 0) < 2 && session.user.role !== "ADMIN") ||
                   (activeTab === "DOCUMENT" && !file) ||
                   (activeTab === "TEXT" && !textContent.trim())
                 }

@@ -146,9 +146,9 @@ export function Header() {
               {/* Right side controls */}
               <div className="flex items-center gap-2">
                 {session?.user && (
-                  <Link href="/pricing" className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
+                  <Link href="/account/coins" className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors border border-primary/20">
                     <Coins className="h-4 w-4" />
-                    <span className="text-sm font-medium">{session.user.coinBalance || 0}</span>
+                    <span className="text-sm font-semibold">{session.user.coinBalance || 0}</span>
                   </Link>
                 )}
                 <div className="hidden md:block">
@@ -304,7 +304,7 @@ export function Header() {
                         {session.user.name || session.user.email}
                       </div>
                       <Link
-                        href="/pricing"
+                        href="/account/coins"
                         onClick={handleCloseSidebar}
                         className="flex items-center gap-3 w-full px-3 py-2 text-base font-medium transition-colors rounded-md text-left hover:bg-accent hover:text-accent-foreground"
                       >

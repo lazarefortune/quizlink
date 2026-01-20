@@ -191,6 +191,18 @@ export const en = {
       confirmPassword: "Confirm new password",
       changePassword: "Change password",
     },
+    coins: {
+      title: "My Coins",
+      subtitle: "View your balance and transaction history",
+      currentBalance: "Current Balance",
+      coins: "coins",
+      transactionHistory: "Transaction History",
+      transactionHistoryDescription: "All your coin transactions",
+      date: "Date",
+      amount: "Amount",
+      reason: "Reason",
+      noTransactions: "No transactions yet",
+    },
     dangerZone: {
       title: "Danger Zone",
       description: "Irreversible actions. Be careful.",
