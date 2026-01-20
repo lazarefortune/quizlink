@@ -47,7 +47,7 @@ export async function extractTextFromPdf(
       const pdfInfo = await parser.getInfo();
 
       // Step 3: Validate page count
-      const pageCount = pdfInfo?.pages || 0;
+      const pageCount = pdfInfo?.total || 0;
       if (pageCount > MAX_PAGES) {
         await parser.destroy();
         return {
