@@ -14,50 +14,40 @@ deploy_quizlink:
     - chmod 600 ~/.ssh/id_rsa
     - ssh-keyscan -H "$SSH_QUIZLINK_HOST" >> ~/.ssh/known_hosts
 
-  script: |
-    ssh -p "$SSH_QUIZLINK_PORT" "$SSH_QUIZLINK_USER@$SSH_QUIZLINK_HOST" "
-      set -e
+  script:
+  - |
+    ssh -p "$SSH_QUIZLINK_PORT" "$SSH_QUIZLINK_USER@$SSH_QUIZLINK_HOST" << 'EOF'
+    set -e
 
-      # 1. Clone / pull du repo QuizLink
-      if [ ! -d /var/www/quizlink/.git ]; then
-        git clone https://gitlab.com/$CI_PROJECT_PATH.git /var/www/quizlink
-      fi
-      cd /var/www/quizlink
-      git reset --hard HEAD
-      git pull origin main
+    echo "Déploiement QuizLink"
 
-      # 2. Installer les dépendances
-      pnpm install --frozen-lockfile
+    cd /var/www/quizlink
 
-      # 3. Générer le client Prisma (OBLIGATOIRE avant le build)
-      echo 'Génération du client Prisma...'
-      npx prisma generate
+    # Récupération du code
+    git reset --hard HEAD
+    git pull origin main
 
-      # 4. Appliquer les migrations Prisma (production)
-      echo 'Application des migrations Prisma...'
-      npx prisma migrate deploy
+    # Installation des dépendances
+    pnpm install --frozen-lockfile
 
-      # 5. Build de l'application Next.js
-      echo 'Build de l'application Next.js...'
-      pnpm run build
+    # Prisma
+    npx prisma generate
+    npx prisma migrate deploy
 
-      # 6. Démarrer/redémarrer avec PM2
-      # PM2 doit être installé globalement sur le serveur: npm install -g pm2
-      # Utiliser le port 3002 (3000 et 3001 sont déjà utilisés)
-      if pm2 list | grep -q quizlink; then
-        echo 'Redémarrage de quizlink...'
-        pm2 reload quizlink
-      else
-        echo 'Premier démarrage de quizlink...'
-        # Démarrer depuis le dossier racine du projet sur le port 3002
-        PORT=3002 pm2 start npm --name quizlink --cwd /var/www/quizlink -- start
-        pm2 save
-      fi
+    # Build
+    pnpm run build
 
-      # Afficher le statut
-      pm2 list
-      pm2 logs quizlink --lines 20
-    "
+    # PM2
+    if pm2 list | grep -q quizlink; then
+      pm2 reload quizlink
+    else
+      PORT=3002 pm2 start npm --name quizlink -- start
+      pm2 save
+    fi
+
+    pm2 list
+    EOF
+
 
   only:
     - main
