@@ -111,17 +111,50 @@ export async function generateQuizFromPdf(
   | { success: true; title: string; questions: any[] }
   | { success: false; error: string }
 > {
-  // Step 1: Extract text from PDF
-  const extractionResult = await uploadPdfAndExtractText(formData);
+  try {
+    // Step 1: Authenticate user (same as generateQuizAction)
+    const session = await auth();
+    if (!session?.user?.id) {
+      console.log("[generateQuizFromPdf] User not authenticated");
+      return {
+        success: false,
+        error: "errors.unauthorized",
+      };
+    }
 
-  if (!extractionResult.success) {
+    const userId = session.user.id;
+    console.log(`[generateQuizFromPdf] User ${userId} - Starting PDF generation`);
+
+    // Step 2: Extract text from PDF
+    const extractionResult = await uploadPdfAndExtractText(formData);
+
+    if (!extractionResult.success) {
+      console.log(`[generateQuizFromPdf] PDF extraction failed: ${extractionResult.error}`);
+      return {
+        success: false,
+        error: extractionResult.error,
+      };
+    }
+
+    console.log(`[generateQuizFromPdf] PDF extraction successful. Text length: ${extractionResult.text.length} characters`);
+
+    // Step 3: Generate quiz using existing AI generation logic
+    // This will handle coin deduction automatically
+    console.log(`[generateQuizFromPdf] Calling generateQuizAction with extracted text`);
+    const result = await generateQuizAction(extractionResult.text, options);
+    
+    if (result.success) {
+      console.log(`[generateQuizFromPdf] Quiz generation successful. Title: ${result.title}, Questions: ${result.questions.length}`);
+    } else {
+      console.log(`[generateQuizFromPdf] Quiz generation failed: ${result.error}`);
+    }
+    
+    return result;
+  } catch (error) {
+    console.error("[generateQuizFromPdf] Unexpected error:", error);
     return {
       success: false,
-      error: extractionResult.error,
+      error: "errors.generationFailed",
     };
   }
-
-  // Step 2: Generate quiz using existing AI generation logic
-  // This will handle coin deduction automatically
-  return await generateQuizAction(extractionResult.text, options);
 }

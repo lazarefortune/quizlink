@@ -10,7 +10,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { Lock } from "lucide-react";
+import { Lock, Sparkles } from "lucide-react";
 import { ContentDropzone } from "@/components/generate/content-dropzone";
 import { GenerationOptionsModal } from "@/components/generate/generation-options-modal";
 import { getAiLimits, validateTextLength, validateQuestionCount } from "@/lib/ai/ai-limits";
@@ -134,20 +134,35 @@ export function GeneratePage() {
         }
 
         // Update session to refresh coin balance in header
+        // Force session update to get latest coin balance from database
         try {
-          await updateSession();
-          await new Promise((resolve) => setTimeout(resolve, 200));
+          console.log("[GeneratePage] Updating session after quiz generation...");
+          // Call updateSession with empty object to trigger JWT callback refresh
+          await updateSession({});
+          // Wait a bit for session to propagate
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          // Trigger custom event to force header update
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new Event("session:update"));
+          }
         } catch (error) {
           console.error("Error updating session:", error);
         }
 
+        // Force router refresh to get new session data
         router.refresh();
+
+        // Show success message
         showToast(t(locale, "builder.quizCreated"), "success");
 
+        // Small delay before redirecting to ensure session is updated
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        // Redirect to builder - this will trigger a full page load which will refresh the session
         if (saveResult.quizId) {
-          router.push(`/builder/${saveResult.quizId}`);
+          window.location.href = `/builder/${saveResult.quizId}`;
         } else {
-          router.push("/builder");
+          window.location.href = "/builder";
         }
       } catch (err) {
         setError(
@@ -230,25 +245,35 @@ export function GeneratePage() {
       }
 
       // Update session to refresh coin balance in header
+      // Force session update to get latest coin balance from database
       try {
-        await updateSession();
-        // Small delay to ensure session update completes
-        await new Promise((resolve) => setTimeout(resolve, 200));
+        console.log("[GeneratePage] Updating session after quiz generation (text)...");
+        // Call updateSession with empty object to trigger JWT callback refresh
+        await updateSession({});
+        // Wait a bit for session to propagate
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        // Trigger custom event to force header update
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("session:update"));
+        }
       } catch (error) {
         console.error("Error updating session:", error);
       }
 
-      // Refresh router to get updated data
+      // Force router refresh to get new session data
       router.refresh();
 
       // Show success message
       showToast(t(locale, "builder.quizCreated"), "success");
 
-      // Redirect to builder to edit the quiz
+      // Small delay before redirecting to ensure session is updated
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // Redirect to builder - this will trigger a full page load which will refresh the session
       if (saveResult.quizId) {
-        router.push(`/builder/${saveResult.quizId}`);
+        window.location.href = `/builder/${saveResult.quizId}`;
       } else {
-        router.push("/builder");
+        window.location.href = "/builder";
       }
     } catch (err) {
       setError(
@@ -375,6 +400,7 @@ export function GeneratePage() {
                   disabled={true}
                   className="w-full sm:w-auto"
                 >
+                  <Sparkles className="h-4 w-4" />
                   {t(locale, "generate.generateButton")}
                 </Button>
                 <Link
@@ -539,6 +565,7 @@ export function GeneratePage() {
                 isLoading={isLoading}
                 className="w-full sm:w-auto"
               >
+                <Sparkles className="h-4 w-4" />
                 {isLoading ? t(locale, "generate.generating") : t(locale, "generate.generateButton")}
               </Button>
 

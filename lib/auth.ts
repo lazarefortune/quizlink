@@ -77,6 +77,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       // Always fetch latest user data from database if we have a token ID
       // This ensures the session is always up-to-date
+      // When trigger is "update", force refresh from database
       if (token.id && prisma) {
         try {
           const dbUser = await prisma.user.findUnique({
@@ -99,8 +100,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
             if (nameChanged || emailChanged || roleChanged || coinBalanceChanged) {
               console.log("[JWT] Updating token with fresh user data:", {
-                oldName: token.name,
-                newName: dbUser.name,
+                oldCoinBalance: token.coinBalance,
+                newCoinBalance: dbUser.coinBalance,
                 trigger,
               });
             }

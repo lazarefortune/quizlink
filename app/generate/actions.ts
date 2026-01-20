@@ -7,6 +7,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { Question } from "@/types/quiz-builder";
 
+// Import prisma for verification
+
 const COINS_PER_GENERATION = 2;
 
 type GenerateQuizResult =
@@ -41,7 +43,6 @@ export async function generateQuizAction(
     }
 
     const userId = session.user.id;
-    const isAdmin = session.user.role === "ADMIN";
 
     // Step 2: Validate input FIRST (before any coin operations)
     // This prevents wasting coins on invalid input
@@ -74,39 +75,48 @@ export async function generateQuizAction(
 
     // Step 3: CRITICAL SECURITY - Deduct coins BEFORE AI generation
     // This prevents race conditions and ensures coins are reserved
-    // ADMIN users bypass coin deduction
+    // All users (including admins) must pay for AI generation
     let coinsDeducted = false;
-    if (!isAdmin) {
-      console.log(`[generateQuizAction] Deducting ${COINS_PER_GENERATION} coins BEFORE AI generation for user ${userId}`);
-      const deductResult = await deductCoins(
-        userId,
-        COINS_PER_GENERATION,
-        `AI quiz generation (reserved)`
-      );
+    console.log(`[generateQuizAction] User ${userId}. Deducting ${COINS_PER_GENERATION} coins BEFORE AI generation`);
+    console.log(`[generateQuizAction] Current session coinBalance: ${session.user.coinBalance}`);
+    
+    const deductResult = await deductCoins(
+      userId,
+      COINS_PER_GENERATION,
+      `AI quiz generation (reserved)`
+    );
 
-      if (!deductResult.success) {
-        // Insufficient coins or other error - abort before calling OpenAI
-        console.log(`[generateQuizAction] Coin deduction failed BEFORE AI generation: ${deductResult.error}`);
-        return {
-          success: false,
-          error: deductResult.error === "Insufficient coins"
-            ? "errors.insufficientCoins"
-            : "errors.coinDeductionFailed",
-        };
-      }
+    console.log(`[generateQuizAction] deductCoins returned:`, JSON.stringify(deductResult));
 
-      coinsDeducted = true;
-      console.log(`[generateQuizAction] Coins deducted successfully. New balance: ${deductResult.newBalance}`);
+    if (!deductResult.success) {
+      // Insufficient coins or other error - abort before calling OpenAI
+      console.error(`[generateQuizAction] ❌ Coin deduction failed BEFORE AI generation: ${deductResult.error}`);
+      return {
+        success: false,
+        error: deductResult.error === "Insufficient coins"
+          ? "errors.insufficientCoins"
+          : "errors.coinDeductionFailed",
+      };
     }
 
+    coinsDeducted = true;
+    console.log(`[generateQuizAction] ✅ Coins deducted successfully. New balance: ${deductResult.newBalance}`);
+    
+    // Verify the deduction by checking the database directly
+    const verifyBalance = await prisma?.user.findUnique({
+      where: { id: userId },
+      select: { coinBalance: true },
+    });
+    console.log(`[generateQuizAction] Verification: balance in DB is now ${verifyBalance?.coinBalance}`);
+
     // Step 4: Generate quiz with AI (external API call)
-    // Coins are already deducted at this point (for non-admin users)
+    // Coins are already deducted at this point
     let aiResult: { title: string; questions: Question[] };
     try {
       aiResult = await generateQuizWithAI(content, options);
     } catch (error) {
       // AI generation failed - REFUND coins if they were deducted
-      if (coinsDeducted && !isAdmin) {
+      if (coinsDeducted) {
         console.log(`[generateQuizAction] AI generation failed. Refunding ${COINS_PER_GENERATION} coins to user ${userId}`);
         const { creditCoins } = await import("@/lib/coins");
         const refundResult = await creditCoins(
@@ -136,7 +146,7 @@ export async function generateQuizAction(
 
     // Step 5: Update transaction reason with actual quiz title (for audit trail)
     // Coins were already deducted, so we just update the reason
-    if (coinsDeducted && !isAdmin) {
+    if (coinsDeducted) {
       // Update the transaction reason to include the actual quiz title
       // This is optional but improves audit trail
       try {

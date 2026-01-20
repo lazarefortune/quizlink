@@ -25,13 +25,6 @@ export async function getUserCoinBalance(userId: string): Promise<number> {
  * Check if user has enough coins for AI generation
  */
 export async function hasEnoughCoins(userId: string, requiredCoins: number = COINS_PER_GENERATION): Promise<boolean> {
-  const session = await auth();
-
-  // Admin users bypass coin restrictions
-  if (session?.user?.role === "ADMIN") {
-    return true;
-  }
-
   const balance = await getUserCoinBalance(userId);
   return balance >= requiredCoins;
 }
@@ -43,7 +36,7 @@ export async function hasEnoughCoins(userId: string, requiredCoins: number = COI
  * - Uses database-level row locking (SELECT FOR UPDATE) to prevent race conditions
  * - Atomic transaction ensures coin deduction and transaction log are consistent
  * - Re-verifies coin balance WITH LOCK before deduction to prevent double-spending
- * - ADMIN users can have negative balance, but transaction is still recorded
+ * - All users (including admins) must have sufficient coins
  * - All operations are server-side only, no client-side manipulation possible
  *
  * @param userId - User ID to deduct coins from
@@ -65,6 +58,8 @@ export async function deductCoins(
   }
 
   try {
+    console.log(`[deductCoins] Starting deduction for user ${userId}, amount: ${amount}`);
+    
     // CRITICAL: Use transaction with row-level locking to prevent race conditions
     // This ensures that only one request can read and modify the balance at a time
     const result = await prisma.$transaction(async (tx) => {
@@ -78,55 +73,63 @@ export async function deductCoins(
       `;
 
       if (!user || user.length === 0) {
+        console.error(`[deductCoins] User ${userId} not found in database`);
         throw new Error("User not found");
       }
 
       const userData = user[0];
-      const isAdmin = userData.role === "ADMIN";
 
-      console.log(`[deductCoins] User ${userId} (${isAdmin ? "ADMIN" : "USER"}): locked balance = ${userData.coinBalance}, deducting ${amount}`);
+      console.log(`[deductCoins] User ${userId}: locked balance = ${userData.coinBalance}, deducting ${amount}`);
 
       // Step 2: Verify coin balance WITH LOCK (prevents race conditions)
-      // ADMIN users bypass this check (can go negative)
-      if (!isAdmin) {
-        if (userData.coinBalance < amount) {
-          console.error(`[deductCoins] Insufficient coins: ${userData.coinBalance} < ${amount}`);
-          throw new Error("Insufficient coins");
-        }
+      // All users must have enough coins
+      if (userData.coinBalance < amount) {
+        console.error(`[deductCoins] Insufficient coins: ${userData.coinBalance} < ${amount}`);
+        throw new Error("Insufficient coins");
       }
 
       // Step 3: Calculate new balance
-      // ADMIN users can go negative, regular users cannot
       const newBalance = userData.coinBalance - amount;
       console.log(`[deductCoins] New balance will be: ${newBalance}`);
 
       // Step 4: Atomic update: balance + transaction log in same transaction
       // This ensures consistency - if one fails, both rollback
-      await Promise.all([
-        tx.user.update({
-          where: { id: userId },
-          data: { coinBalance: newBalance },
-        }),
-        tx.coinTransaction.create({
-          data: {
-            userId,
-            amount: -amount,
-            reason,
-          },
-        }),
-      ]);
+      console.log(`[deductCoins] Updating user balance to ${newBalance}...`);
+      const updateUserResult = await tx.user.update({
+        where: { id: userId },
+        data: { coinBalance: newBalance },
+      });
+      console.log(`[deductCoins] User balance updated. New balance in DB: ${updateUserResult.coinBalance}`);
+
+      console.log(`[deductCoins] Creating transaction log...`);
+      const transactionResult = await tx.coinTransaction.create({
+        data: {
+          userId,
+          amount: -amount,
+          reason,
+        },
+      });
+      console.log(`[deductCoins] Transaction log created with ID: ${transactionResult.id}`);
+
+      // Verify the update was successful
+      const verifyUser = await tx.user.findUnique({
+        where: { id: userId },
+        select: { coinBalance: true },
+      });
+      console.log(`[deductCoins] Verification: user balance in DB is now ${verifyUser?.coinBalance}`);
 
       return { success: true, newBalance };
     }, {
-      isolationLevel: "Serializable", // Highest isolation level to prevent all race conditions
+      isolationLevel: "ReadCommitted", // Use ReadCommitted for MySQL compatibility
       timeout: 10000, // 10 second timeout
     });
 
-    console.log(`[deductCoins] Successfully deducted ${amount} coins. New balance: ${result.newBalance}`);
+    console.log(`[deductCoins] ✅ Successfully deducted ${amount} coins. New balance: ${result.newBalance}`);
 
     // Revalidate paths to update UI
     revalidatePath("/dashboard");
     revalidatePath("/generate");
+    revalidatePath("/account/coins");
 
     return result;
   } catch (error) {

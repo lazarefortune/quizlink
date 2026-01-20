@@ -34,9 +34,13 @@ export function Header() {
   useEffect(() => {
     const handleSessionUpdate = async () => {
       // Update session to get latest data from server
+      // Pass empty object to trigger JWT callback refresh
       if (updateSession) {
         try {
-          await updateSession();
+          console.log("[Header] Session update event received, refreshing session...");
+          await updateSession({});
+          // Small delay to ensure session propagates
+          await new Promise((resolve) => setTimeout(resolve, 200));
         } catch (error) {
           console.error("Error updating session in Header:", error);
         }
