@@ -84,6 +84,9 @@ export function Header() {
     navItems.push({ href: "/", label: t(locale, "nav.home"), icon: Home });
   }
 
+  // Add pricing link for all users
+  navItems.push({ href: "/pricing", label: t(locale, "nav.pricing"), icon: Coins });
+
   const isActive = (href: string) => {
     if (href === "/") {
       return pathname === "/";
