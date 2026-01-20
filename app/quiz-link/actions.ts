@@ -390,51 +390,15 @@ export async function startQuizAttempt(
           };
         }
 
-        // Check for in-progress attempt - reuse it instead of creating a new one
-        const existingInProgress = quizLink.attempts.find(
-          (a: any) => a.participantId === participantId && a.status === "IN_PROGRESS"
-        );
-        if (existingInProgress) {
-          return {
-            success: true,
-            attempt: {
-              id: existingInProgress.id,
-              quizLinkId: existingInProgress.quizLinkId,
-              participantId: existingInProgress.participantId,
-            },
-          };
-        }
+        // Allow creating new attempts even if there's one in progress
+        // Don't automatically abandon in-progress attempts
       } else {
-        // If multiple attempts are allowed, check if there's an in-progress attempt and reuse it
-        const existingInProgress = quizLink.attempts.find(
-          (a: any) => a.participantId === participantId && a.status === "IN_PROGRESS"
-        );
-        if (existingInProgress) {
-          return {
-            success: true,
-            attempt: {
-              id: existingInProgress.id,
-              quizLinkId: existingInProgress.quizLinkId,
-              participantId: existingInProgress.participantId,
-            },
-          };
-        }
+        // If multiple attempts are allowed, allow creating new attempts even if there's one in progress
+        // Don't automatically abandon in-progress attempts
       }
     } else {
-      // For anonymous participants (public links), check for in-progress attempt
-      const existingInProgress = quizLink.attempts.find(
-        (a: any) => a.participantId === null && a.status === "IN_PROGRESS"
-      );
-      if (existingInProgress) {
-        return {
-          success: true,
-          attempt: {
-            id: existingInProgress.id,
-            quizLinkId: existingInProgress.quizLinkId,
-            participantId: existingInProgress.participantId,
-          },
-        };
-      }
+      // For anonymous participants (public links), allow creating new attempts even if there's one in progress
+      // Don't automatically abandon in-progress attempts
 
       // For single-attempt anonymous quizzes, check if any anonymous attempt is completed
       if (!quizLink.allowMultipleAttempts) {
@@ -464,7 +428,7 @@ export async function startQuizAttempt(
             }
           : {}),
         status: "IN_PROGRESS",
-      },
+      } as any, // Type assertion needed because Prisma types don't handle optional relations well
     });
 
     return {

@@ -39,6 +39,7 @@ type Stats = {
   completedAttempts: number;
   averageScore: number;
   completionRate: number;
+  totalQuestions: number;
   participants: Array<{
     id: string;
     name: string;
@@ -55,6 +56,7 @@ type Stats = {
     status: string;
     startedAt: Date;
     finishedAt: Date | null;
+    questionsAnswered: number;
   }>;
 };
 
@@ -256,7 +258,7 @@ export function QuizStatsContent({
               <TableBody>
                 {stats.attempts.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center text-muted-foreground">
                       {t(locale, "dashboard.noAttempts")}
                     </TableCell>
                   </TableRow>
@@ -270,6 +272,9 @@ export function QuizStatsContent({
                         {attempt.score !== null
                           ? `${attempt.score.toFixed(1)}%`
                           : "-"}
+                      </TableCell>
+                      <TableCell>
+                        {attempt.questionsAnswered} / {stats.totalQuestions || "-"}
                       </TableCell>
                       <TableCell>{formatDuration(attempt.duration)}</TableCell>
                       <TableCell>

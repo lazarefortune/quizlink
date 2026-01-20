@@ -103,43 +103,65 @@ export async function creditCoinsAction(
   }
 
   try {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { coinBalance: true },
+    // Use transaction with row locking for consistency and race condition prevention
+    const result = await prisma.$transaction(async (tx) => {
+      // Lock the user row to prevent race conditions
+      const user = await tx.$queryRaw<Array<{ coinBalance: number; role: string }>>`
+        SELECT coin_balance as coinBalance, role
+        FROM users
+        WHERE id = ${userId}
+        FOR UPDATE
+      `;
+
+      if (!user || user.length === 0) {
+        throw new Error("User not found");
+      }
+
+      const currentBalance = user[0].coinBalance;
+      const targetUserRole = user[0].role;
+      const newBalance = currentBalance + amount;
+
+      // Prevent negative balance for non-admin users (target user, not admin doing the action)
+      if (targetUserRole !== "ADMIN" && newBalance < 0) {
+        throw new Error("Cannot reduce balance below zero for non-admin users");
+      }
+
+      // Atomic update: balance + transaction log
+      await Promise.all([
+        tx.user.update({
+          where: { id: userId },
+          data: { coinBalance: newBalance },
+        }),
+        tx.coinTransaction.create({
+          data: {
+            userId,
+            amount,
+            reason: `Admin action: ${reason}`,
+          },
+        }),
+      ]);
+
+      return { success: true, newBalance };
+    }, {
+      isolationLevel: "Serializable",
+      timeout: 10000,
     });
-
-    if (!user) {
-      return { success: false, error: "User not found" };
-    }
-
-    const newBalance = user.coinBalance + amount;
-
-    // Prevent negative balance for non-admin users
-    if (newBalance < 0) {
-      return { success: false, error: "Cannot reduce balance below zero" };
-    }
-
-    await prisma.$transaction([
-      prisma.user.update({
-        where: { id: userId },
-        data: { coinBalance: newBalance },
-      }),
-      prisma.coinTransaction.create({
-        data: {
-          userId,
-          amount,
-          reason: `Admin credit: ${reason}`,
-        },
-      }),
-    ]);
 
     revalidatePath("/admin/coins");
     revalidatePath("/admin");
     revalidatePath("/dashboard");
 
-    return { success: true, newBalance };
+    return result;
   } catch (error) {
     console.error("Error crediting coins:", error);
+    if (error instanceof Error) {
+      if (error.message === "User not found") {
+        return { success: false, error: "User not found" };
+      }
+      if (error.message.includes("Cannot reduce balance")) {
+        return { success: false, error: error.message };
+      }
+    }
     return { success: false, error: "Failed to update coin balance" };
   }
 }

@@ -551,6 +551,7 @@ export const en = {
     attemptsDescription: "List of all attempts",
     participant: "Participant",
     score: "Score",
+    questionsAnswered: "Questions",
     duration: "Duration",
     status: "Status",
     date: "Date",

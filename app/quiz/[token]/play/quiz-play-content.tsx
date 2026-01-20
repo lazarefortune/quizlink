@@ -89,6 +89,7 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
   const [showQuitConfirm, setShowQuitConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
+  const [isQuizFinished, setIsQuizFinished] = useState(false);
 
   const settings = attempt.quizLink.quiz.settings as {
     showAnswerImmediately?: boolean;
@@ -172,6 +173,29 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
 
     return () => clearInterval(interval);
   }, [currentQuestionIndex, settings, questions, answers]);
+
+  // Prevent window close/refresh when quiz is in progress
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // Only prevent if quiz is not finished
+      if (!isQuizFinished) {
+        e.preventDefault();
+        // Modern browsers require returnValue to be set
+        e.returnValue = "";
+        return "";
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [isQuizFinished]);
+
+  // Note: We don't handle 'unload' event as it's unreliable in modern browsers
+  // The beforeunload event will show a confirmation dialog, and if the user confirms,
+  // they can use the quit button which will properly abandon the quiz via confirmQuit
 
   const submitAnswerForQuestion = useCallback(
     async (questionId: string, selectedOptionIds: string[]) => {
@@ -310,9 +334,12 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
         }
       }
 
+      setIsQuizFinished(true); // Mark quiz as finished before redirecting
+
       const result = await finishQuizAttempt(attempt.id);
 
       if (!result.success) {
+        setIsQuizFinished(false); // Reset if failed
         setError(result.error);
         return;
       }
@@ -320,6 +347,7 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
       // Redirect to results
       router.push(`/quiz/${token}/results/${attempt.id}`);
     } catch (err) {
+      setIsQuizFinished(false); // Reset if error
       setError(err instanceof Error ? err.message : "Failed to finish quiz");
     }
   };
@@ -329,8 +357,17 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
   };
 
   const confirmQuit = async () => {
-    await abandonQuizAttempt(attempt.id);
-    router.push("/");
+    try {
+      // Abandon the quiz attempt before marking as finished
+      await abandonQuizAttempt(attempt.id);
+    } catch (error) {
+      console.error("Error abandoning quiz:", error);
+      // Continue even if abandon fails
+    } finally {
+      // Mark as finished to allow navigation
+      setIsQuizFinished(true);
+      router.push("/");
+    }
   };
 
   if (questions.length === 0) {

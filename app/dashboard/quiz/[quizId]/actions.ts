@@ -13,6 +13,7 @@ type GetQuizStatsResponse =
         completedAttempts: number;
         averageScore: number;
         completionRate: number;
+        totalQuestions: number;
         participants: Array<{
           id: string;
           name: string;
@@ -29,6 +30,7 @@ type GetQuizStatsResponse =
           status: string;
           startedAt: Date;
           finishedAt: Date | null;
+          questionsAnswered: number;
         }>;
       };
     }
@@ -71,10 +73,17 @@ export async function getQuizStats(
       return { success: false, error: "Unauthorized" };
     }
 
-    // Verify quiz ownership
+    // Verify quiz ownership and get total questions count
     const quiz = await prisma.quiz.findUnique({
       where: { id: quizId },
-      select: { ownerId: true },
+      select: {
+        ownerId: true,
+        _count: {
+          select: {
+            questions: true,
+          },
+        },
+      },
     });
 
     if (!quiz) {
@@ -186,6 +195,7 @@ export async function getQuizStats(
           status: attempt.status,
           startedAt: attempt.startedAt,
           finishedAt: attempt.finishedAt,
+          questionsAnswered: attempt.answers ? attempt.answers.length : 0,
         };
       })
       .sort(
@@ -202,6 +212,7 @@ export async function getQuizStats(
         completedAttempts: completedAttempts.length,
         averageScore,
         completionRate,
+        totalQuestions: quiz._count.questions,
         participants,
         attempts,
       },
