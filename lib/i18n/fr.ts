@@ -374,6 +374,30 @@ export const fr = {
     features: {
       title: "Fonctionnalités Puissantes",
       subtitle: "Tout ce dont vous avez besoin pour créer, personnaliser et partager des quiz",
+      manual: {
+        title: "Création manuelle",
+        description: "Contrôle total sur chaque question, option de réponse et paramètre de quiz",
+      },
+      ai: {
+        title: "Génération IA",
+        description: "Générez automatiquement des quiz à partir de texte, documents ou autres contenus",
+      },
+      shareable: {
+        title: "Liens partageables",
+        description: "Partagez vos quiz instantanément avec un lien unique et sécurisé",
+      },
+      participants: {
+        title: "Suivi des participants",
+        description: "Gérez vos participants, créez des liens personnalisés et suivez leurs progrès",
+      },
+      statistics: {
+        title: "Statistiques détaillées",
+        description: "Analysez les résultats avec des statistiques complètes : scores, temps passé, taux de complétion",
+      },
+      security: {
+        title: "Sécurité des réponses",
+        description: "Contrôlez la visibilité des réponses et protégez l'intégrité de vos évaluations",
+      },
       manualBuilder: {
         title: "Créateur de Quiz Manuel",
         description: "Contrôle total sur chaque question et option de réponse",
@@ -469,34 +493,6 @@ export const fr = {
       knowledge: {
         title: "Tests de connaissances",
         description: "Testez les connaissances générales ou spécifiques dans n'importe quel domaine.",
-      },
-    },
-    features: {
-      title: "Fonctionnalités clés",
-      subtitle: "Tout ce dont vous avez besoin pour créer des quiz professionnels",
-      manual: {
-        title: "Création manuelle",
-        description: "Contrôle total sur chaque question, option de réponse et paramètre de votre quiz.",
-      },
-      ai: {
-        title: "Génération IA",
-        description: "Générez automatiquement des quiz à partir de texte, documents ou autres contenus.",
-      },
-      shareable: {
-        title: "Liens partageables",
-        description: "Partagez vos quiz instantanément avec un lien unique et sécurisé.",
-      },
-      participants: {
-        title: "Suivi des participants",
-        description: "Gérez vos participants, créez des liens personnalisés et suivez leurs progrès.",
-      },
-      statistics: {
-        title: "Statistiques détaillées",
-        description: "Analysez les résultats avec des statistiques complètes : scores, temps passé, taux de complétion.",
-      },
-      security: {
-        title: "Sécurité des réponses",
-        description: "Contrôlez la visibilité des réponses et protégez l'intégrité de vos évaluations.",
       },
     },
     whyQuizLink: {

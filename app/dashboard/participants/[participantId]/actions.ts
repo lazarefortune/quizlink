@@ -567,7 +567,7 @@ export async function getParticipantAttemptDetails(
       attempt: {
         id: attempt.id,
         quizName: attempt.quizLink.quiz.name,
-        participantName: attempt.participant.name,
+        participantName: attempt.participant?.name || "Anonyme",
         startedAt: attempt.startedAt,
         finishedAt: attempt.finishedAt,
         score: attempt.score,

@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
-import { BuilderPageContent } from "./page";
+import { BuilderPageContent } from "./page-content";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 

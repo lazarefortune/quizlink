@@ -1,6 +1,6 @@
 "use client";
 
-import { GeneratePage } from "./page";
+import { GeneratePage } from "./page-content";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 

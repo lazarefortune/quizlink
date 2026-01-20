@@ -26,5 +26,11 @@ export default async function AccountPage() {
     redirect("/auth/signin");
   }
 
-  return <AccountContent user={user} />;
+  // Ensure preferredLanguage is a valid value
+  const userWithTypedLanguage = {
+    ...user,
+    preferredLanguage: (user.preferredLanguage === "en" ? "en" : "fr") as "fr" | "en",
+  };
+
+  return <AccountContent user={userWithTypedLanguage} />;
 }

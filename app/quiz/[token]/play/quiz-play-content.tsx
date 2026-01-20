@@ -47,7 +47,7 @@ type Question = {
 type Attempt = {
   id: string;
   quizLinkId: string;
-  participantId: string;
+  participantId: string | null;
   status: string;
   quizLink: {
     quiz: {
@@ -60,7 +60,7 @@ type Attempt = {
   participant: {
     id: string;
     name: string;
-  };
+  } | null;
 };
 
 type QuizPlayContentProps = {
@@ -324,7 +324,7 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
       // Save all unanswered questions
       const unansweredQuestions = questions.filter((q) => {
         const answer = answers.find((a) => a.questionId === q.id);
-        return !answer?.isVerified && answer?.selectedOptionIds.length > 0;
+        return !answer?.isVerified && (answer?.selectedOptionIds?.length ?? 0) > 0;
       });
 
       for (const question of unansweredQuestions) {

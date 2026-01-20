@@ -47,13 +47,15 @@ export function AdminCoinsContent() {
     setIsSearching(true);
     try {
       const result = await searchUserByEmail(searchEmail.trim());
-      if (result.success && result.user) {
+      if (result.success) {
         setSelectedUser(result.user);
         setCoinAmount("");
         setReason("");
         loadTransactions(result.user.id);
       } else {
-        showToast(result.error || t(locale, "admin.coins.userNotFound"), "error");
+        // TypeScript narrowing: if success is false, result must have error property
+        const errorResult = result as { success: false; error: string };
+        showToast(errorResult.error || t(locale, "admin.coins.userNotFound"), "error");
         setSelectedUser(null);
         setTransactions([]);
       }

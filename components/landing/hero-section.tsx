@@ -11,22 +11,12 @@ export function HeroSection() {
 
   return (
     <section className="relative overflow-hidden py-24 px-4 sm:py-32 md:py-40 lg:py-48 bg-background">
-      {/* Dot Grid Background Pattern - Visible in both light and dark mode */}
-      {/* Light mode pattern - using higher opacity and larger dots for better visibility */}
+      {/* Dot Grid Background Pattern */}
       <div
-        className="absolute inset-0 z-0 dark:hidden"
+        className="absolute inset-0 z-0"
         style={{
-          backgroundImage: `radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.2) 2px, transparent 0)`,
+          backgroundImage: `radial-gradient(circle at 1px 1px, rgba(128, 128, 128, 0.3) 1.5px, transparent 0)`,
           backgroundSize: '24px 24px',
-        }}
-        aria-hidden="true"
-      />
-      {/* Dark mode pattern */}
-      <div
-        className="absolute inset-0 z-0 hidden dark:block"
-        style={{
-          backgroundImage: `radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.1) 1px, transparent 0)`,
-          backgroundSize: '22px 22px',
         }}
         aria-hidden="true"
       />

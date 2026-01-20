@@ -370,6 +370,30 @@ export const en = {
     features: {
       title: "Powerful Features",
       subtitle: "Everything you need to create, customize, and share quizzes",
+      manual: {
+        title: "Manual creation",
+        description: "Full control over every question, answer option, and quiz setting",
+      },
+      ai: {
+        title: "AI generation",
+        description: "Automatically generate quizzes from text, documents, or other content",
+      },
+      shareable: {
+        title: "Shareable links",
+        description: "Share your quizzes instantly with a unique and secure link",
+      },
+      participants: {
+        title: "Participant tracking",
+        description: "Manage your participants, create personalized links, and track their progress",
+      },
+      statistics: {
+        title: "Detailed statistics",
+        description: "Analyze results with comprehensive statistics: scores, time spent, completion rates",
+      },
+      security: {
+        title: "Answer security",
+        description: "Control answer visibility and protect the integrity of your assessments",
+      },
       manualBuilder: {
         title: "Manual Quiz Builder",
         description: "Full control over every question and answer option",
@@ -465,34 +489,6 @@ export const en = {
       knowledge: {
         title: "Knowledge tests",
         description: "Test general or specific knowledge in any field.",
-      },
-    },
-    features: {
-      title: "Key features",
-      subtitle: "Everything you need to create professional quizzes",
-      manual: {
-        title: "Manual creation",
-        description: "Full control over every question, answer option, and quiz setting.",
-      },
-      ai: {
-        title: "AI generation",
-        description: "Automatically generate quizzes from text, documents, or other content.",
-      },
-      shareable: {
-        title: "Shareable links",
-        description: "Share your quizzes instantly with a unique and secure link.",
-      },
-      participants: {
-        title: "Participant tracking",
-        description: "Manage your participants, create personalized links, and track their progress.",
-      },
-      statistics: {
-        title: "Detailed statistics",
-        description: "Analyze results with comprehensive statistics: scores, time spent, completion rates.",
-      },
-      security: {
-        title: "Answer security",
-        description: "Control answer visibility and protect the integrity of your assessments.",
       },
     },
     whyQuizLink: {
@@ -654,8 +650,6 @@ export const en = {
     scoreLabel: "Score",
     startedAtLabel: "Started at",
     finishedAtLabel: "Finished at",
-    yourAnswerLabel: "Your answer",
-    correctAnswerLabel: "Correct answer",
     selectExpirationDate: "Select expiration date and time",
   },
 
