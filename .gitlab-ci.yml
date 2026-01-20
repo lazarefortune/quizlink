@@ -1,0 +1,63 @@
+image: node:20-alpine
+
+stages:
+  - deploy
+
+deploy_quizlink:
+  stage: deploy
+  variables:
+    CI: "true"            # npm non-interactif
+  before_script:
+    - apk add --no-cache openssh git
+    - mkdir -p ~/.ssh
+    - echo "$SSH_QUIZLINK_KEY" > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-keyscan -H "$SSH_QUIZLINK_HOST" >> ~/.ssh/known_hosts
+
+  script: |
+    ssh -p "$SSH_QUIZLINK_PORT" "$SSH_QUIZLINK_USER@$SSH_QUIZLINK_HOST" "
+      set -e
+
+      # 1. Clone / pull du repo QuizLink
+      if [ ! -d /var/www/quizlink/.git ]; then
+        git clone https://gitlab.com/$CI_PROJECT_PATH.git /var/www/quizlink
+      fi
+      cd /var/www/quizlink
+      git reset --hard HEAD
+      git pull origin main
+
+      # 2. Installer les dépendances
+      pnpm ci
+
+      # 3. Générer le client Prisma (OBLIGATOIRE avant le build)
+      echo 'Génération du client Prisma...'
+      npx prisma generate
+
+      # 4. Appliquer les migrations Prisma (production)
+      echo 'Application des migrations Prisma...'
+      npx prisma migrate deploy
+
+      # 5. Build de l'application Next.js
+      echo 'Build de l'application Next.js...'
+      pnpm run build
+
+      # 6. Démarrer/redémarrer avec PM2
+      # PM2 doit être installé globalement sur le serveur: npm install -g pm2
+      # Utiliser le port 3002 (3000 et 3001 sont déjà utilisés)
+      if pm2 list | grep -q quizlink; then
+        echo 'Redémarrage de quizlink...'
+        pm2 reload quizlink
+      else
+        echo 'Premier démarrage de quizlink...'
+        # Démarrer depuis le dossier racine du projet sur le port 3002
+        PORT=3002 pm2 start npm --name quizlink --cwd /var/www/quizlink -- start
+        pm2 save
+      fi
+
+      # Afficher le statut
+      pm2 list
+      pm2 logs quizlink --lines 20
+    "
+
+  only:
+    - main

@@ -739,4 +739,32 @@ export const fr = {
       noTransactions: "Aucune transaction",
     },
   },
+
+  // Footer
+  footer: {
+    about: {
+      title: "À propos",
+      description: "QuizLink est une plateforme professionnelle de création et de partage de quiz.",
+      author: "Créé par",
+    },
+    legal: {
+      title: "Légal",
+      legalNotice: "Mentions légales",
+      privacy: "Confidentialité",
+      terms: "Conditions d'utilisation",
+    },
+    contact: {
+      title: "Contact",
+    },
+    company: {
+      title: "Informations légales",
+      name: "Lazare Fortune",
+      address: "11 avenue Auguste Rodin",
+      siret: "SIRET",
+      ape: "Code APE",
+      vat: "TVA non applicable – article 293 B du CGI",
+    },
+    rights: "Tous droits réservés",
+    createdBy: "Créé par",
+  },
 };

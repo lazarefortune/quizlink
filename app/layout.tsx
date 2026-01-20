@@ -5,6 +5,7 @@ import { LocaleProvider } from "@/lib/i18n/locale-provider";
 import { SessionProvider } from "@/components/session-provider";
 import { ToastProvider } from "@/components/ui/toast";
 import { Header } from "@/components/header";
+import { Footer } from "@/components/footer";
 import "./globals.css";
 
 const quicksand = Quicksand({
@@ -38,8 +39,11 @@ export default function RootLayout({
               disableTransitionOnChange
             >
               <ToastProvider>
-                <Header />
-                {children}
+                <div className="flex min-h-screen flex-col">
+                  <Header />
+                  <main className="flex-1">{children}</main>
+                  <Footer />
+                </div>
               </ToastProvider>
             </ThemeProvider>
           </SessionProvider>
