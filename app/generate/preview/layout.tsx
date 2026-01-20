@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function GenerateLayout({
+export default function GeneratePreviewLayout({
   children,
 }: {
   children: React.ReactNode;
