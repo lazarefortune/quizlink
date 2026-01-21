@@ -421,10 +421,13 @@ export function QuizStatsContent({
                             </div>
                           </div>
                         )}
-                        {answer.timeSpent && (
+                        {answer.timeSpent !== null && answer.timeSpent !== undefined ? (
                           <p className="text-xs text-muted-foreground">
-                            {t(locale, "dashboard.timeSpentLabel")}: {formatDuration(answer.timeSpent)}{" "}
-                            {t(locale, "dashboard.secondsLabel")}
+                            {t(locale, "dashboard.timeSpentLabel")}: {formatDuration(answer.timeSpent)}
+                          </p>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">
+                            {t(locale, "dashboard.timeSpentLabel")}: -
                           </p>
                         )}
                       </CardContent>

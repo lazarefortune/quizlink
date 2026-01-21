@@ -979,10 +979,13 @@ export function ParticipantDetailsContent({
                           </div>
                         </div>
                       </div>
-                      {answer.timeSpent && (
+                      {answer.timeSpent !== null && answer.timeSpent !== undefined ? (
                         <div className="text-sm text-muted-foreground pt-2 border-t">
-                          {t(locale, "dashboard.timeSpentLabel")}: {formatDuration(answer.timeSpent)}{" "}
-                          {t(locale, "dashboard.secondsLabel")}
+                          {t(locale, "dashboard.timeSpentLabel")}: {formatDuration(answer.timeSpent)}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-muted-foreground pt-2 border-t">
+                          {t(locale, "dashboard.timeSpentLabel")}: -
                         </div>
                       )}
                     </div>

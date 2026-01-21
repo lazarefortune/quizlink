@@ -129,6 +129,23 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
     );
   }, [attempt.id]); // Only depend on attempt.id, not the whole attempt object
 
+  // Reset question start time when question changes
+  useEffect(() => {
+    if (questions.length === 0) {
+      return;
+    }
+
+    const currentQuestion = questions[currentQuestionIndex];
+    if (!currentQuestion) return;
+
+    const currentAnswer = answers.find((a) => a.questionId === currentQuestion.id);
+
+    // Only reset start time if question hasn't been answered yet
+    if (!currentAnswer?.isVerified) {
+      setQuestionStartTime(Date.now());
+    }
+  }, [currentQuestionIndex, questions, answers]);
+
   // Timer effect
   useEffect(() => {
     if (!settings.timeLimitPerQuestion || questions.length === 0) {
@@ -150,7 +167,6 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
     let timerValue = settings.timeLimitPerQuestion;
     setTimeRemaining(timerValue);
     setIsTimeUp(false);
-    setQuestionStartTime(Date.now());
 
     const interval = setInterval(() => {
       timerValue -= 1;
