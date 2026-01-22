@@ -146,23 +146,6 @@ export function PricingContent() {
           ))}
         </div>
 
-        <div className="max-w-2xl mx-auto text-center space-y-4">
-          <Card>
-            <CardContent className="pt-6">
-              <p className="text-muted-foreground mb-4">{t(locale, "pricing.paymentNote")}</p>
-              {!session?.user && (
-                <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                  <Link href="/auth/signup">
-                    <Button variant="primary">{t(locale, "auth.signUp.button")}</Button>
-                  </Link>
-                  <Link href="/auth/signin">
-                    <Button variant="secondary">{t(locale, "auth.signIn.button")}</Button>
-                  </Link>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
       </div>
     </div>
   );
