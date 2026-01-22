@@ -479,6 +479,7 @@ export async function getParticipantAttemptDetails(
           timeSpent: number | null;
           answeredAt: Date;
         }>;
+        questionOrder: Array<{ id: string; order: number }>;
       };
     }
   | { success: false; error: string }
@@ -504,6 +505,15 @@ export async function getParticipantAttemptDetails(
                 id: true,
                 name: true,
                 ownerId: true,
+                questions: {
+                  select: {
+                    id: true,
+                    order: true,
+                  },
+                  orderBy: {
+                    order: "asc",
+                  },
+                },
               },
             },
           },
@@ -515,9 +525,6 @@ export async function getParticipantAttemptDetails(
                 options: true,
               },
             },
-          },
-          orderBy: {
-            answeredAt: "asc",
           },
         },
       },
@@ -532,35 +539,57 @@ export async function getParticipantAttemptDetails(
       return { success: false, error: "Unauthorized" };
     }
 
-    const answers = attempt.answers.map((answer) => {
-      const selectedOptionIds = Array.isArray(answer.selectedOptionIds)
-        ? (answer.selectedOptionIds as string[])
-        : [];
-      const correctOptions = answer.question.options.filter((opt) => opt.isCorrect);
-      const correctOptionIds = correctOptions.map((opt) => opt.id);
-      const selectedOptions = answer.question.options.filter((opt) =>
-        selectedOptionIds.includes(opt.id)
-      );
+    // Create a map of answers by questionId for quick lookup
+    const answersMap = new Map(
+      attempt.answers.map((answer) => {
+        const selectedOptionIds = Array.isArray(answer.selectedOptionIds)
+          ? (answer.selectedOptionIds as string[])
+          : [];
+        const correctOptions = answer.question.options.filter((opt) => opt.isCorrect);
+        const correctOptionIds = correctOptions.map((opt) => opt.id);
+        const selectedOptions = answer.question.options.filter((opt) =>
+          selectedOptionIds.includes(opt.id)
+        );
 
-      return {
-        questionId: answer.question.id,
-        questionLabel: answer.question.label,
-        questionType: answer.question.type,
-        selectedOptionIds: selectedOptionIds as string[],
-        selectedOptions: selectedOptions.map((opt) => ({
-          id: opt.id,
-          label: opt.label,
-        })),
-        correctOptionIds,
-        correctOptions: correctOptions.map((opt) => ({
-          id: opt.id,
-          label: opt.label,
-        })),
-        isCorrect: answer.isCorrect,
-        timeSpent: answer.timeSpent,
-        answeredAt: answer.answeredAt,
-      };
-    });
+        return [
+          answer.question.id,
+          {
+            questionId: answer.question.id,
+            questionLabel: answer.question.label,
+            questionType: answer.question.type,
+            selectedOptionIds: selectedOptionIds as string[],
+            selectedOptions: selectedOptions.map((opt) => ({
+              id: opt.id,
+              label: opt.label,
+            })),
+            correctOptionIds,
+            correctOptions: correctOptions.map((opt) => ({
+              id: opt.id,
+              label: opt.label,
+            })),
+            isCorrect: answer.isCorrect,
+            timeSpent: answer.timeSpent,
+            answeredAt: answer.answeredAt,
+          },
+        ];
+      })
+    );
+
+    // Order answers by quiz question order
+    const answers = attempt.quizLink.quiz.questions
+      .map((question) => answersMap.get(question.id))
+      .filter((answer) => answer !== undefined) as Array<{
+      questionId: string;
+      questionLabel: string;
+      questionType: string;
+      selectedOptionIds: string[];
+      selectedOptions: Array<{ id: string; label: string }>;
+      correctOptionIds: string[];
+      correctOptions: Array<{ id: string; label: string }>;
+      isCorrect: boolean;
+      timeSpent: number | null;
+      answeredAt: Date;
+    }>;
 
     return {
       success: true,
@@ -573,6 +602,7 @@ export async function getParticipantAttemptDetails(
         score: attempt.score,
         status: attempt.status,
         answers,
+        questionOrder: attempt.quizLink.quiz.questions,
       },
     };
   } catch (error) {

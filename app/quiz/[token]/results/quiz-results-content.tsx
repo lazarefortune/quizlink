@@ -67,6 +67,13 @@ export function QuizResultsContent({ attempt }: QuizResultsContentProps) {
   const { locale } = useLocale();
   const token = attempt.quizLink.token;
 
+  const formatDuration = (seconds: number | null) => {
+    if (!seconds) return "-";
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}m ${secs}s`;
+  };
+
   const totalQuestions = attempt.quizLink.quiz.questions.length;
   const correctAnswers = attempt.answers.filter((a) => a.isCorrect).length;
   const score = attempt.score ?? (totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0);
@@ -178,11 +185,11 @@ export function QuizResultsContent({ attempt }: QuizResultsContentProps) {
                           </div>
                         </div>
                       )}
-                      {answer?.timeSpent && (
+                      {answer?.timeSpent !== null && answer?.timeSpent !== undefined ? (
                         <p className="text-xs text-muted-foreground">
-                          {t(locale, "quiz.timeSpent")}: {answer.timeSpent}s
+                          {t(locale, "quiz.timeSpent")}: {formatDuration(answer.timeSpent)}
                         </p>
-                      )}
+                      ) : null}
                     </CardContent>
                   </Card>
                 );

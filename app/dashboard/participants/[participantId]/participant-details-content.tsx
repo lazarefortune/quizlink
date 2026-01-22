@@ -132,6 +132,7 @@ export function ParticipantDetailsContent({
       isCorrect: boolean;
       timeSpent: number | null;
     }>;
+    questionOrder?: Array<{ id: string; order: number }>;
   } | null>(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -905,7 +906,16 @@ export function ParticipantDetailsContent({
                   {t(locale, "dashboard.attemptDetails")}
                 </h3>
                 <div className="space-y-4">
-                  {attemptDetails.answers.map((answer, index: number) => (
+                  {(() => {
+                    // If questionOrder exists, sort answers by question order
+                    // Otherwise, use answers as-is (backward compatibility)
+                    const sortedAnswers = attemptDetails.questionOrder
+                      ? attemptDetails.questionOrder
+                          .map((q) => attemptDetails.answers.find((a) => a.questionId === q.id))
+                          .filter((a) => a !== undefined)
+                      : attemptDetails.answers;
+                    
+                    return sortedAnswers.map((answer, index: number) => (
                     <div
                       key={answer.questionId}
                       className={`border rounded-lg p-4 space-y-3 ${
@@ -989,7 +999,8 @@ export function ParticipantDetailsContent({
                         </div>
                       )}
                     </div>
-                  ))}
+                  ));
+                  })()}
                 </div>
               </div>
             </div>
