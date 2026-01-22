@@ -1,17 +1,21 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { useSession } from "next-auth/react";
-import { Coins, Sparkles, Check } from "lucide-react";
+import { Coins, Sparkles, Check, Loader2 } from "lucide-react";
+import { createCheckoutSession } from "./actions";
+import { useToast } from "@/components/ui/toast";
 
 const OFFERS = [
   {
-    id: "starter",
+    id: "STARTER",
     nameKey: "pricing.starter.name",
     price: 5,
     coins: 50,
@@ -19,7 +23,7 @@ const OFFERS = [
     popular: false,
   },
   {
-    id: "boost",
+    id: "BOOST",
     nameKey: "pricing.boost.name",
     price: 10,
     coins: 120,
@@ -27,7 +31,7 @@ const OFFERS = [
     popular: true,
   },
   {
-    id: "pro",
+    id: "PRO",
     nameKey: "pricing.pro.name",
     price: 20,
     coins: 300,
@@ -39,6 +43,32 @@ const OFFERS = [
 export function PricingContent() {
   const { locale } = useLocale();
   const { data: session } = useSession();
+  const router = useRouter();
+  const { showToast } = useToast();
+  const [loadingPackId, setLoadingPackId] = useState<string | null>(null);
+
+  const handlePurchase = async (packId: string) => {
+    if (!session?.user) {
+      router.push("/auth/signin");
+      return;
+    }
+
+    setLoadingPackId(packId);
+    try {
+      const result = await createCheckoutSession(packId);
+      if (result.success) {
+        // Redirect to Stripe Checkout
+        window.location.href = result.url;
+      } else {
+        showToast(result.error || t(locale, "pricing.checkoutError"), "error");
+        setLoadingPackId(null);
+      }
+    } catch (error) {
+      console.error("[Pricing] Error creating checkout:", error);
+      showToast(t(locale, "pricing.checkoutError"), "error");
+      setLoadingPackId(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -99,9 +129,17 @@ export function PricingContent() {
                 <Button
                   variant={offer.popular ? "primary" : "secondary"}
                   className="w-full"
-                  disabled
+                  disabled={!session?.user || loadingPackId !== null}
+                  onClick={() => handlePurchase(offer.id)}
                 >
-                  {t(locale, "pricing.comingSoon")}
+                  {loadingPackId === offer.id ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      {t(locale, "pricing.processing")}
+                    </>
+                  ) : (
+                    t(locale, "pricing.purchase")
+                  )}
                 </Button>
               </CardFooter>
             </Card>

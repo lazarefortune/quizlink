@@ -59,7 +59,7 @@ export async function deductCoins(
 
   try {
     console.log(`[deductCoins] Starting deduction for user ${userId}, amount: ${amount}`);
-    
+
     // CRITICAL: Use transaction with row-level locking to prevent race conditions
     // This ensures that only one request can read and modify the balance at a time
     const result = await prisma.$transaction(async (tx) => {
@@ -160,32 +160,40 @@ export async function deductCoins(
  * @param userId - User ID to credit coins to
  * @param amount - Amount of coins to credit (must be positive)
  * @param reason - Reason for credit
- * @param skipAuthCheck - If true, skip admin check (for refunds only)
+ * @param skipAuthCheck - If true, skip admin check (for refunds/webhooks only)
+ * @param source - Source of the credit (e.g., "STRIPE", "ADMIN", "REFUND")
  * @returns Success status with new balance or error
  */
 export async function creditCoins(
   userId: string,
   amount: number,
   reason: string,
-  skipAuthCheck: boolean = false
+  skipAuthCheck: boolean = false,
+  source: string = "ADMIN"
 ): Promise<{ success: boolean; error?: string; newBalance?: number }> {
+  console.log(`[creditCoins] Starting credit for user ${userId}, amount: ${amount}, reason: ${reason}, skipAuthCheck: ${skipAuthCheck}, source: ${source}`);
+  
   if (!prisma) {
+    console.error("[creditCoins] Database not initialized");
     return { success: false, error: "Database not initialized" };
   }
 
   if (!skipAuthCheck) {
     const session = await auth();
     if (!session?.user?.id) {
+      console.error("[creditCoins] Unauthorized - no session");
       return { success: false, error: "Unauthorized" };
     }
 
-    // Only admins can credit coins (unless skipAuthCheck is true for refunds)
+    // Only admins can credit coins (unless skipAuthCheck is true for refunds/webhooks)
     if (session.user.role !== "ADMIN") {
+      console.error("[creditCoins] Unauthorized - not admin");
       return { success: false, error: "Only admins can credit coins" };
     }
   }
 
   if (amount <= 0) {
+    console.error(`[creditCoins] Invalid amount: ${amount}`);
     return { success: false, error: "Amount must be positive" };
   }
 
@@ -207,6 +215,8 @@ export async function creditCoins(
       const currentBalance = user[0].coinBalance;
       const newBalance = currentBalance + amount;
 
+      console.log(`[creditCoins] User ${userId}: current balance = ${currentBalance}, adding ${amount}, new balance = ${newBalance}`);
+
       // Atomic update: balance + transaction log
       await Promise.all([
         tx.user.update({
@@ -217,14 +227,15 @@ export async function creditCoins(
           data: {
             userId,
             amount,
-            reason,
+            reason: source === "STRIPE" ? reason : reason,
           },
         }),
       ]);
 
+      console.log(`[creditCoins] ✅ Successfully credited ${amount} coins to user ${userId}. New balance: ${newBalance}`);
       return { success: true, newBalance };
     }, {
-      isolationLevel: "Serializable",
+      isolationLevel: "ReadCommitted", // Use ReadCommitted for MySQL compatibility
       timeout: 10000,
     });
 
