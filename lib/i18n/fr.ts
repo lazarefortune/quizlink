@@ -692,6 +692,8 @@ export const fr = {
     newBalance: "Nouveau solde",
     startGenerating: "Commencer à générer",
     backToPricing: "Retour aux tarifs",
+    noPacksAvailable: "Aucun pack disponible pour le moment",
+    for: "pour",
     starter: {
       name: "Starter Pack",
       description: "Parfait pour commencer",

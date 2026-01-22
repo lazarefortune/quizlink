@@ -685,6 +685,8 @@ export const en = {
     newBalance: "New balance",
     startGenerating: "Start generating",
     backToPricing: "Back to pricing",
+    noPacksAvailable: "No packs available at the moment",
+    for: "for",
     starter: {
       name: "Starter Pack",
       description: "Perfect to get started",

@@ -36,6 +36,8 @@ export function AdminPacksContent() {
   const [packs, setPacks] = useState<CoinPack[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [packToDelete, setPackToDelete] = useState<CoinPack | null>(null);
   const [editingPack, setEditingPack] = useState<CoinPack | null>(null);
   const [formData, setFormData] = useState({
     name: "",
@@ -48,6 +50,7 @@ export function AdminPacksContent() {
     isPopular: false,
   });
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetchPacks();
@@ -101,18 +104,26 @@ export function AdminPacksContent() {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = async (packId: string) => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer ce pack ?")) {
+  const handleDelete = (pack: CoinPack) => {
+    setPackToDelete(pack);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!packToDelete) {
       return;
     }
 
     try {
-      const response = await fetch(`/api/admin/coin-packs/${packId}`, {
+      setDeleting(true);
+      const response = await fetch(`/api/admin/coin-packs/${packToDelete.id}`, {
         method: "DELETE",
       });
 
       if (response.ok) {
         showToast("Pack supprimé avec succès", "success");
+        setIsDeleteDialogOpen(false);
+        setPackToDelete(null);
         fetchPacks();
       } else {
         const data = await response.json();
@@ -121,6 +132,8 @@ export function AdminPacksContent() {
     } catch (error) {
       console.error("[Admin Packs] Error deleting pack:", error);
       showToast("Erreur lors de la suppression", "error");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -220,7 +233,7 @@ export function AdminPacksContent() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleDelete(pack.id)}
+                      onClick={() => handleDelete(pack)}
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
@@ -384,6 +397,45 @@ export function AdminPacksContent() {
                   </>
                 ) : (
                   "Enregistrer"
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Supprimer le pack</DialogTitle>
+              <DialogDescription>
+                Êtes-vous sûr de vouloir supprimer le pack "{packToDelete?.displayName}" ?
+                Cette action est irréversible et supprimera définitivement le pack.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setIsDeleteDialogOpen(false);
+                  setPackToDelete(null);
+                }}
+                disabled={deleting}
+              >
+                Annuler
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleConfirmDelete}
+                disabled={deleting}
+              >
+                {deleting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Suppression...
+                  </>
+                ) : (
+                  "Supprimer"
                 )}
               </Button>
             </DialogFooter>

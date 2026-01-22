@@ -10,7 +10,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
-    "promote:admin": "npx tsx scripts/promote-admin.ts"
+    "promote:admin": "npx tsx scripts/promote-admin.ts",
+    "seed:coin-packs": "npx tsx scripts/seed-coin-packs.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

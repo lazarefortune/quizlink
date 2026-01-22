@@ -1,6 +1,6 @@
 /**
  * Seed script to initialize default coin packs
- * Run with: pnpm tsx scripts/seed-coin-packs.ts
+ * Run with: pnpm run seed:coin-packs
  */
 
 import { PrismaClient } from "@prisma/client";
