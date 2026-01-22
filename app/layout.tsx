@@ -24,6 +24,10 @@ export const metadata: Metadata = {
   authors: [{ name: "Lazare Fortune", url: "https://lazarefortune.com" }],
   creator: "Lazare Fortune",
   publisher: "Lazare Fortune",
+  icons: {
+    icon: "/logo-quizlink.png",
+    apple: "/logo-quizlink.png",
+  },
   openGraph: {
     type: "website",
     locale: "fr_FR",
