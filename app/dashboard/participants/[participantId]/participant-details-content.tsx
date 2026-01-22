@@ -395,7 +395,7 @@ export function ParticipantDetailsContent({
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <Button
-            variant="ghost"
+            variant="secondary"
             onClick={() => router.push("/dashboard/participants")}
             className="mb-4"
           >
@@ -914,7 +914,7 @@ export function ParticipantDetailsContent({
                           .map((q) => attemptDetails.answers.find((a) => a.questionId === q.id))
                           .filter((a) => a !== undefined)
                       : attemptDetails.answers;
-                    
+
                     return sortedAnswers.map((answer, index: number) => (
                     <div
                       key={answer.questionId}
