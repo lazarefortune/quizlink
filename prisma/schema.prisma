@@ -193,3 +193,22 @@ model CoinTransaction {
   @@index([createdAt])
   @@map("coin_transactions")
 }
+
+model CoinPack {
+  id            String   @id @default(cuid())
+  name          String   @db.VarChar(255) // e.g., "STARTER", "BOOST", "PRO"
+  displayName   String   @map("display_name") @db.VarChar(255) // e.g., "Pack Starter"
+  coins         Int // Number of coins in this pack
+  price         Int // Price in cents (e.g., 500 for 5.00€)
+  stripePriceId String?  @map("stripe_price_id") @db.VarChar(255) // Stripe price_id (price_xxx)
+  isActive      Boolean  @default(true) @map("is_active")
+  isPopular     Boolean  @default(false) @map("is_popular") // Highlight as popular pack
+  order         Int      @default(0) // Display order
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@unique([name])
+  @@index([isActive])
+  @@index([order])
+  @@map("coin_packs")
+}

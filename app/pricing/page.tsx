@@ -1,11 +1,8 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
 import { PricingContent } from "./pricing-content";
+import { getActiveCoinPacks } from "@/lib/stripe/coin-packs";
 
 export default async function PricingPage() {
-  const session = await auth();
+  const packs = await getActiveCoinPacks();
 
-  // Redirect authenticated users to dashboard if they're already on the site
-  // But allow unauthenticated users to see pricing
-  return <PricingContent />;
+  return <PricingContent initialPacks={packs} />;
 }

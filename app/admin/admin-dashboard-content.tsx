@@ -135,12 +135,20 @@ export function AdminDashboardContent({ initialUsers }: AdminDashboardContentPro
             <h1 className="text-3xl font-bold">{t(locale, "admin.dashboard.title")}</h1>
             <p className="text-muted-foreground mt-2">{t(locale, "admin.dashboard.description")}</p>
           </div>
-          <Link href="/admin/coins">
-            <Button variant="secondary">
-              <Coins className="h-4 w-4 mr-2" />
-              {t(locale, "admin.dashboard.manageCoins")}
-            </Button>
-          </Link>
+          <div className="flex gap-2">
+            <Link href="/admin/coins">
+              <Button variant="secondary">
+                <Coins className="h-4 w-4 mr-2" />
+                {t(locale, "admin.dashboard.manageCoins")}
+              </Button>
+            </Link>
+            <Link href="/admin/packs">
+              <Button variant="secondary">
+                <Coins className="h-4 w-4 mr-2" />
+                Gérer les Packs
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Search */}

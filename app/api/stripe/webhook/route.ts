@@ -92,8 +92,8 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Validate pack ID
-      if (!isValidPackId(packId)) {
+      // Validate pack ID and get pack configuration (server-side only - never trust metadata)
+      if (!(await isValidPackId(packId))) {
         console.error("[Stripe Webhook] Invalid pack ID:", packId);
         return NextResponse.json(
           { error: "Invalid pack ID" },
@@ -101,8 +101,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Get pack configuration (server-side only - never trust metadata)
-      const pack = getCoinPack(packId);
+      const pack = await getCoinPack(packId);
       if (!pack) {
         console.error("[Stripe Webhook] Pack not found:", packId);
         return NextResponse.json(

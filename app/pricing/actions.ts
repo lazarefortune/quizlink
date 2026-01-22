@@ -23,11 +23,11 @@ export async function createCheckoutSession(
     }
 
     // Validate pack ID
-    if (!isValidPackId(packId)) {
+    if (!(await isValidPackId(packId))) {
       return { success: false, error: "Invalid pack ID" };
     }
 
-    const pack = getCoinPack(packId);
+    const pack = await getCoinPack(packId);
     if (!pack) {
       return { success: false, error: "Pack not found" };
     }
@@ -40,25 +40,36 @@ export async function createCheckoutSession(
     : "http://localhost:3000");
 
     // Create Stripe Checkout Session
+    // Use price_id if available, otherwise fallback to price_data
+    const lineItems = pack.stripePriceId
+      ? [
+          {
+            price: pack.stripePriceId,
+            quantity: 1,
+          },
+        ]
+      : [
+          {
+            price_data: {
+              currency: "eur",
+              product_data: {
+                name: pack.displayName,
+                description: `${pack.coins} coins pour QuizLink`,
+              },
+              unit_amount: Math.round(pack.price * 100), // Convert to cents
+            },
+            quantity: 1,
+          },
+        ];
+
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card"],
-      line_items: [
-        {
-          price_data: {
-            currency: "eur",
-            product_data: {
-              name: `Pack ${packId} - ${pack.coins} coins`,
-              description: `${pack.coins} coins pour QuizLink`,
-            },
-            unit_amount: pack.price * 100, // Convert to cents
-          },
-          quantity: 1,
-        },
-      ],
+      line_items: lineItems,
       metadata: {
         userId: session.user.id,
         packId: pack.id,
+        packName: pack.name,
         coins: pack.coins.toString(),
       },
       success_url: `${baseUrl}/pricing/success?session_id={CHECKOUT_SESSION_ID}`,
