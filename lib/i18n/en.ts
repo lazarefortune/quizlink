@@ -707,15 +707,6 @@ export const en = {
 
   // Admin
   admin: {
-    nav: {
-      title: "Administration",
-      subtitle: "Control Panel",
-      dashboard: "Dashboard",
-      coins: "Coin Management",
-      packs: "Coin Packs",
-      feedback: "Feedbacks",
-      backToDashboard: "Back to Dashboard",
-    },
     dashboard: {
       title: "Admin Dashboard",
       description: "Manage users and their coins",

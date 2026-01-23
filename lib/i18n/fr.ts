@@ -714,15 +714,6 @@ export const fr = {
 
   // Admin
   admin: {
-    nav: {
-      title: "Administration",
-      subtitle: "Panneau de contrôle",
-      dashboard: "Tableau de bord",
-      coins: "Gestion des Coins",
-      packs: "Packs de Coins",
-      feedback: "Feedbacks",
-      backToDashboard: "Retour au tableau de bord",
-    },
     dashboard: {
       title: "Dashboard Administrateur",
       description: "Gérez les utilisateurs et leurs coins",
