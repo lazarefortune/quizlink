@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, Home, Sparkles, Plus, LayoutDashboard, LogIn, UserPlus, Settings, LogOut, FileText, Coins, Shield } from "lucide-react";
+import { Menu, X, Home, Sparkles, Plus, LayoutDashboard, LogIn, UserPlus, Settings, LogOut, FileText, Coins } from "lucide-react";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { LocaleSwitcher } from "@/components/locale-switcher";
@@ -79,10 +79,6 @@ export function Header() {
   // Add dashboard link for authenticated users only
   if (session?.user) {
     navItems.push({ href: "/dashboard", label: t(locale, "nav.dashboard"), icon: LayoutDashboard });
-    // Add admin link for admins only
-    if (session.user.role === "ADMIN") {
-      navItems.push({ href: "/admin", label: t(locale, "nav.admin"), icon: Shield });
-    }
   } else {
     // Only show home link for non-authenticated users
     navItems.push({ href: "/", label: t(locale, "nav.home"), icon: Home });

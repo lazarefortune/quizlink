@@ -234,6 +234,10 @@ export const en = {
     insufficientCoins: "You don't have enough coins. 1 AI generation = 2 coins. Buy coins to continue.",
     coinDeductionFailed: "Generation succeeded but coin deduction failed. Please contact support.",
     unauthorized: "Unauthorized",
+    databaseNotInitialized: "Database is not initialized. Please try again later.",
+    invalidInput: "Invalid data. Please check your information.",
+    rateLimitExceeded: "You have submitted too many feedbacks recently. Please try again in an hour.",
+    feedbackSubmissionFailed: "Error submitting feedback. Please try again.",
   },
 
   // Quiz play
@@ -703,6 +707,15 @@ export const en = {
 
   // Admin
   admin: {
+    nav: {
+      title: "Administration",
+      subtitle: "Control Panel",
+      dashboard: "Dashboard",
+      coins: "Coin Management",
+      packs: "Coin Packs",
+      feedback: "Feedbacks",
+      backToDashboard: "Back to Dashboard",
+    },
     dashboard: {
       title: "Admin Dashboard",
       description: "Manage users and their coins",
@@ -751,6 +764,81 @@ export const en = {
       date: "Date",
       amount: "Amount",
       noTransactions: "No transactions",
+    },
+    feedback: {
+      title: "Feedback Management",
+      description: "View and manage all user feedbacks",
+      loading: "Loading...",
+      noFeedbacks: "No feedbacks found",
+      filters: {
+        type: "Type",
+        status: "Status",
+        allTypes: "All types",
+        allStatuses: "All statuses",
+      },
+      status: {
+        new: "New",
+        inProgress: "In Progress",
+        done: "Done",
+      },
+      table: {
+        date: "Date",
+        user: "User",
+        type: "Type",
+        status: "Status",
+        page: "Page",
+        actions: "Actions",
+        view: "View",
+        userDeleted: "User deleted",
+      },
+      details: {
+        title: "Feedback Details",
+        description: "Complete information about this feedback",
+        type: "Type",
+        status: "Status",
+        user: "User",
+        page: "Page",
+        userAgent: "Browser",
+        message: "Message",
+        date: "Date",
+      },
+      success: {
+        statusUpdated: "Status updated successfully",
+      },
+      errors: {
+        fetchFailed: "Error fetching feedbacks",
+        updateFailed: "Error updating status",
+      },
+    },
+  },
+
+  // Feedback
+  feedback: {
+    title: "Send Feedback",
+    description: "Share your comments, suggestions or report a bug",
+    form: {
+      type: "Type",
+      typePlaceholder: "Select a type",
+      message: "Message",
+      messagePlaceholder: "Describe your feedback, suggestion or bug...",
+      cancel: "Cancel",
+      submit: "Submit",
+    },
+    types: {
+      bug: "Bug",
+      suggestion: "Suggestion",
+      feedback: "Feedback",
+    },
+    validation: {
+      typeRequired: "Please select a type",
+      messageTooShort: "Message must contain at least 10 characters",
+      messageTooLong: "Message cannot exceed 2000 characters",
+    },
+    success: {
+      message: "Thank you for your feedback! We will review it shortly.",
+    },
+    errors: {
+      submissionFailed: "Error submitting feedback. Please try again.",
     },
   },
 
