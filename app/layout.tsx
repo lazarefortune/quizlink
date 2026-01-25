@@ -6,6 +6,7 @@ import { SessionProvider } from "@/components/session-provider";
 import { ToastProvider } from "@/components/ui/toast";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { FeedbackButton } from "@/components/feedback-button";
 import "./globals.css";
 
 const quicksand = Quicksand({
@@ -66,6 +67,7 @@ export default function RootLayout({
                   <Header />
                   <main className="flex-1">{children}</main>
                   <Footer />
+                  <FeedbackButton />
                 </div>
               </ToastProvider>
             </ThemeProvider>

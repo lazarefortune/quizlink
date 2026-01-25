@@ -238,6 +238,10 @@ export const fr = {
     insufficientCoins: "Vous n'avez pas assez de coins. 1 génération IA = 2 coins. Achetez des coins pour continuer.",
     coinDeductionFailed: "La génération a réussi mais la déduction de coins a échoué. Veuillez contacter le support.",
     unauthorized: "Non autorisé",
+    databaseNotInitialized: "La base de données n'est pas initialisée. Veuillez réessayer plus tard.",
+    invalidInput: "Données invalides. Veuillez vérifier vos informations.",
+    rateLimitExceeded: "Vous avez soumis trop de feedbacks récemment. Veuillez réessayer dans une heure.",
+    feedbackSubmissionFailed: "Erreur lors de l'envoi du feedback. Veuillez réessayer.",
   },
 
   // Quiz play
@@ -758,6 +762,81 @@ export const fr = {
       date: "Date",
       amount: "Montant",
       noTransactions: "Aucune transaction",
+    },
+    feedback: {
+      title: "Gestion des Feedbacks",
+      description: "Consultez et gérez tous les feedbacks des utilisateurs",
+      loading: "Chargement...",
+      noFeedbacks: "Aucun feedback trouvé",
+      filters: {
+        type: "Type",
+        status: "Statut",
+        allTypes: "Tous les types",
+        allStatuses: "Tous les statuts",
+      },
+      status: {
+        new: "Nouveau",
+        inProgress: "En cours",
+        done: "Terminé",
+      },
+      table: {
+        date: "Date",
+        user: "Utilisateur",
+        type: "Type",
+        status: "Statut",
+        page: "Page",
+        actions: "Actions",
+        view: "Voir",
+        userDeleted: "Utilisateur supprimé",
+      },
+      details: {
+        title: "Détails du feedback",
+        description: "Informations complètes sur ce feedback",
+        type: "Type",
+        status: "Statut",
+        user: "Utilisateur",
+        page: "Page",
+        userAgent: "Navigateur",
+        message: "Message",
+        date: "Date",
+      },
+      success: {
+        statusUpdated: "Statut mis à jour avec succès",
+      },
+      errors: {
+        fetchFailed: "Erreur lors de la récupération des feedbacks",
+        updateFailed: "Erreur lors de la mise à jour du statut",
+      },
+    },
+  },
+
+  // Feedback
+  feedback: {
+    title: "Envoyer un feedback",
+    description: "Partagez vos commentaires, suggestions ou signalez un bug",
+    form: {
+      type: "Type",
+      typePlaceholder: "Sélectionnez un type",
+      message: "Message",
+      messagePlaceholder: "Décrivez votre feedback, suggestion ou bug...",
+      cancel: "Annuler",
+      submit: "Envoyer",
+    },
+    types: {
+      bug: "Bug",
+      suggestion: "Suggestion",
+      feedback: "Feedback",
+    },
+    validation: {
+      typeRequired: "Veuillez sélectionner un type",
+      messageTooShort: "Le message doit contenir au moins 10 caractères",
+      messageTooLong: "Le message ne peut pas dépasser 2000 caractères",
+    },
+    success: {
+      message: "Merci pour votre feedback ! Nous l'examinerons sous peu.",
+    },
+    errors: {
+      submissionFailed: "Erreur lors de l'envoi du feedback. Veuillez réessayer.",
     },
   },
 

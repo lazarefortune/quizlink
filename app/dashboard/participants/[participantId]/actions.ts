@@ -413,8 +413,8 @@ export async function sendLinkEmail(
       return { success: false, error: "Link is not personalized" };
     }
 
-    const baseUrl =
-      process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
     const quizUrl = `${baseUrl}/quiz/${link.token}`;
 
     // Validate email
