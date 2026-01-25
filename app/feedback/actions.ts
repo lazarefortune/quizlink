@@ -47,7 +47,7 @@ export async function submitFeedbackAction(
     // Step 2: Validate input with Zod
     const validationResult = submitFeedbackSchema.safeParse(input);
     if (!validationResult.success) {
-      const firstError = validationResult.error.errors[0];
+      const firstError = validationResult.error.issues[0];
       return {
         success: false,
         error: firstError.message || "errors.invalidInput",
