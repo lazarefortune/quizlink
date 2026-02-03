@@ -40,11 +40,13 @@ export async function sendEmail({
   subject,
   html,
   text,
+  attachments,
 }: {
   to: string;
   subject: string;
   html: string;
   text?: string;
+  attachments?: Array<{ filename: string; content: Buffer }>;
 }) {
   try {
     await transporter.sendMail({
@@ -53,6 +55,7 @@ export async function sendEmail({
       subject,
       html,
       text: text || html.replace(/<[^>]*>/g, ""), // Fallback to plain text from HTML
+      attachments: attachments?.length ? attachments : undefined,
     });
     return { success: true };
   } catch (error) {

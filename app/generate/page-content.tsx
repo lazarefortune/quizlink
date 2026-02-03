@@ -303,7 +303,7 @@ export function GeneratePage() {
         <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="space-y-2">
             <h1 className="text-2xl sm:text-4xl font-bold">{t(locale, "generate.title")}</h1>
-            <p className="text-sm sm:text-base text-muted-foreground">
+            <p className="text-base text-muted-foreground">
               {t(locale, "generate.subtitle")}
             </p>
           </div>

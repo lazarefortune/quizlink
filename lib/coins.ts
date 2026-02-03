@@ -29,6 +29,11 @@ export async function hasEnoughCoins(userId: string, requiredCoins: number = COI
   return balance >= requiredCoins;
 }
 
+export type DeductCoinsOptions = {
+  /** When true, allow balance to go negative (e.g. for ADMIN bypass). Caller must verify admin. */
+  allowNegativeBalance?: boolean;
+};
+
 /**
  * Deduct coins from user's balance (server-side only)
  *
@@ -36,18 +41,20 @@ export async function hasEnoughCoins(userId: string, requiredCoins: number = COI
  * - Uses database-level row locking (SELECT FOR UPDATE) to prevent race conditions
  * - Atomic transaction ensures coin deduction and transaction log are consistent
  * - Re-verifies coin balance WITH LOCK before deduction to prevent double-spending
- * - All users (including admins) must have sufficient coins
+ * - Unless allowNegativeBalance is true (admin bypass), user must have sufficient coins
  * - All operations are server-side only, no client-side manipulation possible
  *
  * @param userId - User ID to deduct coins from
  * @param amount - Amount of coins to deduct (default: 2)
  * @param reason - Reason for deduction (default: "AI generation")
+ * @param options - allowNegativeBalance: allow deduction even if balance would go negative (admin only)
  * @returns Success status with new balance or error
  */
 export async function deductCoins(
   userId: string,
   amount: number = COINS_PER_GENERATION,
-  reason: string = "AI generation"
+  reason: string = "AI generation",
+  options: DeductCoinsOptions = {}
 ): Promise<{ success: boolean; error?: string; newBalance?: number }> {
   if (!prisma) {
     return { success: false, error: "Database not initialized" };
@@ -57,8 +64,10 @@ export async function deductCoins(
     return { success: false, error: "Amount must be positive" };
   }
 
+  const allowNegativeBalance = options.allowNegativeBalance === true;
+
   try {
-    console.log(`[deductCoins] Starting deduction for user ${userId}, amount: ${amount}`);
+    console.log(`[deductCoins] Starting deduction for user ${userId}, amount: ${amount}, allowNegative: ${allowNegativeBalance}`);
 
     // CRITICAL: Use transaction with row-level locking to prevent race conditions
     // This ensures that only one request can read and modify the balance at a time
@@ -82,8 +91,8 @@ export async function deductCoins(
       console.log(`[deductCoins] User ${userId}: locked balance = ${userData.coinBalance}, deducting ${amount}`);
 
       // Step 2: Verify coin balance WITH LOCK (prevents race conditions)
-      // All users must have enough coins
-      if (userData.coinBalance < amount) {
+      // Unless allowNegativeBalance (admin bypass), user must have enough coins
+      if (!allowNegativeBalance && userData.coinBalance < amount) {
         console.error(`[deductCoins] Insufficient coins: ${userData.coinBalance} < ${amount}`);
         throw new Error("Insufficient coins");
       }
@@ -172,7 +181,7 @@ export async function creditCoins(
   source: string = "ADMIN"
 ): Promise<{ success: boolean; error?: string; newBalance?: number }> {
   console.log(`[creditCoins] Starting credit for user ${userId}, amount: ${amount}, reason: ${reason}, skipAuthCheck: ${skipAuthCheck}, source: ${source}`);
-  
+
   if (!prisma) {
     console.error("[creditCoins] Database not initialized");
     return { success: false, error: "Database not initialized" };
