@@ -103,7 +103,7 @@ export default function DashboardPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold">{t(locale, "dashboard.title")}</h1>
-            <p className="text-sm sm:text-base text-muted-foreground mt-1 sm:mt-2">
+            <p className="text-base text-muted-foreground mt-1 sm:mt-2">
               {t(locale, "dashboard.subtitle")}
             </p>
           </div>
@@ -144,7 +144,7 @@ export default function DashboardPage() {
         {quizzes.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12 px-4">
-              <p className="text-sm sm:text-base text-muted-foreground mb-4 text-center">
+              <p className="text-base text-muted-foreground mb-4 text-center">
                 {t(locale, "dashboard.noQuizzes")}
               </p>
               <DropdownMenu>

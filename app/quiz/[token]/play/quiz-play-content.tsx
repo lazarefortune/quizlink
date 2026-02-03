@@ -553,7 +553,7 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
                     </div>
                     {/* Option text */}
                     <div className="flex-1">
-                      <span className="text-sm sm:text-base">{option.label}</span>
+                      <span className="text-base">{option.label}</span>
                     </div>
                   </div>
                 </button>

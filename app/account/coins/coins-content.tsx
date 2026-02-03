@@ -55,7 +55,7 @@ export function CoinsContent() {
       <div className="mx-auto max-w-4xl space-y-6">
         <div className="space-y-2">
           <h1 className="text-2xl sm:text-3xl font-bold">{t(locale, "account.coins.title")}</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">
+          <p className="text-base text-muted-foreground">
             {t(locale, "account.coins.subtitle")}
           </p>
         </div>

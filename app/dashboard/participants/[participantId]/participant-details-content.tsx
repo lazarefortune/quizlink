@@ -72,7 +72,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, RotateCw } from "lucide-react";
+import { MoreVertical, RotateCw, Sparkles } from "lucide-react";
+import Link from "next/link";
 
 type Participant = {
   id: string;
@@ -492,6 +493,19 @@ export function ParticipantDetailsContent({
                               <Mail className="h-4 w-4 mr-2" />
                               {t(locale, "dashboard.sendByEmail")}
                             </DropdownMenuItem>
+                            {link.attempts.length > 0 && (
+                              <DropdownMenuItem asChild>
+                                <Link
+                                  href={`/dashboard/quiz/${link.quizId}/participants/${participant.id}/report`}
+                                  className="flex items-center cursor-pointer"
+                                >
+                                  <Sparkles className="h-4 w-4 mr-2" />
+                                  {locale === "fr"
+                                    ? "Générer un rapport IA"
+                                    : "Generate AI report"}
+                                </Link>
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem
                               onClick={() => {
                                 setSelectedLink(link);

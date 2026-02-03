@@ -102,6 +102,7 @@ body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
   font-family: var(--font-quicksand), system-ui, sans-serif;
+  font-size: 16px;
   font-weight: 600;
 }
 

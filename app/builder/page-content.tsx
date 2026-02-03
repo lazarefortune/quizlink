@@ -585,7 +585,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
                   variant="primary"
                   onClick={handleSave}
                   disabled={quiz.questions.length === 0 || isSaving}
-                  className="flex-1 sm:flex-initial text-sm sm:text-base relative"
+                  className="flex-1 sm:flex-initial text-base relative"
                   size="default"
                 >
                   <Save className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -606,7 +606,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
                   variant="secondary"
                   onClick={handlePreview}
                   disabled={quiz.questions.length === 0}
-                  className="flex-1 sm:flex-initial text-sm sm:text-base"
+                  className="flex-1 sm:flex-initial text-base"
                   size="default"
                 >
                   <Play className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -628,10 +628,10 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
             {quiz.questions.length === 0 ? (
               <Card>
                 <CardContent className="py-8 sm:py-12 text-center">
-                  <p className="text-sm sm:text-base text-muted-foreground mb-4">
+                  <p className="text-base text-muted-foreground mb-4">
                     {t(locale, "builder.noQuestions")}
                   </p>
-                  <Button variant="primary" onClick={() => handleAddQuestion()} size="default" className="text-sm sm:text-base">
+                  <Button variant="primary" onClick={() => handleAddQuestion()} size="default" className="text-base">
                     <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
                     {t(locale, "builder.addQuestion")}
                   </Button>
@@ -722,7 +722,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
 
             {quiz.questions.length > 0 && (
               <div className="flex justify-center pt-4">
-                <Button variant="primary" onClick={() => handleAddQuestion()} size="default" className="text-sm sm:text-base">
+                <Button variant="primary" onClick={() => handleAddQuestion()} size="default" className="text-base">
                   <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
                   {t(locale, "builder.addQuestion")}
                 </Button>
