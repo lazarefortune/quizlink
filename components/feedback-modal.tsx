@@ -131,7 +131,6 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
               id="feedback-message"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder={t(locale, "feedback.form.messagePlaceholder")}
               rows={6}
               maxLength={2000}
             />

@@ -140,6 +140,7 @@ export async function getQuizStats(
         id: string;
         name: string;
         email: string | null;
+        avatar: string | null;
         attempts: typeof allAttempts;
       }
     >();
@@ -151,6 +152,7 @@ export async function getQuizStats(
           id: participant.id,
           name: participant.name,
           email: participant.email,
+          avatar: participant.avatar,
           attempts: [],
         });
       }
@@ -170,6 +172,7 @@ export async function getQuizStats(
         id: p.id,
         name: p.name,
         email: p.email,
+        avatar: p.avatar,
         attemptsCount: p.attempts.length,
         lastScore: lastAttempt?.score ?? null,
         lastAttemptDate: lastAttempt?.finishedAt ?? null,

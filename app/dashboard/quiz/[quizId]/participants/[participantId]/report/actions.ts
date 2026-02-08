@@ -99,7 +99,7 @@ export async function generateQuizParticipantReportAction(
     console.error("[generateQuizParticipantReportAction]", error);
     return {
       success: false,
-      error: "Erreur lors de la génération du rapport. Veuillez réessayer.",
+      error: "Erreur lors de la génération du rapport. Réessaie.",
     };
   }
 }
@@ -160,11 +160,11 @@ export async function sendReportByEmailAction(
 
     const subject =
       locale === "fr"
-        ? `Rapport de votre quiz - ${quiz.name} - ${participant.name}`
+        ? `Rapport de ton quiz - ${quiz.name} - ${participant.name}`
         : `Report of your quiz - ${quiz.name} - ${participant.name}`;
     const html =
       locale === "fr"
-        ? `<p>Bonjour,</p><p>Veuillez trouver en pièce jointe le rapport d'analyse de <strong>${participant.name}</strong> sur le quiz <strong>${quiz.name}</strong>.</p><p>Cordialement,<br/>QuizLink</p>`
+        ? `<p>Salut,</p><p>Tu trouveras en pièce jointe le rapport d'analyse de <strong>${participant.name}</strong> sur le quiz <strong>${quiz.name}</strong>.</p><p>Cordialement,<br/>QuizLink</p>`
         : `<p>Hello,</p><p>Please find attached the analysis report of <strong>${participant.name}</strong> on the quiz <strong>${quiz.name}</strong>.</p><p>Best regards,<br/>QuizLink</p>`;
 
     const result = await sendEmail({
@@ -187,7 +187,7 @@ export async function sendReportByEmailAction(
     console.error("[sendReportByEmailAction]", error);
     return {
       success: false,
-      error: "Erreur lors de l'envoi de l'email. Veuillez réessayer.",
+      error: "Erreur lors de l'envoi de l'email. Réessaie.",
     };
   }
 }

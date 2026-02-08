@@ -54,6 +54,7 @@ import type {
   Question,
   QuizVisibility,
 } from "@/types/quiz-builder";
+import {Textarea} from "@/components/ui/textarea";
 
 function createEmptyQuestion(): Question {
   return {
@@ -423,24 +424,23 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
         <aside className="w-full lg:w-80 border-r border-b lg:border-b-0 bg-muted/30 lg:overflow-y-auto shrink-0 relative z-10">
           <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
             <div>
-              <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">{t(locale, "options.title")}</h2>
+              <h2 className="uppercase text-lg font-semibold mb-3 sm:mb-4">{t(locale, "options.title")}</h2>
             </div>
 
             <div className="space-y-3 sm:space-y-4">
               <div className="space-y-1.5 sm:space-y-2">
-                <label className="text-xs sm:text-sm font-medium">
+                <label className="text-sm font-medium">
                   {t(locale, "builder.quizName")}
                 </label>
                 <div className="space-y-1">
-                  <Input
+                  <Textarea
                     value={quiz.name}
                     onChange={(e) => {
                       setQuiz({ ...quiz, name: e.target.value });
                       setValidationErrors((prev) => prev.filter((err) => err.field !== "name"));
                     }}
-                    placeholder={t(locale, "builder.quizNamePlaceholder")}
                     required
-                    className={cn("text-sm", getNameError() ? "border-destructive focus-visible:border-destructive" : "")}
+                    className={cn("text-base", getNameError() ? "border-destructive focus-visible:border-destructive" : "")}
                   />
                   {getNameError() && (
                     <p className="text-xs text-destructive flex items-center gap-1">
@@ -452,7 +452,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
               </div>
 
               <div className="space-y-1.5 sm:space-y-2">
-                <label className="text-xs sm:text-sm font-medium">
+                <label className="text-sm font-medium">
                   {t(locale, "builder.visibility")}
                 </label>
                 <Select
@@ -491,7 +491,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
                   className="mt-0.5 shrink-0"
                 />
                 <div className="flex items-start flex-1 min-w-0 gap-1">
-                  <label className="text-xs sm:text-sm font-medium wrap-break-word flex-1">
+                  <label className="text-sm font-medium wrap-break-word flex-1">
                     {t(locale, "builder.showAnswerImmediately")}
                   </label>
                   <InfoTooltip content={t(locale, "builder.showAnswerDescription")} className="shrink-0" />
@@ -513,7 +513,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
                   className="mt-0.5 shrink-0"
                 />
                 <div className="flex items-start flex-1 min-w-0 gap-1">
-                  <label className="text-xs sm:text-sm font-medium wrap-break-word flex-1">
+                  <label className="text-sm font-medium wrap-break-word flex-1">
                     {t(locale, "builder.randomizeQuestions")}
                   </label>
                   <InfoTooltip content={t(locale, "builder.randomizeDescription")} className="shrink-0" />
@@ -535,7 +535,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
                   className="mt-0.5 shrink-0"
                 />
                 <div className="flex items-start flex-1 min-w-0 gap-1">
-                  <label className="text-xs sm:text-sm font-medium wrap-break-word flex-1">
+                  <label className="text-sm font-medium wrap-break-word flex-1">
                     {t(locale, "builder.timeLimitPerQuestion")}
                   </label>
                   <InfoTooltip content={t(locale, "options.timeLimitPlaceholder")} className="shrink-0" />
@@ -559,7 +559,6 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
                         },
                       })
                     }
-                    placeholder="30"
                     className="w-full text-sm"
                   />
                 </div>

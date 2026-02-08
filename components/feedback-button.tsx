@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,12 @@ import { FeedbackModal } from "@/components/feedback-modal";
 export function FeedbackButton() {
   const [isOpen, setIsOpen] = useState(false);
   const { data: session } = useSession();
+
+  useEffect(() => {
+    const handleOpen = () => setIsOpen(true);
+    window.addEventListener("feedback:open", handleOpen);
+    return () => window.removeEventListener("feedback:open", handleOpen);
+  }, []);
 
   // Only show feedback button for authenticated users
   if (!session?.user) {

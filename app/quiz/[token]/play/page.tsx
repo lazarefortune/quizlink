@@ -36,7 +36,7 @@ export default async function QuizPlayPage({ params, searchParams }: PageProps) 
           <div className="max-w-md w-full text-center">
             <h1 className="text-2xl font-bold mb-4">Accès non autorisé</h1>
             <p className="text-muted-foreground">
-              Ce lien ne vous appartient pas.
+              Ce lien ne t'appartient pas.
             </p>
           </div>
         </div>

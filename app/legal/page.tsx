@@ -130,10 +130,10 @@ export default function LegalPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-muted-foreground">
-                Les informations personnelles collectées via ce site sont utilisées uniquement pour les finalités déclarées (création de compte, gestion des quiz, statistiques). Conformément au RGPD, vous disposez d'un droit d'accès, de rectification et de suppression de vos données.
+                Les informations personnelles collectées via ce site sont utilisées uniquement pour les finalités déclarées (création de compte, gestion des quiz, statistiques). Conformément au RGPD, tu disposes d'un droit d'accès, de rectification et de suppression de tes données.
               </p>
               <p className="text-muted-foreground">
-                Pour exercer ce droit, vous pouvez nous contacter à l'adresse suivante :{" "}
+                Pour exercer ce droit, tu peux nous contacter à l'adresse suivante :{" "}
                 <a
                   href="mailto:lazarefortune@gmail.com"
                   className="text-primary hover:underline"
@@ -151,7 +151,7 @@ export default function LegalPage() {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                Pour toute question concernant les mentions légales du site, vous pouvez contacter Lazare Fortune à l'adresse suivante :{" "}
+                Pour toute question concernant les mentions légales du site, tu peux contacter Lazare Fortune à l'adresse suivante :{" "}
                 <a
                   href="mailto:lazarefortune@gmail.com"
                   className="text-primary hover:underline"

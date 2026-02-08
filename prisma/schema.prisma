@@ -120,6 +120,8 @@ model Participant {
   id              String        @id @default(cuid())
   name            String        @db.VarChar(255)
   email           String?       @db.VarChar(255)
+  gender          String?       @db.VarChar(10) // "MALE" | "FEMALE" | "OTHER" | null
+  avatar          String?       @db.Text // SVG avatar URL (DiceBear)
   createdByUserId String?       @map("created_by_user_id")
   createdByUser   User?         @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
   createdAt       DateTime      @default(now()) @map("created_at")

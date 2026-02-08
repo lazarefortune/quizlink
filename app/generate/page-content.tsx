@@ -42,7 +42,7 @@ export function GeneratePage() {
   const { locale } = useLocale();
   const { showToast } = useToast();
   const { data: session, update: updateSession } = useSession();
-  const [activeTab, setActiveTab] = useState<"DOCUMENT" | "TEXT" | "IMAGE" | "VIDEO">("DOCUMENT");
+  const [activeTab, setActiveTab] = useState< "TEXT" | "DOCUMENT" | "IMAGE" | "VIDEO">("TEXT");
   const [textContent, setTextContent] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -330,11 +330,11 @@ export function GeneratePage() {
                 className="w-full"
               >
                 <TabsList className="flex w-full overflow-x-auto sm:grid sm:grid-cols-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                  <TabsTrigger value="DOCUMENT" className="whitespace-nowrap">
-                    {t(locale, "generate.tabs.document")}
-                  </TabsTrigger>
                   <TabsTrigger value="TEXT" className="whitespace-nowrap">
                     {t(locale, "generate.tabs.text")}
+                  </TabsTrigger>
+                  <TabsTrigger value="DOCUMENT" className="whitespace-nowrap">
+                    {t(locale, "generate.tabs.document")}
                   </TabsTrigger>
                   <TabsTrigger value="IMAGE" disabled className="whitespace-nowrap">
                     <Lock className="h-3 w-3 mr-2" />
@@ -345,25 +345,25 @@ export function GeneratePage() {
                     {t(locale, "generate.tabs.video")}
                   </TabsTrigger>
                 </TabsList>
-                <TabsContent value="DOCUMENT" className="mt-6">
+                  <TabsContent value="TEXT" className="mt-6">
+                      <ContentDropzone
+                          sourceType="TEXT"
+                          textContent={textContent}
+                          file={null}
+                          onTextChange={setTextContent}
+                          onFileChange={() => {}}
+                          error={error}
+                          disabled={isLoading}
+                          locale={locale}
+                      />
+                  </TabsContent>
+                  <TabsContent value="DOCUMENT" className="mt-6">
                   <ContentDropzone
                     sourceType="DOCUMENT"
                     textContent=""
                     file={file}
                     onTextChange={() => {}}
                     onFileChange={handleFileChange}
-                    error={error}
-                    disabled={isLoading}
-                    locale={locale}
-                  />
-                </TabsContent>
-                <TabsContent value="TEXT" className="mt-6">
-                  <ContentDropzone
-                    sourceType="TEXT"
-                    textContent={textContent}
-                    file={null}
-                    onTextChange={setTextContent}
-                    onFileChange={() => {}}
                     error={error}
                     disabled={isLoading}
                     locale={locale}
@@ -426,11 +426,11 @@ export function GeneratePage() {
               className="w-full"
             >
               <TabsList className="flex w-full overflow-x-auto sm:grid sm:grid-cols-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                <TabsTrigger value="DOCUMENT" className="whitespace-nowrap">
-                  {t(locale, "generate.tabs.document")}
-                </TabsTrigger>
                 <TabsTrigger value="TEXT" className="whitespace-nowrap">
                   {t(locale, "generate.tabs.text")}
+                </TabsTrigger>
+                <TabsTrigger value="DOCUMENT" className="whitespace-nowrap">
+                  {t(locale, "generate.tabs.document")}
                 </TabsTrigger>
                 <TabsTrigger value="IMAGE" disabled className="whitespace-nowrap">
                   <Lock className="h-3 w-3 mr-2" />

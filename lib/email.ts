@@ -71,7 +71,7 @@ export async function sendVerificationEmail(
 ) {
   const subject =
     locale === "fr"
-      ? "Vérifiez votre adresse email - QuizLink"
+      ? "Vérifie ton adresse email - QuizLink"
       : "Verify your email address - QuizLink";
 
   const html =
@@ -84,14 +84,14 @@ export async function sendVerificationEmail(
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
       </head>
       <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <h1 style="color: #2563eb;">Vérifiez votre adresse email</h1>
-        <p>Bonjour,</p>
-        <p>Merci de vous être inscrit sur QuizLink. Pour activer votre compte, veuillez utiliser le code de vérification suivant :</p>
+        <h1 style="color: #2563eb;">Vérifie ton adresse email</h1>
+        <p>Salut,</p>
+        <p>Merci de t'être inscrit sur QuizLink. Pour activer ton compte, utilise le code de vérification suivant :</p>
         <div style="background-color: #f3f4f6; border: 2px solid #2563eb; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0;">
           <h2 style="color: #2563eb; font-size: 32px; letter-spacing: 4px; margin: 0;">${code}</h2>
         </div>
         <p>Ce code expire dans 15 minutes.</p>
-        <p>Si vous n'avez pas créé de compte, vous pouvez ignorer cet email.</p>
+        <p>Si tu n'as pas créé de compte, tu peux ignorer cet email.</p>
         <p style="margin-top: 30px; color: #6b7280; font-size: 14px;">Cordialement,<br>L'équipe QuizLink</p>
       </body>
     </html>
@@ -141,7 +141,7 @@ export async function sendPasswordResetEmail(
 
   const subject =
     locale === "fr"
-      ? "Réinitialisez votre mot de passe - QuizLink"
+      ? "Réinitialise ton mot de passe - QuizLink"
       : "Reset your password - QuizLink";
 
   const html =
@@ -154,16 +154,16 @@ export async function sendPasswordResetEmail(
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
       </head>
       <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <h1 style="color: #2563eb;">Réinitialisez votre mot de passe</h1>
-        <p>Bonjour,</p>
-        <p>Vous avez demandé à réinitialiser votre mot de passe. Cliquez sur le lien ci-dessous pour créer un nouveau mot de passe :</p>
+        <h1 style="color: #2563eb;">Réinitialise ton mot de passe</h1>
+        <p>Salut,</p>
+        <p>Tu as demandé à réinitialiser ton mot de passe. Clique sur le lien ci-dessous pour créer un nouveau mot de passe :</p>
         <div style="text-align: center; margin: 30px 0;">
           <a href="${resetUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Réinitialiser le mot de passe</a>
         </div>
-        <p>Ou copiez ce lien dans votre navigateur :</p>
+        <p>Ou copie ce lien dans ton navigateur :</p>
         <p style="word-break: break-all; color: #6b7280; font-size: 14px;">${resetUrl}</p>
         <p>Ce lien expire dans 1 heure.</p>
-        <p>Si vous n'avez pas demandé de réinitialisation, vous pouvez ignorer cet email.</p>
+        <p>Si tu n'as pas demandé de réinitialisation, tu peux ignorer cet email.</p>
         <p style="margin-top: 30px; color: #6b7280; font-size: 14px;">Cordialement,<br>L'équipe QuizLink</p>
       </body>
     </html>
@@ -227,12 +227,12 @@ export async function sendEmailChangeCode(
       <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
         <h1 style="color: #2563eb;">Changement d'adresse email</h1>
         <p>Bonjour,</p>
-        <p>Vous avez demandé à changer votre adresse email. Utilisez le code de vérification suivant :</p>
+        <p>Tu as demandé à changer ton adresse email. Utilise le code de vérification suivant :</p>
         <div style="background-color: #f3f4f6; border: 2px solid #2563eb; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0;">
           <h2 style="color: #2563eb; font-size: 32px; letter-spacing: 4px; margin: 0;">${code}</h2>
         </div>
         <p>Ce code expire dans 15 minutes.</p>
-        <p>Si vous n'avez pas demandé de changement d'email, vous pouvez ignorer cet email.</p>
+        <p>Si tu n'as pas demandé de changement d'email, tu peux ignorer cet email.</p>
         <p style="margin-top: 30px; color: #6b7280; font-size: 14px;">Cordialement,<br>L'équipe QuizLink</p>
       </body>
     </html>

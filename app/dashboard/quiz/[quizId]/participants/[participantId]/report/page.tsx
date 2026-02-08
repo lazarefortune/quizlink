@@ -24,7 +24,7 @@ export default async function QuizParticipantReportPage({ params }: PageProps) {
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="max-w-md w-full text-center">
           <h1 className="text-2xl font-bold mb-4">Accès non autorisé</h1>
-          <p className="text-muted-foreground">Quiz introuvable ou vous n'avez pas accès.</p>
+          <p className="text-muted-foreground">Quiz introuvable ou tu n'as pas accès.</p>
         </div>
       </div>
     );

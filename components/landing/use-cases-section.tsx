@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AnimateOnScroll } from "@/components/animate-on-scroll";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { GraduationCap, ClipboardCheck, BookOpen, Brain } from "lucide-react";
@@ -34,20 +35,23 @@ export function UseCasesSection() {
   return (
     <section className="py-16 px-4 sm:py-20 md:py-24">
       <div className="mx-auto max-w-6xl">
-        <div className="text-center mb-12 sm:mb-16">
-          <h2 className="text-3xl font-bold sm:text-4xl md:text-5xl">
-            {t(locale, "landing.useCases.title")}
-          </h2>
-          <p className="mt-4 text-lg text-muted-foreground sm:text-xl">
-            {t(locale, "landing.useCases.subtitle")}
-          </p>
-        </div>
+        <AnimateOnScroll>
+          <div className="text-center mb-12 sm:mb-16">
+            <h2 className="text-3xl font-bold sm:text-4xl md:text-5xl">
+              {t(locale, "landing.useCases.title")}
+            </h2>
+            <p className="mt-4 text-lg text-muted-foreground sm:text-xl">
+              {t(locale, "landing.useCases.subtitle")}
+            </p>
+          </div>
+        </AnimateOnScroll>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {useCases.map((useCase, index) => {
             const Icon = useCase.icon;
             return (
-              <Card key={index} className="flex flex-col">
+              <AnimateOnScroll key={index} delay={100 + 80 * index}>
+                <Card className="flex flex-col">
                 <CardHeader>
                   <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
                     <Icon className="h-6 w-6 text-primary" />
@@ -60,6 +64,7 @@ export function UseCasesSection() {
                   </CardDescription>
                 </CardContent>
               </Card>
+              </AnimateOnScroll>
             );
           })}
         </div>

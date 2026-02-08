@@ -23,6 +23,7 @@ import {
 import { ArrowLeft, Users, FileQuestion, CheckCircle2, Clock } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
+import { ParticipantAvatar } from "@/components/participant-avatar";
 import { getAttemptDetails } from "./actions";
 import {
   Dialog,
@@ -44,6 +45,7 @@ type Stats = {
     id: string;
     name: string;
     email: string | null;
+    avatar: string | null;
     attemptsCount: number;
     lastScore: number | null;
     lastAttemptDate: Date | null;
@@ -210,13 +212,22 @@ export function QuizStatsContent({
                 ) : (
                   stats.participants.map((participant) => (
                     <TableRow key={participant.id}>
-                      <TableCell className="font-medium">
-                        {participant.name}
-                        {participant.email && (
-                          <span className="text-xs text-muted-foreground block">
-                            {participant.email}
-                          </span>
-                        )}
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <ParticipantAvatar
+                            avatar={participant.avatar}
+                            name={participant.name}
+                            size="sm"
+                          />
+                          <div>
+                            <div className="font-medium">{participant.name}</div>
+                            {participant.email && (
+                              <span className="text-xs text-muted-foreground">
+                                {participant.email}
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </TableCell>
                       <TableCell>{participant.attemptsCount}</TableCell>
                       <TableCell>

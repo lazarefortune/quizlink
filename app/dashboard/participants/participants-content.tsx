@@ -34,17 +34,27 @@ import { ArrowLeft, Plus, Edit, Trash2, Eye } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { useToast } from "@/components/ui/toast";
+import { ParticipantAvatar } from "@/components/participant-avatar";
 import {
   getParticipants,
   createParticipant,
   updateParticipant,
   deleteParticipant,
 } from "./actions";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Participant = {
   id: string;
   name: string;
   email: string | null;
+  avatar: string | null;
+  gender?: "MALE" | "FEMALE" | "OTHER" | null;
   createdAt: Date;
   attemptsCount: number;
   quizzes: Array<{
@@ -67,6 +77,7 @@ export function ParticipantsContent() {
   const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null);
   const [formName, setFormName] = useState("");
   const [formEmail, setFormEmail] = useState("");
+  const [formGender, setFormGender] = useState<"MALE" | "FEMALE" | "OTHER" | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -96,12 +107,17 @@ export function ParticipantsContent() {
 
     setIsSubmitting(true);
     try {
-      const result = await createParticipant(formName.trim(), formEmail.trim() || undefined);
+      const result = await createParticipant(
+        formName.trim(),
+        formEmail.trim() || undefined,
+        formGender || undefined
+      );
       if (result.success) {
         showToast(t(locale, "dashboard.participantCreatedSuccess"), "success");
         setShowCreateDialog(false);
         setFormName("");
         setFormEmail("");
+        setFormGender(null);
         loadData();
       } else {
         showToast(result.error || t(locale, "dashboard.createParticipantError"), "error");
@@ -117,6 +133,7 @@ export function ParticipantsContent() {
     setSelectedParticipant(participant);
     setFormName(participant.name);
     setFormEmail(participant.email || "");
+    setFormGender(participant.gender || null);
     setShowEditDialog(true);
   };
 
@@ -131,7 +148,8 @@ export function ParticipantsContent() {
       const result = await updateParticipant(
         selectedParticipant.id,
         formName.trim(),
-        formEmail.trim() || undefined
+        formEmail.trim() || undefined,
+        formGender || undefined
       );
       if (result.success) {
         showToast(t(locale, "dashboard.participantUpdatedSuccess"), "success");
@@ -139,6 +157,7 @@ export function ParticipantsContent() {
         setSelectedParticipant(null);
         setFormName("");
         setFormEmail("");
+        setFormGender(null);
         loadData();
       } else {
         showToast(result.error || t(locale, "dashboard.updateParticipantError"), "error");
@@ -183,14 +202,6 @@ export function ParticipantsContent() {
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
-        <Button
-            variant="secondary"
-            onClick={() => router.push("/dashboard")}
-            className="mb-4"
-        >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            {t(locale, "dashboard.backToDashboard")}
-        </Button>
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-0 mb-8">
           <div>
             <h1 className="text-3xl font-bold">
@@ -254,7 +265,16 @@ export function ParticipantsContent() {
                 <TableBody>
                   {participants.map((participant) => (
                     <TableRow key={participant.id}>
-                      <TableCell className="font-medium">{participant.name}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <ParticipantAvatar
+                            avatar={participant.avatar}
+                            name={participant.name}
+                            size="sm"
+                          />
+                          <span className="font-medium">{participant.name}</span>
+                        </div>
+                      </TableCell>
                       <TableCell>{participant.email || "-"}</TableCell>
                       <TableCell>{participant.attemptsCount}</TableCell>
                       <TableCell>
@@ -330,7 +350,6 @@ export function ParticipantsContent() {
               <Input
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
-                placeholder={t(locale, "quiz.participantNamePlaceholder")}
                 disabled={isSubmitting}
               />
             </div>
@@ -345,7 +364,6 @@ export function ParticipantsContent() {
                 type="email"
                 value={formEmail}
                 onChange={(e) => setFormEmail(e.target.value)}
-                placeholder={t(locale, "quiz.participantEmailPlaceholder")}
                 disabled={isSubmitting}
               />
             </div>
@@ -388,7 +406,6 @@ export function ParticipantsContent() {
               <Input
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
-                placeholder={t(locale, "quiz.participantNamePlaceholder")}
                 disabled={isSubmitting}
               />
             </div>
@@ -403,9 +420,35 @@ export function ParticipantsContent() {
                 type="email"
                 value={formEmail}
                 onChange={(e) => setFormEmail(e.target.value)}
-                placeholder={t(locale, "quiz.participantEmailPlaceholder")}
                 disabled={isSubmitting}
               />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block">
+                {t(locale, "dashboard.participantGenderLabel")}{" "}
+                <span className="text-muted-foreground text-xs">
+                  ({t(locale, "common.optional")})
+                </span>
+              </label>
+              <Select
+                value={formGender || "NOT_SPECIFIED"}
+                onValueChange={(value) =>
+                  setFormGender(
+                    value === "NOT_SPECIFIED" ? null : (value as "MALE" | "FEMALE" | "OTHER")
+                  )
+                }
+                disabled={isSubmitting}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={t(locale, "dashboard.participantGenderNotSpecified")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="MALE">{t(locale, "dashboard.participantGenderMale")}</SelectItem>
+                  <SelectItem value="FEMALE">{t(locale, "dashboard.participantGenderFemale")}</SelectItem>
+                  <SelectItem value="OTHER">{t(locale, "dashboard.participantGenderOther")}</SelectItem>
+                  <SelectItem value="NOT_SPECIFIED">{t(locale, "dashboard.participantGenderNotSpecified")}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex justify-end gap-2">
               <Button

@@ -17,10 +17,7 @@ const AlertDialogOverlay = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Overlay>
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Overlay
-    className={cn(
-      "fixed inset-0 z-50 bg-black/80 transition-opacity duration-200 opacity-0 data-[state=open]:opacity-100 data-[state=closed]:opacity-0",
-      className
-    )}
+    className={cn("quizlink-dialog-overlay fixed inset-0 z-50 bg-black/80", className)}
     {...props}
     ref={ref}
   />
@@ -35,14 +32,16 @@ const AlertDialogContent = React.forwardRef<
 >(({ className, onOverlayClick, ...props }, ref) => (
   <AlertDialogPortal>
     <AlertDialogOverlay onClick={onOverlayClick} />
-    <AlertDialogPrimitive.Content
-      ref={ref}
-      className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 rounded-lg opacity-0 scale-95 data-[state=open]:opacity-100 data-[state=open]:scale-100 data-[state=closed]:opacity-0 data-[state=closed]:scale-95",
-        className
-      )}
-      {...props}
-    />
+    <div className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2">
+      <AlertDialogPrimitive.Content
+        ref={ref}
+        className={cn(
+          "quizlink-dialog-content grid gap-4 border bg-background p-6 shadow-lg rounded-lg opacity-0",
+          className
+        )}
+        {...props}
+      />
+    </div>
   </AlertDialogPortal>
 ));
 AlertDialogContent.displayName = AlertDialogPrimitive.Content.displayName;

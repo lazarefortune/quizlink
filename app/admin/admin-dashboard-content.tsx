@@ -161,7 +161,6 @@ export function AdminDashboardContent({ initialUsers }: AdminDashboardContentPro
             <div className="flex gap-2">
               <Input
                 type="search"
-                placeholder={t(locale, "admin.dashboard.searchPlaceholder")}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
@@ -275,7 +274,6 @@ export function AdminDashboardContent({ initialUsers }: AdminDashboardContentPro
                                         min="1"
                                         value={coinAmount}
                                         onChange={(e) => setCoinAmount(e.target.value)}
-                                        placeholder="50"
                                       />
                                     </div>
                                     <div className="space-y-2">
@@ -284,7 +282,6 @@ export function AdminDashboardContent({ initialUsers }: AdminDashboardContentPro
                                         id="reason"
                                         value={reason}
                                         onChange={(e) => setReason(e.target.value)}
-                                        placeholder={t(locale, "admin.coins.reasonPlaceholder")}
                                         rows={3}
                                       />
                                     </div>

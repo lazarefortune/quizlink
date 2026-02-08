@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/components/ui/toast";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
   Dialog,
@@ -34,6 +35,7 @@ import {
 } from "@/components/ui/select";
 
 export default function DesignSystemPage() {
+  const { showToast } = useToast();
 
   return (
     <div className="min-h-screen bg-background p-8">
@@ -47,6 +49,32 @@ export default function DesignSystemPage() {
           </div>
           <ThemeToggle />
         </header>
+
+        {/* Design direction */}
+        <section className="space-y-4">
+          <h2 className="text-2xl font-semibold">Design direction</h2>
+          <Card>
+            <CardHeader>
+              <CardTitle>Dark mode</CardTitle>
+              <CardDescription>
+                Dark theme uses softer grays (no pure black). Background is a warm dark gray (hsl 220 12% 11%) so the interface stays comfortable at night.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Neumorphism (buttons)</CardTitle>
+              <CardDescription>
+                Buttons use soft shadows for a raised effect: light shadow top-left, dark shadow bottom-right. On press (active), an inset shadow gives a pressed-in feel. Primary keeps its color with subtle depth; secondary, outline and ghost use the same neumorphic relief.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                CSS variables: <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">--shadow-neu-raised</code>, <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">--shadow-neu-pressed</code>, <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">--shadow-neu-primary</code> (light and dark variants in <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">:root</code> and <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">.dark</code>).
+              </p>
+            </CardContent>
+          </Card>
+        </section>
 
         {/* Design Tokens Section */}
         <section className="space-y-6">
@@ -63,9 +91,9 @@ export default function DesignSystemPage() {
               <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                 <div className="space-y-2">
                   <div className="h-16 rounded-md bg-primary"></div>
-                  <p className="text-sm font-medium">Primary</p>
+                  <p className="text-sm font-medium">Primary (KIWI)</p>
                   <p className="text-xs text-muted-foreground">
-                    hsl(var(--primary))
+                    #8EE000 / hsl(var(--primary))
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -87,6 +115,27 @@ export default function DesignSystemPage() {
                   <p className="text-sm font-medium">Destructive</p>
                   <p className="text-xs text-muted-foreground">
                     hsl(var(--destructive))
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <div className="h-16 rounded-md bg-warning"></div>
+                  <p className="text-sm font-medium">Warning (BANANA)</p>
+                  <p className="text-xs text-muted-foreground">
+                    #FFB020 — badges, alertes attention
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <div className="h-16 rounded-md bg-highlight"></div>
+                  <p className="text-sm font-medium">Highlight (PUMPKIN)</p>
+                  <p className="text-xs text-muted-foreground">
+                    #FF9400 — badges « Nouveau », accent
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <div className="h-16 rounded-md bg-blue"></div>
+                  <p className="text-sm font-medium">Blue (BLUEBERRY)</p>
+                  <p className="text-xs text-muted-foreground">
+                    #1CB0F6 — bouton bleu, liens secondaires
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -343,9 +392,15 @@ export default function DesignSystemPage() {
               <div className="flex flex-wrap gap-4">
                 <Button variant="primary">Primary</Button>
                 <Button variant="secondary">Secondary</Button>
+                <Button variant="blue">Blue</Button>
+                <Button variant="outlineBlue">Outline Blue</Button>
+                <Button variant="outline">Outline</Button>
                 <Button variant="ghost">Ghost</Button>
                 <Button variant="destructive">Destructive</Button>
               </div>
+              <p className="text-xs text-muted-foreground">
+                Neumorphic shadows: raised by default, pressed on active. Toggle dark mode to see softer background and matching shadows.
+              </p>
             </CardContent>
           </Card>
 
@@ -514,7 +569,52 @@ export default function DesignSystemPage() {
             <Alert variant="error" title="Error">
               An error occurred. Please try again.
             </Alert>
+            <Alert variant="warning" title="Warning">
+              Please review this before continuing.
+            </Alert>
           </div>
+        </section>
+
+        {/* Toast Component Section */}
+        <section className="space-y-6">
+          <h2 className="text-2xl font-semibold">Toast</h2>
+          <Card>
+            <CardHeader>
+              <CardTitle>Test des toasts</CardTitle>
+              <CardDescription>
+                Les toasts s&apos;affichent en haut à droite. Cliquez pour déclencher chaque type.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  variant="primary"
+                  onClick={() => showToast("Opération réussie !", "success")}
+                >
+                  Toast Success
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => showToast("Une erreur s'est produite.", "error")}
+                >
+                  Toast Error
+                </Button>
+                <Button
+                  variant="blue"
+                  onClick={() => showToast("Information utile pour toi.", "info")}
+                >
+                  Toast Info
+                </Button>
+                <Button
+                  variant="secondary"
+                  className="border-warning/50 bg-warning/10 text-warning hover:bg-warning/20 dark:border-warning/40 dark:bg-warning/15 dark:hover:bg-warning/25"
+                  onClick={() => showToast("Attention : vérifiez ce champ.", "warning")}
+                >
+                  Toast Warning
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </section>
 
         {/* Badge Component Section */}
@@ -529,7 +629,11 @@ export default function DesignSystemPage() {
             <CardContent>
               <div className="flex flex-wrap gap-4">
                 <Badge variant="default">Default</Badge>
+                <Badge variant="secondary">Secondary</Badge>
                 <Badge variant="outline">Outline</Badge>
+                <Badge variant="destructive">Destructive</Badge>
+                <Badge variant="warning">Warning (BANANA)</Badge>
+                <Badge variant="highlight">Highlight (PUMPKIN)</Badge>
               </div>
             </CardContent>
           </Card>
@@ -639,7 +743,7 @@ export default function DesignSystemPage() {
                   <div className="py-4 space-y-4">
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Name</label>
-                      <Input placeholder="Enter name..." />
+                      <Input />
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Description</label>

@@ -1,11 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
+import { LocaleSwitcher } from "@/components/locale-switcher";
 
 export function Footer() {
+  const pathname = usePathname();
   const { locale } = useLocale();
+
+  if (pathname?.startsWith("/dashboard") || pathname?.startsWith("/auth")) {
+    return null;
+  }
 
   return (
     <footer className="border-t bg-background">
@@ -70,6 +77,14 @@ export function Footer() {
                 </Link>
               </li>
             </ul>
+          </div>
+
+          {/* Language */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">{t(locale, "nav.language")}</h3>
+            <div className="flex items-center">
+              <LocaleSwitcher />
+            </div>
           </div>
 
         </div>

@@ -12,6 +12,7 @@ type GetParticipantDetailsResponse =
         id: string;
         name: string;
         email: string | null;
+        avatar: string | null;
         createdAt: Date;
         links: Array<{
           id: string;
@@ -113,6 +114,7 @@ export async function getParticipantDetails(
         id: participant.id,
         name: participant.name,
         email: participant.email,
+        avatar: participant.avatar,
         createdAt: participant.createdAt,
         links: userLinks.map((link) => ({
           id: link.id,
@@ -429,10 +431,10 @@ export async function sendLinkEmail(
       subject: `Invitation au quiz : ${link.quiz.name}`,
       html: `
         <h2>Bonjour ${link.participant?.name || "participant"},</h2>
-        <p>Vous avez été invité à participer au quiz : <strong>${link.quiz.name}</strong>.</p>
-        <p>Cliquez sur le lien ci-dessous pour accéder directement au quiz :</p>
+        <p>Tu as été invité à participer au quiz : <strong>${link.quiz.name}</strong>.</p>
+        <p>Clique sur le lien ci-dessous pour accéder directement au quiz :</p>
         <p><a href="${quizUrl}">${quizUrl}</a></p>
-        <p>Ce lien est personnalisé pour vous et vous permet d'accéder directement au quiz sans remplir de formulaire.</p>
+        <p>Ce lien est personnalisé pour toi et te permet d'accéder directement au quiz sans remplir de formulaire.</p>
         <p>Bonne chance !</p>
       `,
     });

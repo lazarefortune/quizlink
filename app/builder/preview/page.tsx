@@ -1,14 +1,21 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { BuilderPageContent } from "../page-content";
-import { AuthRequiredOverlay } from "@/components/auth-required-overlay";
 import { useSession } from "next-auth/react";
 
 export default function BuilderPreviewPage() {
   const { data: session, status } = useSession();
+  const router = useRouter();
 
-  if (status === "loading") {
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.replace(`/auth/signin?callbackUrl=${encodeURIComponent("/builder/preview")}`);
+    }
+  }, [status, router]);
+
+  if (status === "loading" || status === "unauthenticated") {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p>Loading...</p>
@@ -17,19 +24,14 @@ export default function BuilderPreviewPage() {
   }
 
   return (
-    <div className="relative">
-      <div className={session?.user ? "" : "blur-sm pointer-events-none select-none"}>
-        <Suspense
-          fallback={
-            <div className="min-h-screen flex items-center justify-center">
-              <p>Loading...</p>
-            </div>
-          }
-        >
-          <BuilderPageContent />
-        </Suspense>
-      </div>
-      {!session?.user && <AuthRequiredOverlay />}
-    </div>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <p>Loading...</p>
+        </div>
+      }
+    >
+      <BuilderPageContent />
+    </Suspense>
   );
 }

@@ -258,7 +258,6 @@ export function AccountContent({ user: initialUser }: AccountContentProps) {
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder={t(locale, "account.profile.namePlaceholder")}
               />
             </div>
             <div className="space-y-2">
@@ -318,7 +317,6 @@ export function AccountContent({ user: initialUser }: AccountContentProps) {
                     type="email"
                     value={newEmail}
                     onChange={(e) => setNewEmail(e.target.value)}
-                    placeholder={t(locale, "auth.emailPlaceholder")}
                   />
                 </div>
                 <Button
@@ -388,7 +386,6 @@ export function AccountContent({ user: initialUser }: AccountContentProps) {
                   type={showCurrentPassword ? "text" : "password"}
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
-                  placeholder={t(locale, "auth.passwordPlaceholder")}
                   className="pr-10"
                 />
                 <button
@@ -412,7 +409,6 @@ export function AccountContent({ user: initialUser }: AccountContentProps) {
                   type={showNewPassword ? "text" : "password"}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder={t(locale, "auth.passwordPlaceholder")}
                   className="pr-10"
                 />
                 <button
@@ -436,7 +432,6 @@ export function AccountContent({ user: initialUser }: AccountContentProps) {
                   type={showConfirmPassword ? "text" : "password"}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder={t(locale, "auth.passwordPlaceholder")}
                   className="pr-10"
                 />
                 <button
@@ -482,7 +477,6 @@ export function AccountContent({ user: initialUser }: AccountContentProps) {
                   type={showDeletePassword ? "text" : "password"}
                   value={deletePassword}
                   onChange={(e) => setDeletePassword(e.target.value)}
-                  placeholder={t(locale, "auth.passwordPlaceholder")}
                   className="pr-10"
                 />
                 <button

@@ -8,6 +8,7 @@ export const en = {
     dashboard: "Dashboard",
     anonymousDashboard: "My Quizzes",
     language: "Language",
+    getStarted: "Get Started",
     create: "Create",
     createManually: "Create manually",
     createWithAI: "Create with AI",
@@ -42,6 +43,7 @@ export const en = {
     insufficientCoinsTitle: "Insufficient coins",
     insufficientCoinsDescription: "You need 2 coins to generate a quiz with AI. Visit the Pricing page to get coins.",
     getCoins: "Get coins",
+    pasteOrWriteText: "Paste or write your text here...",
   },
 
   // Generation options modal
@@ -75,10 +77,12 @@ export const en = {
   // Authentication
   auth: {
     required: {
-      title: "Account Required",
-      description: "Create an account or sign in to create and manage your quizzes.",
-      createAccount: "Create Account",
+      title: "One moment to save your quizzes",
+      description: "Create a free account to save your creations and access them anywhere.",
+      primaryCta: "Create my free account",
+      hasAccount: "I already have an account",
       signIn: "Sign In",
+      createAccount: "Create Account",
     },
     signIn: {
       title: "Sign In",
@@ -107,6 +111,22 @@ export const en = {
     hasAccount: "Already have an account?",
     signInLink: "Sign In",
     signUpLink: "Sign Up",
+    sidePanel: {
+      signin: {
+        title: "Welcome back!",
+        description: "Create quizzes, challenge friends, have fun.",
+      },
+      signup: {
+        title: "Your adventure starts here",
+        description: "Create your free account and get started.",
+        feature1Title: "Create quizzes in a few clicks",
+        feature1Desc: "Simple, fast editor for quizzes that hit the mark.",
+        feature2Title: "Share with a link",
+        feature2Desc: "Send your quiz to friends or class with one click.",
+        feature3Title: "Track scores",
+        feature3Desc: "See who wins and start another round whenever you like.",
+      },
+    },
     verifyEmail: {
       title: "Verify your email",
       description: "We've sent a verification code to your email address",
@@ -122,6 +142,14 @@ export const en = {
       success: "Email verified successfully! You can now sign in.",
     },
     forgotPassword: "Forgot password?",
+    sidePanelForgot: {
+      title: "No worries!",
+      description: "We'll email you a link to reset your password.",
+    },
+    sidePanelReset: {
+      title: "New password",
+      description: "Choose a secure password to get back into your account.",
+    },
     forgotPasswordPage: {
       title: "Forgot password",
       description: "Enter your email address and we'll send you a link to reset your password",
@@ -353,12 +381,14 @@ export const en = {
       exactlyTwoOptions: "Question {number}: TRUE_FALSE questions must have exactly 2 options",
       optionLabelRequired: "Question {questionNumber}, Option {optionNumber}: Label is required",
     },
+      answerOptionPlaceholder: "Enter option {number}",
   },
 
   // Landing page
   landing: {
     hero: {
       title: "Create quizzes in seconds, not hours",
+      titleHighlights: "quizzes,seconds",
       subtitle: "Transform any content into engaging quizzes. Create an account to get started.",
       createButton: "Create a Quiz",
       generateButton: "Generate with AI",
@@ -523,6 +553,22 @@ export const en = {
 
   // Dashboard
   dashboard: {
+    sidebar: {
+      overview: "Dashboard",
+      quizzes: "My quizzes",
+      participants: "Participants",
+      admin: "Admin",
+    },
+    welcome: {
+      title: "Hello, {name}",
+      subtitle: "Welcome to your space. Manage your quizzes and participants at a glance.",
+      myQuizzes: "My quizzes",
+      myQuizzesDesc: "View and manage all your quizzes",
+      participants: "Participants",
+      participantsDesc: "Manage your participants",
+      createQuiz: "Create a quiz",
+      createQuizDesc: "Manually or with AI",
+    },
     title: "My Quizzes",
     subtitle: "Manage and track your quizzes",
     createQuiz: "Create Quiz",
@@ -586,6 +632,11 @@ export const en = {
     createParticipant: "Create Participant",
     participantNameLabel: "Name",
     participantEmailLabel: "Email",
+    participantGenderLabel: "Gender",
+    participantGenderMale: "Male",
+    participantGenderFemale: "Female",
+    participantGenderOther: "Other",
+    participantGenderNotSpecified: "Not specified",
     participantCreatedLabel: "Created",
     attemptsCountLabel: "Attempts",
     quizzesLabel: "Quizzes",
@@ -667,10 +718,18 @@ export const en = {
 
   // Pricing
   pricing: {
-    title: "Pricing & Coins",
-    subtitle: "Generate quizzes with AI using coins",
-    coinRule: "1 AI generation = 2 coins",
+    title: "Simple, transparent pricing",
+    subtitle: "Coins unlock QuizLink premium features.",
     coins: "coins",
+    coinsUseCasesTitle: "What your coins get you",
+    coinsUseCasesSubtitle: "Each action uses coins. The more you have, the more you can create.",
+    coinsUseCaseGeneration: "AI quiz generation",
+    coinsUseCaseReport: "AI report per participant",
+    coinsUseCaseReportDetail: "Strengths, weaknesses, 7-day plan",
+    coinsUseCaseParticipants: "Unlimited participants and personalized links",
+    coinsUseCaseManual: "Unlimited manual creation",
+    coinsPerUse: "coins / use",
+    free: "Free",
     generations: "generations",
     aiGenerations: "AI generations",
     unlimitedManual: "Unlimited manual creation",
@@ -691,6 +750,9 @@ export const en = {
     backToPricing: "Back to pricing",
     noPacksAvailable: "No packs available at the moment",
     for: "for",
+    oneTime: "one-time",
+    choosePack: "Choose a pack",
+    choosePackSubtitle: "Top up your coins in one click. No commitment.",
     starter: {
       name: "Starter Pack",
       description: "Perfect to get started",

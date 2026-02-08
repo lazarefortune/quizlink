@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { Menu, X, Home, Sparkles, Plus, LayoutDashboard, LogIn, UserPlus, Settings, LogOut, FileText, Coins, Shield } from "lucide-react";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { LocaleSwitcher } from "@/components/locale-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserMenu } from "@/components/user-menu";
 import { Button } from "@/components/ui/button";
@@ -24,7 +23,7 @@ import {
 export function Header() {
   const pathname = usePathname();
   const router = useRouter();
-  const { locale, setLocale } = useLocale();
+  const { locale } = useLocale();
   const { data: session, update: updateSession } = useSession();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
@@ -98,10 +97,14 @@ export function Header() {
     return pathname?.startsWith(href);
   };
 
+  if (pathname?.startsWith("/dashboard") || pathname?.startsWith("/auth")) {
+    return null;
+  }
+
   return (
-    <header className="sticky top-0 z-[100] w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-[100] w-full shadow-md border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4">
-        <div className="flex h-14 items-center justify-between">
+        <div className="flex h-20 items-center justify-between">
           {/* Logo / Brand */}
           <div className="flex items-center">
             <Link href="/" className="text-lg font-bold">
@@ -133,15 +136,15 @@ export function Header() {
                   {t(locale, "nav.create")}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="center">
                 <DropdownMenuItem asChild>
-                  <Link href={session?.user ? "/builder" : "/builder/preview"} className="flex items-center gap-2">
+                  <Link href={session?.user ? "/builder" : "/builder/preview"} className="flex items-center gap-2 text-base">
                     <FileText className="h-4 w-4" />
                     {t(locale, "nav.createManually")}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href={session?.user ? "/generate" : "/generate/preview"} className="flex items-center gap-2">
+                  <Link href={session?.user ? "/generate" : "/generate/preview"} className="flex items-center gap-2 text-base">
                     <Sparkles className="h-4 w-4" />
                     {t(locale, "nav.createWithAI")}
                   </Link>
@@ -151,19 +154,20 @@ export function Header() {
           </nav>
 
               {/* Right side controls */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 {session?.user && (
-                  <Link href="/account/coins" className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors border border-primary/20">
-                    <Coins className="h-4 w-4" />
-                    <span className="text-sm font-semibold">{session.user.coinBalance || 0}</span>
+                  <Link href="/account/coins" className="hidden md:flex items-center gap-1.5 px-3 py-2.5 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors border border-primary/20">
+                    <Coins className="h-6 w-6" />
+                    <span className="text-base font-medium">{session.user.coinBalance || 0}</span>
                   </Link>
                 )}
-                <div className="hidden md:block">
-                  <LocaleSwitcher />
-                </div>
-                <ThemeToggle />
-                <div className="hidden md:block">
-                  <UserMenu />
+                {/* Group: theme + auth/profile — réduit l’impression d’espacement entre ghost buttons */}
+                <div className="flex items-center rounded-lg border border-border/60 bg-muted/40 dark:bg-muted/20 py-0.5 px-1 md:pl-0.5 md:pr-1 gap-0.5">
+                  <ThemeToggle />
+                  <div className="hidden md:block w-px self-stretch min-h-6 bg-border/60 shrink-0" aria-hidden />
+                  <div className="hidden md:block">
+                    <UserMenu />
+                  </div>
                 </div>
 
             {/* Mobile menu button */}
@@ -299,7 +303,7 @@ export function Header() {
                       className="flex items-center gap-3 px-3 py-2 text-base font-medium transition-colors rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
                     >
                       <UserPlus className="h-5 w-5" />
-                      {t(locale, "auth.signUp.button")}
+                      {t(locale, "nav.getStarted")}
                     </Link>
                   </div>
                 )}
@@ -341,40 +345,6 @@ export function Header() {
                   </div>
                 )}
 
-                {/* Language selector in sidebar */}
-                <div className="border-t pt-4 mt-4">
-                  <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    {t(locale, "nav.language")}
-                  </div>
-                  <button
-                    onClick={() => {
-                      setLocale("fr");
-                      handleCloseSidebar();
-                    }}
-                    className={cn(
-                      "w-full px-3 py-2 text-base font-medium transition-colors rounded-md text-left",
-                      locale === "fr"
-                        ? "bg-accent text-accent-foreground"
-                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                    )}
-                  >
-                    Français
-                  </button>
-                  <button
-                    onClick={() => {
-                      setLocale("en");
-                      handleCloseSidebar();
-                    }}
-                    className={cn(
-                      "w-full px-3 py-2 text-base font-medium transition-colors rounded-md text-left",
-                      locale === "en"
-                        ? "bg-accent text-accent-foreground"
-                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                    )}
-                  >
-                    English
-                  </button>
-                </div>
               </nav>
             </div>
           </div>

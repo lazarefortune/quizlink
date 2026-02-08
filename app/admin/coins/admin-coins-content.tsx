@@ -138,7 +138,6 @@ export function AdminCoinsContent() {
                   type="email"
                   value={searchEmail}
                   onChange={(e) => setSearchEmail(e.target.value)}
-                  placeholder={t(locale, "auth.emailPlaceholder")}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       handleSearch();
@@ -188,7 +187,6 @@ export function AdminCoinsContent() {
                     min="1"
                     value={coinAmount}
                     onChange={(e) => setCoinAmount(e.target.value)}
-                    placeholder="50"
                   />
                 </div>
                 <div className="space-y-2">
@@ -197,7 +195,6 @@ export function AdminCoinsContent() {
                     id="reason"
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
-                    placeholder={t(locale, "admin.coins.reasonPlaceholder")}
                   />
                 </div>
                 <Button

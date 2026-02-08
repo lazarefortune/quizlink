@@ -293,7 +293,8 @@ export async function getQuizLinkByToken(
  */
 export async function createParticipant(
   name: string,
-  email?: string
+  email?: string,
+  gender?: "MALE" | "FEMALE" | "OTHER"
 ): Promise<CreateParticipantResponse> {
   try {
     if (!prisma) {
@@ -316,7 +317,18 @@ export async function createParticipant(
       data: {
         name: name.trim(),
         email: email?.trim() || null,
+        gender: gender || null,
       },
+    });
+
+    // Generate avatar after creation (using participant ID as seed and gender)
+    const { generateParticipantAvatar } = await import("@/lib/participant-avatar");
+    const avatarSvg = generateParticipantAvatar(participant.id, gender || null);
+
+    // Update participant with avatar
+    await prisma.participant.update({
+      where: { id: participant.id },
+      data: { avatar: avatarSvg },
     });
 
     return {

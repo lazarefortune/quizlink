@@ -64,7 +64,7 @@ export function UserMenu() {
         </Link>
         <Link href="/auth/signup">
           <Button variant="primary" size="sm">
-            {t(locale, "auth.signUp.button")}
+            {t(locale, "nav.getStarted")}
           </Button>
         </Link>
       </div>
@@ -81,11 +81,11 @@ export function UserMenu() {
     <div className="relative" ref={menuRef}>
       <Button
         variant="ghost"
-        size="sm"
+        size="default"
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2"
       >
-        <User className="h-4 w-4" />
+        <User className="h-6 w-6" />
         <span className="hidden sm:inline">{session.user.name || session.user.email}</span>
       </Button>
 

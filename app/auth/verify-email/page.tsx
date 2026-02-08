@@ -116,7 +116,6 @@ function VerifyEmailForm() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                placeholder={t(locale, "auth.emailPlaceholder")}
               />
             </div>
             <div className="space-y-2">
@@ -131,7 +130,6 @@ function VerifyEmailForm() {
                   setCode(value);
                 }}
                 required
-                placeholder="000000"
                 maxLength={6}
                 className="text-center text-2xl tracking-widest font-mono"
               />

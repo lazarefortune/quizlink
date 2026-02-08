@@ -1,18 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Alert } from "@/components/ui/alert";
-import { getUserQuizzes } from "@/app/builder/actions";
+import { useSession } from "next-auth/react";
+import Link from "next/link";
+import { FileText, Users, Plus, Sparkles, ArrowRight } from "lucide-react";
+
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
-import { useToast } from "@/components/ui/toast";
-import { Plus, Eye, BarChart3, Users, FileText, Sparkles } from "lucide-react";
-import Link from "next/link";
-import { QuizOptionsMenu } from "@/components/quiz-options-menu";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,141 +15,91 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-type QuizWithAttempts = {
-  id: string;
-  name: string;
-  visibility: "PRIVATE" | "PUBLIC";
-  questions: Array<{
-    id: string;
-    type: string;
-    label: string;
-    image?: string;
-    options: Array<{
-      id: string;
-      label: string;
-      isCorrect: boolean;
-    }>;
-  }>;
-  attempts: Array<{
-    id: string;
-    participantName: string;
-    startedAt: Date;
-    finishedAt: Date | null;
-    score: number | null;
-    status: string;
-  }>;
-  createdAt: string;
-};
-
-export default function DashboardPage() {
-  const router = useRouter();
+export default function DashboardWelcomePage() {
+  const { data: session } = useSession();
   const { locale } = useLocale();
-  const [quizzes, setQuizzes] = useState<QuizWithAttempts[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  const baseUrl =
-    typeof window !== "undefined"
-      ? window.location.origin
-      : process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-
-  const handleEdit = (quizId: string) => {
-    router.push(`/builder/${quizId}`);
-  };
-
-  const handleView = (quiz: QuizWithAttempts) => {
-    router.push(`/builder/${quiz.id}`);
-  };
-
-  const handleStats = (quizId: string) => {
-    router.push(`/dashboard/quiz/${quizId}`);
-  };
-
-  useEffect(() => {
-    loadQuizzes();
-  }, []);
-
-  async function loadQuizzes() {
-    setIsLoading(true);
-    try {
-      const result = await getUserQuizzes();
-      if (result.success) {
-        setQuizzes(result.quizzes);
-      } else {
-        console.error("Failed to load quizzes:", result.error);
-      }
-    } catch (error) {
-      console.error("Error loading quizzes:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <p>{t(locale, "common.loading")}</p>
-      </div>
-    );
-  }
+  const name =
+    session?.user?.name?.split(" ")[0] ||
+    session?.user?.email ||
+    (locale === "fr" ? "tu" : "you");
 
   return (
-    <div className="min-h-screen bg-background p-4 sm:p-6 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold">{t(locale, "dashboard.title")}</h1>
-            <p className="text-base text-muted-foreground mt-1 sm:mt-2">
-              {t(locale, "dashboard.subtitle")}
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Link href="/dashboard/participants" className="w-full sm:w-auto">
-              <Button variant="secondary" className="w-full sm:w-auto">
-                <Users className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">{t(locale, "dashboard.participants")}</span>
-                <span className="sm:hidden">{t(locale, "dashboard.participants")}</span>
-              </Button>
-            </Link>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="primary" className="w-full sm:w-auto gap-2">
-                  <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">{t(locale, "nav.create")}</span>
-                  <span className="sm:hidden">{t(locale, "nav.create")}</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <Link href="/builder" className="flex items-center gap-2">
-                    <FileText className="h-4 w-4" />
-                    {t(locale, "nav.createManually")}
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/generate" className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4" />
-                    {t(locale, "nav.createWithAI")}
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+    <div className="p-4 sm:p-5 md:p-6 lg:p-8">
+      <div className="mx-auto max-w-3xl">
+        {/* Welcome block */}
+        <div className="mb-8 sm:mb-10">
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            {t(locale, "dashboard.welcome.title", { name })}
+          </h1>
+          <p className="mt-2 text-muted-foreground sm:text-lg">
+            {t(locale, "dashboard.welcome.subtitle")}
+          </p>
         </div>
 
-        {quizzes.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12 px-4">
-              <p className="text-base text-muted-foreground mb-4 text-center">
-                {t(locale, "dashboard.noQuizzes")}
-              </p>
+        {/* Quick actions */}
+        <div className="grid gap-4 sm:grid-cols-2 sm:gap-5">
+          <Link href="/dashboard/quizzes">
+            <Card className="h-full transition-shadow hover:shadow-md">
+              <CardContent className="flex flex-col p-5 sm:p-6">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <FileText className="h-5 w-5" />
+                </div>
+                <h2 className="mt-4 font-semibold">
+                  {t(locale, "dashboard.welcome.myQuizzes")}
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {t(locale, "dashboard.welcome.myQuizzesDesc")}
+                </p>
+                <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary">
+                  <span>{locale === "fr" ? "Voir mes quiz" : "View my quizzes"}</span>
+                  <ArrowRight className="h-4 w-4" />
+                </span>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link href="/dashboard/participants">
+            <Card className="h-full transition-shadow hover:shadow-md">
+              <CardContent className="flex flex-col p-5 sm:p-6">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <Users className="h-5 w-5" />
+                </div>
+                <h2 className="mt-4 font-semibold">
+                  {t(locale, "dashboard.welcome.participants")}
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {t(locale, "dashboard.welcome.participantsDesc")}
+                </p>
+                <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary">
+                  <span>{locale === "fr" ? "Gérer" : "Manage"}</span>
+                  <ArrowRight className="h-4 w-4" />
+                </span>
+              </CardContent>
+            </Card>
+          </Link>
+        </div>
+
+        {/* Create quiz CTA */}
+        <div className="mt-8 sm:mt-10">
+          <Card className="border-primary/20 bg-primary/5">
+            <CardContent className="flex flex-col items-start gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+              <div>
+                <h2 className="font-semibold">
+                  {t(locale, "dashboard.welcome.createQuiz")}
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {t(locale, "dashboard.welcome.createQuizDesc")}
+                </p>
+              </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="primary" className="w-full sm:w-auto gap-2">
+                  <Button variant="primary" size="sm" className="gap-2 shrink-0">
                     <Plus className="h-4 w-4" />
                     {t(locale, "nav.create")}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="center">
+                <DropdownMenuContent align="end">
                   <DropdownMenuItem asChild>
                     <Link href="/builder" className="flex items-center gap-2">
                       <FileText className="h-4 w-4" />
@@ -171,76 +116,7 @@ export default function DashboardPage() {
               </DropdownMenu>
             </CardContent>
           </Card>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {quizzes.map((quiz) => (
-              <Card key={quiz.id} className="flex flex-col h-full">
-                <CardHeader className="pb-3 sm:pb-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <CardTitle className="text-base sm:text-lg line-clamp-2 break-words">{quiz.name}</CardTitle>
-                      <div className="text-xs sm:text-sm text-muted-foreground mt-1 space-y-1">
-                        <div>
-                          {quiz.questions.length} {quiz.questions.length === 1 ? t(locale, "dashboard.question") : t(locale, "dashboard.questions")}
-                        </div>
-                        <div>
-                          {`${quiz.attempts.length} ${t(locale, "dashboard.attempts")}`}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="shrink-0">
-                      <QuizOptionsMenu
-                        quizId={quiz.id}
-                        quizName={quiz.name}
-                        visibility={quiz.visibility}
-                        onDeleted={() => {
-                          loadQuizzes();
-                        }}
-                        onDuplicated={(newQuizId) => {
-                          // Quiz will be loaded in the builder
-                        }}
-                        onEdit={() => handleEdit(quiz.id)}
-                      />
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="flex flex-col flex-1 space-y-3 sm:space-y-4 pt-0">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs sm:text-sm text-muted-foreground">
-                      {t(locale, "dashboard.visibility")}:
-                    </span>
-                    <Badge variant={quiz.visibility === "PUBLIC" ? "default" : "outline"} className="text-xs">
-                      {quiz.visibility === "PUBLIC"
-                        ? t(locale, "dashboard.public")
-                        : t(locale, "dashboard.private")}
-                    </Badge>
-                  </div>
-
-                  <div className="flex flex-col gap-2 pt-2 mt-auto">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => handleView(quiz)}
-                      className="w-full text-xs sm:text-sm"
-                    >
-                      <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                      {t(locale, "dashboard.view")}
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => handleStats(quiz.id)}
-                      className="w-full text-xs sm:text-sm"
-                    >
-                      <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                      {t(locale, "dashboard.statistics")}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );

@@ -74,11 +74,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoreVertical, RotateCw, Sparkles } from "lucide-react";
 import Link from "next/link";
+import { ParticipantAvatar } from "@/components/participant-avatar";
 
 type Participant = {
   id: string;
   name: string;
   email: string | null;
+  avatar: string | null;
   createdAt: Date;
         links: Array<{
           id: string;
@@ -404,16 +406,23 @@ export function ParticipantDetailsContent({
             {t(locale, "dashboard.backToParticipants")}
           </Button>
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-0">
-            <div>
-              <h1 className="text-3xl font-bold">{participant.name}</h1>
-              <p className="text-muted-foreground mt-2">
-                {t(locale, "dashboard.participantDetailsSubtitle")}
-              </p>
-              {participant.email && (
-                <p className="text-sm text-muted-foreground mt-1">
-                  {participant.email}
+            <div className="flex items-center gap-4">
+              <ParticipantAvatar
+                avatar={participant.avatar}
+                name={participant.name}
+                size="xl"
+              />
+              <div>
+                <h1 className="text-3xl font-bold">{participant.name}</h1>
+                <p className="text-muted-foreground mt-2">
+                  {t(locale, "dashboard.participantDetailsSubtitle")}
                 </p>
-              )}
+                {participant.email && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {participant.email}
+                  </p>
+                )}
+              </div>
             </div>
             <Button
               variant="primary"
@@ -761,7 +770,6 @@ export function ParticipantDetailsContent({
                 type="email"
                 value={emailAddress}
                 onChange={(e) => setEmailAddress(e.target.value)}
-                placeholder="email@example.com"
                 disabled={isSubmitting}
               />
             </div>
@@ -844,7 +852,6 @@ export function ParticipantDetailsContent({
                 onChange={(value) => setExpiresAt(value)}
                 disabled={isSubmitting}
                 min={new Date()}
-                placeholder={t(locale, "dashboard.selectExpirationDate")}
               />
             </div>
             <div className="flex justify-end gap-2">

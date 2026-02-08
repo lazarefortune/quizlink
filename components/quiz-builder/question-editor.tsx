@@ -233,23 +233,23 @@ export function QuestionEditor({
 
         {/* Header */}
         <div className="flex items-center justify-between gap-2">
-          <h3 className="text-base sm:text-lg font-semibold text-primary">
+          <h3 className="text-lg font-semibold text-primary">
             {t(locale, "builder.questionNumber", { number: (index + 1).toString() })}
           </h3>
           <div className="flex gap-2 shrink-0">
+            {/*<Button*/}
+            {/*  variant="ghost"*/}
+            {/*  size="icon"*/}
+            {/*  className="h-8 w-8 bg-purple-100 hover:bg-purple-200 text-purple-700 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 dark:text-purple-400"*/}
+            {/*  title="AI"*/}
+            {/*>*/}
+            {/*  <Sparkles className="h-4 w-4" />*/}
+            {/*</Button>*/}
             <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 bg-purple-100 hover:bg-purple-200 text-purple-700 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 dark:text-purple-400"
-              title="AI"
-            >
-              <Sparkles className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
+              variant="destructive"
               size="icon"
               onClick={onDelete}
-              className="h-8 w-8 bg-red-100 hover:bg-red-200 text-red-700 dark:bg-red-900/30 dark:hover:bg-red-900/50 dark:text-red-400"
+              className="h-8 w-8"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -258,7 +258,7 @@ export function QuestionEditor({
 
         {/* Question Type */}
         <div className="space-y-1.5 sm:space-y-2">
-          <label className="text-xs sm:text-sm font-medium">{t(locale, "builder.questionType")}</label>
+          <label className="text-base font-medium">{t(locale, "builder.questionType")}</label>
           <Select value={question.type} onValueChange={handleTypeChange}>
             <SelectTrigger className="text-sm max-w-xs">
               <SelectValue />
@@ -273,7 +273,7 @@ export function QuestionEditor({
 
         {/* Question with formatting toolbar */}
         <div className="space-y-1.5 sm:space-y-2">
-          <label className="text-xs sm:text-sm font-medium">{t(locale, "builder.questionLabel")}</label>
+          <label className="text-base font-medium">{t(locale, "builder.questionLabel")}</label>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <div className="flex-1 space-y-2 min-w-0">
               {/* Formatting Toolbar */}
@@ -422,12 +422,12 @@ export function QuestionEditor({
                   onFocus={updateFormatState}
                   onKeyUp={updateFormatState}
                   onMouseUp={updateFormatState}
-                  className="min-h-[100px] sm:min-h-[120px] w-full rounded-md border-2 border-input bg-background px-3 py-2 text-sm outline-none transition-colors focus:!border-primary focus-visible:!border-primary resize-none overflow-y-auto"
+                  className="min-h-[100px] sm:min-h-[120px] w-full rounded-md border-2 border-input bg-background px-3 py-2 text-base outline-none transition-colors focus:!border-primary focus-visible:!border-primary resize-none overflow-y-auto"
                   style={{ whiteSpace: "pre-wrap" }}
                   suppressContentEditableWarning
                 />
                 {!question.label && (
-                  <div className="absolute top-2 left-3 text-sm text-muted-foreground pointer-events-none select-none">
+                  <div className="absolute top-2 left-3 text-base text-muted-foreground pointer-events-none select-none">
                     {t(locale, "builder.questionLabelPlaceholder")}
                   </div>
                 )}
@@ -471,7 +471,7 @@ export function QuestionEditor({
 
         {/* Options */}
         <div className="space-y-2 sm:space-y-3">
-          <label className="text-xs sm:text-sm font-medium">{t(locale, "builder.answerOptions")}</label>
+          <label className="text-base font-medium">{t(locale, "builder.answerOptions")}</label>
           <div className="space-y-2">
             {question.options.map((option, optIndex) => (
               <div
@@ -523,8 +523,10 @@ export function QuestionEditor({
                     e.stopPropagation();
                     handleOptionChange(option.id, { label: e.target.value });
                   }}
+                  placeholder={t(locale, "builder.answerOptionPlaceholder", {
+                    number: (optIndex + 1).toString(),
+                  })}
                   onClick={(e) => e.stopPropagation()}
-                  placeholder={t(locale, "builder.optionPlaceholder", { number: (optIndex + 1).toString() })}
                   className="flex-1 text-sm border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-auto min-w-0"
                 />
                 {question.options.length > 2 && (
@@ -535,7 +537,7 @@ export function QuestionEditor({
                       e.stopPropagation();
                       handleDeleteOption(option.id);
                     }}
-                    className="h-7 w-7 sm:h-8 sm:w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                    className="h-7 w-7 sm:h-8 sm:w-8 shrink-0 text-muted-foreground hover:text-white hover:bg-destructive"
                   >
                     <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                   </Button>
@@ -546,7 +548,7 @@ export function QuestionEditor({
           {question.type !== "TRUE_FALSE" && (
             <button
               onClick={handleAddOption}
-              className="text-xs sm:text-sm text-primary hover:underline font-medium"
+              className="text-base text-primary hover:cursor-pointer hover:underline font-medium"
             >
               {t(locale, "builder.addOption")}
             </button>

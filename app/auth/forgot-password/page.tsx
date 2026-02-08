@@ -1,13 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
-import Link from "next/link";
+import {
+  authFormContainerVariants,
+  authFormItemVariants,
+} from "@/lib/auth-motion-variants";
 import { requestPasswordResetAction } from "../reset-password/actions";
+import { ForgotPasswordSidePanel } from "@/components/auth/forgot-password-side-panel";
+import { ArrowLeft, ArrowRight, Mail, CheckCircle2 } from "lucide-react";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -29,7 +36,7 @@ export default function ForgotPasswordPage() {
       } else {
         setError(result.error || t(locale, "auth.forgotPasswordPage.error"));
       }
-    } catch (err) {
+    } catch {
       setError(t(locale, "auth.forgotPasswordPage.error"));
     } finally {
       setIsLoading(false);
@@ -37,55 +44,134 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>{t(locale, "auth.forgotPasswordPage.title")}</CardTitle>
-          <CardDescription>{t(locale, "auth.forgotPasswordPage.description")}</CardDescription>
-        </CardHeader>
-        <CardContent>
+    <div className="flex min-h-[calc(100vh-3.5rem)] w-full flex-col lg:flex-row">
+      <div className="flex w-full flex-col justify-center px-6 py-12 lg:w-1/2 lg:px-16 xl:px-24">
+        <motion.div
+          className="mx-auto w-full max-w-md"
+          variants={authFormContainerVariants}
+          initial="hidden"
+          animate="show"
+        >
+          <motion.div variants={authFormItemVariants} className="mb-10">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 rounded-lg transition-opacity hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2"
+              aria-label={locale === "fr" ? "Retour à l'accueil" : "Back to home"}
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
+                <span className="font-heading text-lg font-bold text-primary-foreground">Q</span>
+              </div>
+              <span className="text-2xl font-bold tracking-tight text-foreground">
+                Quiz<span className="text-primary">Link</span>
+              </span>
+            </Link>
+          </motion.div>
+
+          {!isSuccess && (
+            <motion.div
+              variants={authFormItemVariants}
+              className="mb-8 flex flex-col gap-2"
+            >
+              <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground text-balance">
+                {t(locale, "auth.forgotPasswordPage.title")}
+              </h1>
+              <p className="text-base leading-relaxed text-muted-foreground">
+                {t(locale, "auth.forgotPasswordPage.description")}
+              </p>
+            </motion.div>
+          )}
+
           {isSuccess ? (
-            <div className="space-y-4">
-              <div className="p-3 text-sm text-green-600 bg-green-50 dark:bg-green-950/50 rounded-md">
-                {t(locale, "auth.forgotPasswordPage.success")}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              className="flex flex-col gap-6 text-center"
+            >
+              <div className="flex justify-center">
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/15">
+                  <CheckCircle2 className="h-8 w-8 text-primary" />
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <p className="text-lg font-semibold text-foreground">
+                  {t(locale, "auth.forgotPasswordPage.success")}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {locale === "fr"
+                    ? "Vérifie ta boîte de réception et suis les instructions pour réinitialiser ton mot de passe."
+                    : "Check your inbox and follow the instructions to reset your password."}
+                </p>
               </div>
               <Link href="/auth/signin">
-                <Button variant="primary" className="w-full">
-                  {t(locale, "auth.signIn.button")}
+                <Button variant="primary" size="lg" className="h-12 w-full gap-2 text-base font-semibold">
+                  <ArrowLeft className="h-4 w-4" />
+                  {t(locale, "auth.forgotPasswordPage.backToSignIn")}
                 </Button>
               </Link>
-            </div>
+            </motion.div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <motion.form
+              onSubmit={handleSubmit}
+              variants={authFormItemVariants}
+              className="flex flex-col gap-6"
+            >
               {error && (
-                <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
+                <div className="form-error" role="alert">
                   {error}
                 </div>
               )}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  {t(locale, "auth.email")}
-                </label>
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  placeholder={t(locale, "auth.emailPlaceholder")}
-                />
+
+              <div className="form-group">
+                <Label htmlFor="forgot-email">{t(locale, "auth.email")}</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="forgot-email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    placeholder={t(locale, "auth.emailPlaceholder")}
+                    className="form-input-lg form-input-with-icon-left bg-secondary/50 border-border"
+                  />
+                </div>
               </div>
-              <Button type="submit" variant="primary" className="w-full" disabled={isLoading}>
-                {isLoading ? t(locale, "common.loading") : t(locale, "auth.forgotPasswordPage.send")}
+
+              <Button
+                type="submit"
+                variant="primary"
+                size="lg"
+                className="h-12 w-full text-base font-semibold"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  t(locale, "common.loading")
+                ) : (
+                  <>
+                    {t(locale, "auth.forgotPasswordPage.send")}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </>
+                )}
               </Button>
-              <p className="text-sm text-center text-muted-foreground">
-                <Link href="/auth/signin" className="text-primary hover:underline">
+
+              <p className="text-center text-sm text-muted-foreground">
+                <Link
+                  href="/auth/signin"
+                  className="inline-flex items-center gap-1 font-semibold text-primary transition-colors hover:text-primary/80"
+                >
+                  <ArrowLeft className="h-3.5 w-3.5" />
                   {t(locale, "auth.forgotPasswordPage.backToSignIn")}
                 </Link>
               </p>
-            </form>
+            </motion.form>
           )}
-        </CardContent>
-      </Card>
+        </motion.div>
+      </div>
+
+      <div className="hidden lg:block lg:w-1/2">
+        <ForgotPasswordSidePanel />
+      </div>
     </div>
   );
 }

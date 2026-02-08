@@ -240,7 +240,7 @@ export function ParticipantReportContent({
             <strong>{attemptsCount}</strong>
           </p>
           <p>
-            {locale === "fr" ? "Votre solde de coins : " : "Your coin balance: "}
+            {locale === "fr" ? "Ton solde de coins : " : "Your coin balance: "}
             <strong>{coinBalance}</strong>
             {isAdmin && (
               <span className="ml-2 text-muted-foreground">
@@ -532,7 +532,6 @@ export function ParticipantReportContent({
               <Input
                 id="report-email"
                 type="email"
-                placeholder={locale === "fr" ? "email@exemple.com" : "email@example.com"}
                 value={emailAddress}
                 onChange={(e) => setEmailAddress(e.target.value)}
                 disabled={isSendingEmail}

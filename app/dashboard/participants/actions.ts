@@ -12,6 +12,8 @@ type GetParticipantsResponse =
         id: string;
         name: string;
         email: string | null;
+        avatar: string | null;
+        gender: "MALE" | "FEMALE" | "OTHER" | null;
         createdAt: Date;
         attemptsCount: number;
         quizzes: Array<{
@@ -145,6 +147,8 @@ export async function getParticipants(): Promise<GetParticipantsResponse> {
         id: string;
         name: string;
         email: string | null;
+        avatar: string | null;
+        gender: "MALE" | "FEMALE" | "OTHER" | null;
         createdAt: Date;
         attemptsCount: number;
         quizzes: Array<{ quizId: string; quizName: string; linkToken: string }>;
@@ -157,6 +161,8 @@ export async function getParticipants(): Promise<GetParticipantsResponse> {
         id: participant.id,
         name: participant.name,
         email: participant.email,
+        avatar: participant.avatar,
+        gender: participant.gender,
         createdAt: participant.createdAt,
         attemptsCount: participant.attempts.length, // Already filtered by quizIds
         quizzes: participant.links.map((link) => ({
@@ -176,6 +182,8 @@ export async function getParticipants(): Promise<GetParticipantsResponse> {
             id: participantId,
             name: link.participant.name,
             email: link.participant.email,
+            avatar: link.participant.avatar,
+            gender: link.participant.gender,
             createdAt: link.participant.createdAt,
             attemptsCount: 0,
             quizzes: [],
@@ -220,6 +228,8 @@ export async function getParticipants(): Promise<GetParticipantsResponse> {
             id: participantId,
             name: attempt.participant.name,
             email: attempt.participant.email,
+            avatar: attempt.participant.avatar,
+            gender: attempt.participant.gender,
             createdAt: attempt.participant.createdAt,
             attemptsCount: count,
             quizzes: [],
@@ -246,7 +256,8 @@ export async function getParticipants(): Promise<GetParticipantsResponse> {
  */
 export async function createParticipant(
   name: string,
-  email?: string
+  email?: string,
+  gender?: "MALE" | "FEMALE" | "OTHER"
 ): Promise<CreateParticipantResponse> {
   try {
     if (!prisma) {
@@ -266,8 +277,19 @@ export async function createParticipant(
       data: {
         name: name.trim(),
         email: email?.trim() || null,
+        gender: gender || null,
         createdByUserId: session.user.id,
       },
+    });
+
+    // Generate avatar after creation (using participant ID as seed and gender)
+    const { generateParticipantAvatar } = await import("@/lib/participant-avatar");
+    const avatarSvg = generateParticipantAvatar(participant.id, gender || null);
+
+    // Update participant with avatar
+    await prisma.participant.update({
+      where: { id: participant.id },
+      data: { avatar: avatarSvg },
     });
 
     revalidatePath("/dashboard/participants");
@@ -295,7 +317,8 @@ export async function createParticipant(
 export async function updateParticipant(
   participantId: string,
   name: string,
-  email?: string
+  email?: string,
+  gender?: "MALE" | "FEMALE" | "OTHER"
 ): Promise<UpdateParticipantResponse> {
   try {
     if (!prisma) {
@@ -354,13 +377,30 @@ export async function updateParticipant(
       return { success: false, error: "Unauthorized" };
     }
 
+    // Get current participant to check if gender changed
+    const currentParticipant = await prisma.participant.findUnique({
+      where: { id: participantId },
+      select: { gender: true },
+    });
+
     const updated = await prisma.participant.update({
       where: { id: participantId },
       data: {
         name: name.trim(),
         email: email?.trim() || null,
+        gender: gender || null,
       },
     });
+
+    // Regenerate avatar if gender changed
+    if (currentParticipant?.gender !== (gender || null)) {
+      const { generateParticipantAvatar } = await import("@/lib/participant-avatar");
+      const avatarSvg = generateParticipantAvatar(participantId, gender || null);
+      await prisma.participant.update({
+        where: { id: participantId },
+        data: { avatar: avatarSvg },
+      });
+    }
 
     revalidatePath("/dashboard/participants");
 

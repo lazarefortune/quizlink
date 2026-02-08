@@ -139,7 +139,7 @@ export function AdminPacksContent() {
 
   const handleSave = async () => {
     if (!formData.name || !formData.displayName || !formData.coins || !formData.price) {
-      showToast("Veuillez remplir tous les champs obligatoires", "error");
+      showToast("Remplis tous les champs obligatoires", "error");
       return;
     }
 
@@ -301,7 +301,6 @@ export function AdminPacksContent() {
                   id="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value.toUpperCase() })}
-                  placeholder="STARTER"
                   disabled={!!editingPack}
                 />
                 <p className="text-xs text-muted-foreground">
@@ -314,7 +313,6 @@ export function AdminPacksContent() {
                   id="displayName"
                   value={formData.displayName}
                   onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
-                  placeholder="Pack Starter"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -326,7 +324,6 @@ export function AdminPacksContent() {
                     min="1"
                     value={formData.coins}
                     onChange={(e) => setFormData({ ...formData, coins: e.target.value })}
-                    placeholder="50"
                   />
                 </div>
                 <div className="space-y-2">
@@ -338,7 +335,6 @@ export function AdminPacksContent() {
                     step="0.01"
                     value={formData.price}
                     onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    placeholder="5.00"
                   />
                 </div>
               </div>
@@ -348,7 +344,6 @@ export function AdminPacksContent() {
                   id="stripePriceId"
                   value={formData.stripePriceId}
                   onChange={(e) => setFormData({ ...formData, stripePriceId: e.target.value })}
-                  placeholder="price_xxx (optionnel)"
                 />
                 <p className="text-xs text-muted-foreground">
                   Laissez vide pour créer automatiquement via price_data
@@ -361,7 +356,6 @@ export function AdminPacksContent() {
                   type="number"
                   value={formData.order}
                   onChange={(e) => setFormData({ ...formData, order: e.target.value })}
-                  placeholder="0"
                 />
               </div>
               <div className="flex items-center justify-between">
@@ -409,7 +403,7 @@ export function AdminPacksContent() {
             <DialogHeader>
               <DialogTitle>Supprimer le pack</DialogTitle>
               <DialogDescription>
-                Êtes-vous sûr de vouloir supprimer le pack "{packToDelete?.displayName}" ?
+                Tu es sûr de vouloir supprimer le pack "{packToDelete?.displayName}" ?
                 Cette action est irréversible et supprimera définitivement le pack.
               </DialogDescription>
             </DialogHeader>

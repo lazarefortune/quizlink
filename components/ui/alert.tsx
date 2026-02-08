@@ -1,17 +1,22 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
-import { Info, CheckCircle2, XCircle } from "lucide-react";
+import { Info, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
 const alertVariants = cva(
-  "relative w-full rounded-lg border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:h-5 [&>svg]:w-5",
+  "flex w-full items-start gap-3 rounded-xl border-2 p-4",
   {
     variants: {
       variant: {
-        info: "bg-background text-foreground border-blue-500/20 dark:border-blue-400/20 [&>svg]:text-blue-600 dark:[&>svg]:text-blue-400",
-        success: "bg-background text-foreground border-green-500/20 dark:border-green-400/20 [&>svg]:text-green-600 dark:[&>svg]:text-green-400",
-        error: "bg-background text-foreground border-red-500/20 dark:border-red-400/20 [&>svg]:text-red-600 dark:[&>svg]:text-red-400",
+        info:
+          "bg-card text-card-foreground border-blue/30 dark:border-blue/40 [&_.alert-icon-wrap]:bg-blue/15 [&_.alert-icon-wrap]:text-blue",
+        success:
+          "bg-card text-card-foreground border-primary/35 dark:border-primary/50 [&_.alert-icon-wrap]:bg-primary/15 [&_.alert-icon-wrap]:text-primary",
+        error:
+          "bg-card text-card-foreground border-destructive/35 dark:border-destructive/50 [&_.alert-icon-wrap]:bg-destructive/15 [&_.alert-icon-wrap]:text-destructive",
+        warning:
+          "bg-card text-card-foreground border-warning/40 dark:border-warning/50 [&_.alert-icon-wrap]:bg-warning/15 [&_.alert-icon-wrap]:text-warning",
       },
     },
     defaultVariants: {
@@ -33,7 +38,9 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
         ? CheckCircle2
         : variant === "error"
           ? XCircle
-          : Info;
+          : variant === "warning"
+            ? AlertTriangle
+            : Info;
 
     return (
       <div
@@ -42,10 +49,12 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
         className={cn(alertVariants({ variant }), className)}
         {...props}
       >
-        <IconComponent className="h-4 w-4" />
-        <div>
+        <span className="alert-icon-wrap inline-flex size-8 shrink-0 items-center justify-center rounded-lg">
+          <IconComponent className="h-5 w-5" />
+        </span>
+        <div className="min-w-0 flex-1">
           {title && (
-            <h5 className="mb-1 font-medium leading-none tracking-tight">
+            <h5 className="mb-1 font-semibold leading-none tracking-tight">
               {title}
             </h5>
           )}

@@ -39,7 +39,7 @@ export default function BuilderQuizPage() {
             <BuilderPageContent initialQuizId={quizId} />
           </Suspense>
         </div>
-        <AuthRequiredOverlay />
+        <AuthRequiredOverlay returnUrl={`/builder/${quizId}`} />
       </div>
     );
   }
