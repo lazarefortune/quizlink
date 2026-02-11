@@ -29,6 +29,9 @@ function getTitleFromPath(pathname: string | null, locale: Locale): string {
   if (pathname.startsWith("/dashboard/quiz/")) {
     return t(locale, "dashboard.statistics");
   }
+  if (pathname.startsWith("/account")) return t(locale, "dashboard.sidebar.account");
+  if (pathname.startsWith("/generate")) return t(locale, "nav.generate");
+  if (pathname.startsWith("/builder")) return t(locale, "nav.create");
   return routeTitles[pathname] ?? t(locale, "dashboard.sidebar.overview");
 }
 
@@ -56,19 +59,14 @@ export function DashboardShell({ children, title }: DashboardShellProps) {
           showCloseButton
           className="w-[min(85vw,18rem)] p-0 sm:w-64"
         >
-          <Sidebar
-            isAdmin={isAdmin}
-            onNavClick={() => setSidebarOpen(false)}
-          />
+          <Sidebar isAdmin={isAdmin} onNavClick={() => setSidebarOpen(false)} />
         </SheetContent>
       </Sheet>
 
       {/* Main content: offset for desktop sidebar */}
       <div className="flex min-w-0 flex-1 flex-col lg:pl-56 xl:pl-64">
-        <Topbar
-          onMenuClick={() => setSidebarOpen(true)}
-        />
-        <main className="min-h-0 flex-1 overflow-auto bg-background">
+        <Topbar onMenuClick={() => setSidebarOpen(true)} />
+        <main className="min-h-0 flex-1 overflow-auto bg-background dark:bg-[#131F24]">
           {children}
         </main>
       </div>

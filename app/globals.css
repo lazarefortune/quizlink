@@ -2,49 +2,111 @@
 
 :root {
   /* Colors - Light Mode */
-  --background: 0 0% 100%;
-  --foreground: 0 0% 3.9%;
+  --background: 250 20% 98.8%; /* #FAFBFC */
+  --foreground: 0 0% 15%;
   --card: 0 0% 100%;
-  --card-foreground: 0 0% 3.9%;
+  --card-foreground: 0 0% 15%;
   --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 3.9%;
-  --primary: 234 100% 63%;
+  --popover-foreground: 0 0% 15%;
+  --primary: 95 98% 35%;
   --primary-foreground: 0 0% 100%;
+  --auth-panel-bg: 95 98% 32%;
   --secondary: 0 0% 96.1%;
-  --secondary-foreground: 0 0% 9%;
+  --secondary-foreground: 0 0% 20%;
   --muted: 0 0% 96.1%;
   --muted-foreground: 0 0% 45.1%;
   --accent: 0 0% 96.1%;
-  --accent-foreground: 0 0% 9%;
+  --accent-foreground: 0 0% 20%;
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 0 0% 98%;
+  /* Design system — usage bref */
+  --warning: 43 100% 56%; /* BANANA #FFB020 */
+  --warning-foreground: 0 0% 15%;
+  --highlight: 35 100% 50%; /* PUMPKIN #FF9400 */
+  --highlight-foreground: 0 0% 100%;
+  --blue: 199 92% 54%; /* BLUEBERRY #1CB0F6 */
+  --blue-foreground: 0 0% 100%;
   --border: 0 0% 89.8%;
   --input: 0 0% 89.8%;
   --ring: 0 0% 3.9%;
   --radius: 0.5rem;
+
+  /* Neumorphism shadows - light (reduced) */
+  --shadow-neu-raised: 4px 4px 8px rgba(0, 0, 0, 0.06), -4px -4px 8px rgba(255, 255, 255, 0.9);
+  --shadow-neu-pressed: inset 3px 3px 6px rgba(0, 0, 0, 0.06), inset -3px -3px 6px rgba(255, 255, 255, 0.85);
+  --shadow-neu-primary: 3px 3px 8px rgba(0, 0, 0, 0.12), -2px -2px 6px rgba(255, 255, 255, 0.4);
+
+  /* Gaming 3D - light (raised button: highlight top-left, solid shadow only below) */
+  --shadow-gaming-highlight: inset 1px 1px 0 rgba(255, 255, 255, 0.35);
+  --shadow-gaming-depth: 0 4px 0 rgba(0, 0, 0, 0.2);
+  --shadow-gaming-depth-pressed: 0 2px 0 rgba(0, 0, 0, 0.2);
+  /* Outline button — très légère ombre haut / gauche / droite + ombre en bas */
+  --shadow-bottom-subtle: 0 0 0 0;
+  /* --shadow-outline-subtle: 0 -1px 2px rgba(0, 0, 0, 0.05), -2px 0 2px rgba(0, 0, 0, 0.04), 2px 0 2px rgba(0, 0, 0, 0.04); */
+  --shadow-outline-depth: 0 4px 0 rgba(0, 0, 0, 0.2);
+  /* Colored shadows (Duolingo-style) — vert plus foncé */
+  --primary-shadow: 95 98% 28%;
+  --destructive-shadow: 0 84% 42%;
+  --shadow-gaming-depth-primary: 0 4px 0 hsl(var(--primary-shadow));
+  --shadow-gaming-depth-primary-pressed: 0 2px 0 hsl(var(--primary-shadow));
+  --shadow-gaming-depth-destructive: 0 4px 0 hsl(var(--destructive-shadow));
+  --shadow-gaming-depth-destructive-pressed: 0 2px 0 hsl(var(--destructive-shadow));
+  --blue-shadow: 199 92% 38%;
+  --shadow-gaming-depth-blue: 0 4px 0 hsl(var(--blue-shadow));
+  --shadow-gaming-depth-blue-pressed: 0 2px 0 hsl(var(--blue-shadow));
 }
 
 .dark {
-  /* Colors - Dark Mode */
-  --background: 0 0% 3.9%;
-  --foreground: 0 0% 98%;
-  --card: 0 0% 3.9%;
-  --card-foreground: 0 0% 98%;
-  --popover: 0 0% 3.9%;
-  --popover-foreground: 0 0% 98%;
-  --primary: 234 100% 63%;
+  /* Colors - Dark Mode (fond noir défini) */
+  --background: 0 0% 7%;
+  --foreground: 220 10% 95%;
+  --card: 0 0% 11%;
+  --card-foreground: 220 10% 95%;
+  --popover: 0 0% 11%;
+  --popover-foreground: 220 10% 95%;
+  --primary: 95 75% 36%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 0 0% 14.9%;
-  --secondary-foreground: 0 0% 98%;
-  --muted: 0 0% 14.9%;
-  --muted-foreground: 0 0% 63.9%;
-  --accent: 0 0% 14.9%;
-  --accent-foreground: 0 0% 98%;
-  --destructive: 0 62.8% 30.6%;
+  --auth-panel-bg: 95 75% 26%; /* vert plus foncé pour les side panels auth */
+  --secondary: 0 0% 14%;
+  --secondary-foreground: 220 10% 95%;
+  --muted: 0 0% 14%;
+  --muted-foreground: 220 10% 58%;
+  --accent: 0 0% 16%;
+  --accent-foreground: 220 10% 95%;
+  --destructive: 0 75% 38%;
   --destructive-foreground: 0 0% 98%;
-  --border: 0 0% 14.9%;
-  --input: 0 0% 14.9%;
-  --ring: 0 0% 83.1%;
+  --warning: 43 90% 58%;
+  --warning-foreground: 0 0% 15%;
+  --highlight: 35 95% 52%;
+  --highlight-foreground: 0 0% 100%;
+  --blue: 199 80% 58%;
+  --blue-foreground: 0 0% 15%;
+  --border: 0 0% 20%;
+  --input: 0 0% 20%;
+  --ring: 220 10% 60%;
+
+  /* Neumorphism shadows - dark (reduced) */
+  --shadow-neu-raised: 4px 4px 8px rgba(0, 0, 0, 0.3), -4px -4px 8px rgba(255, 255, 255, 0.03);
+  --shadow-neu-pressed: inset 3px 3px 6px rgba(0, 0, 0, 0.3), inset -3px -3px 6px rgba(255, 255, 255, 0.02);
+  --shadow-neu-primary: 3px 3px 8px rgba(0, 0, 0, 0.3), -2px -2px 6px rgba(255, 255, 255, 0.05);
+
+  /* Gaming 3D - dark */
+  --shadow-gaming-highlight: inset 1px 1px 0 rgba(255, 255, 255, 0.1);
+  --shadow-gaming-depth: 0 4px 0 rgba(0, 0, 0, 0.45);
+  --shadow-gaming-depth-pressed: 0 2px 0 rgba(0, 0, 0, 0.45);
+  --shadow-bottom-subtle: 0 0 0 0;
+  /* --shadow-outline-subtle: 0 -1px 2px rgba(255, 255, 255, 0.08), -2px 0 2px rgba(255, 255, 255, 0.06), 2px 0 2px rgba(255, 255, 255, 0.06); */
+  --shadow-outline-depth: 0 4px 0 rgba(255, 255, 255, 0.12);
+  /* Colored shadows - dark mode (ombre bien plus foncée que le bouton) */
+  --primary-shadow: 95 75% 22%;
+  --destructive-shadow: 0 75% 24%;
+  --shadow-gaming-depth-primary: 0 4px 0 hsl(var(--primary-shadow));
+  --shadow-gaming-depth-primary-pressed: 0 2px 0 hsl(var(--primary-shadow));
+  --shadow-gaming-depth-destructive: 0 4px 0 hsl(var(--destructive-shadow));
+  --shadow-gaming-depth-destructive-pressed: 0 2px 0 hsl(var(--destructive-shadow));
+  --blue-shadow: 199 80% 38%;
+  --shadow-gaming-depth-blue: 0 4px 0 hsl(var(--blue-shadow));
+  --shadow-gaming-depth-blue-pressed: 0 2px 0 hsl(var(--blue-shadow));
 }
 
 @theme inline {
@@ -65,12 +127,19 @@
   --color-accent-foreground: hsl(var(--accent-foreground));
   --color-destructive: hsl(var(--destructive));
   --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-warning: hsl(var(--warning));
+  --color-warning-foreground: hsl(var(--warning-foreground));
+  --color-highlight: hsl(var(--highlight));
+  --color-highlight-foreground: hsl(var(--highlight-foreground));
+  --color-blue: hsl(var(--blue));
+  --color-blue-foreground: hsl(var(--blue-foreground));
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
 
   /* Typography */
-  --font-sans: var(--font-quicksand);
+  --font-sans: var(--font-rubik);
+  --font-heading: var(--font-capriola);
 
   /* Spacing Scale (using Tailwind defaults) */
   --spacing-0: 0;
@@ -94,37 +163,224 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-* {
-  border-color: hsl(var(--border));
-}
-
 body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
-  font-family: var(--font-quicksand), system-ui, sans-serif;
+  font-family: var(--font-rubik), system-ui, sans-serif;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 400;
+}
+
+/* Fond des side panels auth (vert plus foncé que primary) */
+.auth-side-panel-bg {
+  background-color: hsl(var(--auth-panel-bg));
+}
+
+/* ——— Form design system (modifier ici = impact partout) ——— */
+.form-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  line-height: 1;
+  color: hsl(var(--foreground));
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group-inline {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group-inline > .form-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.form-error {
+  border-radius: var(--radius-lg);
+  border: 2px solid hsl(var(--destructive) / 0.3);
+  background-color: hsl(var(--destructive) / 0.1);
+  color: hsl(var(--destructive));
+  font-size: 0.875rem;
+  padding: 0.75rem 1rem;
+}
+
+.form-hint {
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.form-input {
+  display: flex;
+  height: 2.5rem;
+  width: 100%;
+  border-radius: var(--radius-md);
+  border: 2px solid hsl(var(--input));
+  background-color: hsl(var(--background));
+  padding: 0.5rem 0.75rem;
+  font-size: max(16px, 1rem);
+  color: hsl(var(--foreground));
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-input::placeholder {
+  color: hsl(var(--muted-foreground));
+}
+
+.form-input:focus {
+  border-color: hsl(var(--primary));
+  box-shadow: 0 0 0 2px hsl(var(--primary) / 0.2);
+}
+
+.form-input:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.form-input-lg {
+  height: 3rem;
+}
+
+.form-input-with-icon-left {
+  padding-left: 2.5rem;
+}
+
+.form-input-with-icon-right {
+  padding-right: 2.5rem;
+}
+
+.form-textarea {
+  display: flex;
+  min-height: 5rem;
+  width: 100%;
+  border-radius: var(--radius-md);
+  border: 2px solid hsl(var(--input));
+  background-color: hsl(var(--background));
+  padding: 0.5rem 0.75rem;
+  font-size: max(16px, 1rem);
+  color: hsl(var(--foreground));
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  resize: vertical;
+}
+
+.form-textarea::placeholder {
+  color: hsl(var(--muted-foreground));
+}
+
+.form-textarea:focus {
+  border-color: hsl(var(--primary));
+  box-shadow: 0 0 0 2px hsl(var(--primary) / 0.2);
+}
+
+.form-textarea:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* ——— Auth pages: entrée en scène (stagger) ——— */
+@keyframes auth-enter {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.auth-entrance {
+  opacity: 0;
+  animation: auth-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.auth-delay-0 { animation-delay: 0s; }
+.auth-delay-1 { animation-delay: 0.06s; }
+.auth-delay-2 { animation-delay: 0.12s; }
+.auth-delay-3 { animation-delay: 0.18s; }
+.auth-delay-4 { animation-delay: 0.24s; }
+.auth-delay-5 { animation-delay: 0.3s; }
+.auth-delay-6 { animation-delay: 0.36s; }
+.auth-delay-7 { animation-delay: 0.42s; }
+.auth-delay-8 { animation-delay: 0.48s; }
+.auth-delay-9 { animation-delay: 0.54s; }
+.auth-delay-10 { animation-delay: 0.6s; }
+
+/* Side panel: léger rebond sur le contenu */
+@keyframes auth-panel-enter {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.auth-panel-entrance {
+  opacity: 0;
+  animation: auth-panel-enter 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.auth-panel-delay-0 { animation-delay: 0.1s; }
+.auth-panel-delay-1 { animation-delay: 0.2s; }
+.auth-panel-delay-2 { animation-delay: 0.3s; }
+
+/* Capriola sur les titres — variable définie sur html par next/font */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-capriola), system-ui, sans-serif !important;
+}
+
+/* Minimum 16px for form fields to avoid iOS zoom on focus (mobile) */
+input,
+select,
+textarea {
+  font-size: max(16px, 1rem);
 }
 
 /* Override Tailwind font-weight utilities to be heavier */
-.font-light {
-  font-weight: 400 !important;
+/* Scroll-triggered reveal (Intersection Observer) */
+@keyframes reveal-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-reveal {
+  opacity: 0;
+  transform: translateY(20px);
+}
+.animate-reveal.is-visible {
+  animation: reveal-in 0.5s ease-out forwards;
 }
 
-.font-normal {
-  font-weight: 500 !important;
+/* Dropdown open/close animation */
+@keyframes dropdown-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
-
-.font-medium {
-  font-weight: 600 !important;
-}
-
-.font-semibold {
-  font-weight: 700 !important;
-}
-
-.font-bold {
-  font-weight: 700 !important;
+.dropdown-content-animate[data-state="open"] {
+  animation: dropdown-enter 0.2s ease-out;
 }
 
 /* Modal animations */
@@ -190,35 +446,99 @@ body {
   }
 }
 
-/* Dialog and AlertDialog animations */
-[data-radix-dialog-overlay],
-[data-radix-alert-dialog-overlay] {
-  transition: opacity 0.2s ease-out;
+/* Dialog and AlertDialog — game-like open/close (keyframes run on mount / state change) */
+@keyframes dialog-overlay-open {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
-[data-radix-dialog-overlay][data-state="open"],
-[data-radix-alert-dialog-overlay][data-state="open"] {
-  opacity: 1;
+@keyframes dialog-overlay-close {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
-[data-radix-dialog-overlay][data-state="closed"],
-[data-radix-alert-dialog-overlay][data-state="closed"] {
+/* Scale + opacity only ; le centrage est géré par le wrapper */
+@keyframes dialog-content-open {
+  from {
+    opacity: 0;
+    transform: scale(0.88);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes dialog-content-close {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+}
+
+/* Ciblage par classe car Radix n’ajoute pas data-radix-dialog-* */
+.quizlink-dialog-overlay {
   opacity: 0;
 }
 
-[data-radix-dialog-content],
-[data-radix-alert-dialog-content] {
-  transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+.quizlink-dialog-overlay[data-state="open"] {
+  animation: dialog-overlay-open 0.25s ease-out forwards;
 }
 
-[data-radix-dialog-content][data-state="open"],
-[data-radix-alert-dialog-content][data-state="open"] {
-  opacity: 1;
-  transform: translate(-50%, -50%) scale(1);
+.quizlink-dialog-overlay[data-state="closed"] {
+  animation: dialog-overlay-close 0.2s ease-in forwards;
 }
 
-[data-radix-dialog-content][data-state="closed"],
-[data-radix-alert-dialog-content][data-state="closed"] {
-  opacity: 0;
-  transform: translate(-50%, -48%) scale(0.95);
+.quizlink-dialog-content[data-state="open"] {
+  animation: dialog-content-open 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.quizlink-dialog-content[data-state="closed"] {
+  animation: dialog-content-close 0.22s ease-in forwards;
+}
+
+/* Toast enter animation */
+@keyframes toast-enter {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.animate-toast-enter {
+  animation: toast-enter 0.3s ease-out forwards;
+}
+
+/* Toast exit animation */
+@keyframes toast-exit {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+.animate-toast-exit {
+  animation: toast-exit 0.3s ease-out forwards;
 }

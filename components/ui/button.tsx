@@ -14,10 +14,10 @@ const buttonVariants = cva(
         primary:
           "bg-primary text-primary-foreground shadow-[var(--shadow-gaming-highlight),var(--shadow-gaming-depth-primary)] hover:bg-primary/90 hover:shadow-[var(--shadow-gaming-highlight),var(--shadow-gaming-depth-primary)] active:bg-primary/95 active:shadow-none active:translate-y-[4px]",
         secondary:
-          "bg-secondary text-secondary-foreground border border-border shadow-[var(--shadow-gaming-depth)] hover:bg-secondary/75 hover:border-border/80 hover:shadow-[var(--shadow-gaming-depth)] active:shadow-none active:translate-y-[4px] dark:border-secondary-foreground/20 dark:hover:bg-secondary/60",
+          "bg-secondary text-secondary-foreground border-2 border-border shadow-[var(--shadow-gaming-depth)] hover:bg-secondary/75 hover:border-border/80 hover:shadow-[var(--shadow-gaming-depth)] active:shadow-none active:translate-y-[4px] dark:border-secondary-foreground/20 dark:hover:bg-secondary/60",
         /* Légère ombre haut/gauche/droite + ombre normale en bas, effet enfoncé au clic */
         outline:
-          "border border-primary bg-background text-primary shadow-[var(--shadow-outline-subtle),var(--shadow-outline-depth)] hover:bg-primary/10 hover:shadow-[var(--shadow-outline-subtle),var(--shadow-outline-depth)] active:bg-primary/15 active:shadow-none active:translate-y-[4px] dark:bg-card dark:hover:bg-primary/15 dark:active:bg-primary/20",
+          "border-2 border-b-6 border-primary bg-background text-primary shadow-[var(--shadow-outline-subtle),var(--shadow-outline-depth)] hover:bg-primary/10 hover:shadow-[var(--shadow-outline-subtle),var(--shadow-outline-depth)] active:bg-primary/15 active:shadow-none active:translate-y-[4px] active:border-b-2 dark:bg-card dark:hover:bg-primary/15 dark:active:bg-primary/20",
         ghost:
           "bg-transparent hover:bg-accent hover:text-accent-foreground active:bg-accent/80",
         destructive:
@@ -25,7 +25,7 @@ const buttonVariants = cva(
         blue:
           "bg-blue text-blue-foreground shadow-[var(--shadow-gaming-highlight),var(--shadow-gaming-depth-blue)] hover:bg-blue/90 hover:shadow-[var(--shadow-gaming-highlight),var(--shadow-gaming-depth-blue)] active:bg-blue/95 active:shadow-none active:translate-y-[4px]",
         outlineBlue:
-          "border border-blue bg-background text-blue shadow-[var(--shadow-outline-subtle),var(--shadow-outline-depth)] hover:bg-blue/10 hover:shadow-[var(--shadow-outline-subtle),var(--shadow-outline-depth)] active:bg-blue/15 active:shadow-none active:translate-y-[4px] dark:bg-card dark:hover:bg-blue/15 dark:active:bg-blue/20",
+          "border-2 border-b-6 border-blue bg-background text-blue shadow-[var(--shadow-outline-subtle),var(--shadow-outline-depth)] hover:bg-blue/10 hover:shadow-[var(--shadow-outline-subtle),var(--shadow-outline-depth)] active:bg-blue/15 active:shadow-none active:translate-y-[4px] active:border-b-2 dark:bg-card dark:hover:bg-blue/15 dark:active:bg-blue/20",
       },
       size: {
         default: "h-10 px-5 py-2 rounded-md",

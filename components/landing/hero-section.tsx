@@ -19,10 +19,10 @@ export function HeroSection() {
     const title = t(locale, "landing.hero.title");
     const highlightsStr = t(locale, "landing.hero.titleHighlights");
     if (!highlightsStr || highlightsStr === "landing.hero.titleHighlights") {
-      return [title];
+      return [{ type: "normal" as const, text: title }];
     }
     const keywords = highlightsStr.split(",").map((w) => w.trim()).filter(Boolean);
-    if (keywords.length === 0) return [title];
+    if (keywords.length === 0) return [{ type: "normal" as const, text: title }];
     const pattern = new RegExp(`(${keywords.map(escapeRegex).join("|")})`, "gi");
     const segments = title.split(pattern);
     return segments.map((seg) => {

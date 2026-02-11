@@ -97,7 +97,15 @@ export function Header() {
     return pathname?.startsWith(href);
   };
 
-  if (pathname?.startsWith("/dashboard") || pathname?.startsWith("/auth")) {
+  if (
+    pathname?.startsWith("/dashboard") ||
+    pathname?.startsWith("/auth") ||
+    pathname?.startsWith("/account") ||
+    pathname?.startsWith("/generate") ||
+    pathname?.startsWith("/builder") ||
+    pathname?.startsWith("/admin") ||
+    pathname?.startsWith("/p/")
+  ) {
     return null;
   }
 
@@ -131,7 +139,7 @@ export function Header() {
             {/* Create button with dropdown for all users */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="primary" size="sm" className="gap-2">
+                <Button variant="secondary" size="sm" className="gap-2">
                   <Plus className="h-4 w-4" />
                   {t(locale, "nav.create")}
                 </Button>

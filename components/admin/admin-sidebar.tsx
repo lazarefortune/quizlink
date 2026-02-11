@@ -11,6 +11,7 @@ import {
   Shield,
   Menu,
   X,
+  BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/lib/i18n/use-locale";
@@ -18,26 +19,11 @@ import { t } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
-  {
-    href: "/admin",
-    label: "admin.nav.dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    href: "/admin/coins",
-    label: "admin.nav.coins",
-    icon: Coins,
-  },
-  {
-    href: "/admin/packs",
-    label: "admin.nav.packs",
-    icon: Package,
-  },
-  {
-    href: "/admin/feedback",
-    label: "admin.nav.feedback",
-    icon: MessageSquare,
-  },
+  { href: "/admin", label: "admin.nav.dashboard", icon: LayoutDashboard },
+  { href: "/admin/coins", label: "admin.nav.coins", icon: Coins },
+  { href: "/admin/packs", label: "admin.nav.packs", icon: Package },
+  { href: "/admin/feedback", label: "admin.nav.feedback", icon: MessageSquare },
+  { href: "/admin/analytics", label: "admin.nav.analytics", icon: BarChart3 },
 ];
 
 export function AdminSidebar() {

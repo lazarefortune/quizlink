@@ -49,7 +49,7 @@ export function SigninSidePanel() {
       />
       <div
         className="absolute top-1/3 right-6 h-20 w-20 rounded-2xl bg-white/5"
-        style={{ rotate: 12 }}
+        style={{ rotate: "12deg" }}
         aria-hidden
       >
         <motion.div

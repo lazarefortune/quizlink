@@ -554,9 +554,10 @@ export const en = {
   // Dashboard
   dashboard: {
     sidebar: {
-      overview: "Dashboard",
-      quizzes: "My quizzes",
+      overview: "Home",
+      quizzes: "Quizzes",
       participants: "Participants",
+      account: "My account",
       admin: "Admin",
     },
     welcome: {
@@ -714,6 +715,12 @@ export const en = {
     startedAtLabel: "Started at",
     finishedAtLabel: "Finished at",
     selectExpirationDate: "Select expiration date and time",
+    portalPublic: "Public portal",
+    portalPublicDescription: "The participant can see their quizzes and progress via a public link (Duolingo-style).",
+    portalEnabled: "Public portal enabled",
+    portalDisabled: "Public portal disabled",
+    portalToggleError: "Could not update portal",
+    portalLinkCopied: "Portal link copied",
   },
 
   // Pricing
@@ -769,6 +776,16 @@ export const en = {
 
   // Admin
   admin: {
+    nav: {
+      title: "Admin",
+      subtitle: "Backoffice",
+      dashboard: "Users",
+      coins: "Coins",
+      packs: "Packs",
+      feedback: "Feedback",
+      analytics: "Analytics",
+      backToDashboard: "Back to app",
+    },
     dashboard: {
       title: "Admin Dashboard",
       description: "Manage users and their coins",

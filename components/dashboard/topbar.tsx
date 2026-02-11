@@ -81,12 +81,21 @@ export function Topbar({ title, onMenuClick, className }: TopbarProps) {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <div className="px-2 py-1.5 text-sm font-medium border-b">
+              {session?.user?.name}
+            </div>
+            <div className="px-2 py-1 text-xs text-muted-foreground border-b">
               {session?.user?.email}
             </div>
             <DropdownMenuItem asChild>
               <Link href="/account" className="flex items-center gap-2 cursor-pointer">
                 <Settings className="h-4 w-4" />
                 {t(locale, "userMenu.settings")}
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/account/coins" className="flex items-center gap-2 cursor-pointer">
+                <Coins className="h-4 w-4" />
+                {t(locale, "account.coins.title")}
               </Link>
             </DropdownMenuItem>
             {session?.user?.role === "ADMIN" && (

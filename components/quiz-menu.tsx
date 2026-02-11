@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
-import { deleteQuiz } from "@/app/dashboard/actions";
+import { deleteQuiz } from "@/app/(app)/dashboard/actions";
 import { createOrGetQuizLink } from "@/app/quiz-link/actions";
 import {
   AlertDialog,
@@ -153,7 +153,7 @@ export function QuizMenu({
               onClick={() => setIsOpen(false)}
             />
             {/* Dropdown */}
-            <div className="absolute right-0 mt-2 w-48 rounded-md border bg-popover shadow-lg z-50" onClick={(e) => e.stopPropagation()}>
+            <div className="absolute right-0 mt-2 w-48 rounded-md border border-border bg-popover shadow-lg z-50" onClick={(e) => e.stopPropagation()}>
               <div className="p-1">
                 {visibility === "PUBLIC" ? (
                   <button

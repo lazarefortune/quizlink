@@ -34,7 +34,7 @@ export const fr = {
     characterCount: "caractères",
     minimumRequired: "minimum requis",
     uploadComingSoon: "Téléchargement bientôt disponible",
-    createAccountToUnlock: "Créez un compte pour débloquer cette fonctionnalité",
+    createAccountToUnlock: "Crée un compte pour débloquer cette fonctionnalité",
     dropPdf: "Dépose ton PDF ici ou clique pour parcourir",
     pdfFilesOnly: "Fichiers PDF uniquement (max 5 MB, 20 pages)",
     pdfScannedWarning: "⚠️ Les PDF scannés ne sont pas supportés",
@@ -73,8 +73,8 @@ export const fr = {
     timeLimitPlaceholder: "Laisser vide pour aucune limite",
     save: "Enregistrer les Options",
     cancel: "Annuler",
-    createAccountToCustomize: "Créez un compte pour personnaliser les types de questions",
-    createAccountToChangeLanguage: "Créez un compte pour changer la langue",
+    createAccountToCustomize: "Crée un compte pour personnaliser les types de questions",
+    createAccountToChangeLanguage: "Crée un compte pour changer la langue",
     questions: "questions",
   },
 
@@ -249,8 +249,8 @@ export const fr = {
   // Validation errors
   errors: {
     textTooShort: "Le texte doit contenir au moins {min} caractères.",
-    textTooLong: "Le texte ne doit pas dépasser {max} caractères. Créez un compte pour débloquer des textes plus longs.",
-    invalidQuestionCount: "Maximum {max} questions autorisées. Créez un compte pour débloquer plus de questions.",
+    textTooLong: "Le texte ne doit pas dépasser {max} caractères. Crée un compte pour débloquer des textes plus longs.",
+    invalidQuestionCount: "Maximum {max} questions autorisées. Crée un compte pour débloquer plus de questions.",
     atLeastOneQuestion: "Au moins 1 question est requise.",
     noTextContent: "Saisis du contenu texte.",
     noPdfFile: "Télécharge un fichier PDF.",
@@ -391,18 +391,18 @@ export const fr = {
   // Landing page
   landing: {
     hero: {
-      title: "Créez des quiz en quelques secondes, pas des heures",
+      title: "Crée des quiz en quelques secondes, pas des heures",
       titleHighlights: "quiz,secondes",
-      subtitle: "Transformez n'importe quel contenu en quiz engageant. Créez un compte pour commencer.",
+      subtitle: "Transforme n'importe quel contenu en quiz engageant. Crée un compte pour commencer.",
       createButton: "Créer un Quiz",
       generateButton: "Générer avec l'IA",
     },
     value: {
       title: "Tout ce dont tu as besoin pour créer de superbes quiz",
-      subtitle: "Créez des quiz manuellement ou laissez l'IA faire le travail. Partagez instantanément et personnalisez tout.",
+      subtitle: "Crée des quiz manuellement ou laisse l'IA faire le travail. Partage instantanément et personnalise tout.",
       manualOrAi: {
         title: "Génération Manuelle ou IA",
-        description: "Créez des quiz étape par étape ou générez-les automatiquement à partir de texte ou PDFs",
+        description: "Crée des quiz étape par étape ou génère-les automatiquement à partir de texte ou PDFs",
       },
       shareEasily: {
         title: "Partage Facile",
@@ -410,7 +410,7 @@ export const fr = {
       },
       fullCustomization: {
         title: "Personnalisation Complète",
-        description: "Contrôlez la visibilité des réponses, mélangez les questions, définissez des minuteries, et plus encore",
+        description: "Contrôle la visibilité des réponses, mélange les questions, définis des minuteries, et plus encore",
       },
     },
     features: {
@@ -422,15 +422,15 @@ export const fr = {
       },
       ai: {
         title: "Génération IA",
-        description: "Générez automatiquement des quiz à partir de texte, documents ou autres contenus",
+        description: "Génère automatiquement des quiz à partir de texte, documents ou autres contenus",
       },
       shareable: {
         title: "Liens partageables",
-        description: "Partagez vos quiz instantanément avec un lien unique et sécurisé",
+        description: "Partage tes quiz instantanément avec un lien unique et sécurisé",
       },
       participants: {
         title: "Suivi des participants",
-        description: "Gérez vos participants, créez des liens personnalisés et suivez leurs progrès",
+        description: "Gère tes participants, crée des liens personnalisés et suis leurs progrès",
       },
       statistics: {
         title: "Statistiques détaillées",
@@ -438,7 +438,7 @@ export const fr = {
       },
       security: {
         title: "Sécurité des réponses",
-        description: "Contrôlez la visibilité des réponses et protégez l'intégrité de vos évaluations",
+        description: "Contrôle la visibilité des réponses et protège l'intégrité de tes évaluations",
       },
       manualBuilder: {
         title: "Créateur de Quiz Manuel",
@@ -462,7 +462,7 @@ export const fr = {
       },
       noAccount: {
         title: "Aucun Compte Requis",
-        description: "Commencez à créer et partager des quiz immédiatement, aucune inscription nécessaire",
+        description: "Commence à créer et partager des quiz immédiatement, aucune inscription nécessaire",
       },
       questionTypes: {
         mcq: "QCM",
@@ -475,14 +475,14 @@ export const fr = {
       description: "Les utilisateurs anonymes peuvent créer et partager des quiz, mais les comptes débloquent des fonctionnalités avancées",
       currentLimitations: "Limitations Actuelles",
       limitationsText: "En tant qu'utilisateur anonyme, tu peux créer des quiz et les partager, mais certaines fonctionnalités sont limitées.",
-      unlockTitle: "Débloquez avec un compte :",
+      unlockTitle: "Débloque avec un compte :",
       moreQuestions: {
         title: "Plus de questions par quiz",
-        description: "Créez des quiz plus longs et plus complets",
+        description: "Crée des quiz plus longs et plus complets",
       },
       fileUpload: {
         title: "Support de téléchargement de fichiers",
-        description: "Téléchargez des PDFs et autres documents directement",
+        description: "Télécharge des PDFs et autres documents directement",
       },
       fullAi: {
         title: "Génération IA complète",
@@ -502,7 +502,7 @@ export const fr = {
     },
     howItWorks: {
       title: "Comment ça marche",
-      subtitle: "Trois étapes simples pour créer et partager vos quiz",
+      subtitle: "Trois étapes simples pour créer et partager tes quiz",
       step: "Étape",
       step1: {
         title: "Crée ton quiz",
@@ -514,27 +514,27 @@ export const fr = {
       },
       step3: {
         title: "Analyse les résultats",
-        description: "Suivez les tentatives en temps réel, consultez les statistiques détaillées et analysez les performances de chaque participant.",
+        description: "Suis les tentatives en temps réel, consulte les statistiques détaillées et analyse les performances de chaque participant.",
       },
     },
     useCases: {
       title: "Cas d'usage",
-      subtitle: "QuizLink s'adapte à tous vos besoins d'évaluation",
+      subtitle: "QuizLink s'adapte à tous tes besoins d'évaluation",
       training: {
         title: "Formation",
-        description: "Créez des quiz de formation pour valider les connaissances acquises par vos apprenants.",
+        description: "Crée des quiz de formation pour valider les connaissances acquises par tes apprenants.",
       },
       evaluation: {
         title: "Évaluation",
-        description: "Évaluez les compétences et connaissances de vos participants avec des quiz structurés.",
+        description: "Évalue les compétences et connaissances de tes participants avec des quiz structurés.",
       },
       revision: {
         title: "Révisions",
-        description: "Aidez vos étudiants à réviser efficacement avec des quiz de révision personnalisés.",
+        description: "Aide tes étudiants à réviser efficacement avec des quiz de révision personnalisés.",
       },
       knowledge: {
         title: "Tests de connaissances",
-        description: "Testez les connaissances générales ou spécifiques dans n'importe quel domaine.",
+        description: "Teste les connaissances générales ou spécifiques dans n'importe quel domaine.",
       },
     },
     whyQuizLink: {
@@ -542,15 +542,15 @@ export const fr = {
       subtitle: "Un outil d'évaluation professionnel, pas un simple générateur de quiz",
       noDisposable: {
         title: "Pas de quiz jetables",
-        description: "Chaque quiz est conçu pour être réutilisé, partagé et analysé. Vos données sont précieuses et persistent.",
+        description: "Chaque quiz est conçu pour être réutilisé, partagé et analysé. Tes données sont précieuses et persistent.",
       },
       realResults: {
         title: "Vrais résultats",
-        description: "Obtenez des statistiques détaillées, suivez les participants individuellement et analysez les performances réelles.",
+        description: "Obtiens des statistiques détaillées, suis les participants individuellement et analyse les performances réelles.",
       },
       humanTracking: {
         title: "Suivi humain des participants",
-        description: "Identifiez et suivez chaque participant, créez des liens personnalisés et établissez une vraie relation avec vos apprenants.",
+        description: "Identifie et suis chaque participant, crée des liens personnalisés et établis une vraie relation avec tes apprenants.",
       },
     },
   },
@@ -558,9 +558,10 @@ export const fr = {
   // Dashboard
   dashboard: {
     sidebar: {
-      overview: "Tableau de bord",
-      quizzes: "Mes quiz",
+      overview: "Accueil",
+      quizzes: "Quiz",
       participants: "Participants",
+      account: "Mon compte",
       admin: "Admin",
     },
     welcome: {
@@ -721,6 +722,12 @@ export const fr = {
     correctAnswerLabel: "Bonne réponse",
     timeSpentLabel: "Temps passé",
     selectExpirationDate: "Sélectionner une date et heure d'expiration",
+    portalPublic: "Portail public",
+    portalPublicDescription: "Le participant peut voir ses quiz et sa progression via un lien public (style Duolingo).",
+    portalEnabled: "Portail public activé",
+    portalDisabled: "Portail public désactivé",
+    portalToggleError: "Impossible de modifier le portail",
+    portalLinkCopied: "Lien du portail copié",
   },
 
   // Pricing
@@ -776,9 +783,19 @@ export const fr = {
 
   // Admin
   admin: {
+    nav: {
+      title: "Admin",
+      subtitle: "Backoffice",
+      dashboard: "Utilisateurs",
+      coins: "Coins",
+      packs: "Packs",
+      feedback: "Feedbacks",
+      analytics: "Analytics",
+      backToDashboard: "Retour à l'app",
+    },
     dashboard: {
       title: "Dashboard Administrateur",
-      description: "Gérez les utilisateurs et leurs coins",
+      description: "Gère les utilisateurs et leurs coins",
       searchUsers: "Rechercher des utilisateurs",
       searchDescription: "Recherchez des utilisateurs par nom ou email",
       searchPlaceholder: "Nom ou email...",

@@ -117,18 +117,21 @@ model Option {
 }
 
 model Participant {
-  id              String        @id @default(cuid())
-  name            String        @db.VarChar(255)
-  email           String?       @db.VarChar(255)
-  gender          String?       @db.VarChar(10) // "MALE" | "FEMALE" | "OTHER" | null
-  avatar          String?       @db.Text // SVG avatar URL (DiceBear)
-  createdByUserId String?       @map("created_by_user_id")
-  createdByUser   User?         @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
-  createdAt       DateTime      @default(now()) @map("created_at")
-  attempts        QuizAttempt[]
-  links           QuizLink[]
+  id                String        @id @default(cuid())
+  name              String        @db.VarChar(255)
+  email             String?       @db.VarChar(255)
+  gender            String?       @db.VarChar(10) // "MALE" | "FEMALE" | "OTHER" | null
+  avatar            String?       @db.Text // SVG avatar URL (DiceBear)
+  createdByUserId   String?       @map("created_by_user_id")
+  createdByUser     User?         @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdAt         DateTime      @default(now()) @map("created_at")
+  publicToken       String?       @unique @map("public_token") @db.VarChar(24)
+  isPortalEnabled   Boolean       @default(false) @map("is_portal_enabled")
+  attempts          QuizAttempt[]
+  links             QuizLink[]
 
   @@index([createdByUserId])
+  @@index([publicToken])
   @@map("participants")
 }
 

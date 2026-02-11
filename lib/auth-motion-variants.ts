@@ -96,7 +96,7 @@ export const panelShapeDrift2 = {
 /** Rotation (carré) */
 export const panelShapeRotate = {
   rotate: [0, 360],
-  transition: { duration: 12, repeat: Infinity, ease: "linear" },
+  transition: { duration: 12, repeat: Infinity, ease: noEaseAtExtremes },
 };
 
 /** Pulse scale — keyframes + linear pour pas de pause aux extrêmes */

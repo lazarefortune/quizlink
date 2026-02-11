@@ -73,7 +73,7 @@ export function SignupSidePanel() {
       />
       <div
         className="absolute bottom-1/3 right-8 h-14 w-14 rounded-xl bg-white/5"
-        style={{ rotate: -12 }}
+        style={{ rotate: "-12deg" }}
         aria-hidden
       >
         <motion.div
