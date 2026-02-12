@@ -18,7 +18,7 @@ export function ValueProposition() {
     <section className="py-16 px-4">
       <div className="mx-auto max-w-6xl">
         <div className="mb-12 text-center">
-          <h2 className="text-3xl font-bold sm:text-4xl">
+          <h2 className="h1 text-3xl font-bold sm:text-4xl">
             {t(locale, "landing.value.title")}
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">

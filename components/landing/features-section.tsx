@@ -53,7 +53,7 @@ export function FeaturesSection() {
     <section className="py-16 px-4 sm:py-20 md:py-24 bg-muted/30">
       <div className="mx-auto max-w-6xl">
         <div className="text-center mb-12 sm:mb-16">
-          <h2 className="text-3xl font-bold sm:text-4xl md:text-5xl">
+          <h2 className="h1 text-3xl font-bold sm:text-4xl md:text-5xl">
             {t(locale, "landing.features.title")}
           </h2>
           <p className="mt-4 text-lg text-muted-foreground sm:text-xl">

@@ -34,7 +34,7 @@ export function UpgradeTeaser() {
             </Alert>
 
             <div>
-              <h3 className="mb-4 text-lg font-semibold">
+              <h3 className="mb-4 text-lg h1 font-semibold">
                 {t(locale, "landing.upgrade.unlockTitle")}
               </h3>
               <div className="grid gap-3 sm:grid-cols-2">
