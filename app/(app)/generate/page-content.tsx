@@ -524,7 +524,7 @@ export function GeneratePage() {
                         <p className="text-sm text-destructive font-medium mb-2">
                           {t(locale, "generate.notEnoughCoins")}
                         </p>
-                        <Link href="/pricing">
+                        <Link href="/account/coins">
                           <Button variant="primary" size="sm">
                             {t(locale, "generate.viewOffers")}
                           </Button>
@@ -541,7 +541,7 @@ export function GeneratePage() {
                 <div>
                   <p>{error}</p>
                   {error === t(locale, "errors.insufficientCoins") && (
-                    <Link href="/pricing" className="mt-3 inline-block">
+                    <Link href="/account/coins" className="mt-3 inline-block">
                       <Button variant="primary" size="sm">
                         {t(locale, "pricing.title")}
                       </Button>

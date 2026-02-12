@@ -1,18 +1,23 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import Link from "next/link";
 import confetti from "canvas-confetti";
 
-export default function PricingSuccessPage() {
-  const router = useRouter();
+export default function CoinsSuccessContent() {
   const searchParams = useSearchParams();
   const { locale } = useLocale();
   const { data: session, update: updateSession } = useSession();
@@ -21,12 +26,8 @@ export default function PricingSuccessPage() {
   const hasProcessed = useRef(false);
 
   useEffect(() => {
-    // Prevent multiple executions
-    if (hasProcessed.current) {
-      return;
-    }
+    if (hasProcessed.current) return;
 
-    // Wait a bit for webhook to process, then refresh session
     const verifyPayment = async () => {
       if (!sessionId) {
         setIsVerifying(false);
@@ -36,20 +37,16 @@ export default function PricingSuccessPage() {
 
       hasProcessed.current = true;
 
-      // Wait 3 seconds for webhook to process
       await new Promise((resolve) => setTimeout(resolve, 3000));
 
-      // Refresh session to get updated coin balance
       if (updateSession) {
         await updateSession({});
       }
 
-      // Dispatch session update event
       window.dispatchEvent(new Event("session:update"));
 
       setIsVerifying(false);
 
-      // Trigger confetti animation
       const duration = 3000;
       const animationEnd = Date.now() + duration;
       const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
@@ -60,11 +57,9 @@ export default function PricingSuccessPage() {
 
       const interval = setInterval(() => {
         const timeLeft = animationEnd - Date.now();
-
         if (timeLeft <= 0) {
           return clearInterval(interval);
         }
-
         const particleCount = 50 * (timeLeft / duration);
         confetti({
           ...defaults,
@@ -80,8 +75,8 @@ export default function PricingSuccessPage() {
     };
 
     verifyPayment();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId]); // Only depend on sessionId, not updateSession
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only run on session_id
+  }, [sessionId]);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -91,13 +86,17 @@ export default function PricingSuccessPage() {
             <>
               <Loader2 className="h-12 w-12 mx-auto mb-4 animate-spin text-primary" />
               <CardTitle>{t(locale, "pricing.verifying")}</CardTitle>
-              <CardDescription>{t(locale, "pricing.verifyingDescription")}</CardDescription>
+              <CardDescription>
+                {t(locale, "pricing.verifyingDescription")}
+              </CardDescription>
             </>
           ) : (
             <>
               <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-green-600 dark:text-green-400" />
               <CardTitle>{t(locale, "pricing.paymentSuccess")}</CardTitle>
-              <CardDescription>{t(locale, "pricing.paymentSuccessDescription")}</CardDescription>
+              <CardDescription>
+                {t(locale, "pricing.paymentSuccessDescription")}
+              </CardDescription>
             </>
           )}
         </CardHeader>
@@ -110,7 +109,8 @@ export default function PricingSuccessPage() {
                 </p>
                 {session?.user && (
                   <p className="text-lg font-semibold">
-                    {t(locale, "pricing.newBalance")}: {session.user.coinBalance} {t(locale, "pricing.coins")}
+                    {t(locale, "pricing.newBalance")}: {session.user.coinBalance}{" "}
+                    {t(locale, "pricing.coins")}
                   </p>
                 )}
               </div>
@@ -120,9 +120,9 @@ export default function PricingSuccessPage() {
                     {t(locale, "pricing.startGenerating")}
                   </Button>
                 </Link>
-                <Link href="/pricing">
+                <Link href="/account/coins">
                   <Button variant="secondary" className="w-full">
-                    {t(locale, "pricing.backToPricing")}
+                    {t(locale, "account.coins.backToShop")}
                   </Button>
                 </Link>
               </div>

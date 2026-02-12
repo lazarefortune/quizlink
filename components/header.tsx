@@ -75,20 +75,14 @@ export function Header() {
 
   const navItems: Array<{ href: string; label: string; icon: typeof Home }> = [];
 
-  // Add dashboard link for authenticated users only
   if (session?.user) {
     navItems.push({ href: "/dashboard", label: t(locale, "nav.dashboard"), icon: LayoutDashboard });
-    // Add admin link for admins only
     if (session.user.role === "ADMIN") {
       navItems.push({ href: "/admin", label: t(locale, "nav.admin"), icon: Shield });
     }
   } else {
-    // Only show home link for non-authenticated users
     navItems.push({ href: "/", label: t(locale, "nav.home"), icon: Home });
   }
-
-  // Add pricing link for all users
-  navItems.push({ href: "/pricing", label: t(locale, "nav.pricing"), icon: Coins });
 
   const isActive = (href: string) => {
     if (href === "/") {

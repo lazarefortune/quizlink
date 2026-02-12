@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import { usePathname } from "next/navigation";
 
-import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Sidebar } from "./sidebar";
 import { Topbar } from "./topbar";
+import { MobileBottomNav } from "./mobile-bottom-nav";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t, type Locale } from "@/lib/i18n";
 import { useSession } from "next-auth/react";
@@ -36,7 +35,6 @@ function getTitleFromPath(pathname: string | null, locale: Locale): string {
 }
 
 export function DashboardShell({ children, title }: DashboardShellProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
   const { locale } = useLocale();
   const { data: session } = useSession();
@@ -52,24 +50,16 @@ export function DashboardShell({ children, title }: DashboardShellProps) {
         <Sidebar isAdmin={isAdmin} />
       </div>
 
-      {/* Mobile sidebar */}
-      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-        <SheetContent
-          side="left"
-          showCloseButton
-          className="w-[min(85vw,18rem)] p-0 sm:w-64"
-        >
-          <Sidebar isAdmin={isAdmin} onNavClick={() => setSidebarOpen(false)} />
-        </SheetContent>
-      </Sheet>
-
       {/* Main content: offset for desktop sidebar */}
       <div className="flex min-w-0 flex-1 flex-col lg:pl-56 xl:pl-64">
-        <Topbar onMenuClick={() => setSidebarOpen(true)} />
-        <main className="min-h-0 flex-1 overflow-auto bg-background">
+        <Topbar />
+        <main className="min-h-0 flex-1 overflow-auto bg-background pb-16 lg:pb-0">
           {children}
         </main>
       </div>
+
+      {/* Mobile bottom navigation */}
+      <MobileBottomNav />
     </div>
   );
 }

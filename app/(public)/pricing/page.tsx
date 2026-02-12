@@ -1,8 +1,9 @@
-import { PricingContent } from "./pricing-content";
-import { getActiveCoinPacks } from "@/lib/stripe/coin-packs";
+import { redirect } from "next/navigation";
 
-export default async function PricingPage() {
-  const packs = await getActiveCoinPacks();
-
-  return <PricingContent initialPacks={packs} />;
+/**
+ * Pricing page removed: shop is now at /account/coins (authenticated only).
+ * Redirect so old links and bookmarks still work.
+ */
+export default function PricingRedirectPage() {
+  redirect("/account/coins");
 }

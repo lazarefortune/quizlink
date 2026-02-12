@@ -34,7 +34,7 @@ export function NavItem({
       className={cn(
         "flex items-center gap-3 font-sofia-sans border-none rounded-lg px-3 py-2.5 text-lg font-bold transition-colors",
         isActive
-          ? "bg-blue/20 border-blue"
+          ? "bg-blue text-blue-foreground border-blue dark:bg-blue dark:text-blue-foreground dark:border-blue"
           : "text-muted-foreground hover:bg-muted hover:text-foreground",
         className,
       )}

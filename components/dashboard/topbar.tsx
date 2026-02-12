@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { Menu, Coins } from "lucide-react";
+import { Coins } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -21,11 +21,10 @@ import { cn } from "@/lib/utils";
 
 type TopbarProps = {
   title?: string;
-  onMenuClick?: () => void;
   className?: string;
 };
 
-export function Topbar({ title, onMenuClick, className }: TopbarProps) {
+export function Topbar({ title, className }: TopbarProps) {
   const { data: session } = useSession();
   const { locale } = useLocale();
   const router = useRouter();
@@ -44,15 +43,9 @@ export function Topbar({ title, onMenuClick, className }: TopbarProps) {
       )}
     >
       <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-9 w-9 shrink-0 lg:hidden"
-          onClick={onMenuClick}
-          aria-label="Open menu"
-        >
-          <Menu className="h-5 w-5" />
-        </Button>
+        <Link href="/dashboard" className="font-bold text-lg text-foreground lg:hidden">
+          QuizLink
+        </Link>
       </div>
 
       <div className="flex shrink-0 items-center gap-1 sm:gap-2">

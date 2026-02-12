@@ -25,7 +25,8 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "flex h-full flex-col border-r border-border bg-muted",
+        "flex h-full flex-col border-r border-border bg-white dark:bg-background",
+        "flex h-full flex-col border-r border-border bg-white dark:",
         className,
       )}
     >

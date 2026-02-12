@@ -19,6 +19,7 @@ export default async function AccountPage() {
       email: true,
       preferredLanguage: true,
       emailVerifiedAt: true,
+      createdAt: true,
     },
   });
 

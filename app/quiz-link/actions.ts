@@ -184,6 +184,8 @@ export async function getQuizLinkByToken(
             id: true,
             name: true,
             email: true,
+            publicToken: true,
+            isPortalEnabled: true,
           },
         },
         attempts: {
@@ -254,6 +256,9 @@ export async function getQuizLinkByToken(
               id: quizLink.participant.id,
               name: quizLink.participant.name,
               email: quizLink.participant.email,
+              publicToken: quizLink.participant.isPortalEnabled
+                ? quizLink.participant.publicToken
+                : null,
             }
           : null,
         allowMultipleAttempts: quizLink.allowMultipleAttempts,

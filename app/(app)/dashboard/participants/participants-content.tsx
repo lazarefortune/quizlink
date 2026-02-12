@@ -208,7 +208,7 @@ export function ParticipantsContent() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-10">
           <div className="flex flex-col items-start gap-2 sm:gap-3">
             <div>
-              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl text-foreground">
+              <h1 className="text-2xl h1 font-bold tracking-tight sm:text-3xl text-foreground">
                 {t(locale, "dashboard.participantsManagement")}
               </h1>
             </div>
@@ -377,7 +377,18 @@ export function ParticipantsContent() {
               {participants.map((participant) => (
                 <Card
                   key={participant.id}
-                  className="border-border transition-shadow hover:shadow-md"
+                  className="border-border transition-shadow hover:shadow-md cursor-pointer"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() =>
+                    router.push(`/dashboard/participants/${participant.id}`)
+                  }
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      router.push(`/dashboard/participants/${participant.id}`);
+                    }
+                  }}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between gap-3">
@@ -388,10 +399,10 @@ export function ParticipantsContent() {
                           size="md"
                         />
                         <div className="min-w-0 flex-1">
-                          <p className="font-semibold truncate">
+                          <p className="text-base font-semibold truncate">
                             {participant.name}
                           </p>
-                          <p className="mt-1 text-xs text-muted-foreground">
+                          <p className="mt-1 text-sm text-muted-foreground">
                             {participant.quizzes.length}{" "}
                             {t(
                               locale,
@@ -408,21 +419,11 @@ export function ParticipantsContent() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-9 w-9 text-blue"
-                          onClick={() =>
-                            router.push(
-                              `/dashboard/participants/${participant.id}`,
-                            )
-                          }
-                          title={t(locale, "dashboard.viewDetails")}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
                           className="h-9 w-9"
-                          onClick={() => handleEdit(participant)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEdit(participant);
+                          }}
                           title={t(locale, "dashboard.editParticipant")}
                         >
                           <Edit className="h-4 w-4" />
@@ -431,7 +432,8 @@ export function ParticipantsContent() {
                           variant="ghost"
                           size="icon"
                           className="h-9 w-9 text-destructive"
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setSelectedParticipant(participant);
                             setShowDeleteDialog(true);
                           }}

@@ -2,16 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -29,20 +23,44 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   ArrowLeft,
+  ArrowRight,
   Mail,
   Trash2,
   Copy,
   Check,
   Eye,
-  ExternalLink,
   Clock,
   CheckCircle2,
-  XCircle,
   AlertCircle,
+  MoreHorizontal,
+  RotateCw,
+  Sparkles,
+  FileText,
+  Target,
+  TrendingUp,
+  Plus,
+  Ban,
+  Share2,
+  CalendarClock,
 } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
@@ -53,30 +71,15 @@ import {
   deleteLink,
   deleteAllAttempts,
   sendLinkEmail,
-  getParticipantAttemptDetails,
   toggleParticipantPortal,
+  updateLinkExpiration,
+  sendPortalLinkEmail,
 } from "./actions";
 import { createParticipantLink } from "../actions";
 import { getUserQuizzes } from "@/app/(app)/builder/actions";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { MoreVertical, RotateCw, Sparkles, Link2 } from "lucide-react";
-import Link from "next/link";
 import { ParticipantAvatar } from "@/components/participant-avatar";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type Participant = {
   id: string;
@@ -87,23 +90,23 @@ type Participant = {
   publicToken: string | null;
   isPortalEnabled: boolean;
   links: Array<{
-          id: string;
-          token: string;
-          quizId: string;
-          quizName: string;
-          quizVisibility: string;
-          allowMultipleAttempts: boolean;
-          createdAt: Date;
-          expiresAt: Date | null;
-          revokedAt: Date | null;
-          attempts: Array<{
-            id: string;
-            startedAt: Date;
-            finishedAt: Date | null;
-            score: number | null;
-            status: string;
-          }>;
-        }>;
+    id: string;
+    token: string;
+    quizId: string;
+    quizName: string;
+    quizVisibility: string;
+    allowMultipleAttempts: boolean;
+    createdAt: Date;
+    expiresAt: Date | null;
+    revokedAt: Date | null;
+    attempts: Array<{
+      id: string;
+      startedAt: Date;
+      finishedAt: Date | null;
+      score: number | null;
+      status: string;
+    }>;
+  }>;
 };
 
 type ParticipantDetailsContentProps = {
@@ -116,43 +119,34 @@ export function ParticipantDetailsContent({
   const router = useRouter();
   const { locale } = useLocale();
   const { showToast } = useToast();
+
+  // Dialog states
   const [showRevokeDialog, setShowRevokeDialog] = useState(false);
   const [showDeleteAttemptsDialog, setShowDeleteAttemptsDialog] = useState(false);
   const [showEmailDialog, setShowEmailDialog] = useState(false);
-  const [showAttemptDialog, setShowAttemptDialog] = useState(false);
   const [showCreateLinkDialog, setShowCreateLinkDialog] = useState(false);
+  const [showDeleteLinkDialog, setShowDeleteLinkDialog] = useState(false);
+  const [showRestoreDialog, setShowRestoreDialog] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [showExpirationDialog, setShowExpirationDialog] = useState(false);
+  const [editExpiresAt, setEditExpiresAt] = useState<string>("");
+
   const [selectedLink, setSelectedLink] = useState<Participant["links"][0] | null>(null);
-  const [attemptDetails, setAttemptDetails] = useState<{
-    quizName: string;
-    participantName: string;
-    score: number | null;
-    status: string;
-    startedAt: Date;
-    finishedAt: Date | null;
-    answers: Array<{
-      questionId: string;
-      questionLabel: string;
-      selectedOptionIds: string[];
-      selectedOptions: Array<{ id: string; label: string }>;
-      correctOptionIds: string[];
-      correctOptions: Array<{ id: string; label: string }>;
-      isCorrect: boolean;
-      timeSpent: number | null;
-    }>;
-    questionOrder?: Array<{ id: string; order: number }>;
-  } | null>(null);
-  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [emailAddress, setEmailAddress] = useState(participant.email || "");
+
+  // Create link form
   const [selectedQuizId, setSelectedQuizId] = useState<string>("");
   const [allowMultipleAttempts, setAllowMultipleAttempts] = useState<boolean>(true);
   const [expiresAt, setExpiresAt] = useState<string>("");
   const [quizzes, setQuizzes] = useState<Array<{ id: string; name: string }>>([]);
+
   const [linkCopied, setLinkCopied] = useState<string | null>(null);
-  const [showDeleteLinkDialog, setShowDeleteLinkDialog] = useState(false);
-  const [showRestoreDialog, setShowRestoreDialog] = useState(false);
   const [isTogglingPortal, setIsTogglingPortal] = useState(false);
   const [portalLinkCopied, setPortalLinkCopied] = useState(false);
+  const [portalEmailAddress, setPortalEmailAddress] = useState(participant.email || "");
+  const [isSendingPortalEmail, setIsSendingPortalEmail] = useState(false);
+  const [showPortalEmailField, setShowPortalEmailField] = useState(false);
 
   const baseUrl =
     typeof window !== "undefined"
@@ -166,15 +160,34 @@ export function ParticipantDetailsContent({
         setQuizzes(
           result.quizzes
             .filter((q) => q.visibility === "PUBLIC")
-            .map((q) => ({ id: q.id, name: q.name }))
+            .map((q) => ({ id: q.id, name: q.name })),
         );
       }
     });
   }, []);
 
+  // --- Computed stats ---
+  const totalAttempts = participant.links.reduce(
+    (sum, link) => sum + link.attempts.length,
+    0,
+  );
+  const completedAttempts = participant.links.reduce(
+    (sum, link) =>
+      sum + link.attempts.filter((a) => a.status === "COMPLETED").length,
+    0,
+  );
+  const allScores = participant.links
+    .flatMap((link) => link.attempts)
+    .filter((a) => a.status === "COMPLETED" && a.score !== null)
+    .map((a) => a.score as number);
+  const averageScore =
+    allScores.length > 0
+      ? Math.round(allScores.reduce((s, v) => s + v, 0) / allScores.length)
+      : null;
+
+  // --- Handlers ---
   const handleRevokeLink = async () => {
     if (!selectedLink) return;
-
     setIsSubmitting(true);
     try {
       const result = await revokeLink(selectedLink.id);
@@ -195,7 +208,6 @@ export function ParticipantDetailsContent({
 
   const handleDeleteAllAttempts = async () => {
     if (!selectedLink) return;
-
     setIsSubmitting(true);
     try {
       const result = await deleteAllAttempts(selectedLink.id);
@@ -219,7 +231,6 @@ export function ParticipantDetailsContent({
       showToast(t(locale, "dashboard.emailRequired"), "error");
       return;
     }
-
     setIsSubmitting(true);
     try {
       const result = await sendLinkEmail(selectedLink.id, emailAddress.trim());
@@ -237,35 +248,11 @@ export function ParticipantDetailsContent({
     }
   };
 
-  const handleOpenEmailDialog = (link: Participant["links"][0]) => {
-    setSelectedLink(link);
-    setEmailAddress(participant.email || "");
-    setShowEmailDialog(true);
-  };
-
-  const handleViewAttempt = async (attemptId: string) => {
-    setIsLoadingDetails(true);
-    setShowAttemptDialog(true);
-    try {
-      const result = await getParticipantAttemptDetails(attemptId);
-      if (result.success) {
-        setAttemptDetails(result.attempt);
-      } else {
-        showToast(result.error || t(locale, "common.error"), "error");
-      }
-    } catch {
-      showToast(t(locale, "common.error"), "error");
-    } finally {
-      setIsLoadingDetails(false);
-    }
-  };
-
   const handleCreateLink = async () => {
     if (!selectedQuizId) {
       showToast(t(locale, "dashboard.selectQuiz"), "error");
       return;
     }
-
     setIsSubmitting(true);
     try {
       const expiresAtDate = expiresAt ? new Date(expiresAt) : null;
@@ -273,7 +260,7 @@ export function ParticipantDetailsContent({
         participant.id,
         selectedQuizId,
         allowMultipleAttempts,
-        expiresAtDate
+        expiresAtDate,
       );
       if (result.success) {
         showToast(t(locale, "dashboard.linkCreatedSuccess"), "success");
@@ -294,7 +281,6 @@ export function ParticipantDetailsContent({
 
   const handleRestoreLink = async () => {
     if (!selectedLink) return;
-
     setIsSubmitting(true);
     try {
       const result = await restoreLink(selectedLink.id);
@@ -315,7 +301,6 @@ export function ParticipantDetailsContent({
 
   const handleDeleteLink = async () => {
     if (!selectedLink) return;
-
     setIsSubmitting(true);
     try {
       const result = await deleteLink(selectedLink.id);
@@ -334,23 +319,39 @@ export function ParticipantDetailsContent({
     }
   };
 
+  const handleUpdateExpiration = async () => {
+    if (!selectedLink) return;
+    setIsSubmitting(true);
+    try {
+      const newExpiresAt = editExpiresAt ? new Date(editExpiresAt) : null;
+      const result = await updateLinkExpiration(selectedLink.id, newExpiresAt);
+      if (result.success) {
+        showToast(
+          locale === "fr"
+            ? "Date d'expiration mise à jour"
+            : "Expiration date updated",
+          "success",
+        );
+        setShowExpirationDialog(false);
+        setSelectedLink(null);
+        router.refresh();
+      } else {
+        showToast(result.error || t(locale, "common.error"), "error");
+      }
+    } catch {
+      showToast(t(locale, "common.error"), "error");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleCopyLink = (token: string) => {
     const url = `${baseUrl}/quiz/${token}`;
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(url).then(() => {
-        setLinkCopied(token);
-        setTimeout(() => setLinkCopied(null), 2000);
-      });
-    } else {
-      const textArea = document.createElement("textarea");
-      textArea.value = url;
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand("copy");
-      document.body.removeChild(textArea);
+    navigator.clipboard?.writeText(url).then(() => {
       setLinkCopied(token);
+      showToast(t(locale, "dashboard.linkCopiedParticipant"), "success");
       setTimeout(() => setLinkCopied(null), 2000);
-    }
+    });
   };
 
   const handleTogglePortal = async (enabled: boolean) => {
@@ -362,7 +363,7 @@ export function ParticipantDetailsContent({
           enabled
             ? t(locale, "dashboard.portalEnabled")
             : t(locale, "dashboard.portalDisabled"),
-          "success"
+          "success",
         );
         router.refresh();
       } else {
@@ -378,22 +379,34 @@ export function ParticipantDetailsContent({
   const handleCopyPortalLink = () => {
     if (!participant.publicToken) return;
     const url = `${baseUrl}/p/${participant.publicToken}`;
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(url).then(() => {
-        setPortalLinkCopied(true);
-        setTimeout(() => setPortalLinkCopied(false), 2000);
-        showToast(t(locale, "dashboard.portalLinkCopied"), "success");
-      });
-    } else {
-      const textArea = document.createElement("textarea");
-      textArea.value = url;
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand("copy");
-      document.body.removeChild(textArea);
+    navigator.clipboard?.writeText(url).then(() => {
       setPortalLinkCopied(true);
-      setTimeout(() => setPortalLinkCopied(false), 2000);
       showToast(t(locale, "dashboard.portalLinkCopied"), "success");
+      setTimeout(() => setPortalLinkCopied(false), 2000);
+    });
+  };
+
+  const handleSendPortalEmail = async () => {
+    if (!portalEmailAddress.trim()) {
+      showToast(t(locale, "dashboard.emailRequired"), "error");
+      return;
+    }
+    setIsSendingPortalEmail(true);
+    try {
+      const result = await sendPortalLinkEmail(
+        participant.id,
+        portalEmailAddress.trim(),
+      );
+      if (result.success) {
+        showToast(t(locale, "dashboard.emailSent"), "success");
+        setShowPortalEmailField(false);
+      } else {
+        showToast(result.error || t(locale, "dashboard.emailSendError"), "error");
+      }
+    } catch {
+      showToast(t(locale, "dashboard.emailSendError"), "error");
+    } finally {
+      setIsSendingPortalEmail(false);
     }
   };
 
@@ -408,11 +421,13 @@ export function ParticipantDetailsContent({
     });
   };
 
-  const formatDuration = (seconds: number | null) => {
-    if (!seconds) return "-";
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}m ${secs}s`;
+  const formatDateShort = (date: Date | null) => {
+    if (!date) return "-";
+    return new Date(date).toLocaleDateString(locale, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
   };
 
   const getStatusBadge = (status: string) => {
@@ -444,304 +459,490 @@ export function ParticipantDetailsContent({
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <Button
-            variant="secondary"
-            onClick={() => router.push("/dashboard/participants")}
-            className="mb-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            {t(locale, "dashboard.backToParticipants")}
-          </Button>
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-0">
-            <div className="flex items-center gap-4">
-              <ParticipantAvatar
-                avatar={participant.avatar}
-                name={participant.name}
-                size="xl"
-              />
-              <div>
-                <h1 className="text-3xl font-bold">{participant.name}</h1>
-                <p className="text-muted-foreground mt-2">
-                  {t(locale, "dashboard.participantDetailsSubtitle")}
+    <div className="p-4 sm:p-5 md:p-6 lg:p-8">
+      <div className="space-y-6 sm:space-y-8">
+        {/* Back button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.push("/dashboard/participants")}
+          className="text-muted-foreground -ml-2"
+        >
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          {t(locale, "dashboard.backToParticipants")}
+        </Button>
+
+        {/* Header: participant info + action */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4">
+            <ParticipantAvatar
+              avatar={participant.avatar}
+              name={participant.name}
+              size="xl"
+            />
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+                {participant.name}
+              </h1>
+              {participant.email && (
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  {participant.email}
                 </p>
-                {participant.email && (
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {participant.email}
-                  </p>
-                )}
-              </div>
+              )}
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {t(locale, "dashboard.participantCreatedLabel")}:{" "}
+                {formatDateShort(participant.createdAt)}
+              </p>
             </div>
+          </div>
+          <div className="flex gap-2 w-full sm:w-auto">
             <Button
-              variant="primary"
+              variant="secondary"
+              className="shrink-0"
+              onClick={() => setShowShareDialog(true)}
+            >
+              <Share2 className="h-4 w-4" />
+              <span className="sm:inline hidden ml-1">
+                {locale === "fr" ? "Partager" : "Share"}
+              </span>
+            </Button>
+            <Button
+              variant="blue"
+              className="flex-1 sm:flex-initial shrink-0"
               onClick={() => {
                 setSelectedQuizId("");
+                setAllowMultipleAttempts(true);
+                setExpiresAt("");
                 setShowCreateLinkDialog(true);
               }}
             >
-              <Mail className="h-4 w-4 mr-2" />
-              {t(locale, "dashboard.createInvitation")}
+              <Plus className="h-4 w-4" />
+              {locale === "fr" ? "Inscrire à un quiz" : "Enroll in a quiz"}
             </Button>
           </div>
         </div>
 
-        <div className="space-y-6">
+        {/* Stats row */}
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Link2 className="h-5 w-5" />
-                  {t(locale, "dashboard.portalPublic")}
-                </CardTitle>
-                <CardDescription>{t(locale, "dashboard.portalPublicDescription")}</CardDescription>
+            <CardContent className="flex items-center gap-3 p-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue/10 text-blue">
+                <FileText className="h-5 w-5" />
               </div>
-              <Switch
-                checked={participant.isPortalEnabled}
-                onCheckedChange={handleTogglePortal}
-                disabled={isTogglingPortal}
-              />
-            </CardHeader>
-            {participant.isPortalEnabled && participant.publicToken && (
-              <CardContent className="pt-0">
-                <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
-                  <code className="flex-1 rounded bg-muted px-3 py-2 text-sm break-all">
-                    {baseUrl}/p/{participant.publicToken}
-                  </code>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={handleCopyPortalLink}
-                    className="shrink-0"
-                  >
-                    {portalLinkCopied ? (
-                      <Check className="h-4 w-4 mr-2" />
-                    ) : (
-                      <Copy className="h-4 w-4 mr-2" />
-                    )}
-                    {portalLinkCopied ? t(locale, "dashboard.copied") : t(locale, "dashboard.copy")}
-                  </Button>
-                </div>
-              </CardContent>
-            )}
+              <div>
+                <p className="text-2xl font-bold tabular-nums">
+                  {participant.links.length}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {locale === "fr" ? "Quiz inscrits" : "Quizzes enrolled"}
+                </p>
+              </div>
+            </CardContent>
           </Card>
+          <Card>
+            <CardContent className="flex items-center gap-3 p-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Target className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold tabular-nums">{totalAttempts}</p>
+                <p className="text-sm text-muted-foreground">
+                  {totalAttempts <= 1
+                    ? (locale === "fr" ? "Tentative" : "Attempt")
+                    : (locale === "fr" ? "Tentatives" : "Attempts")}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex items-center gap-3 p-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-highlight/10 text-highlight">
+                <CheckCircle2 className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold tabular-nums">
+                  {completedAttempts}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {t(locale, "dashboard.completed")}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex items-center gap-3 p-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-warning/10 text-warning">
+                <TrendingUp className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold tabular-nums">
+                  {averageScore !== null ? `${averageScore}%` : "-"}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {locale === "fr" ? "Score moyen" : "Avg. score"}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-          <div>
-            <h2 className="text-2xl font-bold mb-2">{t(locale, "dashboard.quizInvitations")}</h2>
-          </div>
+        {/* Quiz list */}
+        <div className="space-y-3">
+          <h2 className="text-lg font-semibold">
+            {locale === "fr" ? "Quiz inscrits" : "Enrolled quizzes"}
+          </h2>
 
           {participant.links.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground border rounded-lg">
-              {t(locale, "dashboard.noInvitations")}
-            </div>
+            <Card className="border-dashed">
+              <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted mb-4">
+                  <FileText className="h-7 w-7 text-muted-foreground" />
+                </div>
+                <p className="text-muted-foreground">
+                  {t(locale, "dashboard.noInvitations")}
+                </p>
+              </CardContent>
+            </Card>
           ) : (
-            <div className="space-y-4">
-              {participant.links.map((link) => (
-                <div
-                  key={link.id}
-                  className={`border rounded-lg p-6 space-y-4 ${
-                    link.revokedAt ? "border-orange-500 bg-orange-50/50 dark:bg-orange-950/20" : "border-border bg-card"
-                  }`}
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex flex-wrap items-center gap-2 mb-2">
-                        <h3 className="text-lg font-semibold">{link.quizName}</h3>
-                        {link.revokedAt && (
-                          <Badge variant="outline" className="border-orange-500 text-orange-500">
-                            {t(locale, "dashboard.revoked")}
-                          </Badge>
-                        )}
-                        <Badge variant={link.quizVisibility === "PUBLIC" ? "default" : "outline"}>
-                          {link.quizVisibility === "PUBLIC"
-                            ? t(locale, "dashboard.public")
-                            : t(locale, "dashboard.private")}
-                        </Badge>
-                      </div>
-                      {link.expiresAt && (
-                        <p className="text-sm text-muted-foreground">
-                          {t(locale, "dashboard.expiresAt")}: {formatDate(link.expiresAt)}
-                        </p>
-                      )}
-                    </div>
-                    <div className="shrink-0">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="w-10 h-10">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                        {link.revokedAt ? (
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setSelectedLink(link);
-                              setShowRestoreDialog(true);
-                            }}
-                          >
-                            <RotateCw className="h-4 w-4 mr-2" />
-                            {t(locale, "dashboard.restoreLink")}
-                          </DropdownMenuItem>
-                        ) : (
-                          <>
-                            <DropdownMenuItem
-                              onClick={() => handleOpenEmailDialog(link)}
-                            >
-                              <Mail className="h-4 w-4 mr-2" />
-                              {t(locale, "dashboard.sendByEmail")}
-                            </DropdownMenuItem>
-                            {link.attempts.length > 0 && (
-                              <DropdownMenuItem asChild>
-                                <Link
-                                  href={`/dashboard/quiz/${link.quizId}/participants/${participant.id}/report`}
-                                  className="flex items-center cursor-pointer"
+            <div className="space-y-3">
+              {participant.links.map((link) => {
+                const lastAttempt =
+                  link.attempts.length > 0 ? link.attempts[0] : null;
+                const completedCount = link.attempts.filter(
+                  (a) => a.status === "COMPLETED",
+                ).length;
+                const bestScore = link.attempts
+                  .filter((a) => a.score !== null)
+                  .reduce(
+                    (best, a) => Math.max(best, a.score as number),
+                    -1,
+                  );
+
+                return (
+                  <Card
+                    key={link.id}
+                    className={cn(
+                      link.revokedAt &&
+                        "border-orange-500/40 bg-orange-50/30 dark:bg-orange-950/10",
+                    )}
+                  >
+                    <CardContent className="p-4 sm:p-5">
+                      <div className="flex items-start justify-between gap-3">
+                        {/* Quiz info */}
+                        <div className="flex items-start gap-3 min-w-0 flex-1">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted mt-0.5">
+                            <FileText className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="font-semibold truncate">
+                                {link.quizName}
+                              </p>
+                              {link.revokedAt && (
+                                <Badge
+                                  variant="outline"
+                                  className="border-orange-500 text-orange-500 text-xs"
                                 >
-                                  <Sparkles className="h-4 w-4 mr-2" />
+                                  {t(locale, "dashboard.revoked")}
+                                </Badge>
+                              )}
+                              {link.expiresAt && (
+                                <Badge
+                                  variant="outline"
+                                  className={cn(
+                                    "text-xs gap-1",
+                                    new Date(link.expiresAt) < new Date()
+                                      ? "border-destructive text-destructive"
+                                      : "border-muted-foreground text-muted-foreground",
+                                  )}
+                                >
+                                  <CalendarClock className="h-3 w-3" />
+                                  {new Date(link.expiresAt) < new Date()
+                                    ? (locale === "fr" ? "Expiré" : "Expired")
+                                    : (locale === "fr"
+                                        ? `Expire le ${formatDate(link.expiresAt)}`
+                                        : `Expires ${formatDate(link.expiresAt)}`)}
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-sm text-muted-foreground">
+                              <span>
+                                {link.attempts.length}{" "}
+                                {link.attempts.length <= 1
+                                  ? (locale === "fr" ? "tentative" : "attempt")
+                                  : (locale === "fr" ? "tentatives" : "attempts")}
+                              </span>
+                              {bestScore >= 0 && (
+                                <span>
+                                  {locale === "fr" ? "Meilleur" : "Best"}:{" "}
+                                  {bestScore.toFixed(0)}%
+                                </span>
+                              )}
+                              {lastAttempt && (
+                                <span>
                                   {locale === "fr"
-                                    ? "Générer un rapport IA"
-                                    : "Generate AI report"}
-                                </Link>
-                              </DropdownMenuItem>
-                            )}
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setSelectedLink(link);
-                                setShowRevokeDialog(true);
-                              }}
+                                    ? "Dernière"
+                                    : "Last"}:{" "}
+                                  {formatDate(lastAttempt.startedAt)}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex items-center gap-1 shrink-0">
+                          {link.attempts.length > 0 && (
+                            <Link
+                              href={`/dashboard/participants/${participant.id}/quiz/${link.id}`}
+                              className="text-blue text-sm font-medium hidden sm:inline-flex items-center gap-1 hover:underline px-3 py-1.5"
                             >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              {t(locale, "dashboard.revokeLink")}
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setSelectedLink(link);
-                            setShowDeleteLinkDialog(true);
-                          }}
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          {t(locale, "dashboard.deleteLink")}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground block mb-2">
-                      {t(locale, "dashboard.linkUrl")}
-                    </label>
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <Input
-                        value={`${baseUrl}/quiz/${link.token}`}
-                        readOnly
-                        className="font-mono text-sm flex-1"
-                      />
-                      <div className="flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleCopyLink(link.token)}
-                        >
-                          {linkCopied === link.token ? (
-                            <Check className="h-4 w-4" />
-                          ) : (
-                            <Copy className="h-4 w-4" />
+                              {locale === "fr" ? "Voir plus" : "See more"}
+                              <ArrowRight className="h-3.5 w-3.5" />
+                            </Link>
                           )}
-                        </Button>
-                        {!link.revokedAt && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => window.open(`${baseUrl}/quiz/${link.token}`, "_blank")}
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="border-t pt-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
-                      <h4 className="font-medium">{t(locale, "dashboard.attemptsLabel")}</h4>
-                      {link.attempts.length > 0 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedLink(link);
-                            setShowDeleteAttemptsDialog(true);
-                          }}
-                          className="text-destructive hover:text-destructive self-start sm:self-auto"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          {t(locale, "dashboard.deleteAllAttempts")}
-                        </Button>
-                      )}
-                    </div>
-                    {link.attempts.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">
-                        {t(locale, "dashboard.noAttemptsForQuiz")}
-                      </p>
-                    ) : (
-                      <div className="overflow-x-auto">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>{t(locale, "dashboard.startedAtLabel")}</TableHead>
-                              <TableHead>{t(locale, "dashboard.finishedAtLabel")}</TableHead>
-                              <TableHead>{t(locale, "dashboard.scoreLabel")}</TableHead>
-                              <TableHead>{t(locale, "dashboard.statusLabel")}</TableHead>
-                              <TableHead></TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {link.attempts.map((attempt) => (
-                              <TableRow key={attempt.id}>
-                                <TableCell className="whitespace-nowrap">{formatDate(attempt.startedAt)}</TableCell>
-                                <TableCell className="whitespace-nowrap">{formatDate(attempt.finishedAt)}</TableCell>
-                                <TableCell>
-                                  {attempt.score !== null
-                                    ? `${attempt.score.toFixed(1)}%`
-                                    : "-"}
-                                </TableCell>
-                                <TableCell>{getStatusBadge(attempt.status)}</TableCell>
-                                <TableCell>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleViewAttempt(attempt.id)}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-9 w-9"
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {link.attempts.length > 0 && (
+                                <DropdownMenuItem
+                                  className="sm:hidden"
+                                  asChild
+                                >
+                                  <Link
+                                    href={`/dashboard/participants/${participant.id}/quiz/${link.id}`}
+                                    className="flex items-center cursor-pointer"
                                   >
                                     <Eye className="h-4 w-4 mr-2" />
-                                    {t(locale, "dashboard.viewAttempt")}
-                                  </Button>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
+                                    {locale === "fr"
+                                      ? "Voir les tentatives"
+                                      : "View attempts"}
+                                  </Link>
+                                </DropdownMenuItem>
+                              )}
+                              {link.revokedAt ? (
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setSelectedLink(link);
+                                    setShowRestoreDialog(true);
+                                  }}
+                                >
+                                  <RotateCw className="h-4 w-4 mr-2" />
+                                  {t(locale, "dashboard.restoreLink")}
+                                </DropdownMenuItem>
+                              ) : (
+                                <>
+                                  <DropdownMenuItem
+                                    onClick={() => handleCopyLink(link.token)}
+                                  >
+                                    {linkCopied === link.token ? (
+                                      <Check className="h-4 w-4 mr-2" />
+                                    ) : (
+                                      <Copy className="h-4 w-4 mr-2" />
+                                    )}
+                                    {t(locale, "dashboard.copyLink")}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      setSelectedLink(link);
+                                      setEmailAddress(participant.email || "");
+                                      setShowEmailDialog(true);
+                                    }}
+                                  >
+                                    <Mail className="h-4 w-4 mr-2" />
+                                    {t(locale, "dashboard.sendByEmail")}
+                                  </DropdownMenuItem>
+                                  {link.attempts.length > 0 && (
+                                    <DropdownMenuItem asChild>
+                                      <Link
+                                        href={`/dashboard/quiz/${link.quizId}/participants/${participant.id}/report`}
+                                        className="flex items-center cursor-pointer"
+                                      >
+                                        <Sparkles className="h-4 w-4 mr-2" />
+                                        {locale === "fr"
+                                          ? "Rapport IA"
+                                          : "AI report"}
+                                      </Link>
+                                    </DropdownMenuItem>
+                                  )}
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      setSelectedLink(link);
+                                      setEditExpiresAt(
+                                        link.expiresAt
+                                          ? new Date(link.expiresAt).toISOString().slice(0, 16)
+                                          : "",
+                                      );
+                                      setShowExpirationDialog(true);
+                                    }}
+                                  >
+                                    <CalendarClock className="h-4 w-4 mr-2" />
+                                    {locale === "fr"
+                                      ? "Modifier l'expiration"
+                                      : "Edit expiration"}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      setSelectedLink(link);
+                                      setShowRevokeDialog(true);
+                                    }}
+                                  >
+                                    <Ban className="h-4 w-4 mr-2" />
+                                    {t(locale, "dashboard.revokeLink")}
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setSelectedLink(link);
+                                  setShowDeleteLinkDialog(true);
+                                }}
+                                className="text-destructive focus:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                {locale === "fr" ? "Supprimer" : "Delete"}
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                </div>
-              ))}
+
+                      {/* Mobile: "Voir plus" as full-width link */}
+                      {link.attempts.length > 0 && (
+                        <Link
+                          href={`/dashboard/participants/${participant.id}/quiz/${link.id}`}
+                          className="flex items-center justify-center gap-1 text-blue text-sm font-medium w-full mt-3 py-1.5 hover:underline sm:hidden"
+                        >
+                          {locale === "fr" ? "Voir plus" : "See more"}
+                          <ArrowRight className="h-3.5 w-3.5" />
+                        </Link>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </div>
       </div>
 
+      {/* ==================== DIALOGS ==================== */}
+
+      {/* Share portal dialog */}
+      <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {locale === "fr" ? "Lien public du participant" : "Participant public link"}
+            </DialogTitle>
+            <DialogDescription>
+              {locale === "fr"
+                ? "Partagez ce lien pour permettre au participant d'accéder à son portail."
+                : "Share this link to allow the participant to access their portal."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="portal-toggle" className="text-sm font-medium">
+                {locale === "fr" ? "Activer le partage" : "Enable sharing"}
+              </Label>
+              <Switch
+                id="portal-toggle"
+                checked={participant.isPortalEnabled}
+                onCheckedChange={handleTogglePortal}
+                disabled={isTogglingPortal}
+              />
+            </div>
+            {participant.isPortalEnabled && participant.publicToken && (
+              <div className="space-y-3">
+                <div className="rounded-lg bg-muted p-3">
+                  <code className="text-sm break-all">
+                    {baseUrl}/p/{participant.publicToken}
+                  </code>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="blue"
+                    className="flex-1"
+                    onClick={handleCopyPortalLink}
+                  >
+                    {portalLinkCopied ? (
+                      <Check className="h-4 w-4 mr-1" />
+                    ) : (
+                      <Copy className="h-4 w-4 mr-1" />
+                    )}
+                    {portalLinkCopied
+                      ? (locale === "fr" ? "Copié !" : "Copied!")
+                      : (locale === "fr" ? "Copier" : "Copy")}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    className="flex-1"
+                    onClick={() => {
+                      setPortalEmailAddress(participant.email || "");
+                      setShowPortalEmailField(!showPortalEmailField);
+                    }}
+                  >
+                    <Mail className="h-4 w-4 mr-1" />
+                    {locale === "fr" ? "Envoyer par email" : "Send by email"}
+                  </Button>
+                </div>
+                {showPortalEmailField && (
+                  <div className="space-y-2 pt-1">
+                    <Label>Email</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        type="email"
+                        value={portalEmailAddress}
+                        onChange={(e) => setPortalEmailAddress(e.target.value)}
+                        disabled={isSendingPortalEmail}
+                        placeholder="email@example.com"
+                        className="flex-1"
+                      />
+                      <Button
+                        variant="blue"
+                        size="sm"
+                        onClick={handleSendPortalEmail}
+                        disabled={isSendingPortalEmail || !portalEmailAddress.trim()}
+                        className="shrink-0 px-4"
+                      >
+                        {isSendingPortalEmail
+                          ? t(locale, "common.loading")
+                          : (locale === "fr" ? "Envoyer" : "Send")}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            {!participant.isPortalEnabled && (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                {locale === "fr"
+                  ? "Activez le partage pour générer un lien public."
+                  : "Enable sharing to generate a public link."}
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Revoke Link Dialog */}
       <AlertDialog open={showRevokeDialog} onOpenChange={setShowRevokeDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t(locale, "dashboard.revokeLink")}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {t(locale, "dashboard.revokeLink")}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              {selectedLink &&
-                t(locale, "dashboard.revokeLinkConfirm")}
+              {t(locale, "dashboard.revokeLinkConfirm")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -751,7 +952,7 @@ export function ParticipantDetailsContent({
             <AlertDialogAction
               onClick={handleRevokeLink}
               disabled={isSubmitting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className={buttonVariants({ variant: "destructive" })}
             >
               {isSubmitting
                 ? t(locale, "common.loading")
@@ -762,13 +963,20 @@ export function ParticipantDetailsContent({
       </AlertDialog>
 
       {/* Delete All Attempts Dialog */}
-      <AlertDialog open={showDeleteAttemptsDialog} onOpenChange={setShowDeleteAttemptsDialog}>
+      <AlertDialog
+        open={showDeleteAttemptsDialog}
+        onOpenChange={setShowDeleteAttemptsDialog}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t(locale, "dashboard.deleteAllAttempts")}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {t(locale, "dashboard.deleteAllAttempts")}
+            </AlertDialogTitle>
             <AlertDialogDescription>
               {selectedLink &&
-                t(locale, "dashboard.deleteAllAttemptsConfirm", { quizName: selectedLink.quizName })}
+                t(locale, "dashboard.deleteAllAttemptsConfirm", {
+                  quizName: selectedLink.quizName,
+                })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -778,7 +986,7 @@ export function ParticipantDetailsContent({
             <AlertDialogAction
               onClick={handleDeleteAllAttempts}
               disabled={isSubmitting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className={buttonVariants({ variant: "destructive" })}
             >
               {isSubmitting
                 ? t(locale, "common.loading")
@@ -792,20 +1000,21 @@ export function ParticipantDetailsContent({
       <AlertDialog open={showRestoreDialog} onOpenChange={setShowRestoreDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t(locale, "dashboard.restoreLink")}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {t(locale, "dashboard.restoreLink")}
+            </AlertDialogTitle>
             <AlertDialogDescription>
               {selectedLink &&
-                t(locale, "dashboard.restoreLinkConfirm", { quizName: selectedLink.quizName })}
+                t(locale, "dashboard.restoreLinkConfirm", {
+                  quizName: selectedLink.quizName,
+                })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isSubmitting}>
               {t(locale, "common.cancel")}
             </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleRestoreLink}
-              disabled={isSubmitting}
-            >
+            <AlertDialogAction onClick={handleRestoreLink} disabled={isSubmitting}>
               {isSubmitting
                 ? t(locale, "common.loading")
                 : t(locale, "dashboard.restoreLink")}
@@ -815,13 +1024,20 @@ export function ParticipantDetailsContent({
       </AlertDialog>
 
       {/* Delete Link Dialog */}
-      <AlertDialog open={showDeleteLinkDialog} onOpenChange={setShowDeleteLinkDialog}>
+      <AlertDialog
+        open={showDeleteLinkDialog}
+        onOpenChange={setShowDeleteLinkDialog}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t(locale, "dashboard.deleteLink")}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {t(locale, "dashboard.deleteLink")}
+            </AlertDialogTitle>
             <AlertDialogDescription>
               {selectedLink &&
-                t(locale, "dashboard.deleteLinkConfirm", { quizName: selectedLink.quizName })}
+                t(locale, "dashboard.deleteLinkConfirm", {
+                  quizName: selectedLink.quizName,
+                })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -831,7 +1047,7 @@ export function ParticipantDetailsContent({
             <AlertDialogAction
               onClick={handleDeleteLink}
               disabled={isSubmitting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className={buttonVariants({ variant: "destructive" })}
             >
               {isSubmitting
                 ? t(locale, "common.loading")
@@ -841,20 +1057,78 @@ export function ParticipantDetailsContent({
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Send Email Dialog */}
-      <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
-        <DialogContent>
+      {/* Edit Expiration Dialog */}
+      <Dialog open={showExpirationDialog} onOpenChange={setShowExpirationDialog}>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{t(locale, "dashboard.sendByEmail")}</DialogTitle>
+            <DialogTitle>
+              {locale === "fr"
+                ? "Modifier la date d'expiration"
+                : "Edit expiration date"}
+            </DialogTitle>
             <DialogDescription>
-              {t(locale, "dashboard.sendByEmail")}
+              {locale === "fr"
+                ? "Définissez ou supprimez la date d'expiration de ce quiz."
+                : "Set or remove the expiration date for this quiz."}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">
-                Email *
-              </label>
+          <div className="space-y-4 pt-2">
+            <div className="space-y-2">
+              <Label>
+                {t(locale, "dashboard.expiresAt")}{" "}
+                <span className="text-muted-foreground text-xs font-normal">
+                  ({t(locale, "common.optional")})
+                </span>
+              </Label>
+              <DateTimePicker
+                value={editExpiresAt || undefined}
+                onChange={(value) => setEditExpiresAt(value)}
+                disabled={isSubmitting}
+              />
+            </div>
+            {editExpiresAt && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground"
+                onClick={() => setEditExpiresAt("")}
+              >
+                {locale === "fr"
+                  ? "Supprimer la date d'expiration"
+                  : "Remove expiration date"}
+              </Button>
+            )}
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                variant="secondary"
+                onClick={() => setShowExpirationDialog(false)}
+                disabled={isSubmitting}
+              >
+                {t(locale, "common.cancel")}
+              </Button>
+              <Button
+                variant="blue"
+                onClick={handleUpdateExpiration}
+                disabled={isSubmitting}
+              >
+                {isSubmitting
+                  ? t(locale, "common.loading")
+                  : (locale === "fr" ? "Enregistrer" : "Save")}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Send Email Dialog */}
+      <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t(locale, "dashboard.sendByEmail")}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="space-y-2">
+              <Label>Email *</Label>
               <Input
                 type="email"
                 value={emailAddress}
@@ -862,7 +1136,7 @@ export function ParticipantDetailsContent({
                 disabled={isSubmitting}
               />
             </div>
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-2 pt-2">
               <Button
                 variant="secondary"
                 onClick={() => setShowEmailDialog(false)}
@@ -871,7 +1145,7 @@ export function ParticipantDetailsContent({
                 {t(locale, "common.cancel")}
               </Button>
               <Button
-                variant="primary"
+                variant="blue"
                 onClick={handleSendEmail}
                 disabled={isSubmitting || !emailAddress.trim()}
               >
@@ -884,27 +1158,26 @@ export function ParticipantDetailsContent({
         </DialogContent>
       </Dialog>
 
-      {/* Create Link Dialog */}
+      {/* Create Link (Enroll) Dialog */}
       <Dialog open={showCreateLinkDialog} onOpenChange={setShowCreateLinkDialog}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{t(locale, "dashboard.createLinkDialog")}</DialogTitle>
-            <DialogDescription>
-              {t(locale, "dashboard.createLinkDialog")}
-            </DialogDescription>
+            <DialogTitle>
+              {locale === "fr" ? "Inscrire à un quiz" : "Enroll in a quiz"}
+            </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">
-                {t(locale, "dashboard.selectQuiz")} *
-              </label>
+          <div className="space-y-4 pt-2">
+            <div className="space-y-2">
+              <Label>{t(locale, "dashboard.selectQuiz")} *</Label>
               <Select
                 value={selectedQuizId}
                 onValueChange={setSelectedQuizId}
                 disabled={isSubmitting}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={t(locale, "dashboard.selectQuiz")} />
+                  <SelectValue
+                    placeholder={t(locale, "dashboard.selectQuiz")}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {quizzes.length === 0 ? (
@@ -932,10 +1205,13 @@ export function ParticipantDetailsContent({
                 disabled={isSubmitting}
               />
             </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">
-                {t(locale, "dashboard.expiresAt")} <span className="text-muted-foreground text-xs">({t(locale, "common.optional")})</span>
-              </label>
+            <div className="space-y-2">
+              <Label>
+                {t(locale, "dashboard.expiresAt")}{" "}
+                <span className="text-muted-foreground text-xs font-normal">
+                  ({t(locale, "common.optional")})
+                </span>
+              </Label>
               <DateTimePicker
                 value={expiresAt || undefined}
                 onChange={(value) => setExpiresAt(value)}
@@ -943,7 +1219,7 @@ export function ParticipantDetailsContent({
                 min={new Date()}
               />
             </div>
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-2 pt-2">
               <Button
                 variant="secondary"
                 onClick={() => setShowCreateLinkDialog(false)}
@@ -952,171 +1228,21 @@ export function ParticipantDetailsContent({
                 {t(locale, "common.cancel")}
               </Button>
               <Button
-                variant="primary"
+                variant="blue"
                 onClick={handleCreateLink}
                 disabled={isSubmitting || !selectedQuizId}
               >
                 {isSubmitting
                   ? t(locale, "common.loading")
-                  : t(locale, "dashboard.createLink")}
+                  : locale === "fr"
+                    ? "Inscrire"
+                    : "Enroll"}
               </Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Attempt Details Dialog */}
-      <Dialog open={showAttemptDialog} onOpenChange={setShowAttemptDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{t(locale, "dashboard.attemptDetailsDialog")}</DialogTitle>
-            <DialogDescription>
-              {attemptDetails && (
-                <>
-                  {attemptDetails.quizName} - {attemptDetails.participantName}
-                </>
-              )}
-            </DialogDescription>
-          </DialogHeader>
-          {isLoadingDetails ? (
-            <div className="text-center py-8">
-              <p>{t(locale, "common.loading")}</p>
-            </div>
-          ) : attemptDetails ? (
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">{t(locale, "dashboard.scoreLabel")}</p>
-                  <p className="text-lg font-semibold">
-                    {attemptDetails.score !== null
-                      ? `${attemptDetails.score.toFixed(1)}%`
-                      : "-"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">{t(locale, "dashboard.statusLabel")}</p>
-                  <div className="mt-1">{getStatusBadge(attemptDetails.status)}</div>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">
-                    {t(locale, "dashboard.startedAtLabel")}
-                  </p>
-                  <p className="text-sm">{formatDate(attemptDetails.startedAt)}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">
-                    {t(locale, "dashboard.finishedAtLabel")}
-                  </p>
-                  <p className="text-sm">{formatDate(attemptDetails.finishedAt)}</p>
-                </div>
-              </div>
-
-              <div className="border-t pt-4">
-                <h3 className="font-medium mb-4">
-                  {t(locale, "dashboard.attemptDetails")}
-                </h3>
-                <div className="space-y-4">
-                  {(() => {
-                    // If questionOrder exists, sort answers by question order
-                    // Otherwise, use answers as-is (backward compatibility)
-                    const sortedAnswers = attemptDetails.questionOrder
-                      ? attemptDetails.questionOrder
-                          .map((q) => attemptDetails.answers.find((a) => a.questionId === q.id))
-                          .filter((a) => a !== undefined)
-                      : attemptDetails.answers;
-
-                    return sortedAnswers.map((answer, index: number) => (
-                    <div
-                      key={answer.questionId}
-                      className={`border rounded-lg p-4 space-y-3 ${
-                        answer.isCorrect
-                          ? "border-green-500 bg-green-50/50 dark:bg-green-950/20"
-                          : "border-red-500 bg-red-50/50 dark:bg-red-950/20"
-                      }`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <h4 className="font-medium">
-                          {t(locale, "dashboard.questionLabel")} {index + 1}
-                        </h4>
-                        {answer.isCorrect ? (
-                          <Badge variant="default" className="bg-green-500">
-                            <CheckCircle2 className="h-3 w-3 mr-1" />
-                            {t(locale, "dashboard.correctLabel")}
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="border-red-500 text-red-500">
-                            <XCircle className="h-3 w-3 mr-1" />
-                            {t(locale, "dashboard.incorrectLabel")}
-                          </Badge>
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium mb-3">{answer.questionLabel}</p>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground mb-2">
-                            {t(locale, "dashboard.yourAnswerLabel")}
-                          </p>
-                          <div className="space-y-1">
-                            {answer.selectedOptions && answer.selectedOptions.length > 0 ? (
-                              answer.selectedOptions.map((opt) => (
-                                <Badge
-                                  key={opt.id}
-                                  variant="outline"
-                                  className={
-                                    answer.correctOptionIds.includes(opt.id)
-                                      ? "border-green-500 text-green-500"
-                                      : "border-red-500 text-red-500"
-                                  }
-                                >
-                                  {opt.label}
-                                </Badge>
-                              ))
-                            ) : (
-                              <p className="text-sm text-muted-foreground">
-                                {t(locale, "quiz.noAnswer")}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground mb-2">
-                            {t(locale, "dashboard.correctAnswerLabel")}
-                          </p>
-                          <div className="space-y-1">
-                            {answer.correctOptions && answer.correctOptions.length > 0 ? (
-                              answer.correctOptions.map((opt) => (
-                                <Badge key={opt.id} variant="default" className="bg-green-500">
-                                  {opt.label}
-                                </Badge>
-                              ))
-                            ) : (
-                              <span className="text-sm text-muted-foreground">
-                                {t(locale, "quiz.noAnswer")}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      {answer.timeSpent !== null && answer.timeSpent !== undefined ? (
-                        <div className="text-sm text-muted-foreground pt-2 border-t">
-                          {t(locale, "dashboard.timeSpentLabel")}: {formatDuration(answer.timeSpent)}
-                        </div>
-                      ) : (
-                        <div className="text-sm text-muted-foreground pt-2 border-t">
-                          {t(locale, "dashboard.timeSpentLabel")}: -
-                        </div>
-                      )}
-                    </div>
-                  ));
-                  })()}
-                </div>
-              </div>
-            </div>
-          ) : null}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

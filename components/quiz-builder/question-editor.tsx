@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Card,
@@ -16,6 +16,16 @@ import {
 } from "@/components/ui/select";
 import { Alert } from "@/components/ui/alert";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Trash2,
   Image as ImageIcon,
   Undo2,
@@ -24,10 +34,7 @@ import {
   Italic,
   Underline,
   Strikethrough,
-  Code,
   Pen,
-  List,
-  ListOrdered,
   Sparkles,
 } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
@@ -35,6 +42,8 @@ import { t } from "@/lib/i18n";
 import type { Question, QuestionType, QuestionOption } from "@/types/quiz-builder";
 import { cn } from "@/lib/utils";
 import { Label } from "../ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Radio } from "@/components/ui/radio";
 
 type QuestionEditorProps = {
   question: Question;
@@ -58,6 +67,7 @@ export function QuestionEditor({
   errors = [],
 }: QuestionEditorProps) {
   const { locale } = useLocale();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(
     question.image || null
   );
@@ -218,6 +228,7 @@ export function QuestionEditor({
   };
 
   return (
+    <>
     <Card className="border-2 border-border shadow-sm bg-card">
       <CardContent className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
         {errors.length > 0 && (
@@ -265,7 +276,7 @@ export function QuestionEditor({
             <Button
               variant="destructive"
               size="icon"
-              onClick={onDelete}
+              onClick={() => setShowDeleteDialog(true)}
               className="h-8 w-8"
             >
               <Trash2 className="h-4 w-4" />
@@ -358,20 +369,6 @@ export function QuestionEditor({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 sm:h-7 sm:w-7 shrink-0"
-                  onClick={() => {
-                    editorRef.current?.focus();
-                    document.execCommand("formatBlock", false, "code");
-                    handleLabelChange();
-                    requestAnimationFrame(updateFormatState);
-                  }}
-                  type="button"
-                >
-                  <Code className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
                   className={cn(
                     "h-6 w-6 sm:h-7 sm:w-7 shrink-0",
                     (activeFormats.bold ||
@@ -388,43 +385,6 @@ export function QuestionEditor({
                   type="button"
                 >
                   <Pen className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                </Button>
-                <div className="h-4 w-px bg-border mx-0.5 sm:mx-1 shrink-0" />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={cn(
-                    "h-6 w-6 sm:h-7 sm:w-7 shrink-0",
-                    activeFormats.insertUnorderedList &&
-                      "bg-primary text-primary-foreground",
-                  )}
-                  onClick={() => {
-                    editorRef.current?.focus();
-                    document.execCommand("insertUnorderedList", false);
-                    handleLabelChange();
-                    requestAnimationFrame(updateFormatState);
-                  }}
-                  type="button"
-                >
-                  <List className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={cn(
-                    "h-6 w-6 sm:h-7 sm:w-7 shrink-0",
-                    activeFormats.insertOrderedList &&
-                      "bg-primary text-primary-foreground",
-                  )}
-                  onClick={() => {
-                    editorRef.current?.focus();
-                    document.execCommand("insertOrderedList", false);
-                    handleLabelChange();
-                    requestAnimationFrame(updateFormatState);
-                  }}
-                  type="button"
-                >
-                  <ListOrdered className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                 </Button>
               </div>
               {/* Question Editor (contentEditable) */}
@@ -494,7 +454,7 @@ export function QuestionEditor({
               <div
                 key={option.id}
                 className={cn(
-                  "flex items-center gap-2 sm:gap-3 transition-colors cursor-pointer",
+                  "flex items-center gap-2 sm:gap-3transition-colors cursor-pointer",
                 )}
                 onClick={() => {
                   if (question.type === "TRUE_FALSE") {
@@ -517,28 +477,35 @@ export function QuestionEditor({
                   }
                 }}
               >
-                <input
-                  type={question.type === "CHECKBOX" ? "checkbox" : "radio"}
-                  checked={option.isCorrect}
-                  onChange={(e) => {
-                    e.stopPropagation();
-                    if (question.type === "TRUE_FALSE") {
-                      const newOptions = question.options.map((opt) => ({
-                        ...opt,
-                        isCorrect: opt.id === option.id,
-                      }));
-                      onChange({
-                        ...question,
-                        options: newOptions,
-                      });
-                    } else {
-                      handleOptionChange(option.id, {
-                        isCorrect: e.target.checked,
-                      });
-                    }
-                  }}
-                  className="h-4 w-4 shrink-0 cursor-pointer checked:bg-primary"
-                />
+                {question.type === "CHECKBOX" ? (
+                  <Checkbox
+                    checked={option.isCorrect}
+                    variant="primary"
+                    size="default"
+                    onCheckedChange={(checked) => {
+                      handleOptionChange(option.id, { isCorrect: checked });
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                ) : (
+                  <Radio
+                    checked={option.isCorrect}
+                    variant="primary"
+                    size="default"
+                    onCheckedChange={() => {
+                      if (question.type === "TRUE_FALSE") {
+                        const newOptions = question.options.map((opt) => ({
+                          ...opt,
+                          isCorrect: opt.id === option.id,
+                        }));
+                        onChange({ ...question, options: newOptions });
+                      } else {
+                        handleOptionChange(option.id, { isCorrect: !option.isCorrect });
+                      }
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                )}
                 <Input
                   value={option.label}
                   onChange={(e) => {
@@ -575,5 +542,33 @@ export function QuestionEditor({
         </div>
       </CardContent>
     </Card>
+
+    <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+      <AlertDialogContent onOverlayClick={() => setShowDeleteDialog(false)}>
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            {t(locale, "builder.deleteConfirmTitle")}
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            {t(locale, "builder.deleteConfirmDescription")}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>
+            {t(locale, "builder.cancel")}
+          </AlertDialogCancel>
+          <AlertDialogAction
+            onClick={() => {
+              setShowDeleteDialog(false);
+              onDelete();
+            }}
+            className={buttonVariants({ variant: "destructive" })}
+          >
+            {t(locale, "dashboard.delete")}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }

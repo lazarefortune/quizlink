@@ -173,6 +173,132 @@ export async function toggleParticipantPortal(
 }
 
 /**
+ * Update the expiration date of a quiz link
+ */
+export async function updateLinkExpiration(
+  linkId: string,
+  expiresAt: Date | null
+): Promise<RevokeLinkResponse> {
+  try {
+    if (!prisma) {
+      return { success: false, error: "Database not initialized" };
+    }
+
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const link = await prisma.quizLink.findUnique({
+      where: { id: linkId },
+      include: {
+        quiz: { select: { ownerId: true } },
+      },
+    });
+
+    if (!link) {
+      return { success: false, error: "Link not found" };
+    }
+
+    if (link.quiz.ownerId !== session.user.id) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    await prisma.quizLink.update({
+      where: { id: linkId },
+      data: { expiresAt },
+    });
+
+    revalidatePath("/dashboard/participants");
+    if (link.participantId) {
+      revalidatePath(`/dashboard/participants/${link.participantId}`);
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating link expiration:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to update expiration",
+    };
+  }
+}
+
+/**
+ * Send the participant's public portal link by email
+ */
+export async function sendPortalLinkEmail(
+  participantId: string,
+  recipientEmail: string
+): Promise<{ success: true } | { success: false; error: string }> {
+  try {
+    if (!prisma) {
+      return { success: false, error: "Database not initialized" };
+    }
+
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const participant = await prisma.participant.findFirst({
+      where: {
+        id: participantId,
+        createdByUserId: session.user.id,
+      },
+      select: {
+        name: true,
+        publicToken: true,
+        isPortalEnabled: true,
+      },
+    });
+
+    if (!participant) {
+      return { success: false, error: "Participant not found" };
+    }
+
+    if (!participant.isPortalEnabled || !participant.publicToken) {
+      return { success: false, error: "Portal is not enabled" };
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(recipientEmail)) {
+      return { success: false, error: "Invalid email address" };
+    }
+
+    const baseUrl =
+      process.env.NEXTAUTH_URL ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      "http://localhost:3000";
+    const portalUrl = `${baseUrl}/p/${participant.publicToken}`;
+
+    const result = await sendEmailUtil({
+      to: recipientEmail,
+      subject: `Ton Lien QuizLink - ${participant.name}`,
+      html: `
+        <h2>Bonjour ${participant.name},</h2>
+        <p>Voici ton lien personnel pour accéder à tous tes quiz et suivre ta progression :</p>
+        <p><a href="${portalUrl}">${portalUrl}</a></p>
+        <p>Ce lien est personnel, garde-le précieusement !</p>
+      `,
+    });
+
+    if (!result.success) {
+      return { success: false, error: result.error || "Failed to send email" };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error sending portal link email:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Failed to send email",
+    };
+  }
+}
+
+/**
  * Revoke a quiz link (delete it, but keep attempts)
  */
 export async function revokeLink(linkId: string): Promise<RevokeLinkResponse> {
@@ -476,6 +602,124 @@ export async function sendLinkEmail(
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to send email",
+    };
+  }
+}
+
+/**
+ * Get link details with quiz info, attempts, and participant info
+ */
+export async function getLinkDetails(
+  participantId: string,
+  linkId: string
+): Promise<
+  | {
+      success: true;
+      data: {
+        participant: {
+          id: string;
+          name: string;
+          email: string | null;
+        };
+        link: {
+          id: string;
+          token: string;
+          quizId: string;
+          quizName: string;
+          allowMultipleAttempts: boolean;
+          createdAt: Date;
+          expiresAt: Date | null;
+          revokedAt: Date | null;
+          attempts: Array<{
+            id: string;
+            startedAt: Date;
+            finishedAt: Date | null;
+            score: number | null;
+            status: string;
+          }>;
+        };
+      };
+    }
+  | { success: false; error: string }
+> {
+  try {
+    if (!prisma) {
+      return { success: false, error: "Database not initialized" };
+    }
+
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const link = await prisma.quizLink.findUnique({
+      where: { id: linkId },
+      include: {
+        quiz: {
+          select: {
+            id: true,
+            name: true,
+            ownerId: true,
+          },
+        },
+        participant: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        attempts: {
+          where: { participantId },
+          orderBy: { startedAt: "desc" },
+        },
+      },
+    });
+
+    if (!link) {
+      return { success: false, error: "Link not found" };
+    }
+
+    if (link.quiz.ownerId !== session.user.id) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    if (!link.participant || link.participant.id !== participantId) {
+      return { success: false, error: "Link does not belong to this participant" };
+    }
+
+    return {
+      success: true,
+      data: {
+        participant: {
+          id: link.participant.id,
+          name: link.participant.name,
+          email: link.participant.email,
+        },
+        link: {
+          id: link.id,
+          token: link.token,
+          quizId: link.quiz.id,
+          quizName: link.quiz.name,
+          allowMultipleAttempts: link.allowMultipleAttempts,
+          createdAt: link.createdAt,
+          expiresAt: link.expiresAt,
+          revokedAt: link.revokedAt,
+          attempts: link.attempts.map((a) => ({
+            id: a.id,
+            startedAt: a.startedAt,
+            finishedAt: a.finishedAt,
+            score: a.score,
+            status: a.status,
+          })),
+        },
+      },
+    };
+  } catch (error) {
+    console.error("Error getting link details:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to get link details",
     };
   }
 }

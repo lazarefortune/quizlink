@@ -50,7 +50,7 @@ const SheetContent = React.forwardRef<
       <DialogPrimitive.Content
         ref={ref}
         className={cn(
-          "fixed z-[101] gap-4 bg-background shadow-lg transition-transform ease-in-out duration-200",
+          "fixed z-[101] gap-4 bg-background shadow-lg transform transition-transform ease-in-out duration-250",
           side === "left" &&
             "inset-y-0 left-0 h-full w-3/4 max-w-sm border-r data-[state=open]:translate-x-0 data-[state=closed]:-translate-x-full",
           side === "right" &&
@@ -63,6 +63,8 @@ const SheetContent = React.forwardRef<
         )}
         {...props}
       >
+        {/* Hidden title for accessibility (required by Radix Dialog) */}
+        <SheetTitle className="sr-only">Panel</SheetTitle>
         {children}
         {showCloseButton && (
           <DialogPrimitive.Close

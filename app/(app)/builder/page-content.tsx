@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   DndContext,
@@ -85,6 +85,10 @@ type SortableQuestionItemProps = {
   onMoveUp: () => void;
   onMoveDown: () => void;
   errors: string[];
+  isNewlyAdded?: boolean;
+  isRemoving?: boolean;
+  onAnimationEnd?: () => void;
+  onRemoveAnimationEnd?: () => void;
 };
 
 function SortableQuestionItem({
@@ -96,7 +100,12 @@ function SortableQuestionItem({
   onMoveUp,
   onMoveDown,
   errors,
+  isNewlyAdded = false,
+  isRemoving = false,
+  onAnimationEnd,
+  onRemoveAnimationEnd,
 }: SortableQuestionItemProps) {
+  const itemRef = useRef<HTMLDivElement>(null);
   const {
     attributes,
     listeners,
@@ -112,14 +121,32 @@ function SortableQuestionItem({
     opacity: isDragging ? 0.5 : 1,
   };
 
+  useEffect(() => {
+    if (isNewlyAdded && itemRef.current) {
+      itemRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [isNewlyAdded]);
+
   return (
     <div
-      ref={setNodeRef}
+      ref={(node) => {
+        setNodeRef(node);
+        (itemRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+      }}
       style={style}
       className={cn(
         "relative group rounded-lg p-2",
-        index % 2 === 0 ? "bg-background" : "bg-muted/30"
+        index % 2 === 0 ? "bg-background" : "bg-muted/30",
+        isNewlyAdded && "animate-question-appear",
+        isRemoving && "animate-question-remove pointer-events-none",
       )}
+      onAnimationEnd={
+        isRemoving
+          ? onRemoveAnimationEnd
+          : isNewlyAdded
+            ? onAnimationEnd
+            : undefined
+      }
     >
 
       <div className="flex items-start gap-2">
@@ -207,6 +234,8 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
   });
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [newlyAddedQuestionId, setNewlyAddedQuestionId] = useState<string | null>(null);
+  const [removingQuestionId, setRemovingQuestionId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [savedQuizId, setSavedQuizId] = useState<string | null>(null);
@@ -308,6 +337,8 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
 
   const handleAddQuestion = (insertIndex?: number) => {
     const newQuestion = createEmptyQuestion();
+    setNewlyAddedQuestionId(newQuestion.id);
+
     if (insertIndex !== undefined) {
       const newQuestions = [...quiz.questions];
       newQuestions.splice(insertIndex, 0, newQuestion);
@@ -334,7 +365,15 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
   };
 
   const handleDeleteQuestion = (index: number) => {
-    const newQuestions = quiz.questions.filter((_, i) => i !== index);
+    const questionId = quiz.questions[index]?.id;
+    if (!questionId) return;
+
+    setRemovingQuestionId(questionId);
+  };
+
+  const commitDeleteQuestion = (questionId: string) => {
+    const newQuestions = quiz.questions.filter((q) => q.id !== questionId);
+    setRemovingQuestionId(null);
     setQuiz({
       ...quiz,
       questions: newQuestions,
@@ -679,6 +718,10 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
                             onMoveUp={() => handleMoveQuestion(index, "up")}
                             onMoveDown={() => handleMoveQuestion(index, "down")}
                             errors={getQuestionErrors(index)}
+                            isNewlyAdded={newlyAddedQuestionId === question.id}
+                            isRemoving={removingQuestionId === question.id}
+                            onAnimationEnd={() => setNewlyAddedQuestionId(null)}
+                            onRemoveAnimationEnd={() => commitDeleteQuestion(question.id)}
                           />
                         </div>
                       </div>

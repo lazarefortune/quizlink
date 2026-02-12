@@ -2,18 +2,20 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert } from "@/components/ui/alert";
-import { Clock, Users, FileQuestion, AlertCircle } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
+import {
+  Clock,
+  FileQuestion,
+  AlertCircle,
+  ArrowLeft,
+  RefreshCw,
+  Info,
+  AlertTriangle,
+} from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { startQuizAttempt } from "@/app/quiz-link/actions";
@@ -27,6 +29,7 @@ type QuizLink = {
     id: string;
     name: string;
     email: string | null;
+    publicToken: string | null;
   } | null;
   allowMultipleAttempts: boolean;
   expiresAt: Date | null;
@@ -35,7 +38,7 @@ type QuizLink = {
     id: string;
     name: string;
     visibility: string;
-    settings: any;
+    settings: Record<string, unknown>;
     questions: Array<{
       id: string;
       type: string;
@@ -71,6 +74,10 @@ export function QuizIntroductionContent({
     timeLimitPerQuestion?: number | null;
   };
 
+  const portalToken = quizLink.participant?.publicToken ?? null;
+  const isCompleted =
+    !quizLink.allowMultipleAttempts && quizLink.hasCompletedAttempt;
+
   const handleStart = async () => {
     setIsLoading(true);
     setError(null);
@@ -78,20 +85,16 @@ export function QuizIntroductionContent({
     try {
       let participantId: string | null = null;
 
-      // For personalized links, use existing participantId
       if (quizLink.participantId) {
         participantId = quizLink.participantId;
       }
-      // For public links, participantId remains null (anonymous)
 
-      // Start attempt
       const attemptResult = await startQuizAttempt(
         quizLink.id,
-        participantId
+        participantId,
       );
 
       if (!attemptResult.success) {
-        // Check if error is a translation key
         const errorKey = attemptResult.error;
         if (errorKey === "alreadyCompleted") {
           setError(t(locale, "quiz.alreadyCompleted"));
@@ -102,105 +105,133 @@ export function QuizIntroductionContent({
         return;
       }
 
-      // Redirect to play page
       router.push(`/quiz/${token}/play?attemptId=${attemptResult.attempt.id}`);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : t(locale, "common.error")
+        err instanceof Error ? err.message : t(locale, "common.error"),
       );
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
-      <div className="max-w-2xl mx-auto">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl md:text-3xl">
-              {quizLink.quiz.name}
-            </CardTitle>
-            <CardDescription>
-              {quizLink.participant
-                ? !quizLink.allowMultipleAttempts && quizLink.hasCompletedAttempt
-                  ? t(locale, "quiz.personalizedLinkCompleted", { name: quizLink.participant.name })
-                  : t(locale, "quiz.personalizedLinkGreeting", { name: quizLink.participant.name })
-                : t(locale, "quiz.introductionDescription")}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Quiz Info */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="flex items-center gap-2">
-                <FileQuestion className="h-8 w-8 text-muted-foreground" />
-                <div>
-                  <p className="text-lg font-medium">
-                    {quizLink.quiz.questions.length}
-                  </p>
-                  <p className="text-base text-muted-foreground">
-                    {t(locale, "quiz.questions")}
-                  </p>
-                </div>
-              </div>
-              {settings.timeLimitPerQuestion && (
-                <div className="flex items-center gap-2">
-                  <Clock className="h-8 w-8 text-muted-foreground" />
-                  <div>
-                    <p className="text-lg font-medium">
-                      {settings.timeLimitPerQuestion}s
-                    </p>
-                    <p className="text-base text-muted-foreground">
-                      {t(locale, "quiz.perQuestion")}
-                    </p>
-                  </div>
-                </div>
-              )}
-              <div className="flex items-center gap-2">
-                <Users className="h-8 w-8 text-muted-foreground" />
-                <div>
-                  <p className="text-lg font-medium">
-                    {quizLink.allowMultipleAttempts
-                      ? t(locale, "quiz.multipleAttempts")
-                      : t(locale, "quiz.singleAttempt")}
-                  </p>
-                  <p className="text-base text-muted-foreground">
-                    {t(locale, "quiz.attempts")}
-                  </p>
-                </div>
-              </div>
-            </div>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+        <div className="container max-w-2xl mx-auto px-4 flex items-center justify-between h-14">
+          {portalToken ? (
+            <Link
+              href={`/p/${portalToken}`}
+              className="flex items-center gap-1.5 text-base text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              {t(locale, "quiz.backToPortal")}
+            </Link>
+          ) : (
+            <span className="text-sm font-semibold tracking-tight">
+              QuizLink
+            </span>
+          )}
+          <ThemeToggle />
+        </div>
+      </header>
 
-            {error && (
-              <Alert variant="error">
-                <AlertCircle className="h-4 w-4" />
-                {error}
-              </Alert>
+      {/* Content */}
+      <div className="container max-w-2xl mx-auto px-4 py-8 sm:py-12">
+        <div className="space-y-8">
+          <div className="flex flex-col gap-4">
+            {/* Greeting */}
+            {quizLink.participant && (
+              <p className="text-muted-foreground text-lg h1">
+                {isCompleted
+                  ? t(locale, "quiz.personalizedLinkCompleted", {
+                      name: quizLink.participant.name,
+                    })
+                  : t(locale, "quiz.personalizedLinkGreeting", {
+                      name: quizLink.participant.name,
+                    })}
+              </p>
             )}
 
-            {/* Start Button */}
-            <div className="space-y-4 border-t border-border pt-6">
-              {!quizLink.allowMultipleAttempts && quizLink.hasCompletedAttempt ? (
-                <div className="text-center space-y-2 py-4">
-                  <p className="text-sm text-muted-foreground">
-                    {t(locale, "quiz.alreadyCompleted")}
-                  </p>
-                </div>
-              ) : (
-                <Button
-                  onClick={handleStart}
-                  disabled={isLoading}
-                  className="w-full"
-                  variant="blue"
-                  size="lg"
-                >
-                  {isLoading
-                    ? t(locale, "common.loading")
-                    : t(locale, "quiz.startQuiz")}
-                </Button>
-              )}
+            {!quizLink.participant && (
+              <p className="text-muted-foreground text-lg h1">
+                {t(locale, "quiz.introductionDescription")}
+              </p>
+            )}
+
+            {/* Quiz name */}
+            <h1 className="text-3xl h1 sm:text-4xl font-bold tracking-tight">
+              {quizLink.quiz.name}
+            </h1>
+          </div>
+
+          {/* Info pills */}
+          <div className="flex flex-wrap gap-3">
+            <Badge variant="secondary" className="text-sm px-3 py-1.5 gap-1.5">
+              <FileQuestion className="h-4 w-4" />
+              {quizLink.quiz.questions.length} {t(locale, "quiz.questions")}
+            </Badge>
+            {settings.timeLimitPerQuestion && (
+              <Badge
+                variant="secondary"
+                className="text-sm px-3 py-1.5 gap-1.5"
+              >
+                <Clock className="h-4 w-4" />
+                {settings.timeLimitPerQuestion}s {t(locale, "quiz.perQuestion")}
+              </Badge>
+            )}
+          </div>
+
+          {/* Attempt info */}
+          <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/50 p-4">
+            {quizLink.allowMultipleAttempts ? (
+              <div className="flex items-center gap-2">
+                <RefreshCw className="h-5 w-5 shrink-0 mt-0.5 mr-1" />
+                <p className="text-sm text-foreground">
+                  {t(locale, "quiz.multipleAttempts")}
+                </p>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5 mr-1 text-orange-700 dark:text-orange-400" />
+                <p className="text-sm text-orange-700 dark:text-orange-400">
+                  {t(locale, "quiz.singleAttempt")}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Error */}
+          {error && (
+            <Alert variant="error">
+              <AlertCircle className="h-4 w-4" />
+              {error}
+            </Alert>
+          )}
+
+          {/* Action */}
+          {isCompleted ? (
+            <div className="text-center py-4">
+              <p className="text-sm text-muted-foreground">
+                {t(locale, "quiz.alreadyCompleted")}
+              </p>
             </div>
-          </CardContent>
-        </Card>
+          ) : (
+            <Button
+              onClick={handleStart}
+              disabled={isLoading}
+              variant="blue"
+              size="lg"
+              className="w-full text-base"
+            >
+              {isLoading
+                ? t(locale, "common.loading")
+                : quizLink.hasCompletedAttempt
+                  ? t(locale, "quiz.restart")
+                  : t(locale, "quiz.startQuiz")}
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );

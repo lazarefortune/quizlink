@@ -270,7 +270,7 @@ export function ParticipantReportContent({
                 ? "Solde insuffisant (4 coins requis)."
                 : "Insufficient balance (4 coins required)."}
               {" "}
-              <Link href="/pricing" className="underline font-medium">
+              <Link href="/account/coins" className="underline font-medium">
                 {locale === "fr" ? "Voir les offres" : "View offers"}
               </Link>
             </p>

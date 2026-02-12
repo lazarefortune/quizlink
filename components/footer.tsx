@@ -15,8 +15,7 @@ export function Footer() {
     pathname?.startsWith("/auth") ||
     pathname?.startsWith("/generate") ||
     pathname?.startsWith("/builder") ||
-    pathname?.startsWith("/account") ||
-    pathname?.startsWith("/quiz/");
+    pathname?.startsWith("/account");
   if (hideFooter) {
     return null;
   }
