@@ -37,7 +37,7 @@ export function UseCasesSection() {
       <div className="mx-auto max-w-6xl">
         <AnimateOnScroll>
           <div className="text-center mb-12 sm:mb-16">
-            <h2 className="text-3xl font-bold sm:text-4xl md:text-5xl">
+            <h2 className="h1 text-3xl font-bold sm:text-4xl md:text-5xl">
               {t(locale, "landing.useCases.title")}
             </h2>
             <p className="mt-4 text-lg text-muted-foreground sm:text-xl">

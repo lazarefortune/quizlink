@@ -48,7 +48,7 @@ export function HeroSection() {
         <div className="text-center space-y-10 sm:space-y-12">
           <AnimateOnScroll>
             <div className="space-y-4">
-              <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl">
+              <h1 className="h1 text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl">
                 <span className="block">
                   {titleWithHighlights.map((part, i) =>
                     part.type === "highlight" ? (
