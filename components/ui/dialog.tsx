@@ -34,11 +34,11 @@ const DialogContent = React.forwardRef<
 >(({ className, children, onOverlayClick, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay onClick={onOverlayClick} />
-    <div className="fixed left-1/2 top-1/2 z-[102] w-full max-w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2">
+    <div className="fixed inset-0 z-[102] flex items-center justify-center p-4">
       <DialogPrimitive.Content
         ref={ref}
         className={cn(
-          "quizlink-dialog-content grid gap-4 border border-border bg-background p-6 shadow-lg sm:rounded-lg max-w-lg",
+          "quizlink-dialog-content grid w-full max-w-lg gap-4 border border-border bg-background p-6 shadow-lg sm:rounded-lg",
           "opacity-0",
           className
         )}
