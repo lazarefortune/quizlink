@@ -2,12 +2,20 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/toast";
-import { Plus, Edit2, Trash2, Loader2 } from "lucide-react";
+import {
+  Plus,
+  Edit2,
+  Trash2,
+  Loader2,
+  Coins,
+  ArrowLeft,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -16,6 +24,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import Link from "next/link";
 
 type CoinPack = {
   id: string;
@@ -34,7 +43,7 @@ type CoinPack = {
 export function AdminPacksContent() {
   const { showToast } = useToast();
   const [packs, setPacks] = useState<CoinPack[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [packToDelete, setPackToDelete] = useState<CoinPack | null>(null);
@@ -49,8 +58,8 @@ export function AdminPacksContent() {
     isActive: true,
     isPopular: false,
   });
-  const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchPacks();
@@ -58,7 +67,7 @@ export function AdminPacksContent() {
 
   const fetchPacks = async () => {
     try {
-      setLoading(true);
+      setIsLoading(true);
       const response = await fetch("/api/admin/coin-packs");
       if (response.ok) {
         const data = await response.json();
@@ -66,11 +75,10 @@ export function AdminPacksContent() {
       } else {
         showToast("Erreur lors du chargement des packs", "error");
       }
-    } catch (error) {
-      console.error("[Admin Packs] Error fetching packs:", error);
+    } catch {
       showToast("Erreur lors du chargement des packs", "error");
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -110,15 +118,14 @@ export function AdminPacksContent() {
   };
 
   const handleConfirmDelete = async () => {
-    if (!packToDelete) {
-      return;
-    }
+    if (!packToDelete) return;
 
     try {
-      setDeleting(true);
-      const response = await fetch(`/api/admin/coin-packs/${packToDelete.id}`, {
-        method: "DELETE",
-      });
+      setIsDeleting(true);
+      const response = await fetch(
+        `/api/admin/coin-packs/${packToDelete.id}`,
+        { method: "DELETE" }
+      );
 
       if (response.ok) {
         showToast("Pack supprimé avec succès", "success");
@@ -129,16 +136,20 @@ export function AdminPacksContent() {
         const data = await response.json();
         showToast(data.error || "Erreur lors de la suppression", "error");
       }
-    } catch (error) {
-      console.error("[Admin Packs] Error deleting pack:", error);
+    } catch {
       showToast("Erreur lors de la suppression", "error");
     } finally {
-      setDeleting(false);
+      setIsDeleting(false);
     }
   };
 
   const handleSave = async () => {
-    if (!formData.name || !formData.displayName || !formData.coins || !formData.price) {
+    if (
+      !formData.name ||
+      !formData.displayName ||
+      !formData.coins ||
+      !formData.price
+    ) {
       showToast("Remplis tous les champs obligatoires", "error");
       return;
     }
@@ -149,7 +160,7 @@ export function AdminPacksContent() {
     }
 
     try {
-      setSaving(true);
+      setIsSaving(true);
       const url = editingPack
         ? `/api/admin/coin-packs/${editingPack.id}`
         : "/api/admin/coin-packs";
@@ -172,7 +183,9 @@ export function AdminPacksContent() {
 
       if (response.ok) {
         showToast(
-          editingPack ? "Pack mis à jour avec succès" : "Pack créé avec succès",
+          editingPack
+            ? "Pack mis à jour avec succès"
+            : "Pack créé avec succès",
           "success"
         );
         setIsDialogOpen(false);
@@ -181,107 +194,118 @@ export function AdminPacksContent() {
         const data = await response.json();
         showToast(data.error || "Erreur lors de la sauvegarde", "error");
       }
-    } catch (error) {
-      console.error("[Admin Packs] Error saving pack:", error);
+    } catch {
       showToast("Erreur lors de la sauvegarde", "error");
     } finally {
-      setSaving(false);
+      setIsSaving(false);
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="flex items-center justify-center py-20">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-6xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
+    <div className="p-4 sm:p-5 md:p-6 lg:p-8">
+      <div className="mx-auto max-w-4xl space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-bold">Gestion des Packs de Coins</h1>
-            <p className="text-muted-foreground mt-2">
-              Créez et gérez les packs de coins disponibles à l'achat
+            <Button variant="ghost" size="sm" asChild className="-ml-2 mb-2">
+              <Link href="/admin" className="text-muted-foreground">
+                <ArrowLeft className="h-4 w-4 mr-1" />
+                Dashboard admin
+              </Link>
+            </Button>
+            <h1 className="text-2xl sm:text-3xl font-bold">
+              Gestion des Packs
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Crée et gère les packs de coins disponibles
             </p>
           </div>
-          <Button onClick={handleCreate}>
-            <Plus className="h-4 w-4 mr-2" />
+          <Button onClick={handleCreate} className="shrink-0">
+            <Plus className="h-4 w-4" />
             Créer un pack
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {packs.map((pack) => (
-            <Card key={pack.id}>
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle>{pack.displayName}</CardTitle>
-                    <CardDescription>{pack.name}</CardDescription>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEdit(pack)}
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(pack)}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Coins:</span>
-                  <span className="font-semibold">{pack.coins}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Prix:</span>
-                  <span className="font-semibold">{pack.price}€</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Stripe Price ID:</span>
-                  <span className="font-mono text-xs">
-                    {pack.stripePriceId || "Non configuré"}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Actif:</span>
-                  <Switch checked={pack.isActive} disabled />
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Populaire:</span>
-                  <Switch checked={pack.isPopular} disabled />
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Ordre:</span>
-                  <span className="font-semibold">{pack.order}</span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {packs.length === 0 && (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground">
-                Aucun pack créé. Cliquez sur "Créer un pack" pour commencer.
-              </p>
+        {/* Pack cards */}
+        {packs.length === 0 ? (
+          <Card className="border-dashed">
+            <CardContent className="py-10 text-center text-muted-foreground">
+              Aucun pack créé. Clique sur &quot;Créer un pack&quot; pour
+              commencer.
             </CardContent>
           </Card>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {packs.map((pack) => (
+              <Card key={pack.id} className="relative">
+                {pack.isPopular && (
+                  <Badge className="absolute -top-2.5 left-1/2 -translate-x-1/2 z-10">
+                    Populaire
+                  </Badge>
+                )}
+                <CardContent className="p-5 space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-semibold text-base">
+                        {pack.displayName}
+                      </p>
+                      <p className="text-xs text-muted-foreground font-mono">
+                        {pack.name}
+                      </p>
+                    </div>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => handleEdit(pack)}
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive"
+                        onClick={() => handleDelete(pack)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-bold">{pack.price}€</span>
+                    <span className="text-muted-foreground text-sm">
+                      / {pack.coins} coins
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    <Badge variant={pack.isActive ? "default" : "secondary"}>
+                      {pack.isActive ? "Actif" : "Inactif"}
+                    </Badge>
+                    {pack.stripePriceId && (
+                      <Badge variant="outline">Stripe</Badge>
+                    )}
+                    <Badge variant="outline">
+                      Ordre: {pack.order}
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         )}
 
+        {/* Create/Edit Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="max-w-md">
             <DialogHeader>
@@ -290,43 +314,52 @@ export function AdminPacksContent() {
               </DialogTitle>
               <DialogDescription>
                 {editingPack
-                  ? "Modifiez les informations du pack"
-                  : "Remplissez les informations pour créer un nouveau pack"}
+                  ? "Modifie les informations du pack"
+                  : "Remplis les informations pour créer un nouveau pack"}
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
+            <div className="space-y-4 py-2">
+              <div className="space-y-1.5">
                 <Label htmlFor="name">Nom (ID unique) *</Label>
                 <Input
                   id="name"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value.toUpperCase() })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      name: e.target.value.toUpperCase(),
+                    })
+                  }
                   disabled={!!editingPack}
                 />
                 <p className="text-xs text-muted-foreground">
                   Identifiant unique (ex: STARTER, BOOST, PRO)
                 </p>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="displayName">Nom d'affichage *</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="displayName">Nom d&apos;affichage *</Label>
                 <Input
                   id="displayName"
                   value={formData.displayName}
-                  onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, displayName: e.target.value })
+                  }
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
                   <Label htmlFor="coins">Coins *</Label>
                   <Input
                     id="coins"
                     type="number"
                     min="1"
                     value={formData.coins}
-                    onChange={(e) => setFormData({ ...formData, coins: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, coins: e.target.value })
+                    }
                   />
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <Label htmlFor="price">Prix (€) *</Label>
                   <Input
                     id="price"
@@ -334,28 +367,31 @@ export function AdminPacksContent() {
                     min="0"
                     step="0.01"
                     value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, price: e.target.value })
+                    }
                   />
                 </div>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label htmlFor="stripePriceId">Stripe Price ID</Label>
                 <Input
                   id="stripePriceId"
                   value={formData.stripePriceId}
-                  onChange={(e) => setFormData({ ...formData, stripePriceId: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, stripePriceId: e.target.value })
+                  }
                 />
-                <p className="text-xs text-muted-foreground">
-                  Laissez vide pour créer automatiquement via price_data
-                </p>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="order">Ordre d'affichage</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="order">Ordre d&apos;affichage</Label>
                 <Input
                   id="order"
                   type="number"
                   value={formData.order}
-                  onChange={(e) => setFormData({ ...formData, order: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, order: e.target.value })
+                  }
                 />
               </div>
               <div className="flex items-center justify-between">
@@ -379,14 +415,17 @@ export function AdminPacksContent() {
                 />
               </div>
             </div>
-            <DialogFooter>
-              <Button variant="secondary" onClick={() => setIsDialogOpen(false)}>
+            <DialogFooter className="gap-2">
+              <Button
+                variant="secondary"
+                onClick={() => setIsDialogOpen(false)}
+              >
                 Annuler
               </Button>
-              <Button onClick={handleSave} disabled={saving}>
-                {saving ? (
+              <Button onClick={handleSave} disabled={isSaving}>
+                {isSaving ? (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                     Enregistrement...
                   </>
                 ) : (
@@ -397,35 +436,39 @@ export function AdminPacksContent() {
           </DialogContent>
         </Dialog>
 
-        {/* Delete Confirmation Dialog */}
-        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        {/* Delete Confirmation */}
+        <Dialog
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+        >
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Supprimer le pack</DialogTitle>
               <DialogDescription>
-                Tu es sûr de vouloir supprimer le pack "{packToDelete?.displayName}" ?
-                Cette action est irréversible et supprimera définitivement le pack.
+                Tu es sûr de vouloir supprimer le pack &quot;
+                {packToDelete?.displayName}&quot; ? Cette action est
+                irréversible.
               </DialogDescription>
             </DialogHeader>
-            <DialogFooter>
+            <DialogFooter className="gap-2">
               <Button
                 variant="secondary"
                 onClick={() => {
                   setIsDeleteDialogOpen(false);
                   setPackToDelete(null);
                 }}
-                disabled={deleting}
+                disabled={isDeleting}
               >
                 Annuler
               </Button>
               <Button
                 variant="destructive"
                 onClick={handleConfirmDelete}
-                disabled={deleting}
+                disabled={isDeleting}
               >
-                {deleting ? (
+                {isDeleting ? (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                     Suppression...
                   </>
                 ) : (

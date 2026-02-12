@@ -93,9 +93,11 @@ export function ParticipantsContent() {
 
       if (participantsResult.success) {
         setParticipants(participantsResult.participants);
+      } else {
+        showToast(participantsResult.error ?? t(locale, "common.error"), "error");
       }
     } catch {
-      // Error handled by getParticipants
+      showToast(t(locale, "common.error"), "error");
     } finally {
       setIsLoading(false);
     }

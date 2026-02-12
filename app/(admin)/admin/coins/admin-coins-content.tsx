@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,8 +9,19 @@ import { useToast } from "@/components/ui/toast";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { searchUserByEmail, getUserCoinTransactions, creditCoinsAction } from "./actions";
-import { Coins, Search, Plus, Minus } from "lucide-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Coins, Search, Plus, ArrowUpCircle, ArrowDownCircle, ArrowLeft } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { format } from "date-fns";
+import { fr, enUS } from "date-fns/locale";
+import Link from "next/link";
 
 type User = {
   id: string;
@@ -38,6 +49,8 @@ export function AdminCoinsContent() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoadingTransactions, setIsLoadingTransactions] = useState(false);
 
+  const dateLocale = locale === "fr" ? fr : enUS;
+
   const handleSearch = async () => {
     if (!searchEmail.trim()) {
       showToast(t(locale, "admin.coins.emailRequired"), "error");
@@ -53,13 +66,15 @@ export function AdminCoinsContent() {
         setReason("");
         loadTransactions(result.user.id);
       } else {
-        // TypeScript narrowing: if success is false, result must have error property
         const errorResult = result as { success: false; error: string };
-        showToast(errorResult.error || t(locale, "admin.coins.userNotFound"), "error");
+        showToast(
+          errorResult.error || t(locale, "admin.coins.userNotFound"),
+          "error"
+        );
         setSelectedUser(null);
         setTransactions([]);
       }
-    } catch (error) {
+    } catch {
       showToast(t(locale, "common.error"), "error");
     } finally {
       setIsSearching(false);
@@ -73,8 +88,8 @@ export function AdminCoinsContent() {
       if (result.success && result.transactions) {
         setTransactions(result.transactions);
       }
-    } catch (error) {
-      console.error("Error loading transactions:", error);
+    } catch {
+      // Silent
     } finally {
       setIsLoadingTransactions(false);
     }
@@ -96,21 +111,33 @@ export function AdminCoinsContent() {
 
     setIsCrediting(true);
     try {
-      const result = await creditCoinsAction(selectedUser.id, amount, reason.trim());
+      const result = await creditCoinsAction(
+        selectedUser.id,
+        amount,
+        reason.trim()
+      );
       if (result.success) {
-        showToast(t(locale, "admin.coins.coinsCredited", { amount, name: selectedUser.name }), "success");
+        showToast(
+          t(locale, "admin.coins.coinsCredited", {
+            amount,
+            name: selectedUser.name,
+          }),
+          "success"
+        );
         setCoinAmount("");
         setReason("");
-        // Reload user data
         const userResult = await searchUserByEmail(selectedUser.email);
         if (userResult.success && userResult.user) {
           setSelectedUser(userResult.user);
         }
         loadTransactions(selectedUser.id);
       } else {
-        showToast(result.error || t(locale, "admin.coins.creditError"), "error");
+        showToast(
+          result.error || t(locale, "admin.coins.creditError"),
+          "error"
+        );
       }
-    } catch (error) {
+    } catch {
       showToast(t(locale, "common.error"), "error");
     } finally {
       setIsCrediting(false);
@@ -118,84 +145,105 @@ export function AdminCoinsContent() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="p-4 sm:p-5 md:p-6 lg:p-8">
+      <div className="mx-auto max-w-3xl space-y-6">
+        {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold">{t(locale, "admin.coins.title")}</h1>
-          <p className="text-muted-foreground mt-2">{t(locale, "admin.coins.description")}</p>
+          <Button variant="ghost" size="sm" asChild className="-ml-2 mb-2">
+            <Link href="/admin" className="text-muted-foreground">
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              {locale === "fr" ? "Dashboard admin" : "Admin dashboard"}
+            </Link>
+          </Button>
+          <h1 className="text-2xl sm:text-3xl font-bold">
+            {t(locale, "admin.coins.title")}
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            {t(locale, "admin.coins.description")}
+          </p>
         </div>
 
         {/* Search User */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t(locale, "admin.coins.searchUser")}</CardTitle>
-            <CardDescription>{t(locale, "admin.coins.searchDescription")}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-2">
-              <div className="flex-1">
-                <Input
-                  type="email"
-                  value={searchEmail}
-                  onChange={(e) => setSearchEmail(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      handleSearch();
-                    }
-                  }}
-                />
-              </div>
-              <Button onClick={handleSearch} disabled={isSearching} variant="primary">
-                <Search className="h-4 w-4 mr-2" />
-                {isSearching ? t(locale, "common.loading") : t(locale, "common.search")}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex gap-2">
+          <Input
+            type="email"
+            placeholder="email@example.com"
+            value={searchEmail}
+            onChange={(e) => setSearchEmail(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+            className="flex-1"
+          />
+          <Button
+            onClick={handleSearch}
+            disabled={isSearching}
+            variant="secondary"
+          >
+            <Search className="h-4 w-4" />
+            <span className="hidden sm:inline">
+              {isSearching
+                ? t(locale, "common.loading")
+                : t(locale, "common.search")}
+            </span>
+          </Button>
+        </div>
 
-        {/* User Info and Credit Form */}
+        {/* User Info + Credit */}
         {selectedUser && (
           <Card>
-            <CardHeader>
-              <CardTitle>{t(locale, "admin.coins.userInfo")}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <CardContent className="p-5 space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <Label>{t(locale, "auth.name")}</Label>
-                  <p className="text-sm font-medium">{selectedUser.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {t(locale, "auth.name")}
+                  </p>
+                  <p className="font-medium">{selectedUser.name}</p>
                 </div>
                 <div>
-                  <Label>{t(locale, "auth.email")}</Label>
-                  <p className="text-sm font-medium">{selectedUser.email}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {t(locale, "auth.email")}
+                  </p>
+                  <p className="font-medium text-sm truncate">
+                    {selectedUser.email}
+                  </p>
                 </div>
                 <div>
-                  <Label>{t(locale, "admin.coins.currentBalance")}</Label>
-                  <div className="flex items-center gap-2">
+                  <p className="text-xs text-muted-foreground">
+                    {t(locale, "admin.coins.currentBalance")}
+                  </p>
+                  <div className="flex items-center gap-1">
                     <Coins className="h-4 w-4 text-primary" />
-                    <p className="text-sm font-bold">{selectedUser.coinBalance}</p>
+                    <span className="font-bold tabular-nums text-lg">
+                      {selectedUser.coinBalance}
+                    </span>
                   </div>
                 </div>
               </div>
 
-              <div className="border-t pt-4 space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="coinAmount">{t(locale, "admin.coins.coinAmount")} *</Label>
-                  <Input
-                    id="coinAmount"
-                    type="number"
-                    min="1"
-                    value={coinAmount}
-                    onChange={(e) => setCoinAmount(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="reason">{t(locale, "admin.coins.reason")} *</Label>
-                  <Input
-                    id="reason"
-                    value={reason}
-                    onChange={(e) => setReason(e.target.value)}
-                  />
+              <div className="border-t pt-4 space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="coinAmount">
+                      {t(locale, "admin.coins.coinAmount")} *
+                    </Label>
+                    <Input
+                      id="coinAmount"
+                      type="number"
+                      min="1"
+                      value={coinAmount}
+                      onChange={(e) => setCoinAmount(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="reason">
+                      {t(locale, "admin.coins.reason")} *
+                    </Label>
+                    <Input
+                      id="reason"
+                      value={reason}
+                      onChange={(e) => setReason(e.target.value)}
+                      placeholder={t(locale, "admin.coins.reasonPlaceholder")}
+                    />
+                  </div>
                 </div>
                 <Button
                   onClick={handleCreditCoins}
@@ -203,8 +251,10 @@ export function AdminCoinsContent() {
                   variant="primary"
                   className="w-full"
                 >
-                  <Plus className="h-4 w-4 mr-2" />
-                  {isCrediting ? t(locale, "common.loading") : t(locale, "admin.coins.creditCoins")}
+                  <Plus className="h-4 w-4" />
+                  {isCrediting
+                    ? t(locale, "common.loading")
+                    : t(locale, "admin.coins.creditCoins")}
                 </Button>
               </div>
             </CardContent>
@@ -213,50 +263,120 @@ export function AdminCoinsContent() {
 
         {/* Transaction History */}
         {selectedUser && (
-          <Card>
-            <CardHeader>
-              <CardTitle>{t(locale, "admin.coins.transactionHistory")}</CardTitle>
-              <CardDescription>{t(locale, "admin.coins.transactionDescription")}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isLoadingTransactions ? (
-                <p className="text-center text-muted-foreground py-4">{t(locale, "common.loading")}</p>
-              ) : transactions.length === 0 ? (
-                <p className="text-center text-muted-foreground py-4">{t(locale, "admin.coins.noTransactions")}</p>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{t(locale, "admin.coins.date")}</TableHead>
-                      <TableHead>{t(locale, "admin.coins.amount")}</TableHead>
-                      <TableHead>{t(locale, "admin.coins.reason")}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {transactions.map((transaction) => (
-                      <TableRow key={transaction.id}>
-                        <TableCell>
-                          {new Date(transaction.createdAt).toLocaleDateString(locale, {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </TableCell>
-                        <TableCell>
-                          <span className={transaction.amount > 0 ? "text-green-600" : "text-red-600"}>
-                            {transaction.amount > 0 ? "+" : ""}{transaction.amount}
-                          </span>
-                        </TableCell>
-                        <TableCell>{transaction.reason}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
+          <div className="space-y-3">
+            <h2 className="text-lg font-semibold">
+              {t(locale, "admin.coins.transactionHistory")}
+            </h2>
+
+            {isLoadingTransactions ? (
+              <Card>
+                <CardContent className="py-8 text-center text-muted-foreground">
+                  {t(locale, "common.loading")}
+                </CardContent>
+              </Card>
+            ) : transactions.length === 0 ? (
+              <Card className="border-dashed">
+                <CardContent className="py-8 text-center text-muted-foreground">
+                  {t(locale, "admin.coins.noTransactions")}
+                </CardContent>
+              </Card>
+            ) : (
+              <>
+                {/* Desktop table */}
+                <Card className="hidden sm:block">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>
+                            {t(locale, "admin.coins.date")}
+                          </TableHead>
+                          <TableHead>
+                            {t(locale, "admin.coins.amount")}
+                          </TableHead>
+                          <TableHead>
+                            {t(locale, "admin.coins.reason")}
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {transactions.map((tx) => {
+                          const isCredit = tx.amount > 0;
+                          return (
+                            <TableRow key={tx.id}>
+                              <TableCell className="whitespace-nowrap text-sm">
+                                {format(new Date(tx.createdAt), "PPp", {
+                                  locale: dateLocale,
+                                })}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-1.5">
+                                  {isCredit ? (
+                                    <ArrowUpCircle className="h-4 w-4 text-green-500" />
+                                  ) : (
+                                    <ArrowDownCircle className="h-4 w-4 text-red-500" />
+                                  )}
+                                  <Badge
+                                    variant={
+                                      isCredit ? "default" : "destructive"
+                                    }
+                                    className="font-mono"
+                                  >
+                                    {isCredit ? "+" : ""}
+                                    {tx.amount}
+                                  </Badge>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-muted-foreground">
+                                {tx.reason}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </Card>
+
+                {/* Mobile cards */}
+                <div className="space-y-2 sm:hidden">
+                  {transactions.map((tx) => {
+                    const isCredit = tx.amount > 0;
+                    return (
+                      <Card key={tx.id}>
+                        <CardContent className="p-3 space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs text-muted-foreground">
+                              {format(new Date(tx.createdAt), "PPp", {
+                                locale: dateLocale,
+                              })}
+                            </p>
+                            <div className="flex items-center gap-1">
+                              {isCredit ? (
+                                <ArrowUpCircle className="h-4 w-4 text-green-500" />
+                              ) : (
+                                <ArrowDownCircle className="h-4 w-4 text-red-500" />
+                              )}
+                              <Badge
+                                variant={
+                                  isCredit ? "default" : "destructive"
+                                }
+                                className="font-mono"
+                              >
+                                {isCredit ? "+" : ""}
+                                {tx.amount}
+                              </Badge>
+                            </div>
+                          </div>
+                          <p className="text-sm">{tx.reason}</p>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
         )}
       </div>
     </div>
