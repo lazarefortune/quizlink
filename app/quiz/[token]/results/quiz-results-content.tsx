@@ -198,12 +198,12 @@ export function QuizResultsContent({ attempt }: QuizResultsContentProps) {
 
             {/* Restart Button */}
             {attempt.quizLink.allowMultipleAttempts && (
-              <div className="border-t pt-6">
+              <div className="border-t border-border pt-6">
                 <Button
                   onClick={handleRestartQuiz}
                   className="w-full"
                   size="lg"
-                  variant="primary"
+                  variant="blue"
                 >
                   <RotateCcw className="h-4 w-4 mr-2" />
                   {t(locale, "quiz.restart")}

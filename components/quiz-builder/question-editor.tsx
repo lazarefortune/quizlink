@@ -34,6 +34,7 @@ import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import type { Question, QuestionType, QuestionOption } from "@/types/quiz-builder";
 import { cn } from "@/lib/utils";
+import { Label } from "../ui/label";
 
 type QuestionEditorProps = {
   question: Question;
@@ -232,10 +233,26 @@ export function QuestionEditor({
         )}
 
         {/* Header */}
-        <div className="flex items-center justify-between gap-2">
-          <h3 className="text-lg font-semibold text-primary">
-            {t(locale, "builder.questionNumber", { number: (index + 1).toString() })}
-          </h3>
+        <div className="flex items-center justify-between gap-2 border-b border-border/60 pb-5">
+          {/* Question Type */}
+          <div className="space-y-1.5 sm:space-y-2">
+            <Select value={question.type} onValueChange={handleTypeChange}>
+              <SelectTrigger className="text-sm max-w-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="MULTIPLE_CHOICE">
+                  {t(locale, "builder.questionTypeMultipleChoice")}
+                </SelectItem>
+                <SelectItem value="CHECKBOX">
+                  {t(locale, "builder.questionTypeCheckbox")}
+                </SelectItem>
+                <SelectItem value="TRUE_FALSE">
+                  {t(locale, "builder.questionTypeTrueFalse")}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div className="flex gap-2 shrink-0">
             {/*<Button*/}
             {/*  variant="ghost"*/}
@@ -256,28 +273,17 @@ export function QuestionEditor({
           </div>
         </div>
 
-        {/* Question Type */}
-        <div className="space-y-1.5 sm:space-y-2">
-          <label className="text-base font-medium">{t(locale, "builder.questionType")}</label>
-          <Select value={question.type} onValueChange={handleTypeChange}>
-            <SelectTrigger className="text-sm max-w-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="MULTIPLE_CHOICE">{t(locale, "builder.questionTypeMultipleChoice")}</SelectItem>
-              <SelectItem value="CHECKBOX">{t(locale, "builder.questionTypeCheckbox")}</SelectItem>
-              <SelectItem value="TRUE_FALSE">{t(locale, "builder.questionTypeTrueFalse")}</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
         {/* Question with formatting toolbar */}
         <div className="space-y-1.5 sm:space-y-2">
-          <label className="text-base font-medium">{t(locale, "builder.questionLabel")}</label>
+          <h3 className="text-lg font-semibold">
+            {t(locale, "builder.questionNumber", {
+              number: (index + 1).toString(),
+            })}
+          </h3>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <div className="flex-1 space-y-2 min-w-0">
               {/* Formatting Toolbar */}
-              <div className="flex items-center gap-0.5 sm:gap-1 p-1 sm:p-1.5 border rounded-md bg-muted/30 overflow-x-auto">
+              <div className="flex items-center gap-0.5 sm:gap-1 p-1 sm:p-1.5 border-2 border-border/60 rounded-md bg-muted/30 overflow-x-auto">
                 <Button
                   variant="ghost"
                   size="icon"
@@ -302,7 +308,7 @@ export function QuestionEditor({
                   size="icon"
                   className={cn(
                     "h-6 w-6 sm:h-7 sm:w-7 shrink-0",
-                    activeFormats.bold && "bg-primary text-primary-foreground"
+                    activeFormats.bold && "bg-primary text-primary-foreground",
                   )}
                   onClick={() => handleFormat("bold")}
                   type="button"
@@ -314,7 +320,8 @@ export function QuestionEditor({
                   size="icon"
                   className={cn(
                     "h-6 w-6 sm:h-7 sm:w-7 shrink-0",
-                    activeFormats.italic && "bg-primary text-primary-foreground"
+                    activeFormats.italic &&
+                      "bg-primary text-primary-foreground",
                   )}
                   onClick={() => handleFormat("italic")}
                   type="button"
@@ -326,7 +333,8 @@ export function QuestionEditor({
                   size="icon"
                   className={cn(
                     "h-6 w-6 sm:h-7 sm:w-7 shrink-0",
-                    activeFormats.underline && "bg-primary text-primary-foreground"
+                    activeFormats.underline &&
+                      "bg-primary text-primary-foreground",
                   )}
                   onClick={() => handleFormat("underline")}
                   type="button"
@@ -338,7 +346,8 @@ export function QuestionEditor({
                   size="icon"
                   className={cn(
                     "h-6 w-6 sm:h-7 sm:w-7 shrink-0",
-                    activeFormats.strikeThrough && "bg-primary text-primary-foreground"
+                    activeFormats.strikeThrough &&
+                      "bg-primary text-primary-foreground",
                   )}
                   onClick={() => handleFormat("strikeThrough")}
                   type="button"
@@ -365,9 +374,13 @@ export function QuestionEditor({
                   size="icon"
                   className={cn(
                     "h-6 w-6 sm:h-7 sm:w-7 shrink-0",
-                    (activeFormats.bold || activeFormats.italic || activeFormats.underline ||
-                     activeFormats.strikeThrough || activeFormats.insertUnorderedList ||
-                     activeFormats.insertOrderedList) && "bg-primary text-primary-foreground"
+                    (activeFormats.bold ||
+                      activeFormats.italic ||
+                      activeFormats.underline ||
+                      activeFormats.strikeThrough ||
+                      activeFormats.insertUnorderedList ||
+                      activeFormats.insertOrderedList) &&
+                      "bg-primary text-primary-foreground",
                   )}
                   onClick={() => {
                     handleFormat("removeFormat");
@@ -382,7 +395,8 @@ export function QuestionEditor({
                   size="icon"
                   className={cn(
                     "h-6 w-6 sm:h-7 sm:w-7 shrink-0",
-                    activeFormats.insertUnorderedList && "bg-primary text-primary-foreground"
+                    activeFormats.insertUnorderedList &&
+                      "bg-primary text-primary-foreground",
                   )}
                   onClick={() => {
                     editorRef.current?.focus();
@@ -399,7 +413,8 @@ export function QuestionEditor({
                   size="icon"
                   className={cn(
                     "h-6 w-6 sm:h-7 sm:w-7 shrink-0",
-                    activeFormats.insertOrderedList && "bg-primary text-primary-foreground"
+                    activeFormats.insertOrderedList &&
+                      "bg-primary text-primary-foreground",
                   )}
                   onClick={() => {
                     editorRef.current?.focus();
@@ -440,7 +455,7 @@ export function QuestionEditor({
                   <img
                     src={imagePreview}
                     alt="Question preview"
-                    className="w-full h-24 sm:h-32 md:h-40 object-cover rounded-md border"
+                    className="w-full h-24 sm:h-32 md:h-40 object-cover rounded-md border border-border"
                   />
                   <Button
                     variant="ghost"
@@ -452,7 +467,7 @@ export function QuestionEditor({
                   </Button>
                 </div>
               ) : (
-                <label className="flex flex-col items-center justify-center h-24 sm:h-32 md:h-40 border-2 border-dashed rounded-md cursor-pointer hover:bg-muted/50 transition-colors">
+                <label className="flex flex-col items-center justify-center h-24 sm:h-32 md:h-40 border-2 border-dashed border-border rounded-md cursor-pointer hover:bg-muted/50 transition-colors">
                   <input
                     type="file"
                     accept="image/*"
@@ -471,14 +486,15 @@ export function QuestionEditor({
 
         {/* Options */}
         <div className="space-y-2 sm:space-y-3">
-          <label className="text-base font-medium">{t(locale, "builder.answerOptions")}</label>
+          <Label className="text-base font-medium">
+            {t(locale, "builder.answerOptions")}
+          </Label>
           <div className="space-y-2">
             {question.options.map((option, optIndex) => (
               <div
                 key={option.id}
                 className={cn(
-                  "flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-md border bg-card hover:bg-muted/50 transition-colors cursor-pointer",
-                  option.isCorrect && "border-primary bg-primary/5"
+                  "flex items-center gap-2 sm:gap-3 transition-colors cursor-pointer",
                 )}
                 onClick={() => {
                   if (question.type === "TRUE_FALSE") {
@@ -491,9 +507,13 @@ export function QuestionEditor({
                       options: newOptions,
                     });
                   } else if (question.type === "MULTIPLE_CHOICE") {
-                    handleOptionChange(option.id, { isCorrect: !option.isCorrect });
+                    handleOptionChange(option.id, {
+                      isCorrect: !option.isCorrect,
+                    });
                   } else {
-                    handleOptionChange(option.id, { isCorrect: !option.isCorrect });
+                    handleOptionChange(option.id, {
+                      isCorrect: !option.isCorrect,
+                    });
                   }
                 }}
               >
@@ -512,10 +532,12 @@ export function QuestionEditor({
                         options: newOptions,
                       });
                     } else {
-                      handleOptionChange(option.id, { isCorrect: e.target.checked });
+                      handleOptionChange(option.id, {
+                        isCorrect: e.target.checked,
+                      });
                     }
                   }}
-                  className="h-4 w-4 shrink-0 cursor-pointer"
+                  className="h-4 w-4 shrink-0 cursor-pointer checked:bg-primary"
                 />
                 <Input
                   value={option.label}
@@ -527,7 +549,7 @@ export function QuestionEditor({
                     number: (optIndex + 1).toString(),
                   })}
                   onClick={(e) => e.stopPropagation()}
-                  className="flex-1 text-sm border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-auto min-w-0"
+                  className="flex-1 text-base border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-auto min-w-0"
                 />
                 {question.options.length > 2 && (
                   <Button
@@ -546,12 +568,9 @@ export function QuestionEditor({
             ))}
           </div>
           {question.type !== "TRUE_FALSE" && (
-            <button
-              onClick={handleAddOption}
-              className="text-base text-primary hover:cursor-pointer hover:underline font-medium"
-            >
+            <Button variant="ghost" size="sm" onClick={handleAddOption}>
               {t(locale, "builder.addOption")}
-            </button>
+            </Button>
           )}
         </div>
       </CardContent>

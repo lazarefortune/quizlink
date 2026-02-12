@@ -36,7 +36,7 @@ const AlertDialogContent = React.forwardRef<
       <AlertDialogPrimitive.Content
         ref={ref}
         className={cn(
-          "quizlink-dialog-content grid gap-4 border bg-background p-6 shadow-lg rounded-lg opacity-0",
+          "quizlink-dialog-content grid gap-4 border border-border bg-background p-6 shadow-lg rounded-lg opacity-0",
           className
         )}
         {...props}
@@ -92,7 +92,7 @@ const AlertDialogDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Description
     ref={ref}
-    className={cn("text-sm text-muted-foreground", className)}
+    className={cn("text-base text-muted-foreground", className)}
     {...props}
   />
 ));

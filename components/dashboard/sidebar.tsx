@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { LayoutDashboard, FileText, Users, Shield, Sparkles, Plus, User } from "lucide-react";
+import { FileText, Users, Shield, Sparkles, Plus, User, House } from "lucide-react";
 
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
@@ -25,7 +25,7 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "flex h-full flex-col border-r border-border/60 bg-card dark:bg-[#131F24]",
+        "flex h-full flex-col border-r border-border bg-muted",
         className,
       )}
     >
@@ -42,7 +42,7 @@ export function Sidebar({
         <NavItem
           href="/dashboard"
           label={t(locale, "dashboard.sidebar.overview")}
-          icon={LayoutDashboard}
+          icon={House}
           onClick={onNavClick}
         />
         <NavItem

@@ -10,12 +10,19 @@ export function Footer() {
   const pathname = usePathname();
   const { locale } = useLocale();
 
-  if (pathname?.startsWith("/dashboard") || pathname?.startsWith("/auth")) {
+  const hideFooter =
+    pathname?.startsWith("/dashboard") ||
+    pathname?.startsWith("/auth") ||
+    pathname?.startsWith("/generate") ||
+    pathname?.startsWith("/builder") ||
+    pathname?.startsWith("/account") ||
+    pathname?.startsWith("/quiz/");
+  if (hideFooter) {
     return null;
   }
 
   return (
-    <footer className="border-t bg-background">
+    <footer className="border-t border-border bg-background">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:py-12">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {/* About */}

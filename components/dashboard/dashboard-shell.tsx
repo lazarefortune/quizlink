@@ -66,7 +66,7 @@ export function DashboardShell({ children, title }: DashboardShellProps) {
       {/* Main content: offset for desktop sidebar */}
       <div className="flex min-w-0 flex-1 flex-col lg:pl-56 xl:pl-64">
         <Topbar onMenuClick={() => setSidebarOpen(true)} />
-        <main className="min-h-0 flex-1 overflow-auto bg-background dark:bg-[#131F24]">
+        <main className="min-h-0 flex-1 overflow-auto bg-background">
           {children}
         </main>
       </div>

@@ -459,7 +459,7 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
           </div>
           <div className="w-full bg-muted rounded-full h-2">
             <div
-              className="bg-primary h-2 rounded-full transition-all duration-300"
+              className="bg-blue h-2 rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -516,10 +516,10 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
                 }
               } else {
                 if (selected) {
-                  // Primary color for selected options
-                  borderColor = "hsl(var(--primary))";
-                  letterBgColor = "bg-primary";
-                  letterTextColor = "text-primary-foreground";
+                  // blue color for selected options
+                  borderColor = "hsl(var(--blue))";
+                  letterBgColor = "bg-blue";
+                  letterTextColor = "text-blue-foreground";
                 } else {
                   // Gray for unselected options
                   borderColor = "";
@@ -536,7 +536,8 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
                   className={cn(
                     "w-full text-left p-4 rounded-lg border-2 transition-all duration-200",
                     !borderColor && "border-border",
-                    isVerified ? "cursor-not-allowed" : "cursor-pointer hover:shadow-sm"
+                    isVerified ? "cursor-not-allowed" : "cursor-pointer hover:shadow-sm",
+                    selected ? "border-b-4" : "",
                   )}
                   style={borderColor ? { borderColor } : undefined}
                 >
@@ -570,7 +571,7 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
             </Button>
             {showAnswerImmediately && !isVerified ? (
               <Button
-                variant="primary"
+                variant="blue"
                 onClick={handleVerify}
                 disabled={!isAnswered || isSubmitting}
                 className="ml-auto"
@@ -581,7 +582,7 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
               </Button>
             ) : (
               <Button
-                variant="primary"
+                variant="blue"
                 onClick={handleNext}
                 disabled={!isAnswered}
                 className="ml-auto"

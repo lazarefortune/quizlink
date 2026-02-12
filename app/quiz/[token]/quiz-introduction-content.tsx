@@ -132,38 +132,38 @@ export function QuizIntroductionContent({
             {/* Quiz Info */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="flex items-center gap-2">
-                <FileQuestion className="h-5 w-5 text-muted-foreground" />
+                <FileQuestion className="h-8 w-8 text-muted-foreground" />
                 <div>
-                  <p className="text-sm font-medium">
+                  <p className="text-lg font-medium">
                     {quizLink.quiz.questions.length}
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-base text-muted-foreground">
                     {t(locale, "quiz.questions")}
                   </p>
                 </div>
               </div>
               {settings.timeLimitPerQuestion && (
                 <div className="flex items-center gap-2">
-                  <Clock className="h-5 w-5 text-muted-foreground" />
+                  <Clock className="h-8 w-8 text-muted-foreground" />
                   <div>
-                    <p className="text-sm font-medium">
+                    <p className="text-lg font-medium">
                       {settings.timeLimitPerQuestion}s
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-base text-muted-foreground">
                       {t(locale, "quiz.perQuestion")}
                     </p>
                   </div>
                 </div>
               )}
               <div className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-muted-foreground" />
+                <Users className="h-8 w-8 text-muted-foreground" />
                 <div>
-                  <p className="text-sm font-medium">
+                  <p className="text-lg font-medium">
                     {quizLink.allowMultipleAttempts
                       ? t(locale, "quiz.multipleAttempts")
                       : t(locale, "quiz.singleAttempt")}
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-base text-muted-foreground">
                     {t(locale, "quiz.attempts")}
                   </p>
                 </div>
@@ -178,7 +178,7 @@ export function QuizIntroductionContent({
             )}
 
             {/* Start Button */}
-            <div className="space-y-4 border-t pt-6">
+            <div className="space-y-4 border-t border-border pt-6">
               {!quizLink.allowMultipleAttempts && quizLink.hasCompletedAttempt ? (
                 <div className="text-center space-y-2 py-4">
                   <p className="text-sm text-muted-foreground">
@@ -190,6 +190,7 @@ export function QuizIntroductionContent({
                   onClick={handleStart}
                   disabled={isLoading}
                   className="w-full"
+                  variant="blue"
                   size="lg"
                 >
                   {isLoading

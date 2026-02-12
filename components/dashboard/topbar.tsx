@@ -40,7 +40,7 @@ export function Topbar({ title, onMenuClick, className }: TopbarProps) {
     <header
       className={cn(
         "flex h-12 sm:h-14 shrink-0 items-center justify-between gap-2 border-b border-border/60 bg-background px-3 sm:px-4",
-        className
+        className,
       )}
     >
       <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
@@ -61,8 +61,10 @@ export function Topbar({ title, onMenuClick, className }: TopbarProps) {
             href="/account/coins"
             className="flex items-center gap-1.5 rounded-md border border-border/60 bg-muted/40 px-2 py-1.5 text-sm font-medium text-foreground hover:bg-muted/60 transition-colors"
           >
-            <Coins className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary shrink-0" />
-            <span className="tabular-nums">{session.user.coinBalance ?? 0}</span>
+            <Coins className="h-5 w-5 text-blue shrink-0" />
+            <span className="tabular-nums text-base text-blue">
+              {session.user.coinBalance ?? 0}
+            </span>
           </Link>
         )}
         <ThemeToggle />
@@ -73,45 +75,42 @@ export function Topbar({ title, onMenuClick, className }: TopbarProps) {
               size="sm"
               className="h-8 gap-1.5 px-2 sm:h-9 sm:px-3 sm:gap-2 max-w-[140px] sm:max-w-[180px]"
             >
-              <User className="h-4 w-4 shrink-0" />
-              <span className="truncate text-sm">
-                {session?.user?.name ?? session?.user?.email ?? ""}
+              <User className="h-5 w-5 shrink-0" />
+              <span className="truncate text-base capitalize">
+                {session?.user?.name ?? ""}
               </span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <div className="px-2 py-1.5 text-sm font-medium border-b">
+            <div className="px-2 py-1.5 text-base font-bold border-b border-border uppercase">
               {session?.user?.name}
             </div>
-            <div className="px-2 py-1 text-xs text-muted-foreground border-b">
-              {session?.user?.email}
-            </div>
-            <DropdownMenuItem asChild>
-              <Link href="/account" className="flex items-center gap-2 cursor-pointer">
-                <Settings className="h-4 w-4" />
-                {t(locale, "userMenu.settings")}
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/account/coins" className="flex items-center gap-2 cursor-pointer">
-                <Coins className="h-4 w-4" />
-                {t(locale, "account.coins.title")}
-              </Link>
-            </DropdownMenuItem>
             {session?.user?.role === "ADMIN" && (
               <DropdownMenuItem asChild>
-                <Link href="/admin" className="flex items-center gap-2 cursor-pointer">
-                  <Shield className="h-4 w-4" />
-                  {t(locale, "userMenu.admin")}
+                <Link
+                  href="/admin"
+                  className="flex items-center gap-2 cursor-pointer text-base"
+                >
+                  <Shield className="h-5 w-5" />
+                  <p className="text-base">{t(locale, "userMenu.admin")}</p>
                 </Link>
               </DropdownMenuItem>
             )}
+            <DropdownMenuItem asChild>
+              <Link
+                href="/account"
+                className="flex items-center gap-2 cursor-pointer text-base"
+              >
+                <Settings className="h-5 w-5" />
+                <p className="text-base">{t(locale, "userMenu.settings")}</p>
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuItem
               onClick={handleSignOut}
-              className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive"
+              className="flex items-center gap-2 cursor-pointer  text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-400"
             >
-              <LogOut className="h-4 w-4" />
-              {t(locale, "auth.signOut")}
+              <LogOut className="h-5 w-5" />
+              <p className="text-base">{t(locale, "auth.signOut")}</p>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

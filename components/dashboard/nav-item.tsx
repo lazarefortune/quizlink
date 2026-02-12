@@ -32,11 +32,11 @@ export function NavItem({
       href={href}
       onClick={onClick}
       className={cn(
-        "flex items-center gap-3 border-2 border-transparent rounded-lg px-3 py-2 text-base font-medium transition-colors",
+        "flex items-center gap-3 font-sofia-sans border-none rounded-lg px-3 py-2.5 text-lg font-bold transition-colors",
         isActive
-          ? "bg-blue/10 border-blue text-blue"
+          ? "bg-blue/20 border-blue"
           : "text-muted-foreground hover:bg-muted hover:text-foreground",
-        className
+        className,
       )}
     >
       <Icon className="h-5 w-5 shrink-0" />

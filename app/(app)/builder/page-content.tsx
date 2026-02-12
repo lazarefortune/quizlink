@@ -421,10 +421,10 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
     <div className="min-h-screen bg-background">
       <div className="flex flex-col lg:flex-row lg:h-[calc(100vh-4rem)]">
         {/* Sidebar - Options */}
-        <aside className="w-full lg:w-80 border-r border-b lg:border-b-0 bg-muted/30 lg:overflow-y-auto shrink-0 relative z-10">
+        <aside className="w-full lg:w-80 border-r border-b border-border/60 lg:border-b-0 bg-muted/30 lg:overflow-y-auto shrink-0 relative z-10">
           <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
             <div>
-              <h2 className="uppercase text-lg font-semibold mb-3 sm:mb-4">{t(locale, "options.title")}</h2>
+              <h2 className="uppercase h1 text-lg font-semibold mb-3 sm:mb-4">{t(locale, "options.title")}</h2>
             </div>
 
             <div className="space-y-3 sm:space-y-4">
@@ -475,7 +475,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
               </div>
             </div>
 
-            <div className="space-y-3 sm:space-y-4 pt-3 sm:pt-4 border-t">
+            <div className="space-y-3 sm:space-y-4 pt-3 sm:pt-4 border-t border-border/60">
               <div className="flex items-start gap-2">
                 <Switch
                   checked={quiz.settings.showAnswerImmediately}
@@ -572,7 +572,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
           <div className="p-3 sm:p-4 md:p-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
               <div className="flex items-center gap-3">
-                <h1 className="text-lg sm:text-xl md:text-2xl font-bold">{t(locale, "builder.title")}</h1>
+                <h1 className="text-lg sm:text-xl md:text-2xl font-bold h1">{t(locale, "builder.title")}</h1>
                 {quiz.questions.length > 0 && (
                   <Badge variant="secondary" className="text-xs sm:text-sm">
                     {quiz.questions.length} {quiz.questions.length === 1 ? t(locale, "dashboard.question") : t(locale, "dashboard.questions")}
@@ -581,7 +581,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
               </div>
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <Button
-                  variant="primary"
+                  variant="blue"
                   onClick={handleSave}
                   disabled={quiz.questions.length === 0 || isSaving}
                   className="flex-1 sm:flex-initial text-base relative"
@@ -654,16 +654,16 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
                         {index > 0 && (
                           <div className="relative h-4 -my-2 group/insert z-20 flex items-center justify-center">
                             <div className="flex items-center justify-center gap-2 opacity-0 group-hover/insert:opacity-100 transition-opacity pointer-events-none">
-                              <div className="h-0.5 w-24 bg-primary/60 rounded-full shadow-sm" />
+                              <div className="h-0.5 w-24 bg-blue/60 rounded-full shadow-sm" />
                               <Button
-                                variant="primary"
+                                variant="blue"
                                 size="icon"
                                 className="h-7 w-7 rounded-full pointer-events-auto shadow-lg z-30 shrink-0"
                                 onClick={() => handleAddQuestion(index)}
                               >
                                 <Plus className="h-4 w-4" />
                               </Button>
-                              <div className="h-0.5 w-24 bg-primary/60 rounded-full shadow-sm" />
+                              <div className="h-0.5 w-24 bg-blue/60 rounded-full shadow-sm" />
                             </div>
                           </div>
                         )}
@@ -686,16 +686,16 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
                     {/* Insert zone at the end */}
                     <div className="relative h-4 mt-4 group/insert z-20 flex items-center justify-center">
                       <div className="flex items-center justify-center gap-2 opacity-0 group-hover/insert:opacity-100 transition-opacity pointer-events-none">
-                        <div className="h-0.5 w-24 bg-primary/60 rounded-full shadow-sm" />
+                        <div className="h-0.5 w-24 bg-blue/60 rounded-full shadow-sm" />
                         <Button
-                          variant="primary"
+                          variant="blue"
                           size="icon"
                           className="h-7 w-7 rounded-full pointer-events-auto shadow-lg z-30 shrink-0"
                           onClick={() => handleAddQuestion(quiz.questions.length)}
                         >
                           <Plus className="h-4 w-4" />
                         </Button>
-                        <div className="h-0.5 w-24 bg-primary/60 rounded-full shadow-sm" />
+                        <div className="h-0.5 w-24 bg-blue/60 rounded-full shadow-sm" />
                       </div>
                     </div>
                   </div>
@@ -721,7 +721,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
 
             {quiz.questions.length > 0 && (
               <div className="flex justify-center pt-4">
-                <Button variant="primary" onClick={() => handleAddQuestion()} size="default" className="text-base">
+                <Button variant="blue" onClick={() => handleAddQuestion()} size="default" className="text-base">
                   <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
                   {t(locale, "builder.addQuestion")}
                 </Button>

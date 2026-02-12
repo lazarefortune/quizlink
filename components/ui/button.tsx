@@ -14,7 +14,8 @@ const buttonVariants = cva(
         primary:
           "bg-primary text-primary-foreground shadow-[var(--shadow-gaming-highlight),var(--shadow-gaming-depth-primary)] hover:bg-primary/90 hover:shadow-[var(--shadow-gaming-highlight),var(--shadow-gaming-depth-primary)] active:bg-primary/95 active:shadow-none active:translate-y-[4px]",
         secondary:
-          "bg-secondary text-secondary-foreground border-2 border-border shadow-[var(--shadow-gaming-depth)] hover:bg-secondary/75 hover:border-border/80 hover:shadow-[var(--shadow-gaming-depth)] active:shadow-none active:translate-y-[4px] dark:border-secondary-foreground/20 dark:hover:bg-secondary/60",
+        //   "bg-secondary text-secondary-foreground border-2 border-border shadow-[var(--shadow-gaming-depth)] hover:bg-secondary/75 hover:border-border/80 hover:shadow-[var(--shadow-gaming-depth)] active:shadow-none active:translate-y-[4px] dark:border-secondary-foreground/20 dark:hover:bg-secondary/60",
+          "bg-secondary text-secondary-foreground border-2 border-b-4 border-border hover:bg-secondary/75 hover:border-border/80 active:bg-secondary/85 active:border-b-2 active:shadow-none active:translate-y-[4px] dark:border-secondary-foreground/20 dark:hover:bg-secondary/60",
         /* Légère ombre haut/gauche/droite + ombre normale en bas, effet enfoncé au clic */
         outline:
           "border-2 border-b-6 border-primary bg-background text-primary shadow-[var(--shadow-outline-subtle),var(--shadow-outline-depth)] hover:bg-primary/10 hover:shadow-[var(--shadow-outline-subtle),var(--shadow-outline-depth)] active:bg-primary/15 active:shadow-none active:translate-y-[4px] active:border-b-2 dark:bg-card dark:hover:bg-primary/15 dark:active:bg-primary/20",

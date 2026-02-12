@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { MoreVertical, Share2, Trash2, Copy, Lock, Check, Edit } from "lucide-react";
+import { MoreHorizontal, Share2, Trash2, Copy, Lock, Check, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
@@ -167,7 +167,7 @@ export function QuizOptionsMenu({
           onClick={() => setIsOpen(!isOpen)}
           className="h-8 w-8"
         >
-          <MoreVertical className="h-4 w-4" />
+          <MoreHorizontal className="h-4 w-4" />
         </Button>
 
         {isOpen && (
@@ -177,7 +177,7 @@ export function QuizOptionsMenu({
               onClick={() => setIsOpen(false)}
             />
             <div
-              className="absolute right-0 mt-2 w-48 rounded-md border border-border bg-popover shadow-lg z-50"
+              className="absolute right-0 bottom-full mb-2 w-48 rounded-md border border-border bg-popover shadow-lg z-50"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-1">
@@ -187,7 +187,7 @@ export function QuizOptionsMenu({
                       onEdit();
                       setIsOpen(false);
                     }}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent rounded-md transition-colors text-left"
+                    className="flex items-center gap-2 w-full px-3 py-2 text-base hover:cursor-pointer hover:bg-accent rounded-md transition-colors text-left"
                   >
                     <Edit className="h-4 w-4" />
                     {t(locale, "dashboard.edit")}
@@ -196,7 +196,7 @@ export function QuizOptionsMenu({
                 {visibility === "PUBLIC" ? (
                   <button
                     onClick={handleShareClick}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent rounded-md transition-colors text-left"
+                    className="flex items-center gap-2 w-full px-3 py-2 text-base hover:cursor-pointer hover:bg-accent rounded-md transition-colors text-left"
                   >
                     <Share2 className="h-4 w-4" />
                     {t(locale, "dashboard.share")}
@@ -204,7 +204,7 @@ export function QuizOptionsMenu({
                 ) : (
                   <button
                     disabled
-                    className="flex items-center gap-2 w-full px-3 py-2 text-sm text-muted-foreground cursor-not-allowed rounded-md opacity-50"
+                    className="flex items-center gap-2 w-full px-3 py-2 text-base text-muted-foreground cursor-not-allowed rounded-md opacity-50"
                     title={t(locale, "dashboard.privateQuiz")}
                   >
                     <Lock className="h-4 w-4" />
@@ -217,20 +217,20 @@ export function QuizOptionsMenu({
                     setIsOpen(false);
                   }}
                   disabled={isDuplicating}
-                  className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent rounded-md transition-colors text-left disabled:opacity-50"
+                  className="flex items-center gap-2 w-full px-3 py-2 text-base hover:cursor-pointer hover:bg-accent rounded-md transition-colors text-left disabled:opacity-50"
                 >
                   <Copy className="h-4 w-4" />
                   {isDuplicating
                     ? t(locale, "common.loading")
                     : t(locale, "dashboard.duplicate")}
                 </button>
-                <div className="border-t my-1" />
+                <div className="border-t border-border/60 my-1" />
                 <button
                   onClick={() => {
                     setShowDeleteDialog(true);
                     setIsOpen(false);
                   }}
-                  className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-destructive/10 hover:text-destructive rounded-md transition-colors text-left"
+                  className="flex items-center gap-2 w-full px-3 py-2 text-base hover:cursor-pointer hover:bg-destructive/10 hover:text-red-500 dark:hover:text-red-400 rounded-md transition-colors text-left"
                 >
                   <Trash2 className="h-4 w-4" />
                   {t(locale, "dashboard.delete")}

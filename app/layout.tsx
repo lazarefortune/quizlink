@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Capriola, Rubik } from "next/font/google";
+import { Capriola, Rubik, Sofia_Sans } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { LocaleProvider } from "@/lib/i18n/locale-provider";
 import { SessionProvider } from "@/components/session-provider";
@@ -17,6 +17,12 @@ const capriola = Capriola({
 
 const rubik = Rubik({
   variable: "--font-rubik",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+});
+
+const sofiaSans = Sofia_Sans({
+  variable: "--font-sofia-sans",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
 });
@@ -55,7 +61,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" suppressHydrationWarning className={`${capriola.variable} ${rubik.variable}`}>
+    <html lang="fr" suppressHydrationWarning className={`${capriola.variable} ${rubik.variable} ${sofiaSans.variable}`}>
       <body className="antialiased" style={{ fontFamily: "var(--font-rubik), system-ui, sans-serif" }}>
         <LocaleProvider>
           <SessionProvider>

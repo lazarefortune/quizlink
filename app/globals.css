@@ -1,8 +1,19 @@
 @import "tailwindcss";
 
+/* Dark mode basé sur la classe .dark (next-themes), pas sur prefers-color-scheme */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* SN Pro — police locale : ajoute les fichiers dans public/fonts/ (ex. SNPro.woff2) */
+@font-face {
+  font-family: "SN Pro";
+  src: url("/fonts/SNPro.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+
 :root {
   /* Colors - Light Mode */
-  --background: 250 20% 98.8%; /* #FAFBFC */
+  --background: 0 0% 100%;
   --foreground: 0 0% 15%;
   --card: 0 0% 100%;
   --card-foreground: 0 0% 15%;
@@ -57,22 +68,22 @@
 }
 
 .dark {
-  /* Colors - Dark Mode (fond noir défini) */
-  --background: 0 0% 7%;
-  --foreground: 220 10% 95%;
-  --card: 0 0% 11%;
-  --card-foreground: 220 10% 95%;
-  --popover: 0 0% 11%;
-  --popover-foreground: 220 10% 95%;
+  /* Colors - Dark Mode (fond #131F24) */
+  --background: 198 31% 11%; /* #131F24 */
+  --foreground: 200 15% 95%;
+  --card: 198 25% 14%;
+  --card-foreground: 200 15% 95%;
+  --popover: 198 25% 14%;
+  --popover-foreground: 200 15% 95%;
   --primary: 95 75% 36%;
   --primary-foreground: 0 0% 100%;
   --auth-panel-bg: 95 75% 26%; /* vert plus foncé pour les side panels auth */
-  --secondary: 0 0% 14%;
-  --secondary-foreground: 220 10% 95%;
-  --muted: 0 0% 14%;
-  --muted-foreground: 220 10% 58%;
-  --accent: 0 0% 16%;
-  --accent-foreground: 220 10% 95%;
+  --secondary: 198 22% 16%;
+  --secondary-foreground: 200 15% 95%;
+  --muted: 198 20% 17%;
+  --muted-foreground: 200 12% 58%;
+  --accent: 198 18% 20%;
+  --accent-foreground: 200 15% 95%;
   --destructive: 0 75% 38%;
   --destructive-foreground: 0 0% 98%;
   --warning: 43 90% 58%;
@@ -81,9 +92,9 @@
   --highlight-foreground: 0 0% 100%;
   --blue: 199 80% 58%;
   --blue-foreground: 0 0% 15%;
-  --border: 0 0% 20%;
-  --input: 0 0% 20%;
-  --ring: 220 10% 60%;
+  --border: 198 20% 22%;
+  --input: 198 20% 22%;
+  --ring: 200 15% 60%;
 
   /* Neumorphism shadows - dark (reduced) */
   --shadow-neu-raised: 4px 4px 8px rgba(0, 0, 0, 0.3), -4px -4px 8px rgba(255, 255, 255, 0.03);
@@ -140,6 +151,10 @@
   /* Typography */
   --font-sans: var(--font-rubik);
   --font-heading: var(--font-capriola);
+  /* Polices utilisables via font-sn-pro, font-rubik, font-sofia-sans */
+  --font-sn-pro: "SN Pro", ui-sans-serif, system-ui, sans-serif;
+  --font-rubik: var(--font-rubik), ui-sans-serif, system-ui, sans-serif;
+  --font-sofia-sans: var(--font-sofia-sans), ui-sans-serif, system-ui, sans-serif;
 
   /* Spacing Scale (using Tailwind defaults) */
   --spacing-0: 0;
@@ -337,7 +352,11 @@ body {
 .auth-panel-delay-2 { animation-delay: 0.3s; }
 
 /* Capriola sur les titres — variable définie sur html par next/font */
-h1, h2, h3, h4, h5, h6 {
+/* h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-capriola), system-ui, sans-serif !important;
+} */
+
+.h1, .h2, .h3, .h4, .h5, .h6 {
   font-family: var(--font-capriola), system-ui, sans-serif !important;
 }
 

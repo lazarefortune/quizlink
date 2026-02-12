@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -30,7 +31,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Plus, Edit, Trash2, Eye } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, Users } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { useToast } from "@/components/ui/toast";
@@ -48,6 +49,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 type Participant = {
   id: string;
@@ -193,78 +195,113 @@ export function ParticipantsContent() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <p>{t(locale, "common.loading")}</p>
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <p className="text-muted-foreground">{t(locale, "common.loading")}</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-0 mb-8">
-          <div>
-            <h1 className="text-3xl font-bold">
-              {t(locale, "dashboard.participantsManagement")}
-            </h1>
-            <p className="text-muted-foreground mt-2">
-              {t(locale, "dashboard.participantsManagementSubtitle")}
-            </p>
+    <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-10">
+          <div className="flex flex-col items-start gap-2 sm:gap-3">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl text-foreground">
+                {t(locale, "dashboard.participantsManagement")}
+              </h1>
+            </div>
+            <Badge
+              variant="secondary"
+              className="shrink-0 font-normal tabular-nums"
+            >
+              <Users className="mr-1 h-3.5 w-3.5" />
+              {participants.length}{" "}
+              {participants.length === 1
+                ? t(locale, "dashboard.participantOne")
+                : t(locale, "dashboard.participants")}
+            </Badge>
           </div>
           <Button
-            variant="primary"
+            variant="blue"
+            className="w-full sm:w-auto shrink-0"
             onClick={() => {
               setFormName("");
               setFormEmail("");
+              setFormGender(null);
               setShowCreateDialog(true);
             }}
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="h-4 w-4" />
             {t(locale, "dashboard.createParticipant")}
           </Button>
         </div>
 
         {participants.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <p className="text-muted-foreground mb-4">
+          <Card className="border-border">
+            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-blue/10 text-blue">
+                <Users className="h-7 w-7" />
+              </div>
+              <p className="mt-4 text-muted-foreground">
                 {t(locale, "dashboard.noParticipantsYet")}
               </p>
               <Button
-                variant="primary"
+                variant="blue"
+                className="mt-6"
                 onClick={() => {
                   setFormName("");
                   setFormEmail("");
+                  setFormGender(null);
                   setShowCreateDialog(true);
                 }}
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-4 w-4" />
                 {t(locale, "dashboard.createFirstParticipant")}
               </Button>
             </CardContent>
           </Card>
         ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle>{t(locale, "dashboard.participants")}</CardTitle>
-              <CardDescription>
-                {t(locale, "dashboard.participantsManagementSubtitle")}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+          <>
+            {/* Desktop: table */}
+            <div className="hidden overflow-hidden rounded-xl border border-border bg-card shadow-sm md:block">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>{t(locale, "dashboard.participantNameLabel")}</TableHead>
-                    <TableHead>{t(locale, "dashboard.participantEmailLabel")}</TableHead>
-                    <TableHead>{t(locale, "dashboard.attemptsCountLabel")}</TableHead>
-                    <TableHead>{t(locale, "dashboard.quizzesLabel")}</TableHead>
-                    <TableHead>{t(locale, "dashboard.actionsLabel")}</TableHead>
+                  <TableRow className="border-border hover:bg-transparent">
+                    <TableHead className="text-muted-foreground">
+                      {t(locale, "dashboard.participantNameLabel")}
+                    </TableHead>
+                    <TableHead className="text-muted-foreground">
+                      {t(locale, "dashboard.quizzesLabel")}
+                    </TableHead>
+                    <TableHead className="text-muted-foreground">
+                      {t(locale, "dashboard.attemptsCountLabel")}
+                    </TableHead>
+                    <TableHead className="w-[120px] text-right text-muted-foreground">
+                      {t(locale, "dashboard.actionsLabel")}
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {participants.map((participant) => (
-                    <TableRow key={participant.id}>
+                    <TableRow
+                      key={participant.id}
+                      role="button"
+                      tabIndex={0}
+                      className="border-border cursor-pointer transition-colors hover:bg-muted/50"
+                      onClick={() =>
+                        router.push(`/dashboard/participants/${participant.id}`)
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          router.push(
+                            `/dashboard/participants/${participant.id}`,
+                          );
+                        }
+                      }}
+                    >
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <ParticipantAvatar
@@ -272,55 +309,60 @@ export function ParticipantsContent() {
                             name={participant.name}
                             size="sm"
                           />
-                          <span className="font-medium">{participant.name}</span>
+                          <span className="font-medium">
+                            {participant.name}
+                          </span>
                         </div>
                       </TableCell>
-                      <TableCell>{participant.email || "-"}</TableCell>
-                      <TableCell>{participant.attemptsCount}</TableCell>
-                      <TableCell>
-                        {participant.quizzes.length > 0 ? (
-                          <div className="flex flex-wrap gap-1">
-                            {participant.quizzes.map((q) => (
-                              <span
-                                key={q.quizId}
-                                className="text-xs bg-muted px-2 py-1 rounded"
-                              >
-                                {q.quizName}
-                              </span>
-                            ))}
-                          </div>
-                        ) : (
-                          "-"
-                        )}
+                      <TableCell className="tabular-nums">
+                        {participant.quizzes.length}
                       </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
+                      <TableCell className="tabular-nums">
+                        {participant.attemptsCount}
+                      </TableCell>
+                      <TableCell
+                        className="text-right"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="flex justify-end gap-1">
                           <Button
                             variant="ghost"
-                            size="sm"
-                            onClick={() => router.push(`/dashboard/participants/${participant.id}`)}
-                            title="Voir les détails"
+                            size="icon"
+                            className="h-9 w-9 text-muted-foreground hover:text-foreground"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              router.push(
+                                `/dashboard/participants/${participant.id}`,
+                              );
+                            }}
+                            title={t(locale, "dashboard.viewDetails")}
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(participant)}
+                            size="icon"
+                            className="h-9 w-9 text-muted-foreground hover:text-foreground"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEdit(participant);
+                            }}
                             title={t(locale, "dashboard.editParticipant")}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
-                            size="sm"
-                            onClick={() => {
+                            size="icon"
+                            className="h-9 w-9 text-muted-foreground hover:text-destructive"
+                            onClick={(e) => {
+                              e.stopPropagation();
                               setSelectedParticipant(participant);
                               setShowDeleteDialog(true);
                             }}
                             title={t(locale, "dashboard.deleteParticipant")}
                           >
-                            <Trash2 className="h-4 w-4 text-destructive" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>
@@ -328,38 +370,151 @@ export function ParticipantsContent() {
                   ))}
                 </TableBody>
               </Table>
-            </CardContent>
-          </Card>
+            </div>
+
+            {/* Mobile: cards */}
+            <div className="space-y-3 md:hidden">
+              {participants.map((participant) => (
+                <Card
+                  key={participant.id}
+                  className="border-border transition-shadow hover:shadow-md"
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex min-w-0 flex-1 items-center gap-3">
+                        <ParticipantAvatar
+                          avatar={participant.avatar}
+                          name={participant.name}
+                          size="md"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold truncate">
+                            {participant.name}
+                          </p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {participant.quizzes.length}{" "}
+                            {t(
+                              locale,
+                              participant.quizzes.length <= 1
+                                ? "dashboard.quizSingular"
+                                : "dashboard.quizPlural",
+                            )}
+                            {participant.attemptsCount > 0 &&
+                              ` · ${participant.attemptsCount} ${t(locale, "dashboard.attemptsLabel")}`}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex shrink-0 gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-9 w-9 text-blue"
+                          onClick={() =>
+                            router.push(
+                              `/dashboard/participants/${participant.id}`,
+                            )
+                          }
+                          title={t(locale, "dashboard.viewDetails")}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-9 w-9"
+                          onClick={() => handleEdit(participant)}
+                          title={t(locale, "dashboard.editParticipant")}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-9 w-9 text-destructive"
+                          onClick={() => {
+                            setSelectedParticipant(participant);
+                            setShowDeleteDialog(true);
+                          }}
+                          title={t(locale, "dashboard.deleteParticipant")}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </>
         )}
       </div>
 
       {/* Create Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-xl">
           <DialogHeader>
-            <DialogTitle>{t(locale, "dashboard.createParticipantDialog")}</DialogTitle>
-            <DialogDescription>
-              {t(locale, "dashboard.participantsManagementSubtitle")}
-            </DialogDescription>
+            <DialogTitle>
+              {t(locale, "dashboard.createParticipantDialog")}
+            </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">
-                {t(locale, "dashboard.participantNameLabel")} *
-              </label>
+          <div className="space-y-4 pt-2">
+            <div className="space-y-2">
+              <Label>
+                {t(locale, "dashboard.participantGenderLabel")}{" "}
+                <span className="text-muted-foreground font-normal">
+                  ({t(locale, "common.optional")})
+                </span>
+              </Label>
+              <Select
+                value={formGender ?? "NOT_SPECIFIED"}
+                onValueChange={(value) =>
+                  setFormGender(
+                    value === "NOT_SPECIFIED"
+                      ? null
+                      : (value as "MALE" | "FEMALE" | "OTHER"),
+                  )
+                }
+                disabled={isSubmitting}
+              >
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={t(
+                      locale,
+                      "dashboard.participantGenderNotSpecified",
+                    )}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="MALE">
+                    {t(locale, "dashboard.participantGenderMale")}
+                  </SelectItem>
+                  <SelectItem value="FEMALE">
+                    {t(locale, "dashboard.participantGenderFemale")}
+                  </SelectItem>
+                  <SelectItem value="OTHER">
+                    {t(locale, "dashboard.participantGenderOther")}
+                  </SelectItem>
+                  <SelectItem value="NOT_SPECIFIED">
+                    {t(locale, "dashboard.participantGenderNotSpecified")}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{t(locale, "dashboard.participantNameLabel")} *</Label>
               <Input
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
                 disabled={isSubmitting}
               />
             </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">
+            <div className="space-y-2">
+              <Label>
                 {t(locale, "dashboard.participantEmailLabel")}{" "}
-                <span className="text-muted-foreground text-xs">
+                <span className="text-muted-foreground font-normal">
                   ({t(locale, "common.optional")})
                 </span>
-              </label>
+              </Label>
               <Input
                 type="email"
                 value={formEmail}
@@ -367,7 +522,7 @@ export function ParticipantsContent() {
                 disabled={isSubmitting}
               />
             </div>
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-2 pt-2">
               <Button
                 variant="secondary"
                 onClick={() => setShowCreateDialog(false)}
@@ -376,7 +531,7 @@ export function ParticipantsContent() {
                 {t(locale, "common.cancel")}
               </Button>
               <Button
-                variant="primary"
+                variant="blue"
                 onClick={handleCreate}
                 disabled={isSubmitting || !formName.trim()}
               >
@@ -393,12 +548,53 @@ export function ParticipantsContent() {
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t(locale, "dashboard.editParticipantDialog")}</DialogTitle>
-            <DialogDescription>
-              {t(locale, "dashboard.participantsManagementSubtitle")}
-            </DialogDescription>
+            <DialogTitle>
+              {t(locale, "dashboard.editParticipantDialog")}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">
+                {t(locale, "dashboard.participantGenderLabel")}{" "}
+                <span className="text-muted-foreground text-xs">
+                  ({t(locale, "common.optional")})
+                </span>
+              </label>
+              <Select
+                value={formGender || "NOT_SPECIFIED"}
+                onValueChange={(value) =>
+                  setFormGender(
+                    value === "NOT_SPECIFIED"
+                      ? null
+                      : (value as "MALE" | "FEMALE" | "OTHER"),
+                  )
+                }
+                disabled={isSubmitting}
+              >
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={t(
+                      locale,
+                      "dashboard.participantGenderNotSpecified",
+                    )}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="MALE">
+                    {t(locale, "dashboard.participantGenderMale")}
+                  </SelectItem>
+                  <SelectItem value="FEMALE">
+                    {t(locale, "dashboard.participantGenderFemale")}
+                  </SelectItem>
+                  <SelectItem value="OTHER">
+                    {t(locale, "dashboard.participantGenderOther")}
+                  </SelectItem>
+                  <SelectItem value="NOT_SPECIFIED">
+                    {t(locale, "dashboard.participantGenderNotSpecified")}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div>
               <label className="text-sm font-medium mb-2 block">
                 {t(locale, "dashboard.participantNameLabel")} *
@@ -422,33 +618,6 @@ export function ParticipantsContent() {
                 onChange={(e) => setFormEmail(e.target.value)}
                 disabled={isSubmitting}
               />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">
-                {t(locale, "dashboard.participantGenderLabel")}{" "}
-                <span className="text-muted-foreground text-xs">
-                  ({t(locale, "common.optional")})
-                </span>
-              </label>
-              <Select
-                value={formGender || "NOT_SPECIFIED"}
-                onValueChange={(value) =>
-                  setFormGender(
-                    value === "NOT_SPECIFIED" ? null : (value as "MALE" | "FEMALE" | "OTHER")
-                  )
-                }
-                disabled={isSubmitting}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={t(locale, "dashboard.participantGenderNotSpecified")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="MALE">{t(locale, "dashboard.participantGenderMale")}</SelectItem>
-                  <SelectItem value="FEMALE">{t(locale, "dashboard.participantGenderFemale")}</SelectItem>
-                  <SelectItem value="OTHER">{t(locale, "dashboard.participantGenderOther")}</SelectItem>
-                  <SelectItem value="NOT_SPECIFIED">{t(locale, "dashboard.participantGenderNotSpecified")}</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
             <div className="flex justify-end gap-2">
               <Button
@@ -476,7 +645,9 @@ export function ParticipantsContent() {
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t(locale, "dashboard.deleteParticipantDialog")}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {t(locale, "dashboard.deleteParticipantDialog")}
+            </AlertDialogTitle>
             <AlertDialogDescription>
               {selectedParticipant &&
                 t(locale, "dashboard.deleteParticipantConfirm", {
@@ -491,7 +662,7 @@ export function ParticipantsContent() {
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isSubmitting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground shadow-[var(--shadow-gaming-highlight),var(--shadow-gaming-depth-destructive)] hover:bg-destructive/85 hover:shadow-[var(--shadow-gaming-highlight),var(--shadow-gaming-depth-destructive)] active:bg-destructive/90 active:shadow-none active:translate-y-[4px]"
             >
               {isSubmitting
                 ? t(locale, "common.loading")
@@ -500,7 +671,6 @@ export function ParticipantsContent() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
     </div>
   );
 }

@@ -21,22 +21,22 @@ const toastTypeConfig: Record<
   success: {
     Icon: CheckCircle2,
     iconWrapClass: "bg-primary/15 text-primary",
-    borderClass: "border-primary/35 dark:border-primary/50",
+    borderClass: "border-primary dark:border-primary/50",
   },
   error: {
     Icon: XCircle,
     iconWrapClass: "bg-destructive/15 text-destructive",
-    borderClass: "border-destructive/35 dark:border-destructive/50",
+    borderClass: "border-destructive dark:border-destructive/50",
   },
   info: {
     Icon: Info,
     iconWrapClass: "bg-blue/15 text-blue",
-    borderClass: "border-blue/35 dark:border-blue/50",
+    borderClass: "border-blue dark:border-blue/50",
   },
   warning: {
     Icon: AlertTriangle,
     iconWrapClass: "bg-warning/15 text-warning",
-    borderClass: "border-warning/40 dark:border-warning/50",
+    borderClass: "border-warning dark:border-warning/50",
   },
 };
 
@@ -82,7 +82,7 @@ export function Toast({ message, type = "info", duration = 3000, onClose }: Toas
       role="status"
       aria-live="polite"
       className={cn(
-        "flex items-center gap-3 rounded-xl border-2 bg-card p-4 shadow-[var(--shadow-outline-subtle),var(--shadow-outline-depth)] transition-none",
+        "flex items-center gap-3 rounded-xl border-2 border-b-4 bg-card p-4 shadow-[var(--shadow-outline-subtle),var(--shadow-outline-depth)] transition-none",
         config.borderClass,
         animationClass
       )}
