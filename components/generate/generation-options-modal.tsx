@@ -78,15 +78,13 @@ export function GenerationOptionsModal({
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{t(locale, "options.title")}</DialogTitle>
-          <DialogDescription>
-            {t(locale, "options.description")}
-          </DialogDescription>
+          <DialogTitle className="text-2xl">{t(locale, "options.title")}</DialogTitle>
+            <DialogDescription>{t(locale, "options.description")}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold">{t(locale, "options.questionGeneration")}</h3>
+            <h3 className="text-xl text-primary font-medium">{t(locale, "options.questionGeneration")}</h3>
 
             <div className="space-y-2">
               <label className="text-sm font-medium flex items-center gap-2">
@@ -176,7 +174,7 @@ export function GenerationOptionsModal({
           </div>
 
           <div className="border-t pt-4 space-y-4">
-            <h3 className="text-sm font-semibold">{t(locale, "options.quizSettings")}</h3>
+            <h3 className="text-xl text-primary font-medium">{t(locale, "options.quizSettings")}</h3>
 
             <div className="space-y-2">
               <label className="text-sm font-medium">{t(locale, "options.visibility")}</label>
@@ -251,7 +249,6 @@ export function GenerationOptionsModal({
                       : null,
                   })
                 }
-                placeholder={t(locale, "options.timeLimitPlaceholder")}
               />
             </div>
           </div>

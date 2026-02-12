@@ -1,14 +1,27 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
+import { LocaleSwitcher } from "@/components/locale-switcher";
 
 export function Footer() {
+  const pathname = usePathname();
   const { locale } = useLocale();
 
+  const hideFooter =
+    pathname?.startsWith("/dashboard") ||
+    pathname?.startsWith("/auth") ||
+    pathname?.startsWith("/generate") ||
+    pathname?.startsWith("/builder") ||
+    pathname?.startsWith("/account");
+  if (hideFooter) {
+    return null;
+  }
+
   return (
-    <footer className="border-t bg-background">
+    <footer className="border-t border-border bg-background">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:py-12">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {/* About */}
@@ -70,6 +83,14 @@ export function Footer() {
                 </Link>
               </li>
             </ul>
+          </div>
+
+          {/* Language */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">{t(locale, "nav.language")}</h3>
+            <div className="flex items-center">
+              <LocaleSwitcher />
+            </div>
           </div>
 
         </div>

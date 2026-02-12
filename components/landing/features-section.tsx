@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AnimateOnScroll } from "@/components/animate-on-scroll";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import {
@@ -64,19 +65,21 @@ export function FeaturesSection() {
           {features.map((feature, index) => {
             const Icon = feature.icon;
             return (
-              <Card key={index} className="flex flex-col">
-                <CardHeader>
-                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                    <Icon className="h-6 w-6 text-primary" />
-                  </div>
-                  <CardTitle className="text-xl">{feature.title}</CardTitle>
-                </CardHeader>
-                <CardContent className="flex-1">
-                  <CardDescription className="text-base">
-                    {feature.description}
-                  </CardDescription>
-                </CardContent>
-              </Card>
+              <AnimateOnScroll key={index} delay={100 + 80 * index}>
+                <Card className="flex flex-col">
+                  <CardHeader>
+                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                      <Icon className="h-6 w-6 text-primary" />
+                    </div>
+                    <CardTitle className="text-xl">{feature.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex-1">
+                    <CardDescription className="text-base">
+                      {feature.description}
+                    </CardDescription>
+                  </CardContent>
+                </Card>
+              </AnimateOnScroll>
             );
           })}
         </div>

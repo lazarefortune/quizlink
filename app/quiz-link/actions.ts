@@ -20,6 +20,7 @@ type GetQuizLinkByTokenResponse =
           id: string;
           name: string;
           email: string | null;
+          publicToken: string | null;
         } | null;
         allowMultipleAttempts: boolean;
         expiresAt: Date | null;
@@ -184,6 +185,8 @@ export async function getQuizLinkByToken(
             id: true,
             name: true,
             email: true,
+            publicToken: true,
+            isPortalEnabled: true,
           },
         },
         attempts: {
@@ -254,6 +257,9 @@ export async function getQuizLinkByToken(
               id: quizLink.participant.id,
               name: quizLink.participant.name,
               email: quizLink.participant.email,
+              publicToken: quizLink.participant.isPortalEnabled
+                ? quizLink.participant.publicToken
+                : null,
             }
           : null,
         allowMultipleAttempts: quizLink.allowMultipleAttempts,
@@ -293,7 +299,8 @@ export async function getQuizLinkByToken(
  */
 export async function createParticipant(
   name: string,
-  email?: string
+  email?: string,
+  gender?: "MALE" | "FEMALE" | "OTHER"
 ): Promise<CreateParticipantResponse> {
   try {
     if (!prisma) {
@@ -316,7 +323,18 @@ export async function createParticipant(
       data: {
         name: name.trim(),
         email: email?.trim() || null,
+        gender: gender || null,
       },
+    });
+
+    // Generate avatar after creation (using participant ID as seed and gender)
+    const { generateParticipantAvatar } = await import("@/lib/participant-avatar");
+    const avatarSvg = generateParticipantAvatar(participant.id, gender || null);
+
+    // Update participant with avatar
+    await prisma.participant.update({
+      where: { id: participant.id },
+      data: { avatar: avatarSvg },
     });
 
     return {

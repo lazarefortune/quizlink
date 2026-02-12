@@ -93,8 +93,8 @@ export async function POST(request: NextRequest) {
         packName: pack.name,
         coins: pack.coins.toString(),
       },
-      success_url: `${baseUrl}/pricing/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/pricing?canceled=true`,
+      success_url: `${baseUrl}/account/coins/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/account/coins?canceled=true`,
       customer_email: session.user.email || undefined,
     });
 

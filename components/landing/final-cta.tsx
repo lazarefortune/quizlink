@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { AnimateOnScroll } from "@/components/animate-on-scroll";
 import { ArrowRight } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
@@ -19,7 +20,8 @@ export function FinalCTA() {
   return (
     <section className="py-16 px-4 sm:py-20 md:py-24 bg-muted/30">
       <div className="mx-auto max-w-4xl">
-        <Card className="border-2">
+        <AnimateOnScroll>
+          <Card className="border-2">
           <CardHeader className="text-center pb-4">
             <CardTitle className="text-3xl sm:text-4xl md:text-5xl">
               {t(locale, "landing.finalCta.title")}
@@ -43,6 +45,7 @@ export function FinalCTA() {
             </Link>
           </CardFooter>
         </Card>
+        </AnimateOnScroll>
       </div>
     </section>
   );

@@ -129,24 +129,18 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
     );
   }, [attempt.id]); // Only depend on attempt.id, not the whole attempt object
 
-  // Reset question start time when question changes
+  // Reset question start time only when the question index changes
   useEffect(() => {
-    if (questions.length === 0) {
-      return;
-    }
+    if (questions.length === 0) return;
+    setQuestionStartTime(Date.now());
+  }, [currentQuestionIndex, questions.length]);
 
-    const currentQuestion = questions[currentQuestionIndex];
-    if (!currentQuestion) return;
+  // Derived: whether current question's answer is verified (used so timer doesn't reset on selection change)
+  const currentQuestionForTimer = questions[currentQuestionIndex];
+  const isCurrentAnswerVerified =
+    (currentQuestionForTimer && answers.find((a) => a.questionId === currentQuestionForTimer.id)?.isVerified) ?? false;
 
-    const currentAnswer = answers.find((a) => a.questionId === currentQuestion.id);
-
-    // Only reset start time if question hasn't been answered yet
-    if (!currentAnswer?.isVerified) {
-      setQuestionStartTime(Date.now());
-    }
-  }, [currentQuestionIndex, questions, answers]);
-
-  // Timer effect
+  // Timer effect: only depend on question index and verified state, not on answers (selection)
   useEffect(() => {
     if (!settings.timeLimitPerQuestion || questions.length === 0) {
       return;
@@ -155,10 +149,7 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
     const currentQuestion = questions[currentQuestionIndex];
     if (!currentQuestion) return;
 
-    const currentAnswer = answers.find((a) => a.questionId === currentQuestion.id);
-
-    // Reset timer when question changes or when verified
-    if (currentAnswer?.isVerified) {
+    if (isCurrentAnswerVerified) {
       setTimeRemaining(null);
       setIsTimeUp(false);
       return;
@@ -173,10 +164,9 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
       if (timerValue <= 0) {
         setIsTimeUp(true);
         clearInterval(interval);
-        // Auto-advance to next question or finish quiz
         setTimeout(() => {
           if (currentQuestionIndex < questions.length - 1) {
-            setCurrentQuestionIndex(currentQuestionIndex + 1);
+            setCurrentQuestionIndex((i) => i + 1);
           } else {
             handleFinish();
           }
@@ -188,7 +178,7 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [currentQuestionIndex, settings, questions, answers]);
+  }, [currentQuestionIndex, settings.timeLimitPerQuestion, questions.length, isCurrentAnswerVerified]);
 
   // Prevent window close/refresh when quiz is in progress
   useEffect(() => {
@@ -459,7 +449,7 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
           </div>
           <div className="w-full bg-muted rounded-full h-2">
             <div
-              className="bg-primary h-2 rounded-full transition-all duration-300"
+              className="bg-blue h-2 rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -516,10 +506,10 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
                 }
               } else {
                 if (selected) {
-                  // Primary color for selected options
-                  borderColor = "hsl(var(--primary))";
-                  letterBgColor = "bg-primary";
-                  letterTextColor = "text-primary-foreground";
+                  // blue color for selected options
+                  borderColor = "hsl(var(--blue))";
+                  letterBgColor = "bg-blue";
+                  letterTextColor = "text-blue-foreground";
                 } else {
                   // Gray for unselected options
                   borderColor = "";
@@ -536,7 +526,8 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
                   className={cn(
                     "w-full text-left p-4 rounded-lg border-2 transition-all duration-200",
                     !borderColor && "border-border",
-                    isVerified ? "cursor-not-allowed" : "cursor-pointer hover:shadow-sm"
+                    isVerified ? "cursor-not-allowed" : "cursor-pointer hover:shadow-sm",
+                    selected ? "border-b-4" : "",
                   )}
                   style={borderColor ? { borderColor } : undefined}
                 >
@@ -570,7 +561,7 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
             </Button>
             {showAnswerImmediately && !isVerified ? (
               <Button
-                variant="primary"
+                variant="blue"
                 onClick={handleVerify}
                 disabled={!isAnswered || isSubmitting}
                 className="ml-auto"
@@ -581,7 +572,7 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
               </Button>
             ) : (
               <Button
-                variant="primary"
+                variant="blue"
                 onClick={handleNext}
                 disabled={!isAnswered}
                 className="ml-auto"

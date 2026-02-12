@@ -173,9 +173,9 @@ export function ContentDropzone({
             ref={textareaRef}
             value={textContent}
             onChange={(e) => onTextChange(e.target.value)}
-            placeholder={t(locale, "generate.pasteOrType")}
             rows={12}
             disabled={disabled}
+            placeholder={t(locale, "generate.pasteOrWriteText")}
             className="border-0 resize-none focus-visible:ring-0"
           />
         </div>

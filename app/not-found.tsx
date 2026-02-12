@@ -17,7 +17,7 @@ export default function NotFound() {
             Page non trouvée
           </h2>
           <p className="text-lg text-muted-foreground">
-            Désolé, la page que vous recherchez n'existe pas ou a été déplacée.
+            Désolé, la page que tu cherches n'existe pas ou a été déplacée.
           </p>
         </div>
 

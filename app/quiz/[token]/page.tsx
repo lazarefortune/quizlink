@@ -8,6 +8,18 @@ type PageProps = {
 
 export default async function QuizIntroductionPage({ params }: PageProps) {
   const { token } = await params;
+
+  if (!token?.trim()) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="max-w-md w-full text-center">
+          <h1 className="text-2xl font-bold mb-4">Lien invalide</h1>
+          <p className="text-muted-foreground">L’URL du quiz est incomplète ou incorrecte.</p>
+        </div>
+      </div>
+    );
+  }
+
   const result = await getQuizLinkByToken(token);
 
   if (!result.success) {

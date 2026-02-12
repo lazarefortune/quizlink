@@ -24,7 +24,7 @@ export function CoinsRequiredOverlay() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <Link href="/pricing" className="block">
+          <Link href="/account/coins" className="block">
             <Button variant="primary" className="w-full" size="lg">
               {t(locale, "generate.getCoins")}
             </Button>

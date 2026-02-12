@@ -125,7 +125,7 @@ export function QuizResultsContent({ attempt }: QuizResultsContentProps) {
 
             {/* Detailed Results */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">
+              <h3 className="text-xl font-medium">
                 {t(locale, "quiz.detailedResults")}
               </h3>
               {attempt.quizLink.quiz.questions.map((question, index) => {
@@ -138,19 +138,19 @@ export function QuizResultsContent({ attempt }: QuizResultsContentProps) {
                   <Card key={question.id} className={isCorrect ? "border-green-500" : "border-red-500"}>
                     <CardHeader>
                       <div className="flex items-start justify-between gap-2">
-                        <CardTitle className="text-base">
+                        <CardTitle className="text-xl">
                           {t(locale, "quiz.question")} {index + 1}: {question.label}
                         </CardTitle>
                         {isCorrect ? (
-                          <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 shrink-0" />
+                          <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400 shrink-0" />
                         ) : (
-                          <XCircle className="h-5 w-5 text-red-600 dark:text-red-400 shrink-0" />
+                          <XCircle className="h-6 w-6 text-red-600 dark:text-red-400 shrink-0" />
                         )}
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <div>
-                        <p className="text-sm font-medium mb-2">
+                        <p className="text-base font-medium mb-2">
                           {t(locale, "quiz.yourAnswer")}:
                         </p>
                         {selectedOptions.length > 0 ? (
@@ -159,26 +159,26 @@ export function QuizResultsContent({ attempt }: QuizResultsContentProps) {
                               <Badge
                                 key={opt.id}
                                 variant={opt.isCorrect ? "default" : "outline"}
-                                className="mr-2"
+                                className={opt.isCorrect ? "mr-2 text-white bg-green-600" : "mr-2 text-white bg-red-500 dark:bg-red-700"}
                               >
                                 {opt.label}
                               </Badge>
                             ))}
                           </div>
                         ) : (
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-base text-muted-foreground">
                             {t(locale, "quiz.noAnswer")}
                           </p>
                         )}
                       </div>
                       {!isCorrect && (
                         <div>
-                          <p className="text-sm font-medium mb-2">
+                          <p className="text-base font-medium mb-2">
                             {t(locale, "quiz.correctAnswer")}:
                           </p>
                           <div className="space-y-1">
                             {correctOptions.map((opt) => (
-                              <Badge key={opt.id} variant="default" className="mr-2">
+                              <Badge key={opt.id} variant="default" className={opt.isCorrect ? "mr-2 bg-green-600" : "mr-2 bg-red-500 dark:bg-red-700"}>
                                 {opt.label}
                               </Badge>
                             ))}
@@ -186,7 +186,7 @@ export function QuizResultsContent({ attempt }: QuizResultsContentProps) {
                         </div>
                       )}
                       {answer?.timeSpent !== null && answer?.timeSpent !== undefined ? (
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-base text-muted-foreground">
                           {t(locale, "quiz.timeSpent")}: {formatDuration(answer.timeSpent)}
                         </p>
                       ) : null}
@@ -198,12 +198,12 @@ export function QuizResultsContent({ attempt }: QuizResultsContentProps) {
 
             {/* Restart Button */}
             {attempt.quizLink.allowMultipleAttempts && (
-              <div className="border-t pt-6">
+              <div className="border-t border-border pt-6">
                 <Button
                   onClick={handleRestartQuiz}
                   className="w-full"
                   size="lg"
-                  variant="primary"
+                  variant="blue"
                 >
                   <RotateCcw className="h-4 w-4 mr-2" />
                   {t(locale, "quiz.restart")}

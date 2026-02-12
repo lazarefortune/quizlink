@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
-import { deleteQuiz, duplicateQuiz } from "@/app/dashboard/actions";
+import { deleteQuiz, duplicateQuiz } from "@/app/(app)/dashboard/actions";
 import {
   AlertDialog,
   AlertDialogAction,

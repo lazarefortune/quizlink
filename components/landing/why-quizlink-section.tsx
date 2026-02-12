@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AnimateOnScroll } from "@/components/animate-on-scroll";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { CheckCircle2 } from "lucide-react";
@@ -26,18 +27,21 @@ export function WhyQuizLinkSection() {
   return (
     <section className="py-16 px-4 sm:py-20 md:py-24">
       <div className="mx-auto max-w-6xl">
-        <div className="text-center mb-12 sm:mb-16">
-          <h2 className="text-3xl font-bold sm:text-4xl md:text-5xl">
-            {t(locale, "landing.whyQuizLink.title")}
-          </h2>
-          <p className="mt-4 text-lg text-muted-foreground sm:text-xl">
-            {t(locale, "landing.whyQuizLink.subtitle")}
-          </p>
-        </div>
+        <AnimateOnScroll>
+          <div className="text-center mb-12 sm:mb-16">
+            <h2 className="text-3xl font-bold sm:text-4xl md:text-5xl">
+              {t(locale, "landing.whyQuizLink.title")}
+            </h2>
+            <p className="mt-4 text-lg text-muted-foreground sm:text-xl">
+              {t(locale, "landing.whyQuizLink.subtitle")}
+            </p>
+          </div>
+        </AnimateOnScroll>
 
         <div className="grid gap-6 md:grid-cols-3">
           {values.map((value, index) => (
-            <Card key={index} className="flex flex-col">
+            <AnimateOnScroll key={index} delay={100 + 80 * index}>
+              <Card className="flex flex-col">
               <CardHeader>
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-green-500/10">
                   <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
@@ -50,6 +54,7 @@ export function WhyQuizLinkSection() {
                 </CardDescription>
               </CardContent>
             </Card>
+            </AnimateOnScroll>
           ))}
         </div>
       </div>
