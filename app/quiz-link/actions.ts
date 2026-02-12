@@ -20,6 +20,7 @@ type GetQuizLinkByTokenResponse =
           id: string;
           name: string;
           email: string | null;
+          publicToken: string | null;
         } | null;
         allowMultipleAttempts: boolean;
         expiresAt: Date | null;
