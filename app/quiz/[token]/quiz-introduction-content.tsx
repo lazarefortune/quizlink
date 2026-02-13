@@ -6,7 +6,6 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert } from "@/components/ui/alert";
-import { ThemeToggle } from "@/components/theme-toggle";
 import {
   Clock,
   FileQuestion,
@@ -116,28 +115,17 @@ export function QuizIntroductionContent({
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
-        <div className="container max-w-2xl mx-auto px-4 flex items-center justify-between h-14">
-          {portalToken ? (
-            <Link
-              href={`/p/${portalToken}`}
-              className="flex items-center gap-1.5 text-base text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              {t(locale, "quiz.backToPortal")}
-            </Link>
-          ) : (
-            <span className="text-sm font-semibold tracking-tight">
-              QuizLink
-            </span>
-          )}
-          <ThemeToggle />
-        </div>
-      </header>
-
       {/* Content */}
       <div className="container max-w-2xl mx-auto px-4 py-8 sm:py-12">
+        {portalToken && (
+          <Link
+            href={`/p/${portalToken}`}
+            className="inline-flex items-center gap-1.5 text-base text-muted-foreground hover:text-foreground transition-colors mb-6"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            {t(locale, "quiz.backToPortal")}
+          </Link>
+        )}
         <div className="space-y-8">
           <div className="flex flex-col gap-4">
             {/* Greeting */}

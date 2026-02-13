@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FileText, Users, Shield, Sparkles, Plus, User, House } from "lucide-react";
+import { FileText, Users, Shield, Sparkles, Plus, User, House, Globe } from "lucide-react";
 
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
@@ -50,6 +50,12 @@ export function Sidebar({
           href="/dashboard/quizzes"
           label={t(locale, "dashboard.sidebar.quizzes")}
           icon={FileText}
+          onClick={onNavClick}
+        />
+        <NavItem
+          href="/quizzes"
+          label={t(locale, "dashboard.sidebar.community")}
+          icon={Globe}
           onClick={onNavClick}
         />
         <NavItem

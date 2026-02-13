@@ -2,6 +2,7 @@ export const fr = {
   // Navigation
   nav: {
     home: "Accueil",
+    publicQuizzes: "Explorer les quiz",
     generate: "Générer",
     builder: "Créer",
     preview: "Aperçu",
@@ -15,6 +16,15 @@ export const fr = {
     coins: "Coins",
     pricing: "Tarifs",
     admin: "Admin",
+  },
+
+  publicQuizzes: {
+    title: "Quiz publics",
+    subtitle: "Découvrez et jouez aux quiz partagés par la communauté.",
+    play: "Jouer",
+    backToHome: "Retour à l'accueil",
+    noQuizzes: "Aucun quiz public pour le moment",
+    noQuizzesDescription: "Les quiz marqués comme publics par leurs créateurs apparaîtront ici.",
   },
 
   // Generate page
@@ -331,6 +341,8 @@ export const fr = {
     delete: "Supprimer",
     anonymous: "Anonyme",
     search: "Rechercher",
+    yes: "Oui",
+    no: "Non",
   },
 
   // Quiz Builder
@@ -570,6 +582,7 @@ export const fr = {
     sidebar: {
       overview: "Accueil",
       quizzes: "Quiz",
+      community: "Communauté",
       participants: "Participants",
       account: "Mon compte",
       admin: "Admin",
@@ -617,9 +630,15 @@ export const fr = {
     statistics: "Statistiques",
     backToDashboard: "Retour au tableau de bord",
     statsSubtitle: "Statistiques et résultats détaillés",
-    totalInvitations: "Invitations totales",
-    totalParticipants: "Participants totaux",
+    quizDetails: "Détails du quiz",
+    totalInvitations: "Liens / invitations",
+    enrolledParticipants: "Participants inscrits",
+    attemptedCountSubtitle: "ont répondu",
+    totalParticipants: "Participants ayant répondu",
     totalAttempts: "Tentatives totales",
+    anonymousAttempts: "Tentatives anonymes",
+    createdOn: "Créé le",
+    noTimeLimit: "Aucune limite",
     completed: "Terminées",
     averageScore: "Score moyen",
     completionRate: "Taux de complétion",
@@ -636,6 +655,7 @@ export const fr = {
     duration: "Durée",
     status: "Statut",
     date: "Date",
+    noAttempts: "Aucune tentative pour ce quiz",
     noAttemptsYet: "Aucune tentative pour le moment",
     inProgress: "En cours",
     abandoned: "Abandonné",

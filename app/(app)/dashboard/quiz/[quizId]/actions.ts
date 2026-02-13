@@ -3,17 +3,30 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 
+type QuizSettings = {
+  showAnswerImmediately?: boolean;
+  randomizeQuestions?: boolean;
+  timeLimitPerQuestion?: number | null;
+};
+
 type GetQuizStatsResponse =
   | {
       success: true;
       stats: {
         totalInvitations: number;
+        enrolledParticipantsCount: number;
         totalParticipants: number;
         totalAttempts: number;
+        anonymousAttemptsCount: number;
         completedAttempts: number;
         averageScore: number;
         completionRate: number;
         totalQuestions: number;
+        quizDetails: {
+          visibility: string;
+          settings: QuizSettings;
+          createdAt: Date;
+        };
         participants: Array<{
           id: string;
           name: string;
@@ -26,6 +39,7 @@ type GetQuizStatsResponse =
         attempts: Array<{
           id: string;
           participantName: string;
+          isAnonymous: boolean;
           score: number | null;
           duration: number | null;
           status: string;
@@ -74,11 +88,14 @@ export async function getQuizStats(
       return { success: false, error: "Unauthorized" };
     }
 
-    // Verify quiz ownership and get total questions count
+    // Verify quiz ownership and get quiz details
     const quiz = await prisma.quiz.findUnique({
       where: { id: quizId },
       select: {
         ownerId: true,
+        visibility: true,
+        settings: true,
+        createdAt: true,
         _count: {
           select: {
             questions: true,
@@ -115,13 +132,20 @@ export async function getQuizStats(
 
     // Calculate stats
     const totalInvitations = quizLinks.length;
-    // Only count attempts with participants (exclude anonymous attempts)
-    const attemptsWithParticipants = allAttempts.filter((a: any) => a.participantId !== null);
+    const enrolledParticipantsCount = quizLinks.filter(
+      (link: { participantId: string | null }) => link.participantId != null
+    ).length;
+    const attemptsWithParticipants = allAttempts.filter(
+      (a: { participantId: string | null }) => a.participantId !== null
+    );
     const uniqueParticipants = new Set(
-      attemptsWithParticipants.map((a: any) => a.participantId)
+      attemptsWithParticipants.map((a: { participantId: string | null }) => a.participantId)
     );
     const totalParticipants = uniqueParticipants.size;
     const totalAttempts = allAttempts.length;
+    const anonymousAttemptsCount = allAttempts.filter(
+      (a: { participantId: string | null }) => a.participantId === null
+    ).length;
 
     const averageScore =
       completedAttempts.length > 0
@@ -182,41 +206,61 @@ export async function getQuizStats(
 
     // Get attempts list
     const attempts = allAttempts
-      .map((attempt: any) => {
-        const duration =
-          attempt.finishedAt && attempt.startedAt
-            ? Math.floor(
-                (attempt.finishedAt.getTime() - attempt.startedAt.getTime()) /
-                  1000
-              )
-            : null;
+      .map(
+        (attempt: {
+          id: string;
+          participant: { name: string } | null;
+          score: number | null;
+          status: string;
+          startedAt: Date;
+          finishedAt: Date | null;
+          answers: unknown[];
+        }) => {
+          const duration =
+            attempt.finishedAt && attempt.startedAt
+              ? Math.floor(
+                  (attempt.finishedAt.getTime() - attempt.startedAt.getTime()) /
+                    1000
+                )
+              : null;
 
-        return {
-          id: attempt.id,
-          participantName: attempt.participant ? attempt.participant.name : "Anonyme",
-          score: attempt.score,
-          duration,
-          status: attempt.status,
-          startedAt: attempt.startedAt,
-          finishedAt: attempt.finishedAt,
-          questionsAnswered: attempt.answers ? attempt.answers.length : 0,
-        };
-      })
+          return {
+            id: attempt.id,
+            participantName: attempt.participant ? attempt.participant.name : "Anonyme",
+            isAnonymous: !attempt.participant,
+            score: attempt.score,
+            duration,
+            status: attempt.status,
+            startedAt: attempt.startedAt,
+            finishedAt: attempt.finishedAt,
+            questionsAnswered: attempt.answers ? attempt.answers.length : 0,
+          };
+        }
+      )
       .sort(
-        (a: any, b: any) =>
+        (a: { startedAt: Date }, b: { startedAt: Date }) =>
           b.startedAt.getTime() - a.startedAt.getTime()
       );
+
+    const settings = (quiz.settings ?? {}) as QuizSettings;
 
     return {
       success: true,
       stats: {
         totalInvitations,
+        enrolledParticipantsCount,
         totalParticipants,
         totalAttempts,
+        anonymousAttemptsCount,
         completedAttempts: completedAttempts.length,
         averageScore,
         completionRate,
         totalQuestions: quiz._count.questions,
+        quizDetails: {
+          visibility: quiz.visibility,
+          settings,
+          createdAt: quiz.createdAt,
+        },
         participants,
         attempts,
       },

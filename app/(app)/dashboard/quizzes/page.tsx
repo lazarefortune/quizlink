@@ -154,9 +154,18 @@ export default function DashboardQuizzesPage() {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <h2 className="text-2xl h1 font-semibold sm:text-3xl">
-            {t(locale, "dashboard.title")}
-          </h2>
+          <div className="flex flex-col gap-2">
+            <h2 className="text-2xl h1 font-semibold sm:text-3xl">
+              {t(locale, "dashboard.title")}
+            </h2>
+            <Link
+              href="/quizzes"
+              className="md:hidden inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-fit"
+            >
+              <Globe className="h-4 w-4 shrink-0" />
+              {t(locale, "dashboard.sidebar.community")}
+            </Link>
+          </div>
           <div className="shrink-0">
             <CreateQuizDropdown locale={locale} />
           </div>
@@ -194,9 +203,9 @@ export default function DashboardQuizzesPage() {
                 className="group flex flex-col transition-all border-b-4"
               >
                 <CardContent className="flex flex-col flex-1 p-5">
-                  {/* Quiz name — clickable area */}
+                  {/* Quiz name — links to quiz details */}
                   <Link
-                    href={`/builder/${quiz.id}`}
+                    href={`/dashboard/quiz/${quiz.id}`}
                     className="block flex-1 mb-4"
                   >
                     <h3 className="text-lg text-neutral-600 dark:text-neutral-100 font-semibold leading-snug line-clamp-2 wrap-break-word group-hover:text-blue transition-colors">

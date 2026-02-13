@@ -45,10 +45,18 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Legal */}
+          {/* Legal & Explore */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">{t(locale, "footer.legal.title")}</h3>
             <ul className="space-y-2 text-sm">
+              <li>
+                <Link
+                  href="/quizzes"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {t(locale, "nav.publicQuizzes")}
+                </Link>
+              </li>
               <li>
                 <Link
                   href="/legal"

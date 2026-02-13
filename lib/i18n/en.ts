@@ -2,6 +2,7 @@ export const en = {
   // Navigation
   nav: {
     home: "Home",
+    publicQuizzes: "Explore quizzes",
     generate: "Generate",
     builder: "Builder",
     preview: "Preview",
@@ -15,6 +16,15 @@ export const en = {
     coins: "Coins",
     pricing: "Pricing",
     admin: "Admin",
+  },
+
+  publicQuizzes: {
+    title: "Public quizzes",
+    subtitle: "Discover and play quizzes shared by the community.",
+    play: "Play",
+    backToHome: "Back to home",
+    noQuizzes: "No public quizzes yet",
+    noQuizzesDescription: "Quizzes marked as public by their creators will appear here.",
   },
 
   // Generate page
@@ -327,6 +337,8 @@ export const en = {
     delete: "Delete",
     anonymous: "Anonymous",
     search: "Search",
+    yes: "Yes",
+    no: "No",
   },
 
   // Quiz Builder
@@ -566,6 +578,7 @@ export const en = {
     sidebar: {
       overview: "Home",
       quizzes: "Quizzes",
+      community: "Community",
       participants: "Participants",
       account: "My account",
       admin: "Admin",
@@ -613,9 +626,15 @@ export const en = {
     statistics: "Statistics",
     backToDashboard: "Back to dashboard",
     statsSubtitle: "Detailed statistics and results",
-    totalInvitations: "Total invitations",
-    totalParticipants: "Total participants",
+    quizDetails: "Quiz details",
+    totalInvitations: "Links / invitations",
+    enrolledParticipants: "Enrolled participants",
+    attemptedCountSubtitle: "have attempted",
+    totalParticipants: "Participants who attempted",
     totalAttempts: "Total attempts",
+    anonymousAttempts: "Anonymous attempts",
+    createdOn: "Created on",
+    noTimeLimit: "No limit",
     completed: "Completed",
     averageScore: "Average score",
     completionRate: "Completion rate",

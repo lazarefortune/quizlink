@@ -20,7 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowLeft, Users, FileQuestion, CheckCircle2, Clock } from "lucide-react";
+import { ArrowLeft, Users, FileQuestion, CheckCircle2, Clock, Globe, Lock, Settings2, Calendar } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { ParticipantAvatar } from "@/components/participant-avatar";
@@ -33,14 +33,27 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+type QuizSettings = {
+  showAnswerImmediately?: boolean;
+  randomizeQuestions?: boolean;
+  timeLimitPerQuestion?: number | null;
+};
+
 type Stats = {
   totalInvitations: number;
+  enrolledParticipantsCount: number;
   totalParticipants: number;
   totalAttempts: number;
+  anonymousAttemptsCount: number;
   completedAttempts: number;
   averageScore: number;
   completionRate: number;
   totalQuestions: number;
+  quizDetails: {
+    visibility: string;
+    settings: QuizSettings;
+    createdAt: Date;
+  };
   participants: Array<{
     id: string;
     name: string;
@@ -53,6 +66,7 @@ type Stats = {
   attempts: Array<{
     id: string;
     participantName: string;
+    isAnonymous: boolean;
     score: number | null;
     duration: number | null;
     status: string;
@@ -110,14 +124,23 @@ export function QuizStatsContent({
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <Link href="/dashboard">
-              <Button variant="ghost" size="sm" className="mb-2">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                {t(locale, "dashboard.backToDashboard")}
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <Link href="/dashboard/quizzes">
+                <Button variant="ghost" size="sm">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  {t(locale, "dashboard.backToDashboard")}
+                </Button>
+              </Link>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push(`/builder/${quizId}`)}
+              >
+                {t(locale, "dashboard.edit")}
               </Button>
-            </Link>
+            </div>
             <h1 className="text-3xl font-bold">{quizName}</h1>
             <p className="text-muted-foreground mt-2">
               {t(locale, "dashboard.statsSubtitle")}
@@ -125,8 +148,80 @@ export function QuizStatsContent({
           </div>
         </div>
 
+        {/* Quiz details card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Settings2 className="h-4 w-4" />
+              {t(locale, "dashboard.quizDetails")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">
+                {t(locale, "dashboard.visibility")}
+              </p>
+              <div className="mt-1 flex items-center gap-2">
+                {stats.quizDetails.visibility === "PUBLIC" ? (
+                  <Globe className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <Lock className="h-4 w-4 text-muted-foreground" />
+                )}
+                <span>
+                  {stats.quizDetails.visibility === "PUBLIC"
+                    ? t(locale, "dashboard.public")
+                    : t(locale, "dashboard.private")}
+                </span>
+              </div>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">
+                {t(locale, "dashboard.questions")}
+              </p>
+              <p className="mt-1">{stats.totalQuestions}</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">
+                {t(locale, "builder.showAnswerImmediately")}
+              </p>
+              <p className="mt-1">
+                {stats.quizDetails.settings.showAnswerImmediately
+                  ? t(locale, "common.yes")
+                  : t(locale, "common.no")}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">
+                {t(locale, "builder.randomizeQuestions")}
+              </p>
+              <p className="mt-1">
+                {stats.quizDetails.settings.randomizeQuestions
+                  ? t(locale, "common.yes")
+                  : t(locale, "common.no")}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">
+                {t(locale, "builder.timeLimitPerQuestion")}
+              </p>
+              <p className="mt-1">
+                {stats.quizDetails.settings.timeLimitPerQuestion != null
+                  ? `${stats.quizDetails.settings.timeLimitPerQuestion} s`
+                  : t(locale, "dashboard.noTimeLimit")}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                <Calendar className="h-3.5 w-3.5" />
+                {t(locale, "dashboard.createdOn")}
+              </p>
+              <p className="mt-1">{formatDate(stats.quizDetails.createdAt)}</p>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Overview Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -142,12 +237,15 @@ export function QuizStatsContent({
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                {t(locale, "dashboard.totalParticipants")}
+                {t(locale, "dashboard.enrolledParticipants")}
               </CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.totalParticipants}</div>
+              <div className="text-2xl font-bold">{stats.enrolledParticipantsCount}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {stats.totalParticipants} {t(locale, "dashboard.attemptedCountSubtitle")}
+              </p>
             </CardContent>
           </Card>
 
@@ -165,6 +263,20 @@ export function QuizStatsContent({
               </p>
             </CardContent>
           </Card>
+
+          {stats.anonymousAttemptsCount > 0 && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  {t(locale, "dashboard.anonymousAttempts")}
+                </CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.anonymousAttemptsCount}</div>
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -269,7 +381,7 @@ export function QuizStatsContent({
               <TableBody>
                 {stats.attempts.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground">
+                    <TableCell colSpan={6} className="text-center text-muted-foreground">
                       {t(locale, "dashboard.noAttempts")}
                     </TableCell>
                   </TableRow>
@@ -277,15 +389,19 @@ export function QuizStatsContent({
                   stats.attempts.map((attempt) => (
                     <TableRow key={attempt.id}>
                       <TableCell className="font-medium">
-                        {attempt.participantName}
+                        <span className="flex items-center gap-2">
+                          {attempt.participantName}
+                          {attempt.isAnonymous && (
+                            <Badge variant="secondary" className="text-xs">
+                              {t(locale, "dashboard.anonymous")}
+                            </Badge>
+                          )}
+                        </span>
                       </TableCell>
                       <TableCell>
                         {attempt.score !== null
                           ? `${attempt.score.toFixed(1)}%`
                           : "-"}
-                      </TableCell>
-                      <TableCell>
-                        {attempt.questionsAnswered} / {stats.totalQuestions || "-"}
                       </TableCell>
                       <TableCell>{formatDuration(attempt.duration)}</TableCell>
                       <TableCell>

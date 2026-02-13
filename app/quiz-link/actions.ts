@@ -167,6 +167,77 @@ export async function createOrGetQuizLink(
 }
 
 /**
+ * Get or create a public quiz link (no auth required).
+ * Only allowed for quizzes with visibility === "PUBLIC".
+ * Returns a token that can be used to play the quiz at /quiz/[token].
+ */
+export async function getOrCreatePublicQuizLink(
+  quizId: string
+): Promise<
+  | { success: true; token: string }
+  | { success: false; error: string }
+> {
+  try {
+    if (!prisma) {
+      return { success: false, error: "Database not initialized" };
+    }
+
+    const quiz = await prisma.quiz.findUnique({
+      where: { id: quizId },
+      select: { id: true, visibility: true },
+    });
+
+    if (!quiz) {
+      return { success: false, error: "Quiz not found" };
+    }
+
+    if (quiz.visibility !== "PUBLIC") {
+      return { success: false, error: "This quiz is not public" };
+    }
+
+    const existingLink = await prisma.quizLink.findFirst({
+      where: { quizId, participantId: null },
+      select: { token: true },
+    });
+
+    if (existingLink) {
+      return { success: true, token: existingLink.token };
+    }
+
+    let token = generateToken();
+    let attempts = 0;
+    while (attempts < 10) {
+      const existing = await prisma.quizLink.findUnique({
+        where: { token },
+      });
+      if (!existing) break;
+      token = generateToken();
+      attempts++;
+    }
+
+    if (attempts >= 10) {
+      return { success: false, error: "Failed to generate unique token" };
+    }
+
+    await prisma.quizLink.create({
+      data: {
+        quizId,
+        token,
+        allowMultipleAttempts: true,
+      },
+    });
+
+    return { success: true, token };
+  } catch (error) {
+    console.error("Error in getOrCreatePublicQuizLink:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to get quiz link",
+    };
+  }
+}
+
+/**
  * Get quiz link by token (public access)
  */
 export async function getQuizLinkByToken(

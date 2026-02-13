@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, Home, Sparkles, Plus, LayoutDashboard, LogIn, UserPlus, Settings, LogOut, FileText, Coins, Shield } from "lucide-react";
+import { Menu, X, Home, Sparkles, Plus, LayoutDashboard, LogIn, UserPlus, Settings, LogOut, FileText, FileQuestion, Coins, Shield } from "lucide-react";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -83,6 +83,7 @@ export function Header() {
   } else {
     navItems.push({ href: "/", label: t(locale, "nav.home"), icon: Home });
   }
+  navItems.push({ href: "/quizzes", label: t(locale, "nav.publicQuizzes"), icon: FileQuestion });
 
   const isActive = (href: string) => {
     if (href === "/") {
@@ -110,8 +111,17 @@ export function Header() {
         <div className="flex h-20 items-center justify-between">
           {/* Logo / Brand */}
           <div className="flex items-center">
-            <Link href="/" className="text-lg font-bold">
-              QuizLink
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 rounded-lg transition-opacity hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2"
+              aria-label={locale === "fr" ? "Retour à l'accueil" : "Back to home"}
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
+                <span className="font-heading text-lg font-bold text-primary-foreground">Q</span>
+              </div>
+              <span className="text-2xl font-bold tracking-tight text-foreground">
+                Quiz<span className="text-primary">Link</span>
+              </span>
             </Link>
           </div>
 
@@ -221,9 +231,14 @@ export function Header() {
                 <Link
                   href="/"
                   onClick={handleCloseSidebar}
-                  className="text-lg font-bold"
+                  className="inline-flex items-center gap-2 rounded-lg transition-opacity hover:opacity-80"
                 >
-                  QuizLink
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
+                    <span className="font-heading text-lg font-bold text-primary-foreground">Q</span>
+                  </div>
+                  <span className="text-2xl font-bold tracking-tight text-foreground">
+                    Quiz<span className="text-primary">Link</span>
+                  </span>
                 </Link>
                 <Button
                   variant="ghost"
