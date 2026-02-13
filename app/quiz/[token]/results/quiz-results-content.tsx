@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert } from "@/components/ui/alert";
-import { CheckCircle2, XCircle, RotateCcw } from "lucide-react";
+import { CheckCircle2, XCircle, RotateCcw, ArrowLeft } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 
@@ -38,6 +39,7 @@ type Attempt = {
   };
   participant: {
     name: string;
+    publicToken: string | null;
   } | null;
   answers: Array<{
     id: string;
@@ -100,9 +102,19 @@ export function QuizResultsContent({ attempt }: QuizResultsContentProps) {
     router.push(`/quiz/${token}`);
   };
 
+  const portalToken = attempt.participant?.publicToken ?? null;
+
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="max-w-4xl mx-auto space-y-6">
+        {portalToken && (
+          <Button variant="ghost" size="sm" asChild className="-ml-2 text-muted-foreground hover:text-foreground">
+            <Link href={`/p/${portalToken}`}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              {t(locale, "quiz.backToPortal")}
+            </Link>
+          </Button>
+        )}
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl md:text-3xl">

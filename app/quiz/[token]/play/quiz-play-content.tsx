@@ -97,6 +97,10 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
     timeLimitPerQuestion?: number | null;
   };
 
+  const timeLimit = settings.timeLimitPerQuestion ?? 0;
+  const isTimerDanger = timeRemaining !== null && timeLimit > 0 && timeRemaining <= 10;
+  const isTimerWarning = timeRemaining !== null && timeLimit > 0 && timeRemaining <= 20 && timeRemaining > 10;
+
   // Initialize questions and answers (only once when attempt changes)
   useEffect(() => {
     // Only initialize if we don't have questions yet or if attempt ID changed
@@ -423,7 +427,7 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
 
         <header className="space-y-2">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-            <h1 className="text-xl sm:text-2xl font-bold break-words flex-1">
+            <h1 className="h1 text-xl sm:text-2xl font-bold break-words flex-1">
               {attempt.quizLink.quiz.name}
             </h1>
             <div className="flex items-center gap-2 shrink-0">
@@ -436,12 +440,6 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
                 <X className="h-4 w-4 mr-1" />
                 {t(locale, "quiz.quit")}
               </Button>
-              {timeRemaining !== null && (
-                <Badge variant="outline" className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {timeRemaining} {t(locale, "quiz.seconds")}
-                </Badge>
-              )}
               <Badge variant="outline">
                 {currentQuestionIndex + 1} / {questions.length}
               </Badge>
@@ -453,6 +451,35 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
               style={{ width: `${progress}%` }}
             />
           </div>
+
+          {timeRemaining !== null && timeLimit > 0 && (
+            <div className="mt-4">
+              <div
+                className={cn(
+                  "inline-flex items-center gap-2 rounded-lg px-3 py-1.5 font-semibold tabular-nums transition-colors",
+                  isTimerDanger &&
+                    "bg-destructive/15 text-destructive border border-destructive/40 animate-pulse",
+                  isTimerWarning &&
+                    !isTimerDanger &&
+                    "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/40",
+                  !isTimerWarning &&
+                    !isTimerDanger &&
+                    "bg-muted/80 text-muted-foreground border border-border",
+                )}
+              >
+                <Clock
+                  className={cn(
+                    "h-4 w-4 shrink-0",
+                    isTimerDanger && "text-destructive",
+                    isTimerWarning && !isTimerDanger && "text-amber-600 dark:text-amber-400",
+                  )}
+                />
+                <span>
+                  {timeRemaining} {t(locale, "quiz.seconds")}
+                </span>
+              </div>
+            </div>
+          )}
         </header>
 
         {isTimeUp && (
@@ -480,7 +507,9 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
               const selected = isOptionSelected(option.id);
               const correct = isOptionCorrect(option.id);
               const incorrect = isOptionIncorrect(option.id);
-              const optionLetter = String.fromCharCode(65 + currentQuestion.options.indexOf(option));
+              const optionLetter = String.fromCharCode(
+                65 + currentQuestion.options.indexOf(option),
+              );
 
               // Determine styling based on state
               let borderColor = "";
@@ -526,7 +555,9 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
                   className={cn(
                     "w-full text-left p-4 rounded-lg border-2 transition-all duration-200",
                     !borderColor && "border-border",
-                    isVerified ? "cursor-not-allowed" : "cursor-pointer hover:shadow-sm",
+                    isVerified
+                      ? "cursor-not-allowed"
+                      : "cursor-pointer hover:shadow-sm",
                     selected ? "border-b-4" : "",
                   )}
                   style={borderColor ? { borderColor } : undefined}
@@ -537,7 +568,7 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
                       className={cn(
                         "flex items-center justify-center w-10 h-10 rounded-md font-semibold text-sm shrink-0 transition-colors",
                         letterBgColor,
-                        letterTextColor
+                        letterTextColor,
                       )}
                     >
                       {optionLetter}
@@ -594,10 +625,7 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
-              <Button
-                variant="ghost"
-                onClick={() => setShowQuitConfirm(false)}
-              >
+              <Button variant="ghost" onClick={() => setShowQuitConfirm(false)}>
                 {t(locale, "common.cancel")}
               </Button>
               <Button variant="destructive" onClick={confirmQuit}>
