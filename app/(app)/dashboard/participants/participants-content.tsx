@@ -204,7 +204,7 @@ export function ParticipantsContent() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-neutral-50 dark:bg-background p-4 sm:p-6 lg:p-8">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-10">

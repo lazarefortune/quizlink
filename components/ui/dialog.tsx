@@ -34,18 +34,19 @@ const DialogContent = React.forwardRef<
 >(({ className, children, onOverlayClick, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay onClick={onOverlayClick} />
-    <div className="fixed inset-0 z-[102] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[102] flex min-w-0 items-center justify-center overflow-x-hidden overflow-y-auto p-4 sm:p-6">
       <DialogPrimitive.Content
         ref={ref}
         className={cn(
-          "quizlink-dialog-content grid w-full max-w-lg gap-4 border border-border bg-background p-6 shadow-lg sm:rounded-lg",
+          "quizlink-dialog-content grid w-full min-w-0 max-w-full gap-4 border border-border bg-background p-4 shadow-lg sm:max-w-lg sm:rounded-lg sm:p-6",
+          "max-h-[90vh] overflow-y-auto overflow-x-hidden",
           "opacity-0",
           className
         )}
         {...props}
       >
         {children}
-        <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground cursor-pointer">
+        <DialogPrimitive.Close className="absolute right-3 top-3 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground cursor-pointer sm:right-4 sm:top-4">
           <X className="h-4 w-4" />
           <span className="sr-only">Close</span>
         </DialogPrimitive.Close>

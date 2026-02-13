@@ -532,6 +532,34 @@ textarea {
   animation: dialog-content-close 0.22s ease-in forwards;
 }
 
+/* Modales : sur mobile, ne jamais dépasser la largeur visible (évite débordement) */
+.quizlink-dialog-content {
+  box-sizing: border-box;
+}
+@media (max-width: 639px) {
+  .quizlink-dialog-content {
+    max-width: calc(100vw - 2rem) !important;
+  }
+}
+/* Les pages peuvent surcharger via sm:max-w-md etc. — on garde la contrainte mobile */
+.quizlink-dialog-content input,
+.quizlink-dialog-content select,
+.quizlink-dialog-content textarea {
+  max-width: 100% !important;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.quizlink-dialog-content .relative {
+  min-width: 0;
+}
+.quizlink-dialog-content > * {
+  min-width: 0;
+}
+/* Groupes de boutons (Annuler / Valider) : passage à la ligne sur mobile si besoin */
+.quizlink-dialog-content .flex[class*="justify-end"] {
+  flex-wrap: wrap;
+}
+
 /* Question appear animation (builder) */
 @keyframes question-appear {
   0% {
