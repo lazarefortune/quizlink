@@ -38,7 +38,7 @@ const DialogContent = React.forwardRef<
       <DialogPrimitive.Content
         ref={ref}
         className={cn(
-          "quizlink-dialog-content grid w-full min-w-0 max-w-full gap-4 border border-border bg-background p-4 shadow-lg sm:max-w-lg sm:rounded-lg sm:p-6",
+          "quizlink-dialog-content grid w-full min-w-0 max-w-full gap-4 border border-border bg-background p-4 shadow-lg sm:max-w-5xl sm:rounded-lg sm:p-6",
           "max-h-[90vh] overflow-y-auto overflow-x-hidden",
           "opacity-0",
           className
