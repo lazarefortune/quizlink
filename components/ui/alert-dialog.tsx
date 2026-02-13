@@ -32,11 +32,12 @@ const AlertDialogContent = React.forwardRef<
 >(({ className, onOverlayClick, ...props }, ref) => (
   <AlertDialogPortal>
     <AlertDialogOverlay onClick={onOverlayClick} />
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex min-w-0 items-center justify-center overflow-x-hidden overflow-y-auto p-4 sm:p-6">
       <AlertDialogPrimitive.Content
         ref={ref}
         className={cn(
-          "quizlink-dialog-content grid w-full max-w-lg gap-4 border border-border bg-background p-6 shadow-lg rounded-lg opacity-0",
+          "quizlink-dialog-content grid w-full min-w-0 max-w-full gap-4 border border-border bg-background p-4 shadow-lg rounded-lg opacity-0 sm:max-w-lg sm:p-6",
+          "max-h-[90vh] overflow-y-auto overflow-x-hidden",
           className
         )}
         {...props}

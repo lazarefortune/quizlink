@@ -525,12 +525,12 @@ export function ParticipantDetailsContent({
         {/* Stats row */}
         <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           <Card>
-            <CardContent className="flex items-center gap-3 p-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue/10 text-blue">
+            <CardContent className="flex items-start gap-3 p-4">
+              <div className="flex items-start text-blue pt-2">
                 <FileText className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-2xl font-bold tabular-nums">
+                <p className="h1 text-2xl font-bold tabular-nums">
                   {participant.links.length}
                 </p>
                 <p className="text-sm text-muted-foreground">
@@ -540,12 +540,12 @@ export function ParticipantDetailsContent({
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="flex items-center gap-3 p-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <CardContent className="flex items-start gap-3 p-4">
+              <div className="flex items-start text-primary pt-2">
                 <Target className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-2xl font-bold tabular-nums">{totalAttempts}</p>
+                <p className="h1 text-2xl font-bold tabular-nums">{totalAttempts}</p>
                 <p className="text-sm text-muted-foreground">
                   {totalAttempts <= 1
                     ? (locale === "fr" ? "Tentative" : "Attempt")
@@ -555,12 +555,12 @@ export function ParticipantDetailsContent({
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="flex items-center gap-3 p-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-highlight/10 text-highlight">
+            <CardContent className="flex items-start gap-3 p-4">
+              <div className="flex items-start text-highlight pt-2">
                 <CheckCircle2 className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-2xl font-bold tabular-nums">
+                <p className="h1 text-2xl font-bold tabular-nums">
                   {completedAttempts}
                 </p>
                 <p className="text-sm text-muted-foreground">
@@ -570,12 +570,12 @@ export function ParticipantDetailsContent({
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="flex items-center gap-3 p-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-warning/10 text-warning">
+            <CardContent className="flex items-start gap-3 p-4">
+              <div className="flex items-start text-warning pt-2">
                 <TrendingUp className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-2xl font-bold tabular-nums">
+                <p className="h1 text-2xl font-bold tabular-nums">
                   {averageScore !== null ? `${averageScore}%` : "-"}
                 </p>
                 <p className="text-sm text-muted-foreground">
