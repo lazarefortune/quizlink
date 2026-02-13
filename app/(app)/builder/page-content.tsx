@@ -52,6 +52,7 @@ import { cn } from "@/lib/utils";
 import type {
   QuizBuilder,
   Question,
+  QuestionType,
   QuizVisibility,
 } from "@/types/quiz-builder";
 import {Textarea} from "@/components/ui/textarea";
@@ -261,7 +262,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
               settings: result.quiz.settings,
               questions: result.quiz.questions.map((q: { id: string; type: string; label: string; image?: string; explanation?: string; options: { id: string; label: string; isCorrect: boolean }[] }) => ({
                 id: q.id,
-                type: q.type,
+                type: q.type as QuestionType,
                 label: q.label,
                 image: q.image,
                 explanation: q.explanation ?? undefined,
