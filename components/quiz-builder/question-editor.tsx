@@ -42,6 +42,7 @@ import { t } from "@/lib/i18n";
 import type { Question, QuestionType, QuestionOption } from "@/types/quiz-builder";
 import { cn } from "@/lib/utils";
 import { Label } from "../ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Radio } from "@/components/ui/radio";
 
@@ -442,6 +443,21 @@ export function QuestionEditor({
               )}
             </div>
           </div>
+        </div>
+
+        {/* Explanation (shown when user gets it wrong) */}
+        <div className="space-y-2">
+          <Label className="text-sm font-medium text-muted-foreground">
+            {t(locale, "builder.explanationLabel")}
+          </Label>
+          <Textarea
+            value={question.explanation ?? ""}
+            onChange={(e) =>
+              onChange({ ...question, explanation: e.target.value })
+            }
+            placeholder={t(locale, "builder.explanationPlaceholder")}
+            className="min-h-[80px] resize-y text-base"
+          />
         </div>
 
         {/* Options */}

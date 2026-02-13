@@ -37,6 +37,7 @@ type Question = {
   label: string;
   image: string | null;
   order: number;
+  explanation: string | null;
   options: Array<{
     id: string;
     label: string;
@@ -582,6 +583,19 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
               );
             })}
           </CardContent>
+          {showAnswerImmediately &&
+            isVerified &&
+            currentAnswer?.isCorrect === false &&
+            currentQuestion.explanation?.trim() && (
+              <div className="px-6 pb-4">
+                <Alert variant="info" className="border-blue/40 bg-blue/5">
+                  <span className="font-medium">{t(locale, "quiz.explanation")}</span>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {currentQuestion.explanation.trim()}
+                  </p>
+                </Alert>
+              </div>
+            )}
           <CardFooter className="flex gap-4">
             <Button
               variant="ghost"

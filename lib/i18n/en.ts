@@ -314,6 +314,7 @@ export const en = {
     noAnswer: "No answer",
     correctAnswer: "Correct answer",
     timeSpent: "Time spent",
+    explanation: "Explanation",
   },
 
   // Common
@@ -371,6 +372,8 @@ export const en = {
     questionTypeTrueFalse: "True/False",
     questionLabel: "Question Label",
     questionLabelPlaceholder: "Enter your question...",
+    explanationLabel: "Hint / Explanation",
+    explanationPlaceholder: "Shown when the participant gets the question wrong (optional)",
     questionImage: "Question Image (Optional)",
     removeImage: "Remove Image",
     answerOptions: "Answer Options",

@@ -15,6 +15,8 @@ export type Question = {
   type: QuestionType;
   label: string;
   image?: string;
+  /** Shown when the user gets the question wrong (results page) */
+  explanation?: string;
   options: QuestionOption[];
 };
 

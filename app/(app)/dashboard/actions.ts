@@ -166,12 +166,13 @@ export async function getQuizById(quizId: string) {
         name: quiz.name,
         visibility: quiz.visibility as "PRIVATE" | "PUBLIC",
         settings: quiz.settings as any,
-        questions: quiz.questions.map((q: any) => ({
+        questions: quiz.questions.map((q: { id: string; type: string; label: string; image: string | null; explanation: string | null; options: { id: string; label: string; isCorrect: boolean }[] }) => ({
           id: q.id,
           type: q.type as "MULTIPLE_CHOICE" | "CHECKBOX" | "TRUE_FALSE",
           label: q.label,
           image: q.image || undefined,
-          options: q.options.map((opt: any) => ({
+          explanation: q.explanation ?? undefined,
+          options: q.options.map((opt: { id: string; label: string; isCorrect: boolean }) => ({
             id: opt.id,
             label: opt.label,
             isCorrect: opt.isCorrect,
@@ -239,20 +240,21 @@ export async function updateQuiz(quizId: string, quiz: QuizBuilder) {
           name: quiz.name,
           visibility: quiz.visibility,
           settings: quiz.settings as any,
-          questions: {
-            create: quiz.questions.map((q, index) => ({
-              type: q.type,
-              label: q.label,
-              image: q.image || null,
-              order: index,
-              options: {
-                create: q.options.map((opt) => ({
-                  label: opt.label,
-                  isCorrect: opt.isCorrect,
-                })),
-              },
-            })),
-          },
+            questions: {
+              create: quiz.questions.map((q, index) => ({
+                type: q.type,
+                label: q.label,
+                image: q.image || null,
+                explanation: q.explanation?.trim() || null,
+                order: index,
+                options: {
+                  create: q.options.map((opt) => ({
+                    label: opt.label,
+                    isCorrect: opt.isCorrect,
+                  })),
+                },
+              })),
+            },
         },
       }),
     ]);

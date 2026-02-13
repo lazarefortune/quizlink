@@ -318,6 +318,7 @@ export const fr = {
     noAnswer: "Aucune réponse",
     correctAnswer: "Bonne réponse",
     timeSpent: "Temps passé",
+    explanation: "Explication",
   },
 
   // Common
@@ -375,6 +376,8 @@ export const fr = {
     questionTypeTrueFalse: "Vrai/Faux",
     questionLabel: "Libellé de la Question",
     questionLabelPlaceholder: "Entre ta question...",
+    explanationLabel: "Indication / Explication",
+    explanationPlaceholder: "Texte affiché si le participant rate la question (optionnel)",
     questionImage: "Image de la Question (Optionnel)",
     removeImage: "Supprimer l'Image",
     answerOptions: "Options de Réponse",

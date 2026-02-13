@@ -29,6 +29,7 @@ type Attempt = {
         id: string;
         label: string;
         type: string;
+        explanation: string | null;
         options: Array<{
           id: string;
           label: string;
@@ -201,6 +202,16 @@ export function QuizResultsContent({ attempt }: QuizResultsContentProps) {
                         <p className="text-base text-muted-foreground">
                           {t(locale, "quiz.timeSpent")}: {formatDuration(answer.timeSpent)}
                         </p>
+                      ) : null}
+                      {!isCorrect && question.explanation?.trim() ? (
+                        <div className="mt-3 rounded-lg border border-border bg-muted/50 p-3">
+                          <p className="text-sm font-medium text-foreground mb-1">
+                            {t(locale, "quiz.explanation")}
+                          </p>
+                          <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                            {question.explanation.trim()}
+                          </p>
+                        </div>
                       ) : null}
                     </CardContent>
                   </Card>

@@ -91,15 +91,16 @@ model Quiz {
 }
 
 model Question {
-  id      String       @id @default(cuid())
-  quizId  String       @map("quiz_id")
-  quiz    Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  type    String // MULTIPLE_CHOICE | CHECKBOX | TRUE_FALSE
-  label   String       @db.Text
-  image   String?      @db.LongText
-  order   Int // Order within the quiz
-  options Option[]
-  answers QuizAnswer[]
+  id          String       @id @default(cuid())
+  quizId      String       @map("quiz_id")
+  quiz        Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  type        String // MULTIPLE_CHOICE | CHECKBOX | TRUE_FALSE
+  label       String       @db.Text
+  image       String?      @db.LongText
+  explanation String?      @db.Text // Shown when user gets the question wrong
+  order       Int // Order within the quiz
+  options     Option[]
+  answers     QuizAnswer[]
 
   @@index([quizId])
   @@map("questions")

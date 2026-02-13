@@ -64,6 +64,7 @@ export async function saveQuiz(quiz: QuizBuilder, quizId?: string) {
                 type: q.type,
                 label: q.label,
                 image: q.image || null,
+                explanation: q.explanation?.trim() || null,
                 order: index,
                 options: {
                   create: q.options.map((opt) => ({
@@ -98,6 +99,7 @@ export async function saveQuiz(quiz: QuizBuilder, quizId?: string) {
             type: q.type,
             label: q.label,
             image: q.image || null,
+            explanation: q.explanation?.trim() || null,
             order: index,
             options: {
               create: q.options.map((opt) => ({

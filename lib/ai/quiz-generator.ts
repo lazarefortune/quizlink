@@ -7,6 +7,7 @@ type AiQuizResponse = {
   questions: Array<{
     type: "MULTIPLE_CHOICE" | "TRUE_FALSE";
     label: string;
+    explanation?: string;
     options: Array<{
       label: string;
       isCorrect: boolean;
@@ -73,16 +74,29 @@ function validateAiResponse(response: unknown): response is AiQuizResponse {
   return true;
 }
 
+/** Extract explanation from AI question; AI may use explanation, explication, hint, feedback */
+function getExplanationFromAiQuestion(q: Record<string, unknown>): string | undefined {
+  const keys = ["explanation", "explication", "hint", "feedback"];
+  for (const key of keys) {
+    const val = q[key];
+    if (typeof val === "string" && val.trim()) return val.trim();
+  }
+  return undefined;
+}
+
 function adaptAiQuestionsToQuizBuilder(
   aiQuestions: AiQuizResponse["questions"]
 ): Question[] {
   return aiQuestions.map((q, index) => {
     const questionId = `q-ai-${Date.now()}-${index}`;
+    const qRecord = q as Record<string, unknown>;
+    const explanation = getExplanationFromAiQuestion(qRecord);
 
     return {
       id: questionId,
       type: q.type as QuestionType,
       label: q.label,
+      explanation,
       options: q.options.map((opt, optIndex) => ({
         id: `opt-${questionId}-${optIndex}`,
         label: opt.label,
@@ -122,8 +136,8 @@ export async function generateQuizWithAI(
           role: "system",
           content:
             options.language === "fr"
-              ? "Tu es un assistant de génération de quiz. Retourne toujours uniquement du JSON valide, sans explications."
-              : "You are a quiz generation assistant. Always return valid JSON only, no explanations.",
+              ? "Tu es un assistant de génération de quiz. Retourne toujours uniquement du JSON valide, sans texte autour. Chaque question dans le JSON doit contenir le champ \"explanation\" (1-2 phrases expliquant la bonne réponse)."
+              : "You are a quiz generation assistant. Always return valid JSON only, no text outside. Each question in the JSON must include the \"explanation\" field (1-2 sentences explaining the correct answer).",
         },
         {
           role: "user",
@@ -176,8 +190,8 @@ export async function generateQuizWithAI(
               role: "system",
               content:
                 options.language === "fr"
-                  ? "Tu es un assistant de génération de quiz. Retourne toujours uniquement du JSON valide, sans explications."
-                  : "You are a quiz generation assistant. Always return valid JSON only, no explanations.",
+                  ? "Tu es un assistant de génération de quiz. Retourne toujours uniquement du JSON valide. Chaque question doit contenir le champ \"explanation\"."
+                  : "You are a quiz generation assistant. Always return valid JSON only. Each question must include the \"explanation\" field.",
             },
             {
               role: "user",

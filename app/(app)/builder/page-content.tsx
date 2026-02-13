@@ -61,6 +61,7 @@ function createEmptyQuestion(): Question {
     id: `q-${Date.now()}-${Math.random().toString(36).substring(7)}`,
     type: "MULTIPLE_CHOICE",
     label: "",
+    explanation: "",
     options: [
       {
         id: `opt-${Date.now()}-1`,
@@ -258,12 +259,13 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
               name: result.quiz.name,
               visibility: result.quiz.visibility,
               settings: result.quiz.settings,
-              questions: result.quiz.questions.map((q: any) => ({
+              questions: result.quiz.questions.map((q: { id: string; type: string; label: string; image?: string; explanation?: string; options: { id: string; label: string; isCorrect: boolean }[] }) => ({
                 id: q.id,
                 type: q.type,
                 label: q.label,
                 image: q.image,
-                options: q.options.map((opt: any) => ({
+                explanation: q.explanation ?? undefined,
+                options: q.options.map((opt: { id: string; label: string; isCorrect: boolean }) => ({
                   id: opt.id,
                   label: opt.label,
                   isCorrect: opt.isCorrect,

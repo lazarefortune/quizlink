@@ -39,6 +39,7 @@ EXIGENCES:
 - Les questions doivent être pertinentes par rapport au contenu
 - Les questions doivent tester la compréhension, pas seulement la mémorisation
 - Langue: français
+- OBLIGATOIRE: Chaque question doit avoir un champ "explanation" (1-2 phrases) expliquant la bonne réponse, affiché si le participant se trompe
 
 FORMAT DE SORTIE (JSON uniquement, aucune explication):
 {
@@ -47,6 +48,7 @@ FORMAT DE SORTIE (JSON uniquement, aucune explication):
     {
       "type": "MULTIPLE_CHOICE" | "TRUE_FALSE",
       "label": "Texte de la question ici",
+      "explanation": "1 à 2 phrases expliquant pourquoi la bonne réponse est correcte (OBLIGATOIRE pour chaque question)",
       "options": [
         {"label": "Option 1", "isCorrect": true},
         {"label": "Option 2", "isCorrect": false},
@@ -61,10 +63,14 @@ IMPORTANT - CRITIQUE:
 - Retourne UNIQUEMENT du JSON valide
 - N'inclus aucune explication ou texte en dehors du JSON
 - TU DOIS générer EXACTEMENT ${options.maxQuestions} questions - C'EST OBLIGATOIRE
+- Chaque question DOIT contenir le champ "explanation" avec une courte explication pédagogique (obligatoire)
 - Ne t'arrête pas avant d'avoir généré les ${options.maxQuestions} questions complètes
 - Pour MULTIPLE_CHOICE: exactement 4 options, exactement 1 correcte
 - Pour TRUE_FALSE: exactement 2 options, exactement 1 correcte
-- Le tableau "questions" doit contenir EXACTEMENT ${options.maxQuestions} éléments`
+- Le tableau "questions" doit contenir EXACTEMENT ${options.maxQuestions} éléments
+
+EXEMPLE d'une question (à reproduire pour chaque question, avec ton contenu et une vraie "explanation"):
+{"type":"MULTIPLE_CHOICE","label":"Quelle est la capitale de la France?","explanation":"Paris est la capitale et la plus grande ville de France.","options":[{"label":"Lyon","isCorrect":false},{"label":"Paris","isCorrect":true},{"label":"Marseille","isCorrect":false},{"label":"Bordeaux","isCorrect":false}]}`
     : `You are a quiz generation assistant. Generate a quiz from the following content.
 
 CONTENT:
@@ -80,6 +86,7 @@ REQUIREMENTS:
 - Questions must be relevant to the content
 - Questions must test understanding, not just recall
 - Language: ${options.language}
+- MANDATORY: Each question must have an "explanation" field (1-2 sentences) explaining the correct answer, shown when the participant gets it wrong
 
 OUTPUT FORMAT (JSON only, no explanations):
 {
@@ -88,6 +95,7 @@ OUTPUT FORMAT (JSON only, no explanations):
     {
       "type": "MULTIPLE_CHOICE" | "TRUE_FALSE",
       "label": "Question text here",
+      "explanation": "1-2 sentences explaining why the correct answer is right (MANDATORY for each question)",
       "options": [
         {"label": "Option 1", "isCorrect": true},
         {"label": "Option 2", "isCorrect": false},
@@ -102,10 +110,14 @@ IMPORTANT - CRITICAL:
 - Return ONLY valid JSON
 - Do not include any explanations or text outside the JSON
 - YOU MUST generate EXACTLY ${options.maxQuestions} questions - THIS IS MANDATORY
+- Each question MUST include the "explanation" field with a short pedagogical explanation (mandatory)
 - Do not stop before generating all ${options.maxQuestions} complete questions
 - For MULTIPLE_CHOICE: exactly 4 options, exactly 1 correct
 - For TRUE_FALSE: exactly 2 options, exactly 1 correct
-- The "questions" array must contain EXACTLY ${options.maxQuestions} items`;
+- The "questions" array must contain EXACTLY ${options.maxQuestions} items
+
+EXAMPLE of one question (replicate for each question with your content and a real "explanation"):
+{"type":"MULTIPLE_CHOICE","label":"What is the capital of France?","explanation":"Paris is the capital and largest city of France.","options":[{"label":"Lyon","isCorrect":false},{"label":"Paris","isCorrect":true},{"label":"Marseille","isCorrect":false},{"label":"Bordeaux","isCorrect":false}]}`;
 
   return prompt;
 }
