@@ -3,8 +3,10 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useLocale } from "@/lib/i18n/use-locale";
@@ -105,32 +107,47 @@ function ResetPasswordForm() {
             initial="hidden"
             animate="show"
           >
-            <motion.div variants={authFormItemVariants} className="mb-10">
-              <Link
-                href="/"
-                className="inline-flex items-center gap-2 rounded-lg transition-opacity hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2"
-                aria-label={locale === "fr" ? "Retour à l'accueil" : "Back to home"}
-              >
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
-                  <span className="font-heading text-lg font-bold text-primary-foreground">Q</span>
-                </div>
-                <span className="text-2xl font-bold tracking-tight text-foreground">
-                  Quiz<span className="text-primary">Link</span>
-                </span>
-              </Link>
-            </motion.div>
-            <motion.div
-              variants={authFormItemVariants}
-              className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10"
-            >
-              <KeyRound className="h-8 w-8 text-primary animate-pulse" />
-            </motion.div>
-            <motion.p
-              variants={authFormItemVariants}
-              className="mt-4 text-muted-foreground"
-            >
-              {t(locale, "common.loading")}
-            </motion.p>
+            <Card>
+              <CardContent className="pt-6">
+                <motion.div
+                  variants={authFormItemVariants}
+                  className="mb-8 flex justify-center"
+                >
+                  <Link
+                    href="/"
+                    className="inline-block rounded-full transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2"
+                    aria-label={locale === "fr" ? "Retour à l'accueil" : "Back to home"}
+                  >
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
+                      className="relative h-24 w-24 drop-shadow-md"
+                    >
+                      <Image
+                        src="/mascot.jpg"
+                        alt="QuizLink mascotte"
+                        fill
+                        className="object-contain"
+                        sizes="96px"
+                      />
+                    </motion.div>
+                  </Link>
+                </motion.div>
+                <motion.div
+                  variants={authFormItemVariants}
+                  className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10"
+                >
+                  <KeyRound className="h-8 w-8 text-primary animate-pulse" />
+                </motion.div>
+                <motion.p
+                  variants={authFormItemVariants}
+                  className="mt-4 text-muted-foreground"
+                >
+                  {t(locale, "common.loading")}
+                </motion.p>
+              </CardContent>
+            </Card>
           </motion.div>
         </div>
         <div className="hidden lg:block lg:w-1/2">
@@ -150,47 +167,62 @@ function ResetPasswordForm() {
             initial="hidden"
             animate="show"
           >
-            <motion.div variants={authFormItemVariants} className="mb-10">
-              <Link
-                href="/"
-                className="inline-flex items-center gap-2 rounded-lg transition-opacity hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2"
-                aria-label={locale === "fr" ? "Retour à l'accueil" : "Back to home"}
-              >
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
-                  <span className="font-heading text-lg font-bold text-primary-foreground">Q</span>
-                </div>
-                <span className="text-2xl font-bold tracking-tight text-foreground">
-                  Quiz<span className="text-primary">Link</span>
-                </span>
-              </Link>
-            </motion.div>
-            <motion.div
-              variants={authFormItemVariants}
-              className="mb-4 flex justify-center"
-            >
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-destructive/10">
-                <AlertCircle className="h-8 w-8 text-destructive" />
-              </div>
-            </motion.div>
-            <motion.h1
-              variants={authFormItemVariants}
-              className="mb-2 text-xl font-bold text-foreground sm:text-2xl"
-            >
-              {t(locale, "auth.resetPassword.invalidToken")}
-            </motion.h1>
-            {error && (
-              <motion.div variants={authFormItemVariants} className="mb-6 form-error">
-                {error}
-              </motion.div>
-            )}
-            <motion.div variants={authFormItemVariants}>
-              <Link href="/auth/forgot-password" className="block">
-                <Button variant="primary" size="lg" className="h-12 w-full gap-2 text-base font-semibold">
-                  <ArrowLeft className="h-4 w-4" />
-                  {t(locale, "auth.forgotPassword.title")}
-                </Button>
-              </Link>
-            </motion.div>
+            <Card variant="playful">
+              <CardContent className="pt-6">
+                <motion.div
+                  variants={authFormItemVariants}
+                  className="mb-8 flex justify-center"
+                >
+                  <Link
+                    href="/"
+                    className="inline-block rounded-full transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2"
+                    aria-label={locale === "fr" ? "Retour à l'accueil" : "Back to home"}
+                  >
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
+                      className="relative h-24 w-24 drop-shadow-md"
+                    >
+                      <Image
+                        src="/mascot.jpg"
+                        alt="QuizLink mascotte"
+                        fill
+                        className="object-contain"
+                        sizes="96px"
+                      />
+                    </motion.div>
+                  </Link>
+                </motion.div>
+                <motion.div
+                  variants={authFormItemVariants}
+                  className="mb-4 flex justify-center"
+                >
+                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-destructive/10">
+                    <AlertCircle className="h-8 w-8 text-destructive" />
+                  </div>
+                </motion.div>
+                <motion.h1
+                  variants={authFormItemVariants}
+                  className="mb-2 text-xl font-bold text-foreground sm:text-2xl"
+                >
+                  {t(locale, "auth.resetPassword.invalidToken")}
+                </motion.h1>
+                {error && (
+                  <motion.div variants={authFormItemVariants} className="mb-6 form-error">
+                    {error}
+                  </motion.div>
+                )}
+                <motion.div variants={authFormItemVariants}>
+                  <Link href="/auth/forgot-password" className="block">
+                    <Button variant="primary" size="lg" className="h-12 w-full gap-2 text-base font-semibold">
+                      <ArrowLeft className="h-4 w-4" />
+                      {t(locale, "auth.forgotPassword.title")}
+                    </Button>
+                  </Link>
+                </motion.div>
+              </CardContent>
+            </Card>
           </motion.div>
         </div>
         <div className="hidden lg:block lg:w-1/2">
@@ -209,39 +241,52 @@ function ResetPasswordForm() {
           initial="hidden"
           animate="show"
         >
-          <motion.div variants={authFormItemVariants} className="mb-10">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 rounded-lg transition-opacity hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2"
-              aria-label={locale === "fr" ? "Retour à l'accueil" : "Back to home"}
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
-                <span className="font-heading text-lg font-bold text-primary-foreground">Q</span>
-              </div>
-              <span className="text-2xl font-bold tracking-tight text-foreground">
-                Quiz<span className="text-primary">Link</span>
-              </span>
-            </Link>
-          </motion.div>
+          <Card variant="playful">
+            <CardContent className="pt-6">
+              <motion.div
+                variants={authFormItemVariants}
+                className="mb-8 flex justify-center"
+              >
+                <Link
+                  href="/"
+                  className="inline-block rounded-full transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2"
+                  aria-label={locale === "fr" ? "Retour à l'accueil" : "Back to home"}
+                >
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
+                    className="relative h-24 w-24 drop-shadow-md"
+                  >
+                    <Image
+                      src="/mascot.jpg"
+                      alt="QuizLink mascotte"
+                      fill
+                      className="object-contain"
+                      sizes="96px"
+                    />
+                  </motion.div>
+                </Link>
+              </motion.div>
 
-          <motion.div
-            variants={authFormItemVariants}
-            className="mb-8 flex flex-col gap-2"
-          >
-            <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground text-balance">
-              {t(locale, "auth.resetPassword.title")}
-            </h1>
-            <p className="text-base leading-relaxed text-muted-foreground">
-              {t(locale, "auth.resetPassword.description")}
-            </p>
-          </motion.div>
+              <motion.div
+                variants={authFormItemVariants}
+                className="mb-8 flex flex-col gap-2"
+              >
+                <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground text-balance">
+                  {t(locale, "auth.resetPassword.title")}
+                </h1>
+                <p className="text-base leading-relaxed text-muted-foreground">
+                  {t(locale, "auth.resetPassword.description")}
+                </p>
+              </motion.div>
 
-          <motion.form
-            onSubmit={handleSubmit}
-            variants={authFormItemVariants}
-            className="flex flex-col gap-6"
-          >
-            {error && (
+              <motion.form
+                onSubmit={handleSubmit}
+                variants={authFormItemVariants}
+                className="flex flex-col gap-6"
+              >
+                {error && (
               <div className="form-error" role="alert">
                 {error}
               </div>
@@ -307,19 +352,21 @@ function ResetPasswordForm() {
               )}
             </Button>
 
-            <motion.p
-              variants={authFormItemVariants}
-              className="text-center text-sm text-muted-foreground"
-            >
-              <Link
-                href="/auth/signin"
-                className="inline-flex items-center gap-1 font-semibold text-primary transition-colors hover:text-primary/80"
+              <motion.p
+                variants={authFormItemVariants}
+                className="text-center text-sm text-muted-foreground"
               >
-                <ArrowLeft className="h-3.5 w-3.5" />
-                {t(locale, "auth.forgotPasswordPage.backToSignIn")}
-              </Link>
-            </motion.p>
-          </motion.form>
+                <Link
+                  href="/auth/signin"
+                  className="inline-flex items-center gap-1 font-semibold text-primary transition-colors hover:text-primary/80"
+                >
+                  <ArrowLeft className="h-3.5 w-3.5" />
+                  {t(locale, "auth.forgotPasswordPage.backToSignIn")}
+                </Link>
+              </motion.p>
+            </motion.form>
+            </CardContent>
+          </Card>
         </motion.div>
       </div>
 

@@ -95,7 +95,7 @@ export function Toast({ message, type = "info", duration = 3000, onClose }: Toas
       >
         <Icon className="h-5 w-5" />
       </span>
-      <p className="min-w-0 flex-1 text-sm font-medium text-card-foreground">{message}</p>
+      <p className="min-w-0 font-nunito flex-1 text-lg font-black text-card-foreground">{message}</p>
       <button
         type="button"
         onClick={handleClose}
@@ -140,7 +140,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     mounted && typeof document !== "undefined"
       ? createPortal(
           <div
-            className="fixed top-4 right-4 z-9999 flex min-w-[320px] max-w-[420px] flex-col gap-2"
+            className="fixed top-4 right-4 z-[9999] flex min-w-[320px] max-w-[420px] flex-col gap-2 font-nunito"
             aria-label="Notifications"
           >
             {toasts.map((toast) => (

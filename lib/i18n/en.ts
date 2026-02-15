@@ -95,16 +95,17 @@ export const en = {
       createAccount: "Create Account",
     },
     signIn: {
-      title: "Sign In",
-      description: "Sign in to your account",
+      title: "Welcome back!",
+      description: "Sign in to retrieve your quizzes",
       button: "Sign In",
       invalidCredentials: "Invalid email or password",
       error: "An error occurred. Please try again.",
     },
     signUp: {
-      title: "Sign Up",
+      title: "Join the adventure!",
       description: "Create an account to save your quizzes",
-      button: "Sign Up",
+      button: "Create my account",
+      link: "Sign up",
       error: "Failed to create account",
     },
     name: "Name",
@@ -119,8 +120,8 @@ export const en = {
     confirmPasswordPlaceholder: "••••••••",
     noAccount: "Don't have an account?",
     hasAccount: "Already have an account?",
-    signInLink: "Sign In",
-    signUpLink: "Sign Up",
+    signInLink: "Sign in",
+    signUpLink: "Sign up",
     sidePanel: {
       signin: {
         title: "Welcome back!",
@@ -163,7 +164,7 @@ export const en = {
     forgotPasswordPage: {
       title: "Forgot password",
       description: "Enter your email address and we'll send you a link to reset your password",
-      send: "Send reset link",
+      send: "Send email",
       success: "If an account exists with this email, a reset link has been sent.",
       error: "Failed to send email. Please try again.",
       backToSignIn: "Back to sign in",
@@ -409,10 +410,20 @@ export const en = {
   // Landing page
   landing: {
     hero: {
-      title: "Create quizzes in seconds, not hours",
-      titleHighlights: "quizzes,seconds",
-      subtitle: "Transform any content into engaging quizzes. Create an account to get started.",
-      createButton: "Create a Quiz",
+      badge: "Powered by AI",
+      titleBefore1: "Quizzes that are so much ",
+      titleHighlight1: "fun",
+      titleMid: " in just a few ",
+      titleHighlight2: "clicks",
+      titleAfter: " 🎉",
+      subtitle: "Create quizzes by hand or let AI do the magic. Share them and challenge your friends!",
+      createButton: "Let's go!",
+      exploreButton: "Explore quizzes",
+      lovedBy: "Loved by",
+      lovedByCount: "+2,000",
+      lovedBySuffix: "players",
+      mascotBadge1: "10 questions ⚡",
+      mascotBadge2: "In 5 sec! 🤯",
       generateButton: "Generate with AI",
     },
     value: {
@@ -432,27 +443,31 @@ export const en = {
       },
     },
     features: {
-      title: "Powerful Features",
-      subtitle: "Everything you need to create, customize, and share quizzes",
+      title: "Why you'll love it",
+      subtitle: "Fun, powerful tools for the best quizzes.",
       manual: {
         title: "Manual creation",
-        description: "Full control over every question, answer option, and quiz setting",
+        description: "Build your quiz question by question with a super simple editor.",
       },
       ai: {
         title: "AI generation",
-        description: "Automatically generate quizzes from text, documents, or other content",
+        description: "Give a topic and AI creates a full quiz in seconds.",
       },
       shareable: {
-        title: "Shareable links",
-        description: "Share your quizzes instantly with a unique and secure link",
+        title: "Easy sharing",
+        description: "One link, that's it! No sign-up required to play.",
       },
       participants: {
-        title: "Participant tracking",
-        description: "Manage your participants, create personalized links, and track their progress",
+        title: "Multiplayer mode",
+        description: "Run live sessions with friends or your class!",
       },
       statistics: {
-        title: "Detailed statistics",
-        description: "Analyze results with comprehensive statistics: scores, time spent, completion rates",
+        title: "Detailed results",
+        description: "Who scored the most? Fun, complete stats.",
+      },
+      fun: {
+        title: "Fast and fun",
+        description: "A playful interface that makes you want to play again and again.",
       },
       security: {
         title: "Answer security",
@@ -513,26 +528,26 @@ export const en = {
       upgradeLater: "Don't worry, you can always create an account later. Start creating quizzes now and upgrade when you're ready.",
     },
     finalCta: {
-      title: "Ready to create your first quiz?",
-      subtitle: "Get started in seconds. No account required.",
+      title: "Ready to play?",
+      subtitle: "Join thousands of players and create your first quiz now!",
       description: "Build quizzes manually with full control, or let AI generate them from your content. Share instantly and customize everything.",
-      button: "Get started now",
+      button: "Start for free",
     },
     howItWorks: {
-      title: "How it works",
+      title: "Simple as that",
       subtitle: "Three simple steps to create and share your quizzes",
       step: "Step",
       step1: {
-        title: "Create your quiz",
-        description: "Build your quiz manually with full control or use AI to automatically generate questions from your content.",
+        title: "Choose your method",
+        description: "Manual or AI, your call!",
       },
       step2: {
-        title: "Share the link",
-        description: "Get an instantly shareable link. Share it with your participants via email, message, or embed it in your platform.",
+        title: "Customize",
+        description: "Adjust questions and style.",
       },
       step3: {
-        title: "Analyze results",
-        description: "Track attempts in real-time, view detailed statistics, and analyze each participant's performance.",
+        title: "Share and play!",
+        description: "Send the link and you're good to go.",
       },
     },
     useCases: {
@@ -990,5 +1005,6 @@ export const en = {
     },
     rights: "All rights reserved",
     createdBy: "Created by",
+    madeWith: "Made with 💚",
   },
 };

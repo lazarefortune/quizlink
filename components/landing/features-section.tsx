@@ -1,87 +1,72 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { AnimateOnScroll } from "@/components/animate-on-scroll";
+import { motion } from "framer-motion";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
-import {
-  FileEdit,
-  Sparkles,
-  Link2,
-  Users,
-  BarChart3,
-  Lock,
-} from "lucide-react";
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 30 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.12, duration: 0.5, ease: "easeOut" as const },
+  }),
+};
+
+const featureKeys = [
+  { key: "manual" as const, emoji: "✏️", color: "bg-primary", shadow: "var(--shadow-raised-primary)" },
+  { key: "ai" as const, emoji: "🤖", color: "bg-highlight", shadow: "var(--shadow-raised-highlight)" },
+  { key: "shareable" as const, emoji: "🔗", color: "bg-blue", shadow: "var(--shadow-raised-blue)" },
+  { key: "participants" as const, emoji: "👥", color: "bg-warning", shadow: "var(--shadow-raised-warning)" },
+  { key: "statistics" as const, emoji: "📊", color: "bg-purple", shadow: "var(--shadow-raised-purple)" },
+  { key: "fun" as const, emoji: "🎮", color: "bg-primary", shadow: "var(--shadow-raised-primary)" },
+] as const;
 
 export function FeaturesSection() {
   const { locale } = useLocale();
 
-  const features = [
-    {
-      icon: FileEdit,
-      title: t(locale, "landing.features.manual.title"),
-      description: t(locale, "landing.features.manual.description"),
-    },
-    {
-      icon: Sparkles,
-      title: t(locale, "landing.features.ai.title"),
-      description: t(locale, "landing.features.ai.description"),
-    },
-    {
-      icon: Link2,
-      title: t(locale, "landing.features.shareable.title"),
-      description: t(locale, "landing.features.shareable.description"),
-    },
-    {
-      icon: Users,
-      title: t(locale, "landing.features.participants.title"),
-      description: t(locale, "landing.features.participants.description"),
-    },
-    {
-      icon: BarChart3,
-      title: t(locale, "landing.features.statistics.title"),
-      description: t(locale, "landing.features.statistics.description"),
-    },
-    {
-      icon: Lock,
-      title: t(locale, "landing.features.security.title"),
-      description: t(locale, "landing.features.security.description"),
-    },
-  ];
-
   return (
-    <section className="py-16 px-4 sm:py-20 md:py-24 bg-muted/30">
-      <div className="mx-auto max-w-6xl">
-        <div className="text-center mb-12 sm:mb-16">
-          <h2 className="h1 text-3xl font-bold sm:text-4xl md:text-5xl">
-            {t(locale, "landing.features.title")}
-          </h2>
-          <p className="mt-4 text-lg text-muted-foreground sm:text-xl">
+    <section id="features" className="py-20">
+      <div className="container mx-auto px-4">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          className="text-center mb-14"
+        >
+          <motion.h2 custom={0} variants={fadeUp} className="text-3xl font-black text-foreground md:text-4xl">
+            {t(locale, "landing.features.title")} 💚
+          </motion.h2>
+          <motion.p custom={1} variants={fadeUp} className="text-muted-foreground mt-3 text-lg">
             {t(locale, "landing.features.subtitle")}
-          </p>
-        </div>
+          </motion.p>
+        </motion.div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {features.map((feature, index) => {
-            const Icon = feature.icon;
-            return (
-              <AnimateOnScroll key={index} delay={100 + 80 * index}>
-                <Card className="flex flex-col">
-                  <CardHeader>
-                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                      <Icon className="h-6 w-6 text-primary" />
-                    </div>
-                    <CardTitle className="text-xl">{feature.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex-1">
-                    <CardDescription className="text-base">
-                      {feature.description}
-                    </CardDescription>
-                  </CardContent>
-                </Card>
-              </AnimateOnScroll>
-            );
-          })}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {featureKeys.map((f, i) => (
+            <motion.div
+              key={f.key}
+              custom={i}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-30px" }}
+              variants={fadeUp}
+              className="rounded-2xl border-2 border-border bg-card p-6 card-playful cursor-default"
+            >
+              <div
+                className={`w-12 h-12 rounded-xl ${f.color} flex items-center justify-center mb-4 text-2xl`}
+                style={{ boxShadow: f.shadow }}
+              >
+                {f.emoji}
+              </div>
+              <h3 className="font-extrabold text-lg text-foreground mb-2">
+                {t(locale, `landing.features.${f.key}.title`)}
+              </h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                {t(locale, `landing.features.${f.key}.description`)}
+              </p>
+            </motion.div>
+          ))}
         </div>
       </div>
     </section>

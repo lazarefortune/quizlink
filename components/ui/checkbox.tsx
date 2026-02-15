@@ -50,7 +50,18 @@ type CheckboxProps = Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "onChan
   };
 
 const Checkbox = React.forwardRef<HTMLButtonElement, CheckboxProps>(
-  ({ className, variant, size = "default", checked = false, onCheckedChange, disabled, onClick, ...props }, ref) => {
+  ({ className, variant, size = "default", checked: controlledChecked, onCheckedChange, disabled, onClick, ...props }, ref) => {
+    const isControlled = controlledChecked !== undefined;
+    const [uncontrolledChecked, setUncontrolledChecked] = React.useState(false);
+    const checked = isControlled ? controlledChecked : uncontrolledChecked;
+
+    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+      onClick?.(e);
+      const next = !checked;
+      if (!isControlled) setUncontrolledChecked(next);
+      onCheckedChange?.(next);
+    };
+
     return (
       <button
         ref={ref}
@@ -60,10 +71,7 @@ const Checkbox = React.forwardRef<HTMLButtonElement, CheckboxProps>(
         data-state={checked ? "checked" : "unchecked"}
         disabled={disabled}
         className={cn(checkboxVariants({ variant, size }), className)}
-        onClick={(e) => {
-          onClick?.(e);
-          onCheckedChange?.(!checked);
-        }}
+        onClick={handleClick}
         {...props}
       >
         <Check

@@ -4,8 +4,10 @@ import { useState, useEffect, Suspense } from "react";
 import { signIn as nextAuthSignIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useLocale } from "@/lib/i18n/use-locale";
@@ -78,28 +80,41 @@ function SignInForm() {
           initial="hidden"
           animate="show"
         >
-          {/* Logo */}
-          <motion.div variants={authFormItemVariants} className="mb-10">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 rounded-lg transition-opacity hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2"
-              aria-label={locale === "fr" ? "Retour à l'accueil" : "Back to home"}
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
-                <span className="font-heading text-lg font-bold text-primary-foreground">Q</span>
-              </div>
-              <span className="text-2xl font-bold tracking-tight text-foreground">
-                Quiz<span className="text-primary">Link</span>
-              </span>
-            </Link>
-          </motion.div>
+          <Card>
+            <CardContent className="pt-6">
+              {/* Mascotte — clic = retour accueil */}
+              <motion.div
+                variants={authFormItemVariants}
+                className="mb-8 flex justify-center"
+              >
+                <Link
+                  href="/"
+                  className="inline-block rounded-full transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2"
+                  aria-label={locale === "fr" ? "Retour à l'accueil" : "Back to home"}
+                >
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
+                    className="relative h-24 w-24 drop-shadow-md"
+                  >
+                    <Image
+                      src="/mascot.jpg"
+                      alt="QuizLink mascotte"
+                      fill
+                      className="object-contain"
+                      sizes="96px"
+                    />
+                  </motion.div>
+                </Link>
+              </motion.div>
 
           {/* En-tête */}
           <motion.div
             variants={authFormItemVariants}
             className="mb-8 flex flex-col gap-2"
           >
-            <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground text-balance">
+            <h1 className="font-heading text-3xl font-nunito font-black tracking-tight text-foreground text-balance">
               {t(locale, "auth.signIn.title")}
             </h1>
             <p className="text-base leading-relaxed text-muted-foreground">
@@ -139,7 +154,7 @@ function SignInForm() {
                 <Label htmlFor="signin-password">{t(locale, "auth.password")}</Label>
                 <Link
                   href="/auth/forgot-password"
-                  className="text-xs font-medium text-primary transition-colors hover:text-primary/80"
+                  className="text-base font-medium text-primary transition-colors hover:text-primary/80"
                 >
                   {t(locale, "auth.forgotPassword")}
                 </Link>
@@ -174,7 +189,7 @@ function SignInForm() {
               type="submit"
               variant="primary"
               size="lg"
-              className="h-12 w-full text-base font-semibold"
+              className="h-12 w-full"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -188,18 +203,20 @@ function SignInForm() {
             </Button>
           </motion.form>
 
-          <motion.p
-            variants={authFormItemVariants}
-            className="mt-8 text-center text-sm text-muted-foreground"
-          >
-            {t(locale, "auth.noAccount")}{" "}
-            <Link
-              href="/auth/signup"
-              className="font-semibold text-primary transition-colors hover:text-primary/80"
-            >
-              {t(locale, "auth.signUpLink")}
-            </Link>
-          </motion.p>
+              <motion.p
+                variants={authFormItemVariants}
+                className="mt-8 text-center text-sm text-muted-foreground"
+              >
+                {t(locale, "auth.noAccount")}{" "}
+                <Link
+                  href="/auth/signup"
+                  className="font-semibold text-primary transition-colors hover:text-primary/80"
+                >
+                  {t(locale, "auth.signUpLink")}
+                </Link>
+              </motion.p>
+            </CardContent>
+          </Card>
         </motion.div>
       </div>
 

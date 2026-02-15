@@ -1,7 +1,6 @@
-@import "tailwindcss";
-
-/* Dark mode basé sur la classe .dark (next-themes), pas sur prefers-color-scheme */
-@custom-variant dark (&:where(.dark, .dark *));
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* SN Pro — police locale : ajoute les fichiers dans public/fonts/ (ex. SNPro.woff2) */
 @font-face {
@@ -12,8 +11,8 @@
 }
 
 :root {
-  /* Colors - Light Mode */
-  --background: 0 0% 100%;
+  /* Colors - Light Mode (fond #FAF9F5, cards #fff) */
+  --background: 48 33% 97%;
   --foreground: 0 0% 15%;
   --card: 0 0% 100%;
   --card-foreground: 0 0% 15%;
@@ -22,11 +21,11 @@
   --primary: 95 98% 35%;
   --primary-foreground: 0 0% 100%;
   --auth-panel-bg: 95 98% 32%;
-  --secondary: 0 0% 96.1%;
+  --secondary: 48 30% 92%;
   --secondary-foreground: 0 0% 20%;
-  --muted: 0 0% 96.1%;
+  --muted: 48 20% 94%;
   --muted-foreground: 0 0% 45.1%;
-  --accent: 0 0% 96.1%;
+  --accent: 48 30% 92%;
   --accent-foreground: 0 0% 20%;
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 0 0% 98%;
@@ -37,10 +36,14 @@
   --highlight-foreground: 0 0% 100%;
   --blue: 199 92% 54%; /* BLUEBERRY #1CB0F6 */
   --blue-foreground: 0 0% 100%;
-  --border: 0 0% 89.8%;
-  --input: 0 0% 89.8%;
+  --purple: 270 70% 55%;
+  --purple-foreground: 0 0% 100%;
+  --border: 48 15% 88%;
+  --input: 48 15% 88%;
   --ring: 0 0% 3.9%;
-  --radius: 0.5rem;
+  --radius: 1rem;
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
 
   /* Neumorphism shadows - light (reduced) */
   --shadow-neu-raised: 4px 4px 8px rgba(0, 0, 0, 0.06), -4px -4px 8px rgba(255, 255, 255, 0.9);
@@ -65,26 +68,37 @@
   --blue-shadow: 199 92% 38%;
   --shadow-gaming-depth-blue: 0 4px 0 hsl(var(--blue-shadow));
   --shadow-gaming-depth-blue-pressed: 0 2px 0 hsl(var(--blue-shadow));
+  --purple-shadow: 270 70% 38%;
+  --shadow-gaming-depth-purple: 0 4px 0 hsl(var(--purple-shadow));
+  --shadow-gaming-depth-purple-pressed: 0 2px 0 hsl(var(--purple-shadow));
+  /* Aliases for landing (raised colored blocks) */
+  --shadow-raised-primary: 0 4px 0 hsl(var(--primary-shadow));
+  --shadow-raised-highlight: 0 4px 0 hsl(35 100% 35%);
+  --shadow-raised-blue: 0 4px 0 hsl(var(--blue-shadow));
+  --shadow-raised-warning: 0 4px 0 hsl(38 95% 40%);
+  --shadow-raised-purple: 0 4px 0 hsl(var(--purple-shadow));
+  /* Neutral raised shadow (btn-bouncy default) */
+  --shadow-raised: 0 4px 0 hsl(0 0% 82%);
 }
 
 .dark {
-  /* Colors - Dark Mode (fond #131F24) */
-  --background: 198 31% 11%; /* #131F24 */
-  --foreground: 200 15% 95%;
-  --card: 198 25% 14%;
-  --card-foreground: 200 15% 95%;
-  --popover: 198 25% 14%;
-  --popover-foreground: 200 15% 95%;
+  /* Colors - Dark Mode (même fond que la ref: 220 20% 10%) */
+  --background: 220 20% 10%;
+  --foreground: 48 20% 92%;
+  --card: 220 18% 14%;
+  --card-foreground: 48 20% 92%;
+  --popover: 220 18% 14%;
+  --popover-foreground: 48 20% 92%;
   --primary: 95 75% 36%;
   --primary-foreground: 0 0% 100%;
   --auth-panel-bg: 95 75% 26%; /* vert plus foncé pour les side panels auth */
-  --secondary: 198 22% 16%;
-  --secondary-foreground: 200 15% 95%;
-  --muted: 198 20% 17%;
-  --muted-foreground: 200 12% 58%;
-  --accent: 198 18% 20%;
-  --accent-foreground: 200 15% 95%;
-  --destructive: 0 75% 38%;
+  --secondary: 220 15% 18%;
+  --secondary-foreground: 48 20% 92%;
+  --muted: 220 15% 20%;
+  --muted-foreground: 220 10% 60%;
+  --accent: 220 15% 18%;
+  --accent-foreground: 48 20% 92%;
+  --destructive: 0 72% 55%;
   --destructive-foreground: 0 0% 98%;
   --warning: 43 90% 58%;
   --warning-foreground: 0 0% 15%;
@@ -92,9 +106,12 @@
   --highlight-foreground: 0 0% 100%;
   --blue: 199 80% 58%;
   --blue-foreground: 0 0% 15%;
-  --border: 198 20% 22%;
-  --input: 198 20% 22%;
-  --ring: 200 15% 60%;
+  --purple: 270 65% 60%;
+  --purple-foreground: 0 0% 100%;
+  --border: 220 15% 22%;
+  --input: 220 15% 22%;
+  --ring: 82 72% 42%;
+  --shadow-raised: 0 4px 0 hsl(220 15% 6%);
 
   /* Neumorphism shadows - dark (reduced) */
   --shadow-neu-raised: 4px 4px 8px rgba(0, 0, 0, 0.3), -4px -4px 8px rgba(255, 255, 255, 0.03);
@@ -118,72 +135,96 @@
   --blue-shadow: 199 80% 38%;
   --shadow-gaming-depth-blue: 0 4px 0 hsl(var(--blue-shadow));
   --shadow-gaming-depth-blue-pressed: 0 2px 0 hsl(var(--blue-shadow));
+  --purple-shadow: 270 65% 35%;
+  --shadow-gaming-depth-purple: 0 4px 0 hsl(var(--purple-shadow));
+  --shadow-gaming-depth-purple-pressed: 0 2px 0 hsl(var(--purple-shadow));
+  --shadow-raised-primary: 0 4px 0 hsl(var(--primary-shadow));
+  --shadow-raised-highlight: 0 4px 0 hsl(35 95% 30%);
+  --shadow-raised-blue: 0 4px 0 hsl(var(--blue-shadow));
+  --shadow-raised-warning: 0 4px 0 hsl(38 90% 38%);
+  --shadow-raised-purple: 0 4px 0 hsl(var(--purple-shadow));
 }
 
-@theme inline {
-  /* Color Tokens */
-  --color-background: hsl(var(--background));
-  --color-foreground: hsl(var(--foreground));
-  --color-card: hsl(var(--card));
-  --color-card-foreground: hsl(var(--card-foreground));
-  --color-popover: hsl(var(--popover));
-  --color-popover-foreground: hsl(var(--popover-foreground));
-  --color-primary: hsl(var(--primary));
-  --color-primary-foreground: hsl(var(--primary-foreground));
-  --color-secondary: hsl(var(--secondary));
-  --color-secondary-foreground: hsl(var(--secondary-foreground));
-  --color-muted: hsl(var(--muted));
-  --color-muted-foreground: hsl(var(--muted-foreground));
-  --color-accent: hsl(var(--accent));
-  --color-accent-foreground: hsl(var(--accent-foreground));
-  --color-destructive: hsl(var(--destructive));
-  --color-destructive-foreground: hsl(var(--destructive-foreground));
-  --color-warning: hsl(var(--warning));
-  --color-warning-foreground: hsl(var(--warning-foreground));
-  --color-highlight: hsl(var(--highlight));
-  --color-highlight-foreground: hsl(var(--highlight-foreground));
-  --color-blue: hsl(var(--blue));
-  --color-blue-foreground: hsl(var(--blue-foreground));
-  --color-border: hsl(var(--border));
-  --color-input: hsl(var(--input));
-  --color-ring: hsl(var(--ring));
+/* ——— QuizLink design system: playful cards & bouncy buttons (aligné ref) ——— */
+.card-playful {
+  box-shadow: 0 2px 0 hsl(var(--border)), 0 8px 24px hsl(var(--border) / 0.2);
+  border: 2px solid hsl(var(--border));
+  border-radius: var(--radius);
+  transition: all 0.2s ease;
+}
+.card-playful:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 0 hsl(var(--border)), 0 12px 32px hsl(var(--border) / 0.3);
+}
+.dark .card-playful {
+  box-shadow: 0 2px 0 hsl(220 15% 6%), 0 8px 24px hsl(0 0% 0% / 0.4);
+}
+.dark .card-playful:hover {
+  box-shadow: 0 6px 0 hsl(220 15% 6%), 0 12px 32px hsl(0 0% 0% / 0.5);
+}
 
-  /* Typography */
-  --font-sans: var(--font-rubik);
-  --font-heading: var(--font-capriola);
-  /* Polices utilisables via font-sn-pro, font-rubik, font-sofia-sans */
-  --font-sn-pro: "SN Pro", ui-sans-serif, system-ui, sans-serif;
-  --font-rubik: var(--font-rubik), ui-sans-serif, system-ui, sans-serif;
-  --font-sofia-sans: var(--font-sofia-sans), ui-sans-serif, system-ui, sans-serif;
+.btn-bouncy {
+  box-shadow: var(--shadow-raised);
+  transition: all 0.1s ease;
+  transform: translateY(0);
+}
+.btn-bouncy:hover {
+  filter: brightness(1.05);
+}
+.btn-bouncy:active {
+  box-shadow: none;
+  transform: translateY(4px);
+}
 
-  /* Spacing Scale (using Tailwind defaults) */
-  --spacing-0: 0;
-  --spacing-1: 0.25rem;
-  --spacing-2: 0.5rem;
-  --spacing-3: 0.75rem;
-  --spacing-4: 1rem;
-  --spacing-5: 1.25rem;
-  --spacing-6: 1.5rem;
-  --spacing-8: 2rem;
-  --spacing-10: 2.5rem;
-  --spacing-12: 3rem;
-  --spacing-16: 4rem;
-  --spacing-20: 5rem;
-  --spacing-24: 6rem;
+.btn-bouncy-primary {
+  box-shadow: var(--shadow-raised-primary);
+  transition: all 0.1s ease;
+  transform: translateY(0);
+}
+.btn-bouncy-primary:hover {
+  filter: brightness(1.08);
+}
+.btn-bouncy-primary:active {
+  box-shadow: none;
+  transform: translateY(4px);
+}
 
-  /* Border Radius */
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+.btn-bouncy-blue {
+  box-shadow: var(--shadow-raised-blue);
+  transition: all 0.1s ease;
+  transform: translateY(0);
+}
+.btn-bouncy-blue:hover {
+  filter: brightness(1.08);
+}
+.btn-bouncy-blue:active {
+  box-shadow: none;
+  transform: translateY(4px);
+}
+
+.text-gradient-fun {
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--highlight)) 50%, hsl(var(--blue)) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.header-logo-shadow {
+  box-shadow: 0 3px 0 hsl(var(--primary-shadow));
 }
 
 body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
-  font-family: var(--font-rubik), system-ui, sans-serif;
+  font-family: var(--font-nunito), system-ui, sans-serif;
   font-size: 16px;
   font-weight: 400;
+}
+
+/* Rubik uniquement pour le texte de lecture (paragraphes, descriptions) */
+p,
+.text-body {
+  font-family: var(--font-rubik), system-ui, sans-serif;
 }
 
 /* Fond des side panels auth (vert plus foncé que primary) */
@@ -232,73 +273,17 @@ body {
   color: hsl(var(--muted-foreground));
 }
 
-.form-input {
-  display: flex;
-  height: 2.5rem;
-  width: 100%;
-  border-radius: var(--radius-md);
-  border: 2px solid hsl(var(--input));
-  background-color: hsl(var(--background));
-  padding: 0.5rem 0.75rem;
-  font-size: max(16px, 1rem);
-  color: hsl(var(--foreground));
-  outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.form-input::placeholder {
-  color: hsl(var(--muted-foreground));
-}
-
-.form-input:focus {
-  border-color: hsl(var(--primary));
-  box-shadow: 0 0 0 2px hsl(var(--primary) / 0.2);
-}
-
-.form-input:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
+/* Modifiers for Input (used by auth pages: size lg, icon padding) */
 .form-input-lg {
   height: 3rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
 }
-
 .form-input-with-icon-left {
   padding-left: 2.5rem;
 }
-
 .form-input-with-icon-right {
   padding-right: 2.5rem;
-}
-
-.form-textarea {
-  display: flex;
-  min-height: 5rem;
-  width: 100%;
-  border-radius: var(--radius-md);
-  border: 2px solid hsl(var(--input));
-  background-color: hsl(var(--background));
-  padding: 0.5rem 0.75rem;
-  font-size: max(16px, 1rem);
-  color: hsl(var(--foreground));
-  outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  resize: vertical;
-}
-
-.form-textarea::placeholder {
-  color: hsl(var(--muted-foreground));
-}
-
-.form-textarea:focus {
-  border-color: hsl(var(--primary));
-  box-shadow: 0 0 0 2px hsl(var(--primary) / 0.2);
-}
-
-.form-textarea:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
 }
 
 /* ——— Auth pages: entrée en scène (stagger) ——— */
@@ -357,7 +342,8 @@ body {
 } */
 
 .h1, .h2, .h3, .h4, .h5, .h6 {
-  font-family: var(--font-capriola), system-ui, sans-serif !important;
+  font-family: var(--font-nunito), system-ui, sans-serif !important;
+  font-weight: 900;
 }
 
 /* Minimum 16px for form fields to avoid iOS zoom on focus (mobile) */

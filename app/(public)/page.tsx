@@ -1,10 +1,8 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { HeroSection } from "@/components/landing/hero-section";
-import { HowItWorksSection } from "@/components/landing/how-it-works-section";
-import { UseCasesSection } from "@/components/landing/use-cases-section";
 import { FeaturesSection } from "@/components/landing/features-section";
-import { WhyQuizLinkSection } from "@/components/landing/why-quizlink-section";
+import { HowItWorksSection } from "@/components/landing/how-it-works-section";
 import { FinalCTA } from "@/components/landing/final-cta";
 
 export default async function HomePage() {
@@ -15,12 +13,10 @@ export default async function HomePage() {
   }
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-background">
       <HeroSection />
-      <HowItWorksSection />
-      <UseCasesSection />
       <FeaturesSection />
-      <WhyQuizLinkSection />
+      <HowItWorksSection />
       <FinalCTA />
     </main>
   );

@@ -1,99 +1,136 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import Image from "next/image";
+import { useState } from "react";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { AnimateOnScroll } from "@/components/animate-on-scroll";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles, Zap, Star } from "lucide-react";
 
-function escapeRegex(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
+const fadeUp = {
+  hidden: { opacity: 0, y: 30 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.12, duration: 0.5, ease: "easeOut" as const },
+  }),
+};
 
 export function HeroSection() {
   const { locale } = useLocale();
-
-  const titleWithHighlights = useMemo(() => {
-    const title = t(locale, "landing.hero.title");
-    const highlightsStr = t(locale, "landing.hero.titleHighlights");
-    if (!highlightsStr || highlightsStr === "landing.hero.titleHighlights") {
-      return [{ type: "normal" as const, text: title }];
-    }
-    const keywords = highlightsStr.split(",").map((w) => w.trim()).filter(Boolean);
-    if (keywords.length === 0) return [{ type: "normal" as const, text: title }];
-    const pattern = new RegExp(`(${keywords.map(escapeRegex).join("|")})`, "gi");
-    const segments = title.split(pattern);
-    return segments.map((seg) => {
-      const isKeyword = keywords.some((k) => k.toLowerCase() === seg.toLowerCase());
-      return isKeyword ? { type: "highlight" as const, text: seg } : { type: "normal" as const, text: seg };
-    });
-  }, [locale]);
+  const [mascotError, setMascotError] = useState(false);
 
   return (
-    <section className="relative overflow-hidden py-24 px-4 sm:py-32 md:py-40 lg:py-48 bg-background">
-      {/* Dot Grid Background Pattern */}
-      <div
-        className="absolute inset-0 z-0"
-        style={{
-          backgroundImage: `radial-gradient(circle at 1px 1px, rgba(128, 128, 128, 0.3) 1.5px, transparent 0)`,
-          backgroundSize: "24px 24px",
-        }}
-        aria-hidden="true"
-      />
+    <section className="relative overflow-hidden pt-28 pb-12 sm:pt-32 sm:pb-16 md:pt-36 md:pb-20">
+      {/* Floating shapes */}
+      <div className="absolute top-20 left-10 h-20 w-20 rounded-full bg-warning/20 animate-float z-0" aria-hidden />
+      <div className="absolute top-40 right-16 h-14 w-14 rounded-2xl bg-blue/20 animate-float z-0" style={{ animationDelay: "1s" }} aria-hidden />
+      <div className="absolute bottom-20 left-1/4 h-10 w-10 rounded-full bg-primary/15 animate-float z-0" style={{ animationDelay: "2s" }} aria-hidden />
+      <div className="absolute top-32 right-1/3 h-6 w-6 rounded-lg bg-highlight/20 animate-float z-0" style={{ animationDelay: "0.5s" }} aria-hidden />
 
-      {/* Content Container */}
-      <div className="relative z-10 mx-auto max-w-6xl">
-        <div className="text-center space-y-10 sm:space-y-12">
-          <AnimateOnScroll>
-            <div className="space-y-4">
-              <h1 className="h1 text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl">
-                <span className="block">
-                  {titleWithHighlights.map((part, i) =>
-                    part.type === "highlight" ? (
-                      <span key={i} className="text-primary font-semibold">
-                        {part.text}
-                      </span>
-                    ) : (
-                      <span key={i}>{part.text}</span>
-                    )
-                  )}
-                </span>
-              </h1>
-            </div>
-          </AnimateOnScroll>
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="grid lg:grid-cols-2 gap-8 items-center">
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            className="space-y-6 text-center lg:text-left"
+          >
+            <motion.div
+              custom={0}
+              variants={fadeUp}
+              className="inline-flex items-center gap-2 rounded-full border-2 border-border bg-card px-4 py-2 text-sm font-bold card-playful"
+            >
+              <Sparkles className="h-4 w-4 text-warning" />
+              <span>{t(locale, "landing.hero.badge")} ✨</span>
+            </motion.div>
 
-          <AnimateOnScroll delay={80}>
-            <p className="mx-auto max-w-3xl text-lg leading-relaxed text-muted-foreground sm:text-xl md:text-2xl">
+            <motion.h1
+              custom={1}
+              variants={fadeUp}
+              className="text-4xl font-black leading-tight text-foreground md:text-5xl lg:text-6xl"
+            >
+              {t(locale, "landing.hero.titleBefore1")}
+              <span className="text-primary">{t(locale, "landing.hero.titleHighlight1")}</span>
+              {t(locale, "landing.hero.titleMid")}
+              <span className="text-blue">{t(locale, "landing.hero.titleHighlight2")}</span>
+              {t(locale, "landing.hero.titleAfter")}
+            </motion.h1>
+
+            <motion.p custom={2} variants={fadeUp} className="text-lg text-muted-foreground max-w-lg mx-auto lg:mx-0 leading-relaxed">
               {t(locale, "landing.hero.subtitle")}
-            </p>
-          </AnimateOnScroll>
+            </motion.p>
 
-          <AnimateOnScroll delay={160}>
-            <div className="flex flex-col items-center justify-center gap-4 pt-4 sm:flex-row sm:gap-4">
+            <motion.div custom={3} variants={fadeUp} className="flex flex-wrap gap-4 justify-center lg:justify-start">
               <Link href="/builder/preview">
-                <Button
-                  variant="primary"
-                  size="lg"
-                  className="group h-12 w-full px-8 text-base font-semibold sm:w-auto shadow-lg hover:shadow-xl transition-all"
-                >
+                <Button variant="hero" size="xl" className="text-lg w-full sm:w-auto">
+                  <Zap className="h-5 w-5" />
                   {t(locale, "landing.hero.createButton")}
-                  <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                 </Button>
               </Link>
-              <Link href="/generate/preview">
-                <Button
-                  variant="secondary"
-                  size="lg"
-                  className="h-12 w-full px-8 text-base font-semibold sm:w-auto border-2 hover:bg-accent/50 transition-all"
-                >
-                  <Sparkles className="mr-2 h-5 w-5" />
-                  {t(locale, "landing.hero.generateButton")}
+              <Link href="/quizzes">
+                <Button variant="outline" size="xl" className="text-lg normal-case tracking-normal w-full sm:w-auto">
+                  {t(locale, "landing.hero.exploreButton")}
+                  <ArrowRight className="h-5 w-5" />
                 </Button>
               </Link>
+            </motion.div>
+
+            <motion.div custom={4} variants={fadeUp} className="flex items-center gap-2 justify-center lg:justify-start pt-2">
+              <div className="flex gap-0.5">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Star key={i} className="h-5 w-5 fill-warning text-warning" />
+                ))}
+              </div>
+              <span className="text-sm font-bold text-muted-foreground">
+                {t(locale, "landing.hero.lovedBy")} <span className="text-foreground">{t(locale, "landing.hero.lovedByCount")}</span> {t(locale, "landing.hero.lovedBySuffix")}
+              </span>
+            </motion.div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
+            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+            transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
+            className="relative flex items-center justify-center"
+          >
+            <div className="relative w-72 md:w-96 aspect-square flex items-center justify-center">
+              {!mascotError ? (
+                <Image
+                  src="/mascot.jpg"
+                  alt="QuizLink mascotte"
+                  width={384}
+                  height={384}
+                  className="w-full h-full object-contain animate-float drop-shadow-2xl"
+                  unoptimized
+                  onError={() => setMascotError(true)}
+                />
+              ) : (
+                <div className="w-full h-full rounded-3xl bg-primary/10 flex items-center justify-center text-6xl animate-float" aria-hidden>
+                  🦉
+                </div>
+              )}
+              <motion.div
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.9, type: "spring", stiffness: 200 }}
+                className="absolute -top-2 -right-2 md:top-4 md:right-4 bg-warning text-warning-foreground rounded-2xl px-4 py-2 font-extrabold text-sm rotate-6"
+                style={{ boxShadow: "0 3px 0 hsl(38 95% 40%)" }}
+              >
+                {t(locale, "landing.hero.mascotBadge1")}
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 1.1, type: "spring", stiffness: 200 }}
+                className="absolute -bottom-2 -left-2 md:bottom-8 md:left-4 bg-blue text-blue-foreground rounded-2xl px-4 py-2 font-extrabold text-sm -rotate-3"
+                style={{ boxShadow: "0 3px 0 hsl(199 90% 40%)" }}
+              >
+                {t(locale, "landing.hero.mascotBadge2")}
+              </motion.div>
             </div>
-          </AnimateOnScroll>
+          </motion.div>
         </div>
       </div>
     </section>

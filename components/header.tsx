@@ -106,7 +106,7 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-[100] w-full shadow-md border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-[100] w-full border-b-2 border-border bg-background/90 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4">
         <div className="flex h-20 items-center justify-between">
           {/* Logo / Brand */}
@@ -116,10 +116,10 @@ export function Header() {
               className="inline-flex items-center gap-2 rounded-lg transition-opacity hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2"
               aria-label={locale === "fr" ? "Retour à l'accueil" : "Back to home"}
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
-                <span className="font-heading text-lg font-bold text-primary-foreground">Q</span>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary header-logo-shadow">
+                <span className="font-nunito text-xl font-black text-primary-foreground">Q</span>
               </div>
-              <span className="text-2xl font-bold tracking-tight text-foreground">
+              <span className="font-nunito text-xl font-black tracking-tight text-foreground">
                 Quiz<span className="text-primary">Link</span>
               </span>
             </Link>
@@ -233,12 +233,12 @@ export function Header() {
                   onClick={handleCloseSidebar}
                   className="inline-flex items-center gap-2 rounded-lg transition-opacity hover:opacity-80"
                 >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
-                    <span className="font-heading text-lg font-bold text-primary-foreground">Q</span>
-                  </div>
-                  <span className="text-2xl font-bold tracking-tight text-foreground">
-                    Quiz<span className="text-primary">Link</span>
-                  </span>
+<div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary header-logo-shadow">
+                  <span className="font-nunito text-xl font-black text-primary-foreground">Q</span>
+                </div>
+                <span className="font-nunito text-xl font-black tracking-tight text-foreground">
+                  Quiz<span className="text-primary">Link</span>
+                </span>
                 </Link>
                 <Button
                   variant="ghost"

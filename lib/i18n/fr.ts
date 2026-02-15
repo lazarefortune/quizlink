@@ -99,16 +99,17 @@ export const fr = {
       createAccount: "Créer un compte",
     },
     signIn: {
-      title: "Connexion",
-      description: "Connecte-toi à ton compte",
+      title: "Bon retour !",
+      description: "Connecte-toi pour retrouver tes quiz",
       button: "Se connecter",
       invalidCredentials: "Email ou mot de passe invalide",
       error: "Une erreur s'est produite. Réessaie.",
     },
     signUp: {
-      title: "Créer un compte",
+      title: "Rejoins l'aventure !",
       description: "Crée un compte pour sauvegarder tes quiz",
-      button: "Créer un compte",
+      button: "Créer mon compte",
+      link: "Inscris-toi",
       error: "Échec de la création du compte",
     },
     name: "Nom",
@@ -123,8 +124,8 @@ export const fr = {
     confirmPasswordPlaceholder: "••••••••",
     noAccount: "Tu n'as pas de compte ?",
     hasAccount: "Tu as déjà un compte ?",
-    signInLink: "Se connecter",
-    signUpLink: "S'inscrire",
+    signInLink: "Connecte-toi",
+    signUpLink: "Inscris-toi",
     sidePanel: {
       signin: {
         title: "Bon retour parmi nous !",
@@ -167,7 +168,7 @@ export const fr = {
     forgotPasswordPage: {
       title: "Mot de passe oublié",
       description: "Entre ton adresse email et on t'enverra un lien pour réinitialiser ton mot de passe",
-      send: "Envoyer le lien de réinitialisation",
+      send: "Envoyer le mail",
       success: "Si un compte existe avec cet email, un lien de réinitialisation a été envoyé.",
       error: "Échec de l'envoi de l'email. Réessaie.",
       backToSignIn: "Retour à la connexion",
@@ -413,10 +414,20 @@ export const fr = {
   // Landing page
   landing: {
     hero: {
-      title: "Crée des quiz en quelques secondes, pas des heures",
-      titleHighlights: "quiz,secondes",
-      subtitle: "Transforme n'importe quel contenu en quiz engageant. Crée un compte pour commencer.",
-      createButton: "Créer un Quiz",
+      badge: "Propulsé par l'IA",
+      titleBefore1: "Des quiz trop ",
+      titleHighlight1: "fun",
+      titleMid: " en quelques ",
+      titleHighlight2: "clics",
+      titleAfter: " 🎉",
+      subtitle: "Crée tes quiz à la main ou laisse l'IA faire la magie. Partage-les et défie tes potes !",
+      createButton: "C'est parti !",
+      exploreButton: "Explorer les quiz",
+      lovedBy: "Adoré par",
+      lovedByCount: "+2,000",
+      lovedBySuffix: "joueurs",
+      mascotBadge1: "10 questions ⚡",
+      mascotBadge2: "En 5 sec ! 🤯",
       generateButton: "Générer avec l'IA",
     },
     value: {
@@ -436,27 +447,31 @@ export const fr = {
       },
     },
     features: {
-      title: "Fonctionnalités Puissantes",
-      subtitle: "Tout ce dont tu as besoin pour créer, personnaliser et partager des quiz",
+      title: "Pourquoi tu vas adorer",
+      subtitle: "Des outils fun et puissants pour les meilleurs quiz.",
       manual: {
         title: "Création manuelle",
-        description: "Contrôle total sur chaque question, option de réponse et paramètre de quiz",
+        description: "Construis ton quiz question par question avec un éditeur super simple.",
       },
       ai: {
         title: "Génération IA",
-        description: "Génère automatiquement des quiz à partir de texte, documents ou autres contenus",
+        description: "Donne un sujet et l'IA crée un quiz complet en quelques secondes.",
       },
       shareable: {
-        title: "Liens partageables",
-        description: "Partage tes quiz instantanément avec un lien unique et sécurisé",
+        title: "Partage facile",
+        description: "Un lien, c'est tout ! Pas besoin de s'inscrire pour jouer.",
       },
       participants: {
-        title: "Suivi des participants",
-        description: "Gère tes participants, crée des liens personnalisés et suis leurs progrès",
+        title: "Mode multijoueur",
+        description: "Lance des sessions en live avec tes amis ou ta classe !",
       },
       statistics: {
-        title: "Statistiques détaillées",
-        description: "Analysez les résultats avec des statistiques complètes : scores, temps passé, taux de complétion",
+        title: "Résultats détaillés",
+        description: "Qui a scoré le plus ? Des stats fun et complètes.",
+      },
+      fun: {
+        title: "Rapide et fun",
+        description: "Interface ludique qui donne envie de jouer encore et encore.",
       },
       security: {
         title: "Sécurité des réponses",
@@ -517,26 +532,26 @@ export const fr = {
       upgradeLater: "Pas d'inquiétude, tu peux toujours créer un compte plus tard. Commence à créer des quiz maintenant et passe à la version complète quand tu es prêt.",
     },
     finalCta: {
-      title: "Prêt à créer ton premier quiz ?",
-      subtitle: "Commence en quelques secondes. Aucun compte requis.",
+      title: "Prêt à jouer ?",
+      subtitle: "Rejoins des milliers de joueurs et crée ton premier quiz maintenant !",
       description: "Crée des quiz manuellement avec un contrôle total, ou laisse l'IA les générer à partir de ton contenu. Partage instantanément et personnalise tout.",
-      button: "Commencer maintenant",
+      button: "Commencer gratuitement",
     },
     howItWorks: {
-      title: "Comment ça marche",
+      title: "Simple comme bonjour",
       subtitle: "Trois étapes simples pour créer et partager tes quiz",
       step: "Étape",
       step1: {
-        title: "Crée ton quiz",
-        description: "Crée ton quiz manuellement avec un contrôle total ou utilise l'IA pour générer des questions à partir de ton contenu.",
+        title: "Choisis ta méthode",
+        description: "Manuel ou IA, à toi de voir !",
       },
       step2: {
-        title: "Partage le lien",
-        description: "Obtiens un lien partageable instantanément. Partage-le avec tes participants par email, message ou intègre-le sur ta plateforme.",
+        title: "Personnalise",
+        description: "Ajuste les questions et le style.",
       },
       step3: {
-        title: "Analyse les résultats",
-        description: "Suis les tentatives en temps réel, consulte les statistiques détaillées et analyse les performances de chaque participant.",
+        title: "Partage et joue !",
+        description: "Envoie le lien et c'est parti.",
       },
     },
     useCases: {
@@ -998,5 +1013,6 @@ export const fr = {
     },
     rights: "Tous droits réservés",
     createdBy: "Créé par",
+    madeWith: "Fait avec 💚",
   },
 };

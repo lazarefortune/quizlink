@@ -2,6 +2,9 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import Image from "next/image";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -90,12 +93,35 @@ function VerifyEmailForm() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>{t(locale, "auth.verifyEmail.title")}</CardTitle>
-          <CardDescription>{t(locale, "auth.verifyEmail.description")}</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <Card variant="playful" className="w-full max-w-md">
+        <CardContent className="pt-6">
+          <div className="mb-6 flex justify-center">
+            <Link
+              href="/"
+              className="inline-block rounded-full transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2"
+              aria-label={locale === "fr" ? "Retour à l'accueil" : "Back to home"}
+            >
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
+                className="relative h-24 w-24 drop-shadow-md"
+              >
+                <Image
+                  src="/mascot.jpg"
+                  alt="QuizLink mascotte"
+                  fill
+                  className="object-contain"
+                  sizes="96px"
+                />
+              </motion.div>
+            </Link>
+          </div>
+          <CardHeader className="px-0 pt-0">
+            <CardTitle>{t(locale, "auth.verifyEmail.title")}</CardTitle>
+            <CardDescription>{t(locale, "auth.verifyEmail.description")}</CardDescription>
+          </CardHeader>
+          <div className="px-0">
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
               <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
@@ -153,6 +179,7 @@ function VerifyEmailForm() {
               </button>
             </div>
           </form>
+          </div>
         </CardContent>
       </Card>
     </div>
@@ -163,7 +190,7 @@ export default function VerifyEmailPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
+        <Card variant="playful" className="w-full max-w-md">
           <CardContent className="pt-6">
             <p className="text-center">{t("fr", "common.loading")}</p>
           </CardContent>
