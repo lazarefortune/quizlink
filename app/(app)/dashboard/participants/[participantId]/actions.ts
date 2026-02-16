@@ -848,10 +848,7 @@ export async function getParticipantAttemptDetails(
       })
     );
 
-    // Order answers by quiz question order
-    const answers = attempt.quizLink.quiz.questions
-      .map((question) => answersMap.get(question.id))
-      .filter((answer) => answer !== undefined) as Array<{
+    type AnswerItem = {
       questionId: string;
       questionLabel: string;
       questionType: string;
@@ -862,7 +859,56 @@ export async function getParticipantAttemptDetails(
       isCorrect: boolean;
       timeSpent: number | null;
       answeredAt: Date;
-    }>;
+    };
+
+    // Order answers by quiz question order (when quiz has questions)
+    let answers: AnswerItem[] = attempt.quizLink.quiz.questions
+      .map((question) => answersMap.get(question.id))
+      .filter((answer): answer is AnswerItem => answer !== undefined);
+
+    let questionOrder: Array<{ id: string; order: number }> =
+      attempt.quizLink.quiz.questions;
+
+    // Fallback: if no answers matched (e.g. quiz questions empty or IDs changed), build from attempt.answers directly
+    if (answers.length === 0 && attempt.answers.length > 0) {
+      console.warn(
+        "[getParticipantAttemptDetails] Using fallback: answers from attempt.answers (quiz.questions count: %s, attempt.answers count: %s)",
+        attempt.quizLink.quiz.questions.length,
+        attempt.answers.length
+      );
+      answers = attempt.answers.map((answer) => {
+        const selectedOptionIds = Array.isArray(answer.selectedOptionIds)
+          ? (answer.selectedOptionIds as string[])
+          : [];
+        const correctOptions = answer.question.options.filter((opt) => opt.isCorrect);
+        const correctOptionIds = correctOptions.map((opt) => opt.id);
+        const selectedOptions = answer.question.options.filter((opt) =>
+          selectedOptionIds.includes(opt.id)
+        );
+        return {
+          questionId: answer.question.id,
+          questionLabel: answer.question.label,
+          questionType: answer.question.type,
+          selectedOptionIds: selectedOptionIds as string[],
+          selectedOptions: selectedOptions.map((opt) => ({
+            id: opt.id,
+            label: opt.label,
+          })),
+          correctOptionIds,
+          correctOptions: correctOptions.map((opt) => ({
+            id: opt.id,
+            label: opt.label,
+          })),
+          isCorrect: answer.isCorrect,
+          timeSpent: answer.timeSpent,
+          answeredAt: answer.answeredAt,
+        };
+      });
+      questionOrder = attempt.answers.map((a, index) => ({
+        id: a.question.id,
+        order: index,
+      }));
+    }
 
     return {
       success: true,
@@ -875,7 +921,7 @@ export async function getParticipantAttemptDetails(
         score: attempt.score,
         status: attempt.status,
         answers,
-        questionOrder: attempt.quizLink.quiz.questions,
+        questionOrder,
       },
     };
   } catch (error) {
