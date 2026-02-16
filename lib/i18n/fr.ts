@@ -777,6 +777,7 @@ export const fr = {
     noAttemptsForQuiz: "Aucune tentative pour ce quiz",
     viewAttempt: "Voir la tentative",
     attemptDetailsDialog: "Détails de la tentative",
+    attemptDetailsLoadFailed: "Impossible de charger les détails de la tentative.",
     questionLabel: "Question",
     yourAnswer: "Ta réponse",
     correctAnswer: "Bonne réponse",

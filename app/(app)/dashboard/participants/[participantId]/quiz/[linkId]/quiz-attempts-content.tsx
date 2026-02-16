@@ -182,6 +182,7 @@ export function QuizAttemptsContent({
   };
 
   const handleViewAttempt = async (attemptId: string) => {
+    setAttemptDetails(null);
     setIsLoadingDetails(true);
     setShowAttemptDialog(true);
     try {
@@ -547,6 +548,7 @@ export function QuizAttemptsContent({
                 </h3>
                 <div className="space-y-4">
                   {(() => {
+                    type AnswerItem = (typeof attemptDetails.answers)[number];
                     const sortedAnswers = attemptDetails.questionOrder
                       ? attemptDetails.questionOrder
                           .map((q) =>
@@ -554,7 +556,7 @@ export function QuizAttemptsContent({
                               (a) => a.questionId === q.id,
                             ),
                           )
-                          .filter((a) => a !== undefined)
+                          .filter((a): a is AnswerItem => a != null)
                       : attemptDetails.answers;
 
                     return sortedAnswers.map((answer, index: number) => (
@@ -656,7 +658,14 @@ export function QuizAttemptsContent({
                 </div>
               </div>
             </div>
-          ) : null}
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>{t(locale, "common.error")}</p>
+              <p className="text-sm mt-2">
+                {t(locale, "dashboard.attemptDetailsLoadFailed")}
+              </p>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
