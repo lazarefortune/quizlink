@@ -51,6 +51,7 @@ import {
 } from "../../actions";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { FormattedDate } from "@/components/ui/formatted-date";
 
 type QuizAttemptsContentProps = {
   participant: {
@@ -529,7 +530,7 @@ export function QuizAttemptsContent({
                     {t(locale, "dashboard.startedAtLabel")}
                   </p>
                   <p className="text-sm">
-                    {formatDate(attemptDetails.startedAt)}
+                    <FormattedDate date={attemptDetails.startedAt} locale={locale} />
                   </p>
                 </div>
                 <div>
@@ -537,7 +538,7 @@ export function QuizAttemptsContent({
                     {t(locale, "dashboard.finishedAtLabel")}
                   </p>
                   <p className="text-sm">
-                    {formatDate(attemptDetails.finishedAt)}
+                    <FormattedDate date={attemptDetails.finishedAt} locale={locale} />
                   </p>
                 </div>
               </div>

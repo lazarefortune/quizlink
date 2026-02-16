@@ -32,6 +32,7 @@ import {
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { FormattedDate } from "@/components/ui/formatted-date";
 import { getAttemptDetails } from "./actions";
 
 type Stats = {
@@ -413,13 +414,13 @@ export function QuizStatsTab({
                   <p className="text-sm text-muted-foreground">
                     {t(locale, "dashboard.startedAtLabel")}
                   </p>
-                  <p className="text-sm">{formatDate(attemptDetails.startedAt)}</p>
+                  <p className="text-sm"><FormattedDate date={attemptDetails.startedAt} locale={locale} /></p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">
                     {t(locale, "dashboard.finishedAtLabel")}
                   </p>
-                  <p className="text-sm">{formatDate(attemptDetails.finishedAt)}</p>
+                  <p className="text-sm"><FormattedDate date={attemptDetails.finishedAt} locale={locale} /></p>
                 </div>
               </div>
               <div className="border-t border-border pt-4">

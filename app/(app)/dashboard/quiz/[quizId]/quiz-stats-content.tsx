@@ -40,6 +40,7 @@ import { t } from "@/lib/i18n";
 import { ParticipantAvatar } from "@/components/participant-avatar";
 import { getAttemptDetails } from "./actions";
 import { cn } from "@/lib/utils";
+import { FormattedDate } from "@/components/ui/formatted-date";
 import {
   Dialog,
   DialogContent,
@@ -687,7 +688,7 @@ export function QuizStatsContent({
                       {t(locale, "dashboard.startedAtLabel")}
                     </p>
                     <p className="text-sm">
-                      {formatDate(attemptDetails.startedAt)}
+                      <FormattedDate date={attemptDetails.startedAt} locale={locale} />
                     </p>
                   </div>
                   <div>
@@ -695,7 +696,7 @@ export function QuizStatsContent({
                       {t(locale, "dashboard.finishedAtLabel")}
                     </p>
                     <p className="text-sm">
-                      {formatDate(attemptDetails.finishedAt)}
+                      <FormattedDate date={attemptDetails.finishedAt} locale={locale} />
                     </p>
                   </div>
                 </div>
