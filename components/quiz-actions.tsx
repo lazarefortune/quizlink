@@ -229,9 +229,9 @@ export function QuizActions({
       <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t(locale, "dashboard.shareQuiz")}</DialogTitle>
+            <DialogTitle>{t(locale, "dashboard.publicPlayLinkTitle")}</DialogTitle>
             <DialogDescription>
-              {t(locale, "dashboard.shareDescription")}
+              {t(locale, "dashboard.publicPlayLinkDescription")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">

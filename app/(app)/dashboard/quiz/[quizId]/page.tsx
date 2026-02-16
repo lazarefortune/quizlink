@@ -1,6 +1,6 @@
 import { Suspense } from "react";
-import { QuizStatsContent } from "./quiz-stats-content";
-import { getQuizStats } from "./actions";
+import { QuizDetailContent } from "./quiz-detail-content";
+import { getQuizContent, getQuizStats } from "./actions";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -17,7 +17,6 @@ export default async function QuizStatsPage({ params }: PageProps) {
 
   const { quizId } = await params;
 
-  // Verify quiz ownership
   const quiz = await prisma.quiz.findUnique({
     where: { id: quizId },
     select: { ownerId: true, name: true },
@@ -47,7 +46,21 @@ export default async function QuizStatsPage({ params }: PageProps) {
     );
   }
 
-  const statsResult = await getQuizStats(quizId);
+  const [contentResult, statsResult] = await Promise.all([
+    getQuizContent(quizId),
+    getQuizStats(quizId),
+  ]);
+
+  if (!contentResult.success) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="max-w-md w-full text-center">
+          <h1 className="text-2xl font-bold mb-4">Erreur</h1>
+          <p className="text-muted-foreground">{contentResult.error}</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!statsResult.success) {
     return (
@@ -61,8 +74,20 @@ export default async function QuizStatsPage({ params }: PageProps) {
   }
 
   return (
-    <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center">Chargement...</div>}>
-      <QuizStatsContent quizName={quiz.name} stats={statsResult.stats} quizId={quizId} />
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          Chargement...
+        </div>
+      }
+    >
+      <QuizDetailContent
+        quizId={quizId}
+        quizName={contentResult.quiz.name}
+        visibility={contentResult.quiz.visibility}
+        questions={contentResult.quiz.questions}
+        stats={statsResult.stats}
+      />
     </Suspense>
   );
 }

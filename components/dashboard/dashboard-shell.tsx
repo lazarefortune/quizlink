@@ -20,6 +20,9 @@ function getTitleFromPath(pathname: string | null, locale: Locale): string {
   if (pathname === "/dashboard/quizzes" || pathname.startsWith("/dashboard/quizzes/")) {
     return t(locale, "dashboard.sidebar.quizzes");
   }
+  if (pathname.startsWith("/dashboard/community")) {
+    return t(locale, "dashboard.sidebar.community");
+  }
   if (pathname.startsWith("/dashboard/participants")) {
     return t(locale, "dashboard.sidebar.participants");
   }

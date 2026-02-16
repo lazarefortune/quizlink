@@ -67,7 +67,7 @@ export function Sidebar({
           onClick={onNavClick}
         />
         <NavItem
-          href="/quizzes"
+          href="/dashboard/community"
           label={t(locale, "dashboard.sidebar.community")}
           icon={Globe}
           onClick={onNavClick}

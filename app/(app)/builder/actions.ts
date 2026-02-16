@@ -255,3 +255,109 @@ export async function getUserQuizzes() {
     };
   }
 }
+
+export type UserQuizListItem = {
+  id: string;
+  name: string;
+  visibility: "PRIVATE" | "PUBLIC";
+  questionCount: number;
+  attemptCount: number;
+  createdAt: string;
+};
+
+const DEFAULT_PAGE_SIZE = 12;
+
+export async function getUserQuizzesPaginated(
+  page: number,
+  pageSize: number = DEFAULT_PAGE_SIZE,
+  search?: string,
+): Promise<{
+  success: boolean;
+  quizzes: UserQuizListItem[];
+  total: number;
+  error?: string;
+}> {
+  try {
+    if (!prisma) {
+      return {
+        success: false,
+        quizzes: [],
+        total: 0,
+        error: "Database not initialized. Please run 'pnpm prisma:generate' first.",
+      };
+    }
+
+    const session = await auth();
+    if (!session?.user?.id) {
+      return {
+        success: false,
+        quizzes: [],
+        total: 0,
+        error: "You must be logged in",
+      };
+    }
+
+    const where = {
+      ownerId: session.user.id,
+      ...(search?.trim()
+        ? { name: { contains: search.trim() } }
+        : {}),
+    };
+
+    const [quizzes, total] = await Promise.all([
+      prisma.quiz.findMany({
+        where,
+        select: {
+          id: true,
+          name: true,
+          visibility: true,
+          createdAt: true,
+          _count: { select: { questions: true } },
+        },
+        orderBy: { updatedAt: "desc" },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      prisma.quiz.count({ where }),
+    ]);
+
+    const quizIds = quizzes.map((q) => q.id);
+    const linksWithCounts = await prisma.quizLink.findMany({
+      where: { quizId: { in: quizIds } },
+      select: {
+        quizId: true,
+        _count: { select: { attempts: true } },
+      },
+    });
+
+    const attemptCountByQuizId = new Map<string, number>();
+    for (const link of linksWithCounts) {
+      const current = attemptCountByQuizId.get(link.quizId) ?? 0;
+      attemptCountByQuizId.set(link.quizId, current + link._count.attempts);
+    }
+
+    return {
+      success: true,
+      quizzes: quizzes.map((q) => ({
+        id: q.id,
+        name: q.name,
+        visibility: q.visibility as "PRIVATE" | "PUBLIC",
+        questionCount: q._count.questions,
+        attemptCount: attemptCountByQuizId.get(q.id) ?? 0,
+        createdAt:
+          q.createdAt instanceof Date
+            ? q.createdAt.toISOString()
+            : new Date(q.createdAt).toISOString(),
+      })),
+      total,
+    };
+  } catch (error) {
+    console.error("Error fetching quizzes:", error);
+    return {
+      success: false,
+      quizzes: [],
+      total: 0,
+      error: error instanceof Error ? error.message : "Failed to fetch quizzes",
+    };
+  }
+}

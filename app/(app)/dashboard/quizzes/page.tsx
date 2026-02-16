@@ -1,13 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { getUserQuizzes } from "@/app/(app)/builder/actions";
+import { Input } from "@/components/ui/input";
+import {
+  getUserQuizzesPaginated,
+  type UserQuizListItem,
+} from "@/app/(app)/builder/actions";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t, type Locale } from "@/lib/i18n";
 import {
@@ -19,14 +23,21 @@ import {
   MessageSquare,
   Globe,
   Lock,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  Play,
 } from "lucide-react";
 import { QuizOptionsMenu } from "@/components/quiz-options-menu";
+import { createOrGetQuizLink } from "@/app/quiz-link/actions";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+
+const PAGE_SIZE = 12;
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -35,32 +46,6 @@ const fadeUp = {
     y: 0,
     transition: { delay: i * 0.05, duration: 0.35 },
   }),
-};
-
-type QuizWithAttempts = {
-  id: string;
-  name: string;
-  visibility: "PRIVATE" | "PUBLIC";
-  questions: Array<{
-    id: string;
-    type: string;
-    label: string;
-    image?: string;
-    options: Array<{
-      id: string;
-      label: string;
-      isCorrect: boolean;
-    }>;
-  }>;
-  attempts: Array<{
-    id: string;
-    participantName: string;
-    startedAt: Date;
-    finishedAt: Date | null;
-    score: number | null;
-    status: string;
-  }>;
-  createdAt: string;
 };
 
 function CreateQuizModalTrigger({
@@ -131,23 +116,27 @@ function CreateQuizModalTrigger({
 export default function DashboardQuizzesPage() {
   const router = useRouter();
   const { locale } = useLocale();
-  const [quizzes, setQuizzes] = useState<QuizWithAttempts[]>([]);
+  const [quizzes, setQuizzes] = useState<UserQuizListItem[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [searchInput, setSearchInput] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [playLoadingQuizId, setPlayLoadingQuizId] = useState<string | null>(null);
 
-  const handleEdit = (quizId: string) => {
-    router.push(`/builder/${quizId}`);
-  };
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  useEffect(() => {
-    loadQuizzes();
-  }, []);
-
-  async function loadQuizzes() {
+  const loadQuizzes = useCallback(async (p: number, search: string) => {
     setIsLoading(true);
     try {
-      const result = await getUserQuizzes();
+      const result = await getUserQuizzesPaginated(
+        p,
+        PAGE_SIZE,
+        search || undefined,
+      );
       if (result.success) {
         setQuizzes(result.quizzes);
+        setTotal(result.total);
       } else {
         console.error("Failed to load quizzes:", result.error);
       }
@@ -156,7 +145,42 @@ export default function DashboardQuizzesPage() {
     } finally {
       setIsLoading(false);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    loadQuizzes(page, searchQuery);
+  }, [page, searchQuery, loadQuizzes]);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSearchQuery(searchInput.trim());
+    setPage(1);
+  };
+
+  const handleEdit = (quizId: string) => {
+    router.push(`/builder/${quizId}`);
+  };
+
+  const refreshCurrentPage = () => {
+    loadQuizzes(page, searchQuery);
+  };
+
+  const baseUrl =
+    typeof window !== "undefined"
+      ? window.location.origin
+      : process.env.NEXT_PUBLIC_APP_URL ?? "";
+
+  const handlePlay = async (quizId: string) => {
+    setPlayLoadingQuizId(quizId);
+    try {
+      const result = await createOrGetQuizLink(quizId, true);
+      if (result.success && baseUrl) {
+        window.open(`${baseUrl}/quiz/${result.quizLink.token}`, "_blank", "noopener,noreferrer");
+      }
+    } finally {
+      setPlayLoadingQuizId(null);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -197,23 +221,44 @@ export default function DashboardQuizzesPage() {
         <motion.div
           custom={0}
           variants={fadeUp}
-          className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
+          className="flex flex-col gap-4"
         >
-          <div className="flex flex-col gap-2">
-            <h2 className="text-2xl font-black text-foreground sm:text-3xl">
-              {t(locale, "dashboard.title")}
-            </h2>
-            <Link
-              href="/quizzes"
-              className="md:hidden inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-fit"
-            >
-              <Globe className="h-4 w-4 shrink-0" />
-              {t(locale, "dashboard.sidebar.community")}
-            </Link>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div className="flex flex-col gap-2">
+              <h2 className="text-2xl font-black text-foreground sm:text-3xl">
+                {t(locale, "dashboard.title")}
+              </h2>
+              <Link
+                href="/dashboard/community"
+                className="md:hidden inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-fit"
+              >
+                <Globe className="h-4 w-4 shrink-0" />
+                {t(locale, "dashboard.sidebar.community")}
+              </Link>
+            </div>
+            <div className="shrink-0">
+              <CreateQuizModalTrigger locale={locale} />
+            </div>
           </div>
-          <div className="shrink-0">
-            <CreateQuizModalTrigger locale={locale} />
-          </div>
+          <form
+            onSubmit={handleSearchSubmit}
+            className="flex gap-2 max-w-md"
+          >
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Input
+                type="search"
+                placeholder={t(locale, "dashboard.searchPlaceholder")}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                className="pl-9"
+                aria-label={t(locale, "common.search")}
+              />
+            </div>
+            <Button type="submit" variant="secondary" size="default">
+              {t(locale, "common.search")}
+            </Button>
+          </form>
         </motion.div>
 
         {/* Empty state */}
@@ -241,76 +286,124 @@ export default function DashboardQuizzesPage() {
             </Card>
           </motion.div>
         ) : (
-          /* Quiz grid */
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-5">
-            {quizzes.map((quiz, i) => (
-              <motion.div key={quiz.id} custom={i + 1} variants={fadeUp}>
-                <Card
-                  variant="playful"
-                  className="group flex flex-col h-full"
-                >
-                  <CardContent className="flex flex-col flex-1 p-5">
-                    {/* Quiz name */}
-                    <Link
-                      href={`/dashboard/quiz/${quiz.id}`}
-                      className="block flex-1 mb-4"
-                    >
-                      <h3 className="text-lg font-bold leading-snug line-clamp-2 wrap-break-word text-foreground group-hover:text-blue transition-colors">
-                        {quiz.name}
-                      </h3>
-                    </Link>
-
-                    {/* Stats row */}
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-                      <span className="inline-flex items-center gap-1.5">
-                        <MessageSquare className="h-3.5 w-3.5" />
-                        {quiz.questions.length}{" "}
-                        {quiz.questions.length === 1
-                          ? t(locale, "dashboard.question")
-                          : t(locale, "dashboard.questions")}
-                      </span>
-                      <span className="inline-flex items-center gap-1.5">
-                        <Users className="h-3.5 w-3.5" />
-                        {quiz.attempts.length}{" "}
-                        {t(locale, "dashboard.attempts")}
-                      </span>
-                    </div>
-
-                    {/* Bottom row: badge + menu */}
-                    <div className="flex items-center justify-between mt-auto pt-3 border-t border-border/60">
-                      <Badge
-                        variant={
-                          quiz.visibility === "PUBLIC"
-                            ? "default"
-                            : "destructive"
-                        }
-                        className="text-sm"
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-5">
+              {quizzes.map((quiz, i) => (
+                <motion.div key={quiz.id} custom={i + 1} variants={fadeUp}>
+                  <Card
+                    variant="playful"
+                    className="group flex flex-col h-full"
+                  >
+                    <CardContent className="flex flex-col flex-1 p-5">
+                      <Link
+                        href={`/dashboard/quiz/${quiz.id}`}
+                        className="block flex-1 mb-4"
                       >
-                        {quiz.visibility === "PUBLIC" ? (
-                          <Globe className="h-3.5 w-3.5" />
-                        ) : (
-                          <Lock className="h-3.5 w-3.5" />
-                        )}
-                        <span className="ml-2">
-                          {quiz.visibility === "PUBLIC"
-                            ? t(locale, "dashboard.public")
-                            : t(locale, "dashboard.private")}
+                        <h3 className="text-lg font-bold leading-snug line-clamp-2 wrap-break-word text-foreground group-hover:text-blue transition-colors">
+                          {quiz.name}
+                        </h3>
+                      </Link>
+
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+                        <span className="inline-flex items-center gap-1.5">
+                          <MessageSquare className="h-3.5 w-3.5" />
+                          {quiz.questionCount}{" "}
+                          {quiz.questionCount === 1
+                            ? t(locale, "dashboard.question")
+                            : t(locale, "dashboard.questions")}
                         </span>
-                      </Badge>
-                      <QuizOptionsMenu
-                        quizId={quiz.id}
-                        quizName={quiz.name}
-                        visibility={quiz.visibility}
-                        onDeleted={() => loadQuizzes()}
-                        onDuplicated={() => {}}
-                        onEdit={() => handleEdit(quiz.id)}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
+                        <span className="inline-flex items-center gap-1.5">
+                          <Users className="h-3.5 w-3.5" />
+                          {quiz.attemptCount}{" "}
+                          {t(locale, "dashboard.attempts")}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-col gap-2 mt-auto pt-3 border-t border-border/60">
+                        <div className="flex items-center justify-between">
+                          <Badge
+                            variant={
+                              quiz.visibility === "PUBLIC"
+                                ? "primarySoft"
+                                : "warningSoft"
+                            }
+                            className="text-sm font-extrabold font-nunito uppercase"
+                          >
+                            {quiz.visibility === "PUBLIC" ? (
+                              <Globe className="h-3.5 w-3.5" />
+                            ) : (
+                              <Lock className="h-3.5 w-3.5" />
+                            )}
+                            <span className="ml-2">
+                              {quiz.visibility === "PUBLIC"
+                                ? t(locale, "dashboard.public")
+                                : t(locale, "dashboard.private")}
+                            </span>
+                          </Badge>
+                            <QuizOptionsMenu
+                            quizId={quiz.id}
+                            quizName={quiz.name}
+                            visibility={quiz.visibility}
+                            onDeleted={refreshCurrentPage}
+                            onDuplicated={refreshCurrentPage}
+                            onEdit={() => handleEdit(quiz.id)}
+                          />
+                        </div>
+                        {quiz.visibility === "PUBLIC" && (
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="w-full gap-2"
+                            onClick={() => handlePlay(quiz.id)}
+                            disabled={playLoadingQuizId !== null}
+                          >
+                            {playLoadingQuizId === quiz.id ? (
+                              t(locale, "common.loading")
+                            ) : (
+                              <>
+                                <Play className="h-4 w-4" />
+                                {t(locale, "publicQuizzes.play")}
+                              </>
+                            )}
+                          </Button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+
+            {totalPages > 1 && (
+              <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                  className="gap-1"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  {t(locale, "dashboard.previousPage")}
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  {t(locale, "dashboard.pageOf")
+                    .replace("{current}", String(page))
+                    .replace("{total}", String(totalPages))}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages}
+                  className="gap-1"
+                >
+                  {t(locale, "dashboard.nextPage")}
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </motion.div>
     </div>

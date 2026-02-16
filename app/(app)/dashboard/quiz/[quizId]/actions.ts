@@ -58,19 +58,116 @@ type GetAttemptDetailsResponse =
         id: string;
         participantName: string;
         score: number | null;
+        status: string;
         startedAt: Date;
         finishedAt: Date | null;
         answers: Array<{
           questionId: string;
           questionLabel: string;
           selectedOptionIds: string[];
+          selectedOptions: Array<{ id: string; label: string }>;
           correctOptionIds: string[];
+          correctOptions: Array<{ id: string; label: string }>;
           isCorrect: boolean;
           timeSpent: number | null;
         }>;
+        questionOrder?: Array<{ id: string; order: number }>;
       };
     }
   | { success: false; error: string };
+
+export type QuizContentQuestion = {
+  id: string;
+  order: number;
+  type: string;
+  label: string;
+  image: string | null;
+  explanation: string | null;
+  options: Array<{ id: string; label: string; isCorrect: boolean }>;
+};
+
+export type GetQuizContentResponse =
+  | {
+      success: true;
+      quiz: {
+        name: string;
+        visibility: string;
+        questions: QuizContentQuestion[];
+      };
+    }
+  | { success: false; error: string };
+
+/**
+ * Get quiz content (questions, options, explanations) for display / edit link
+ */
+export async function getQuizContent(
+  quizId: string
+): Promise<GetQuizContentResponse> {
+  try {
+    if (!prisma) {
+      return { success: false, error: "Database not initialized" };
+    }
+
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const quiz = await prisma.quiz.findUnique({
+      where: { id: quizId },
+      select: {
+        name: true,
+        visibility: true,
+        ownerId: true,
+        questions: {
+          orderBy: { order: "asc" },
+          select: {
+            id: true,
+            order: true,
+            type: true,
+            label: true,
+            image: true,
+            explanation: true,
+            options: {
+              select: { id: true, label: true, isCorrect: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!quiz || quiz.ownerId !== session.user.id) {
+      return { success: false, error: "Quiz not found or unauthorized" };
+    }
+
+    return {
+      success: true,
+      quiz: {
+        name: quiz.name,
+        visibility: quiz.visibility,
+        questions: quiz.questions.map((q) => ({
+          id: q.id,
+          order: q.order,
+          type: q.type,
+          label: q.label,
+          image: q.image,
+          explanation: q.explanation,
+          options: q.options.map((o) => ({
+            id: o.id,
+            label: o.label,
+            isCorrect: o.isCorrect,
+          })),
+        })),
+      },
+    };
+  } catch (error) {
+    console.error("Error getting quiz content:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to get quiz",
+    };
+  }
+}
 
 /**
  * Get statistics for a quiz
@@ -296,7 +393,10 @@ export async function getAttemptDetails(
         quizLink: {
           include: {
             quiz: {
-              select: { ownerId: true },
+              select: {
+                ownerId: true,
+                questions: { select: { id: true, order: true }, orderBy: { order: "asc" } },
+              },
             },
           },
         },
@@ -359,15 +459,20 @@ export async function getAttemptDetails(
       };
     });
 
+    const quiz = attempt.quizLink.quiz as { ownerId: string; questions: Array<{ id: string; order: number }> };
+    const questionOrder = quiz.questions?.map((q) => ({ id: q.id, order: q.order })) ?? [];
+
     return {
       success: true,
       attempt: {
         id: attempt.id,
         participantName: attempt.participant ? attempt.participant.name : "Anonyme",
         score: attempt.score,
+        status: attempt.status,
         startedAt: attempt.startedAt,
         finishedAt: attempt.finishedAt,
         answers,
+        questionOrder,
       },
     };
   } catch (error) {

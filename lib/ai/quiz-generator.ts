@@ -129,15 +129,25 @@ export async function generateQuizWithAI(
     const calculatedTokens = options.maxQuestions * estimatedTokensPerQuestion + 1000; // Larger buffer
     const maxTokens = Math.min(16384, Math.max(4000, calculatedTokens)); // Cap at model limit
 
+    const systemMessage =
+      options.language === "fr"
+        ? options.questionType === "MCQ"
+          ? "Tu es un assistant de génération de quiz. Retourne toujours uniquement du JSON valide. Chaque question DOIT avoir \"type\": \"MULTIPLE_CHOICE\" avec 4 options. Ne génère AUCUNE question vrai/faux (TRUE_FALSE). Chaque question doit contenir le champ \"explanation\"."
+          : options.questionType === "TRUE_FALSE"
+            ? "Tu es un assistant de génération de quiz. Retourne toujours uniquement du JSON valide. Chaque question DOIT avoir \"type\": \"TRUE_FALSE\" avec 2 options. Ne génère AUCUNE question à choix multiples (MULTIPLE_CHOICE). Chaque question doit contenir le champ \"explanation\"."
+            : "Tu es un assistant de génération de quiz. Retourne toujours uniquement du JSON valide, sans texte autour. Chaque question dans le JSON doit contenir le champ \"explanation\" (1-2 phrases expliquant la bonne réponse)."
+        : options.questionType === "MCQ"
+          ? "You are a quiz generation assistant. Always return valid JSON only. Every question MUST have \"type\": \"MULTIPLE_CHOICE\" with 4 options. Do NOT generate any true/false (TRUE_FALSE) question. Each question must include the \"explanation\" field."
+          : options.questionType === "TRUE_FALSE"
+            ? "You are a quiz generation assistant. Always return valid JSON only. Every question MUST have \"type\": \"TRUE_FALSE\" with 2 options. Do NOT generate any multiple choice (MULTIPLE_CHOICE) question. Each question must include the \"explanation\" field."
+            : "You are a quiz generation assistant. Always return valid JSON only, no text outside. Each question in the JSON must include the \"explanation\" field (1-2 sentences explaining the correct answer).";
+
     const completion = await client.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
-          content:
-            options.language === "fr"
-              ? "Tu es un assistant de génération de quiz. Retourne toujours uniquement du JSON valide, sans texte autour. Chaque question dans le JSON doit contenir le champ \"explanation\" (1-2 phrases expliquant la bonne réponse)."
-              : "You are a quiz generation assistant. Always return valid JSON only, no text outside. Each question in the JSON must include the \"explanation\" field (1-2 sentences explaining the correct answer).",
+          content: systemMessage,
         },
         {
           role: "user",
@@ -167,6 +177,20 @@ export async function generateQuizWithAI(
     }
 
     let generatedQuestions = adaptAiQuestionsToQuizBuilder(parsedResponse.questions);
+
+    // Enforce requested question type: filter out any question that does not match
+    const requestedType = options.questionType;
+    if (requestedType === "MCQ" || requestedType === "TRUE_FALSE") {
+      const allowedType = requestedType === "MCQ" ? "MULTIPLE_CHOICE" : "TRUE_FALSE";
+      const beforeCount = generatedQuestions.length;
+      generatedQuestions = generatedQuestions.filter((q) => q.type === allowedType);
+      if (generatedQuestions.length < beforeCount) {
+        console.warn(
+          `Filtered out ${beforeCount - generatedQuestions.length} questions that did not match requested type ${requestedType}.`
+        );
+      }
+    }
+
     const title = parsedResponse.title.trim();
 
     // If we didn't get enough questions, try to generate the missing ones
@@ -188,10 +212,7 @@ export async function generateQuizWithAI(
           messages: [
             {
               role: "system",
-              content:
-                options.language === "fr"
-                  ? "Tu es un assistant de génération de quiz. Retourne toujours uniquement du JSON valide. Chaque question doit contenir le champ \"explanation\"."
-                  : "You are a quiz generation assistant. Always return valid JSON only. Each question must include the \"explanation\" field.",
+              content: systemMessage,
             },
             {
               role: "user",
@@ -207,7 +228,11 @@ export async function generateQuizWithAI(
         if (followUpText) {
           const followUpParsed = JSON.parse(followUpText);
           if (validateAiResponse(followUpParsed)) {
-            const additionalQuestions = adaptAiQuestionsToQuizBuilder(followUpParsed.questions);
+            let additionalQuestions = adaptAiQuestionsToQuizBuilder(followUpParsed.questions);
+            if (requestedType === "MCQ" || requestedType === "TRUE_FALSE") {
+              const allowedType = requestedType === "MCQ" ? "MULTIPLE_CHOICE" : "TRUE_FALSE";
+              additionalQuestions = additionalQuestions.filter((q) => q.type === allowedType);
+            }
             generatedQuestions = [...generatedQuestions, ...additionalQuestions];
             console.log(`Successfully generated ${additionalQuestions.length} additional questions. Total: ${generatedQuestions.length}`);
           }
