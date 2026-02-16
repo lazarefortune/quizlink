@@ -130,30 +130,53 @@ export function GenerationOptionsModal({
 
           <div className="space-y-1.5">
             <Label className="text-sm font-medium">
-              {t(locale, "options.maxQuestions")}
+              {t(locale, "options.maxQuestions")}{" "}
+              <span className="text-muted-foreground font-normal">
+                (1–{maxQuestionsLimit})
+              </span>
             </Label>
-            <Select
-              value={localOptions.maxQuestions.toString()}
-              onValueChange={(value) =>
+            <Input
+              type="number"
+              min={1}
+              max={maxQuestionsLimit}
+              className="rounded-lg"
+              value={localOptions.maxQuestions}
+              onChange={(e) => {
+                const raw = e.target.value;
+                if (raw === "") return;
+                const num = parseInt(raw, 10);
+                if (Number.isNaN(num)) return;
+                const clamped = Math.min(
+                  maxQuestionsLimit,
+                  Math.max(1, num)
+                );
                 setLocalOptions({
                   ...localOptions,
-                  maxQuestions: parseInt(value, 10),
-                })
-              }
-            >
-              <SelectTrigger className="rounded-lg">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {[5, 10, 15, 20, 30, 50]
-                  .filter((n) => n <= maxQuestionsLimit)
-                  .map((n) => (
-                    <SelectItem key={n} value={n.toString()}>
-                      {n} {t(locale, "options.questions")}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
+                  maxQuestions: clamped,
+                });
+              }}
+              onBlur={(e) => {
+                const raw = e.target.value;
+                if (raw === "") {
+                  setLocalOptions({
+                    ...localOptions,
+                    maxQuestions: 1,
+                  });
+                  return;
+                }
+                const num = parseInt(raw, 10);
+                const clamped = Math.min(
+                  maxQuestionsLimit,
+                  Math.max(1, Number.isNaN(num) ? 1 : num)
+                );
+                if (clamped !== localOptions.maxQuestions) {
+                  setLocalOptions({
+                    ...localOptions,
+                    maxQuestions: clamped,
+                  });
+                }
+              }}
+            />
           </div>
 
           <div className="space-y-1.5">
