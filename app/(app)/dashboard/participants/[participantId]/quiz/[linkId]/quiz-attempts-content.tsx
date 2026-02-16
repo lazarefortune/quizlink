@@ -379,12 +379,17 @@ export function QuizAttemptsContent({
                         {link.attempts.map((attempt) => (
                           <TableRow key={attempt.id}>
                             <TableCell className="whitespace-nowrap text-sm">
-                              {formatDate(attempt.startedAt)}
+                              <FormattedDate
+                                date={attempt.startedAt}
+                                locale={locale}
+                              />
                             </TableCell>
                             <TableCell className="font-medium">
-                              {attempt.score !== null
-                                ? `${attempt.score.toFixed(1)}%`
-                                : "-"}
+                              <span suppressHydrationWarning>
+                                {attempt.score !== null
+                                  ? `${attempt.score.toFixed(1)}%`
+                                  : "-"}
+                              </span>
                             </TableCell>
                             <TableCell>
                               {getStatusBadge(
@@ -416,7 +421,10 @@ export function QuizAttemptsContent({
                     <CardContent className="p-4 space-y-3">
                       <div className="flex items-center justify-between">
                         <p className="text-sm text-muted-foreground">
-                          {formatDate(attempt.startedAt)}
+                          <FormattedDate
+                            date={attempt.startedAt}
+                            locale={locale}
+                          />
                         </p>
                         {getStatusBadge(
                           getDisplayStatus(attempt.status, attempt.startedAt),
@@ -424,9 +432,11 @@ export function QuizAttemptsContent({
                       </div>
                       <div className="flex items-center justify-between">
                         <p className="text-lg font-semibold">
-                          {attempt.score !== null
-                            ? `${attempt.score.toFixed(1)}%`
-                            : "-"}
+                          <span suppressHydrationWarning>
+                            {attempt.score !== null
+                              ? `${attempt.score.toFixed(1)}%`
+                              : "-"}
+                          </span>
                         </p>
                         <Button
                           variant="ghost"
@@ -507,9 +517,11 @@ export function QuizAttemptsContent({
                     {t(locale, "dashboard.scoreLabel")}
                   </p>
                   <p className="text-lg font-semibold">
-                    {attemptDetails.score !== null
-                      ? `${attemptDetails.score.toFixed(1)}%`
-                      : "-"}
+                    <span suppressHydrationWarning>
+                      {attemptDetails.score !== null
+                        ? `${attemptDetails.score.toFixed(1)}%`
+                        : "-"}
+                    </span>
                   </p>
                 </div>
                 <div>

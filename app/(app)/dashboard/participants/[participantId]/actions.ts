@@ -861,54 +861,55 @@ export async function getParticipantAttemptDetails(
       answeredAt: Date;
     };
 
-    // Order answers by quiz question order (when quiz has questions)
-    let answers: AnswerItem[] = attempt.quizLink.quiz.questions
-      .map((question) => answersMap.get(question.id))
-      .filter((answer): answer is AnswerItem => answer !== undefined);
-
-    let questionOrder: Array<{ id: string; order: number }> =
-      attempt.quizLink.quiz.questions;
-
-    // Fallback: if no answers matched (e.g. quiz questions empty or IDs changed), build from attempt.answers directly
-    if (answers.length === 0 && attempt.answers.length > 0) {
-      console.warn(
-        "[getParticipantAttemptDetails] Using fallback: answers from attempt.answers (quiz.questions count: %s, attempt.answers count: %s)",
-        attempt.quizLink.quiz.questions.length,
-        attempt.answers.length
+    // Always build full answers list from attempt.answers so we never lose data
+    // (e.g. when quiz.questions is empty in prod or IDs changed after quiz edit)
+    const answersFromAttempt: AnswerItem[] = attempt.answers.map((answer) => {
+      const selectedOptionIds = Array.isArray(answer.selectedOptionIds)
+        ? (answer.selectedOptionIds as string[])
+        : [];
+      const correctOptions = answer.question.options.filter((opt) => opt.isCorrect);
+      const correctOptionIds = correctOptions.map((opt) => opt.id);
+      const selectedOptions = answer.question.options.filter((opt) =>
+        selectedOptionIds.includes(opt.id)
       );
-      answers = attempt.answers.map((answer) => {
-        const selectedOptionIds = Array.isArray(answer.selectedOptionIds)
-          ? (answer.selectedOptionIds as string[])
-          : [];
-        const correctOptions = answer.question.options.filter((opt) => opt.isCorrect);
-        const correctOptionIds = correctOptions.map((opt) => opt.id);
-        const selectedOptions = answer.question.options.filter((opt) =>
-          selectedOptionIds.includes(opt.id)
-        );
-        return {
-          questionId: answer.question.id,
-          questionLabel: answer.question.label,
-          questionType: answer.question.type,
-          selectedOptionIds: selectedOptionIds as string[],
-          selectedOptions: selectedOptions.map((opt) => ({
-            id: opt.id,
-            label: opt.label,
-          })),
-          correctOptionIds,
-          correctOptions: correctOptions.map((opt) => ({
-            id: opt.id,
-            label: opt.label,
-          })),
-          isCorrect: answer.isCorrect,
-          timeSpent: answer.timeSpent,
-          answeredAt: answer.answeredAt,
-        };
-      });
-      questionOrder = attempt.answers.map((a, index) => ({
-        id: a.question.id,
-        order: index,
-      }));
-    }
+      return {
+        questionId: answer.question.id,
+        questionLabel: answer.question.label,
+        questionType: answer.question.type,
+        selectedOptionIds: selectedOptionIds as string[],
+        selectedOptions: selectedOptions.map((opt) => ({
+          id: opt.id,
+          label: opt.label,
+        })),
+        correctOptionIds,
+        correctOptions: correctOptions.map((opt) => ({
+          id: opt.id,
+          label: opt.label,
+        })),
+        isCorrect: answer.isCorrect,
+        timeSpent: answer.timeSpent,
+        answeredAt: answer.answeredAt,
+      };
+    });
+
+    const quizQuestionIds = attempt.quizLink.quiz.questions.map((q) => q.id);
+    const orderedIds =
+      quizQuestionIds.length > 0
+        ? [
+            ...quizQuestionIds,
+            ...answersFromAttempt
+              .map((a) => a.questionId)
+              .filter((id) => !quizQuestionIds.includes(id)),
+          ]
+        : answersFromAttempt.map((a) => a.questionId);
+
+    const answers = orderedIds
+      .map((id) => answersFromAttempt.find((a) => a.questionId === id))
+      .filter((a): a is AnswerItem => a !== undefined);
+
+    const questionOrder: Array<{ id: string; order: number }> = answers.map(
+      (a, index) => ({ id: a.questionId, order: index })
+    );
 
     return {
       success: true,
