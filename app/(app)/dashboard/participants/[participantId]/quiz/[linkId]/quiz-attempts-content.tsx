@@ -190,13 +190,6 @@ export function QuizAttemptsContent({
     try {
       const result = await getParticipantAttemptDetails(attemptId);
       if (result.success) {
-        const a = result.attempt;
-        console.log(
-          "[QuizAttempts] attemptId=%s reçu: answers=%s questionOrder=%s",
-          attemptId,
-          a.answers?.length ?? 0,
-          a.questionOrder?.length ?? 0
-        );
         setAttemptDetails(result.attempt);
       } else {
         showToast(result.error || t(locale, "common.error"), "error");
@@ -567,33 +560,20 @@ export function QuizAttemptsContent({
                 <h3 className="font-medium mb-4">
                   {t(locale, "dashboard.attemptDetails")}
                 </h3>
-                {(() => {
-                  type AnswerItem = (typeof attemptDetails.answers)[number];
-                  const sortedAnswers = attemptDetails.questionOrder
-                    ? attemptDetails.questionOrder
-                        .map((q) =>
-                          attemptDetails.answers.find(
-                            (a) => a.questionId === q.id,
-                          ),
-                        )
-                        .filter((a): a is AnswerItem => a != null)
-                    : attemptDetails.answers;
+                <div className="space-y-4">
+                  {(() => {
+                    type AnswerItem = (typeof attemptDetails.answers)[number];
+                    const sortedAnswers = attemptDetails.questionOrder
+                      ? attemptDetails.questionOrder
+                          .map((q) =>
+                            attemptDetails.answers.find(
+                              (a) => a.questionId === q.id,
+                            ),
+                          )
+                          .filter((a): a is AnswerItem => a != null)
+                      : attemptDetails.answers;
 
-                  return (
-                    <>
-                      {sortedAnswers.length === 0 && (
-                        <div
-                          className="mb-4 rounded-lg border border-amber-500/50 bg-amber-50 dark:bg-amber-950/30 px-4 py-3 text-sm text-amber-800 dark:text-amber-200"
-                          role="status"
-                        >
-  <strong>Diagnostic :</strong>{" "}
-                          {attemptDetails.answers.length} réponses reçues,{" "}
-                          {attemptDetails.questionOrder?.length ?? 0} dans
-                          l&apos;ordre → 0 affichées. attemptId=&quot;{attemptDetails.id}&quot; — voir pm2 logs quizlink.
-                        </div>
-                      )}
-                      <div className="space-y-4">
-                        {sortedAnswers.map((answer, index: number) => (
+                    return sortedAnswers.map((answer, index: number) => (
                       <div
                         key={answer.questionId}
                         className={cn(
@@ -687,11 +667,9 @@ export function QuizAttemptsContent({
                           </span>
                         </div>
                       </div>
-                    ))}
-                      </div>
-                    </>
-                  );
-                })()}
+                    ));
+                  })()}
+                </div>
               </div>
             </div>
           ) : (

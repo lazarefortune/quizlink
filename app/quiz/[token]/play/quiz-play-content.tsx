@@ -213,7 +213,6 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
       setIsSubmitting(true);
       setError(null);
 
-      // Validate that we have selected options
       if (!selectedOptionIds || selectedOptionIds.length === 0) {
         setError(t(locale, "quiz.noAnswer"));
         setIsSubmitting(false);
@@ -221,40 +220,48 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
       }
 
       const timeSpent = Math.floor((Date.now() - questionStartTime) / 1000);
+      const maxRetries = 3;
 
-      try {
-        const result = await submitAnswerForAttempt(
-          attempt.id,
-          questionId,
-          selectedOptionIds,
-          timeSpent
-        );
+      for (let attemptCount = 0; attemptCount < maxRetries; attemptCount++) {
+        try {
+          const result = await submitAnswerForAttempt(
+            attempt.id,
+            questionId,
+            selectedOptionIds,
+            timeSpent
+          );
 
-        if (!result.success) {
-          setError(result.error);
+          if (!result.success) {
+            setError(result.error);
+            setIsSubmitting(false);
+            return;
+          }
+
+          setAnswers((prev) =>
+            prev.map((a) => {
+              if (a.questionId === questionId) {
+                return {
+                  ...a,
+                  isVerified: true,
+                  isCorrect: result.isCorrect,
+                  correctOptionIds: result.correctOptionIds,
+                  timeSpent,
+                };
+              }
+              return a;
+            })
+          );
           setIsSubmitting(false);
           return;
+        } catch (err) {
+          if (attemptCount < maxRetries - 1) {
+            await new Promise((r) => setTimeout(r, 500));
+            continue;
+          }
+          setError(err instanceof Error ? err.message : "Failed to submit answer");
         }
-
-        setAnswers((prev) =>
-          prev.map((a) => {
-            if (a.questionId === questionId) {
-              return {
-                ...a,
-                isVerified: true,
-                isCorrect: result.isCorrect,
-                correctOptionIds: result.correctOptionIds,
-                timeSpent,
-              };
-            }
-            return a;
-          })
-        );
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to submit answer");
-      } finally {
-        setIsSubmitting(false);
       }
+      setIsSubmitting(false);
     },
     [attempt.id, questionStartTime, locale]
   );

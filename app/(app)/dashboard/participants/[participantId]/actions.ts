@@ -812,26 +812,7 @@ export async function getParticipantAttemptDetails(
       return { success: false, error: "Unauthorized" };
     }
 
-    // Debug: log counts for "Détails de la tentative" empty modal (pm2 logs quizlink)
-    const quizQuestionsCount = attempt.quizLink.quiz.questions?.length ?? 0;
-    const attemptAnswersCount = attempt.answers?.length ?? 0;
-    console.log(
-      "[getParticipantAttemptDetails] attemptId=%s quiz=%s attempt.answers=%s quiz.questions=%s",
-      attemptId,
-      attempt.quizLink.quiz.name,
-      attemptAnswersCount,
-      quizQuestionsCount
-    );
-
-    // Create a map of answers by questionId for quick lookup (skip answers whose question is missing)
     const answersWithQuestion = attempt.answers.filter((a) => a.question != null);
-    if (answersWithQuestion.length < attempt.answers.length) {
-      console.warn(
-        "[getParticipantAttemptDetails] attemptId=%s skipping %s answers with missing question",
-        attemptId,
-        attempt.answers.length - answersWithQuestion.length
-      );
-    }
     type AnswerItem = {
       questionId: string;
       questionLabel: string;
@@ -893,13 +874,6 @@ export async function getParticipantAttemptDetails(
 
     const questionOrder: Array<{ id: string; order: number }> = answers.map(
       (a, index) => ({ id: a.questionId, order: index })
-    );
-
-    console.log(
-      "[getParticipantAttemptDetails] attemptId=%s returning answers=%s questionOrder=%s",
-      attemptId,
-      answers.length,
-      questionOrder.length
     );
 
     return {

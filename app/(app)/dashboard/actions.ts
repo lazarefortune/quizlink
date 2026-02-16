@@ -219,6 +219,17 @@ export async function updateQuiz(quizId: string, quiz: QuizBuilder) {
       };
     }
 
+    const answersOnQuiz = await prisma.quizAnswer.count({
+      where: { question: { quizId } },
+    });
+    if (answersOnQuiz > 0) {
+      return {
+        success: false,
+        error:
+          "Ce quiz a des réponses enregistrées. Dupliquez le quiz pour le modifier sans perdre les statistiques.",
+      };
+    }
+
     // Delete existing questions and options, then recreate
     await prisma.$transaction([
       // Delete all options first (due to foreign key constraints)
