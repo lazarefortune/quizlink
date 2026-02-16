@@ -91,6 +91,7 @@ export function QuizAttemptsContent({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [attemptDetails, setAttemptDetails] = useState<{
+    id: string;
     quizName: string;
     participantName: string;
     score: number | null;
