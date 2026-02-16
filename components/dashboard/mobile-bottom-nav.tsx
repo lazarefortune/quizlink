@@ -65,17 +65,17 @@ export function MobileBottomNav() {
                   key={item.href}
                   type="button"
                   onClick={() => setIsCreateOpen(true)}
-                  className="flex flex-1 flex-col items-center gap-1 pb-1.5 pt-1 text-xs font-medium transition-colors text-blue"
+                  className="flex flex-1 flex-col items-center gap-1 pb-1.5 pt-1 text-sm font-medium transition-colors text-primary"
                 >
                   <span
                     className={cn(
-                      "flex h-10 w-10 items-center justify-center rounded-full bg-blue text-blue-foreground shadow-md -mt-4 transition-transform active:scale-95",
-                      isCreateActive && "ring-2 ring-blue/30 ring-offset-2 ring-offset-background",
+                      "flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md -mt-4 transition-transform active:scale-95",
+                      isCreateActive && "ring-2 ring-primary/30 ring-offset-2 ring-offset-background",
                     )}
                   >
                     <Icon className="h-6 w-6" />
                   </span>
-                  <span className="font-semibold">{t(locale, item.labelKey)}</span>
+                  <span className="font-black font-nunito">{t(locale, item.labelKey)}</span>
                 </button>
               );
             }
@@ -87,20 +87,20 @@ export function MobileBottomNav() {
                 className={cn(
                   "relative flex flex-1 flex-col items-center gap-1 py-2 text-xs font-medium transition-colors",
                   isCurrent
-                    ? "text-blue"
+                    ? "text-primary"
                     : "text-muted-foreground",
                 )}
               >
                 {isCurrent && (
-                  <span className="absolute top-0 left-1/2 -translate-x-1/2 h-[3px] w-8 rounded-full bg-blue" />
+                  <span className="absolute top-0 left-1/2 -translate-x-1/2 h-[3px] w-8 rounded-full bg-primary" />
                 )}
                 <Icon
                   className={cn(
                     "h-6 w-6 transition-colors",
-                    isCurrent ? "text-blue" : "text-muted-foreground",
+                    isCurrent ? "text-primary" : "text-muted-foreground",
                   )}
                 />
-                <span className={cn(isCurrent && "font-semibold")}>
+                <span className={cn(isCurrent && "font-black font-nunito")}>
                   {t(locale, item.labelKey)}
                 </span>
               </Link>
@@ -115,7 +115,7 @@ export function MobileBottomNav() {
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
         <DialogContent className="sm:max-w-sm mx-auto">
           <DialogHeader>
-            <DialogTitle className="text-center text-xl">
+            <DialogTitle className="text-center text-xl font-black font-nunito">
               {locale === "fr" ? "Crée ton quiz !" : "Create your quiz!"}
             </DialogTitle>
           </DialogHeader>
@@ -129,7 +129,7 @@ export function MobileBottomNav() {
                 <Pen className="h-7 w-7" />
               </span>
               <div className="text-center">
-                <p className="text-sm font-semibold">{t(locale, "nav.createManually")}</p>
+                <p className="text-sm font-black font-nunito">{t(locale, "nav.createManually")}</p>
               </div>
             </Link>
             <Link
@@ -141,7 +141,7 @@ export function MobileBottomNav() {
                 <Sparkles className="h-7 w-7" />
               </span>
               <div className="text-center">
-                <p className="text-sm font-semibold">{t(locale, "nav.createWithAI")}</p>
+                <p className="text-sm font-black font-nunito">{t(locale, "nav.createWithAI")}</p>
               </div>
             </Link>
           </div>

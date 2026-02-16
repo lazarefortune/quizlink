@@ -121,12 +121,9 @@ export function ContentDropzone({
             <div className="flex flex-col items-center gap-4 p-8">
               <FileText className="h-12 w-12 text-primary" />
               <div className="text-center">
-                <p className="font-medium">{file.name}</p>
+                <p className="font-nunito font-black text-lg">{file.name}</p>
                 <p className="text-sm text-muted-foreground">
                   {(file.size / 1024 / 1024).toFixed(2)} MB
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {t(locale, "generate.costInfo", { cost: "2" })}
                 </p>
               </div>
               <Button
@@ -176,7 +173,7 @@ export function ContentDropzone({
             rows={12}
             disabled={disabled}
             placeholder={t(locale, "generate.pasteOrWriteText")}
-            className="border-0 resize-none focus-visible:ring-0"
+            className="border-0 resize-none focus-visible:ring-0 p-4"
           />
         </div>
       )}

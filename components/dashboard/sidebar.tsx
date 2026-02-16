@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { FileText, Users, Shield, Sparkles, Plus, User, House, Globe } from "lucide-react";
+import Image from "next/image";
+import { FileText, Users, Sparkles, Plus, House, Globe, ShoppingBag } from "lucide-react";
 
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
@@ -25,21 +26,34 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "flex h-full flex-col border-r border-border bg-white dark:bg-background",
-        "flex h-full flex-col border-r border-border bg-white dark:",
+        "flex h-full flex-col border-r border-border bg-card",
         className,
       )}
     >
+      {/* Logo */}
       <div className="flex h-14 shrink-0 items-center border-b border-border/60 px-4">
         <Link
           href="/dashboard"
           onClick={onNavClick}
-          className="font-bold text-lg text-foreground"
+          className="flex items-center gap-2.5"
         >
-          QuizLink
+          <div className="relative h-9 w-9 shrink-0">
+            <Image
+              src="/mascot.jpg"
+              alt="QuizLink"
+              fill
+              className="object-contain"
+              sizes="36px"
+            />
+          </div>
+          <span className="font-black text-lg text-foreground">
+            Quiz<span className="text-primary">Link</span>
+          </span>
         </Link>
       </div>
-      <nav className="flex-1 space-y-0.5 overflow-y-auto p-3">
+
+      {/* Nav */}
+      <nav className="flex-1 space-y-1 overflow-y-auto p-3">
         <NavItem
           href="/dashboard"
           label={t(locale, "dashboard.sidebar.overview")}
@@ -78,22 +92,11 @@ export function Sidebar({
         />
         <Separator className="my-2" />
         <NavItem
-          href="/account"
-          label={t(locale, "dashboard.sidebar.account")}
-          icon={User}
+          href="/account/coins"
+          label={t(locale, "dashboard.sidebar.shop")}
+          icon={ShoppingBag}
           onClick={onNavClick}
         />
-        {isAdmin && (
-          <>
-            <Separator className="my-2" />
-            <NavItem
-              href="/admin"
-              label={t(locale, "dashboard.sidebar.admin")}
-              icon={Shield}
-              onClick={onNavClick}
-            />
-          </>
-        )}
       </nav>
     </aside>
   );

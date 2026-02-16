@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +15,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Coins,
   ArrowUpCircle,
   ArrowDownCircle,
@@ -22,11 +29,17 @@ import {
   Check,
   Loader2,
   Zap,
-  ArrowLeft,
+  History,
+  FileText,
+  ZapIcon,
 } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
-import { getUserCoinTransactions, createCheckoutSession, type CoinTransaction } from "./actions";
+import {
+  getUserCoinTransactions,
+  createCheckoutSession,
+  type CoinTransaction,
+} from "./actions";
 import { useToast } from "@/components/ui/toast";
 import { format } from "date-fns";
 import { fr, enUS } from "date-fns/locale";
@@ -54,6 +67,7 @@ export function CoinsContent() {
   const [packs, setPacks] = useState<CoinPack[]>([]);
   const [isLoadingPacks, setIsLoadingPacks] = useState(true);
   const [loadingPackId, setLoadingPackId] = useState<string | null>(null);
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -83,7 +97,7 @@ export function CoinsContent() {
           setPacks(data.packs || []);
         }
       } catch {
-        // Silently fail — packs just won't show
+        // Silently fail
       } finally {
         setIsLoadingPacks(false);
       }
@@ -101,9 +115,7 @@ export function CoinsContent() {
         window.location.assign(result.url);
       } else {
         const message =
-          "error" in result
-            ? result.error
-            : t(locale, "pricing.checkoutError");
+          "error" in result ? result.error : t(locale, "pricing.checkoutError");
         showToast(message, "error");
         setLoadingPackId(null);
       }
@@ -118,76 +130,72 @@ export function CoinsContent() {
 
   return (
     <div className="p-4 sm:p-5 md:p-6 lg:p-8">
-      <div className="mx-auto max-w-3xl space-y-8">
-        {/* Back + Title */}
+      <div className="mx-auto max-w-4xl space-y-8 sm:space-y-10">
+        {/* Hero: titre boutique */}
         <div>
-          <h1 className="h1 text-2xl sm:text-3xl font-bold">
+          <h1 className="h1 text-2xl font-black tracking-tight text-foreground sm:text-3xl md:text-4xl">
             {t(locale, "account.coins.title")}
           </h1>
+          <p className="mt-1 text-base text-muted-foreground">
+            {t(locale, "account.coins.subtitle")}
+          </p>
         </div>
 
-        {/* Balance card */}
-        <Card className="overflow-hidden">
-          <div className="relative">
-            <div className="absolute inset-0" />
-            <CardContent className="relative flex flex-col sm:flex-row items-center justify-between gap-4 p-6 sm:p-8">
-              <div className="flex items-center gap-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue/15 text-blue">
-                  <Coins className="h-7 w-7" />
-                </div>
-                <div>
-                  <p className="text-sm uppercase text-muted-foreground font-medium">
-                    {t(locale, "account.coins.currentBalance")}
-                  </p>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-4xl font-bold tabular-nums">
-                      {isLoading ? "–" : balance}
-                    </span>
-                    <span className="text-lg text-muted-foreground">
-                      {t(locale, "account.coins.coins")}
-                    </span>
-                  </div>
+        {/* Balance + actions */}
+        <Card className="overflow-hidden border-2">
+          <CardContent className="relative flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-6 sm:p-8">
+            <div className="flex items-center gap-4">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-blue/15 text-blue">
+                <Coins className="h-7 w-7" />
+              </div>
+              <div>
+                <p className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
+                  {t(locale, "account.coins.currentBalance")}
+                </p>
+                <div className="flex items-baseline gap-2 mt-0.5">
+                  <span className="text-4xl font-black tabular-nums text-foreground">
+                    {isLoading ? "–" : balance}
+                  </span>
+                  <span className="text-lg font-semibold text-muted-foreground">
+                    {t(locale, "account.coins.coins")}
+                  </span>
                 </div>
               </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2">
               <Button
-                variant="blue"
-                size="lg"
-                className="w-full sm:w-auto shrink-0"
-                onClick={() => {
-                  document
-                    .getElementById("shop-section")
-                    ?.scrollIntoView({ behavior: "smooth" });
-                }}
+                variant="secondary"
+                size="default"
+                className="gap-2 font-semibold"
+                onClick={() => setHistoryModalOpen(true)}
               >
-                <ShoppingBag className="h-4 w-4" />
-                {locale === "fr" ? "Recharger" : "Top up"}
+                <History className="h-4 w-4" />
+                {t(locale, "account.coins.history")}
               </Button>
-            </CardContent>
-          </div>
+            </div>
+          </CardContent>
         </Card>
 
         {/* Low balance alert */}
         {!isLoading && isLowBalance && (
-          <div className="flex items-center gap-3 rounded-lg border border-border bg-warning/5 p-4">
+          <div className="flex items-center gap-3 rounded-xl border-2 border-warning/30 bg-warning/5 p-4">
             <Zap className="h-5 w-5 text-warning shrink-0" />
-            <p className="text-sm">
+            <p className="text-sm font-medium">
               {t(locale, "account.coins.lowBalanceMessage")}
             </p>
           </div>
         )}
 
-        {/* Shop section */}
-        <div id="shop-section" className="space-y-4 scroll-mt-8">
-          <div>
-            <h2 className="h1 text-xl font-semibold flex items-center gap-2">
-              {t(locale, "account.coins.shopTitle")}
-            </h2>
-          </div>
+        {/* Nos offres — extensible pour d'autres produits plus tard */}
+        <section id="shop-offers" className="scroll-mt-8 space-y-6">
+          <h2 className="h2 text-xl font-black text-foreground sm:text-2xl">
+            {t(locale, "account.coins.ourOffers")}
+          </h2>
 
           {isLoadingPacks ? (
-            <div className="flex sm:grid sm:grid-cols-3 gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {[1, 2, 3].map((i) => (
-                <Card key={i} className="animate-pulse shrink-0 w-[min(85vw,280px)] sm:w-auto">
+                <Card key={i} className="animate-pulse">
                   <CardContent className="p-6 space-y-4">
                     <div className="h-4 bg-muted rounded w-1/2" />
                     <div className="h-8 bg-muted rounded w-1/3" />
@@ -197,45 +205,48 @@ export function CoinsContent() {
               ))}
             </div>
           ) : packs.length === 0 ? (
-            <Card className="border-dashed">
-              <CardContent className="flex flex-col items-center justify-center py-10 text-center">
-                <ShoppingBag className="h-10 w-10 text-muted-foreground mb-3" />
-                <p className="text-muted-foreground text-sm">
+            <Card variant="playful" className="border-dashed">
+              <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                <ShoppingBag className="h-12 w-12 text-muted-foreground mb-4" />
+                <p className="text-muted-foreground font-medium">
                   {t(locale, "pricing.noPacksAvailable")}
                 </p>
               </CardContent>
             </Card>
           ) : (
-            <div className="flex sm:grid sm:grid-cols-3 gap-4 overflow-x-auto pb-2 sm:overflow-visible sm:pb-0 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
               {packs.map((pack) => {
                 const isPopular = pack.isPopular;
                 return (
                   <Card
                     key={pack.id}
-                    className={`relative transition-all duration-200 shrink-0 w-[min(85vw,280px)] sm:w-auto snap-center ${
+                    variant="playful"
+                    className={`relative transition-all duration-200 ${
                       isPopular
-                        ? "border-primary shadow-md ring-1 ring-primary/20"
-                        : "hover:border-primary/30 hover:shadow-sm"
+                        ? "border-primary shadow-md ring-2 ring-primary/20"
+                        : "hover:border-primary/30 hover:shadow-md"
                     }`}
                   >
                     {isPopular && (
-                      <Badge className="absolute -top-2.5 left-1/2 -translate-x-1/2 z-10">
+                      <Badge className="absolute -top-2.5 left-1/2 -translate-x-1/2 z-10 font-bold">
                         {t(locale, "pricing.popular")}
                       </Badge>
                     )}
-                    <CardContent className="p-5 space-y-4">
+                    <CardContent className="p-5 sm:p-6 space-y-4">
                       <div>
-                        <p className="h1 font-semibold text-base">
+                        <p className="font-nunito font-black text-foreground text-lg uppercase">
                           {pack.displayName}
                         </p>
                         <div className="flex items-center gap-1.5 mt-1">
-                          <Coins className="h-4 w-4 text-primary" />
-                          <span className="text-sm text-muted-foreground">
+                          <Coins className="h-5 w-5 text-primary" />
+                          <span className="text-base font-nunito font-semibold text-muted-foreground">
                             {pack.coins} {t(locale, "account.coins.coins")}
                           </span>
                         </div>
                       </div>
-                      <p className="text-3xl font-bold">{pack.price}€</p>
+                      <p className="font-nunito text-3xl font-black text-foreground">
+                        {pack.price}€
+                      </p>
                       <ul className="space-y-1.5 text-sm text-muted-foreground">
                         <li className="flex items-center gap-2">
                           <Check className="h-4 w-4 text-primary shrink-0" />
@@ -248,18 +259,23 @@ export function CoinsContent() {
                         </li>
                       </ul>
                       <Button
-                        variant={isPopular ? "blue" : "secondary"}
-                        className="w-full"
+                        variant={isPopular ? "primary" : "secondary"}
+                        className="w-full font-bold"
                         disabled={loadingPackId !== null}
                         onClick={() => handlePurchase(pack.id)}
                       >
                         {loadingPackId === pack.id ? (
                           <>
-                            <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
                             {t(locale, "pricing.loading")}
                           </>
                         ) : (
-                          t(locale, "pricing.recharge")
+                          <>
+                            <ZapIcon
+                              className="h-4 w-4"
+                            />
+                            {t(locale, "pricing.purchase")}
+                          </>
                         )}
                       </Button>
                     </CardContent>
@@ -268,54 +284,62 @@ export function CoinsContent() {
               })}
             </div>
           )}
-        </div>
+        </section>
 
-        {/* Transaction History */}
-        <div className="space-y-4">
-          <div>
-            <h2 className="h1 text-xl font-semibold">
-              {t(locale, "account.coins.transactionHistory")}
-            </h2>
-          </div>
+        {/* Factures — placeholder pour intégration future */}
+        <section className="space-y-4">
+          <h2 className="h2 text-xl font-black text-foreground sm:text-2xl">
+            {t(locale, "account.coins.invoices")}
+          </h2>
+          <Card variant="playful" className="border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-10 text-center">
+              <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+              <p className="font-semibold text-muted-foreground">
+                {t(locale, "account.coins.invoicesComingSoon")}
+              </p>
+              <p className="text-sm text-muted-foreground mt-1 max-w-sm">
+                {t(locale, "account.coins.invoicesDescription")}
+              </p>
+            </CardContent>
+          </Card>
+        </section>
+      </div>
 
-          {isLoading ? (
-            <Card>
-              <CardContent className="flex items-center justify-center py-8">
-                <p className="text-muted-foreground h1">
-                  {t(locale, "common.loading")}
-                </p>
-              </CardContent>
-            </Card>
-          ) : error ? (
-            <Card>
-              <CardContent className="flex items-center justify-center py-8">
-                <p className="text-destructive h1">{error}</p>
-              </CardContent>
-            </Card>
-          ) : transactions.length === 0 ? (
-            <Card className="border-dashed">
-              <CardContent className="flex flex-col items-center justify-center py-10 text-center">
-                <Coins className="h-10 w-10 text-muted-foreground mb-3" />
-                <p className="text-muted-foreground h1 text-sm">
+      {/* Modale Historique */}
+      <Dialog open={historyModalOpen} onOpenChange={setHistoryModalOpen}>
+        <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black">
+              {t(locale, "account.coins.historyDescription")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="overflow-y-auto flex-1 min-h-0 -mx-6 px-6">
+            {isLoading ? (
+              <p className="text-muted-foreground font-medium py-4">
+                {t(locale, "common.loading")}
+              </p>
+            ) : error ? (
+              <p className="text-destructive font-medium py-4">{error}</p>
+            ) : transactions.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-10 text-center">
+                <History className="h-12 w-12 text-muted-foreground mb-3" />
+                <p className="text-muted-foreground font-medium">
                   {t(locale, "account.coins.noTransactions")}
                 </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <>
-              {/* Desktop table */}
-              <Card className="hidden sm:block">
-                <div className="overflow-x-auto">
+              </div>
+            ) : (
+              <>
+                <div className="hidden sm:block overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>
+                        <TableHead className="font-semibold">
                           {t(locale, "account.coins.date")}
                         </TableHead>
-                        <TableHead>
+                        <TableHead className="font-semibold">
                           {t(locale, "account.coins.amount")}
                         </TableHead>
-                        <TableHead>
+                        <TableHead className="font-semibold">
                           {t(locale, "account.coins.reason")}
                         </TableHead>
                       </TableRow>
@@ -338,15 +362,17 @@ export function CoinsContent() {
                                   <ArrowDownCircle className="h-4 w-4 text-red-500 dark:text-red-400" />
                                 )}
                                 <Badge
-                                  variant={isCredit ? "default" : "destructive"}
-                                  className="font-mono text-white dark:text-white"
+                                  variant={
+                                    isCredit ? "default" : "destructive"
+                                  }
+                                  className="font-mono font-bold"
                                 >
                                   {isCredit ? "+" : ""}
                                   {tx.amount}
                                 </Badge>
                               </div>
                             </TableCell>
-                            <TableCell className="text-muted-foreground">
+                            <TableCell className="text-muted-foreground text-sm">
                               {tx.reason}
                             </TableCell>
                           </TableRow>
@@ -355,46 +381,46 @@ export function CoinsContent() {
                     </TableBody>
                   </Table>
                 </div>
-              </Card>
-
-              {/* Mobile cards */}
-              <div className="space-y-3 sm:hidden">
-                {transactions.map((tx) => {
-                  const isCredit = tx.amount > 0;
-                  return (
-                    <Card key={tx.id}>
-                      <CardContent className="p-4 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <p className="text-xs text-muted-foreground">
-                            {format(new Date(tx.createdAt), "PPp", {
-                              locale: dateLocale,
-                            })}
-                          </p>
-                          <div className="flex items-center gap-1.5">
-                            {isCredit ? (
-                              <ArrowUpCircle className="h-4 w-4 text-green-500" />
-                            ) : (
-                              <ArrowDownCircle className="h-4 w-4 text-red-500" />
-                            )}
-                            <Badge
-                              variant={isCredit ? "default" : "destructive"}
-                              className="font-mono"
-                            >
-                              {isCredit ? "+" : ""}
-                              {tx.amount}
-                            </Badge>
+                <div className="space-y-3 sm:hidden">
+                  {transactions.map((tx) => {
+                    const isCredit = tx.amount > 0;
+                    return (
+                      <Card key={tx.id}>
+                        <CardContent className="p-4 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs text-muted-foreground">
+                              {format(new Date(tx.createdAt), "PPp", {
+                                locale: dateLocale,
+                              })}
+                            </p>
+                            <div className="flex items-center gap-1.5">
+                              {isCredit ? (
+                                <ArrowUpCircle className="h-4 w-4 text-green-500" />
+                              ) : (
+                                <ArrowDownCircle className="h-4 w-4 text-red-500" />
+                              )}
+                              <Badge
+                                variant={
+                                  isCredit ? "default" : "destructive"
+                                }
+                                className="font-mono font-bold"
+                              >
+                                {isCredit ? "+" : ""}
+                                {tx.amount}
+                              </Badge>
+                            </div>
                           </div>
-                        </div>
-                        <p className="text-sm">{tx.reason}</p>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            </>
-          )}
-        </div>
-      </div>
+                          <p className="text-sm font-medium">{tx.reason}</p>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

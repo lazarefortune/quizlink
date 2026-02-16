@@ -14,8 +14,6 @@ type DashboardShellProps = {
   title?: string;
 };
 
-const routeTitles: Record<string, string> = {};
-
 function getTitleFromPath(pathname: string | null, locale: Locale): string {
   if (!pathname) return t(locale, "dashboard.sidebar.overview");
   if (pathname === "/dashboard") return t(locale, "dashboard.sidebar.overview");
@@ -31,7 +29,7 @@ function getTitleFromPath(pathname: string | null, locale: Locale): string {
   if (pathname.startsWith("/account")) return t(locale, "dashboard.sidebar.account");
   if (pathname.startsWith("/generate")) return t(locale, "nav.generate");
   if (pathname.startsWith("/builder")) return t(locale, "nav.create");
-  return routeTitles[pathname] ?? t(locale, "dashboard.sidebar.overview");
+  return t(locale, "dashboard.sidebar.overview");
 }
 
 export function DashboardShell({ children, title }: DashboardShellProps) {
@@ -39,8 +37,7 @@ export function DashboardShell({ children, title }: DashboardShellProps) {
   const { locale } = useLocale();
   const { data: session } = useSession();
 
-  const pageTitle =
-    title ?? getTitleFromPath(pathname, locale);
+  const pageTitle = title ?? getTitleFromPath(pathname, locale);
   const isAdmin = session?.user?.role === "ADMIN";
 
   return (
@@ -53,7 +50,7 @@ export function DashboardShell({ children, title }: DashboardShellProps) {
       {/* Main content: offset for desktop sidebar */}
       <div className="flex min-w-0 flex-1 flex-col lg:pl-56 xl:pl-64">
         <Topbar />
-        <main className="min-h-0 flex-1 overflow-auto bg-neutral-50 dark:bg-background pb-16 lg:pb-0">
+        <main className="min-h-0 flex-1 overflow-auto bg-background pb-16 lg:pb-0">
           {children}
         </main>
       </div>

@@ -10,7 +10,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { Lock, Sparkles } from "lucide-react";
+import { Lock, Sparkles, Coins, Zap } from "lucide-react";
 import { ContentDropzone } from "@/components/generate/content-dropzone";
 import { GenerationOptionsModal } from "@/components/generate/generation-options-modal";
 import { getAiLimits, validateTextLength, validateQuestionCount } from "@/lib/ai/ai-limits";
@@ -23,7 +23,6 @@ import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { useSession } from "next-auth/react";
 import { Alert } from "@/components/ui/alert";
-import { Card, CardContent } from "@/components/ui/card";
 import { CoinsRequiredOverlay } from "@/components/coins-required-overlay";
 import type { QuizVisibility } from "@/types/quiz-builder";
 
@@ -302,7 +301,9 @@ export function GeneratePage() {
       <div className="mx-auto max-w-4xl space-y-4 sm:space-y-6">
         <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="space-y-2">
-            <h1 className="text-2xl sm:text-4xl font-bold">{t(locale, "generate.title")}</h1>
+            <h1 className="text-2xl sm:text-4xl font-bold">
+              {t(locale, "generate.title")}
+            </h1>
             <p className="text-base text-muted-foreground">
               {t(locale, "generate.subtitle")}
             </p>
@@ -336,28 +337,36 @@ export function GeneratePage() {
                   <TabsTrigger value="DOCUMENT" className="whitespace-nowrap">
                     {t(locale, "generate.tabs.document")}
                   </TabsTrigger>
-                  <TabsTrigger value="IMAGE" disabled className="whitespace-nowrap">
+                  <TabsTrigger
+                    value="IMAGE"
+                    disabled
+                    className="whitespace-nowrap"
+                  >
                     <Lock className="h-3 w-3 mr-2" />
                     {t(locale, "generate.tabs.image")}
                   </TabsTrigger>
-                  <TabsTrigger value="VIDEO" disabled className="whitespace-nowrap">
+                  <TabsTrigger
+                    value="VIDEO"
+                    disabled
+                    className="whitespace-nowrap"
+                  >
                     <Lock className="h-3 w-3 mr-2" />
                     {t(locale, "generate.tabs.video")}
                   </TabsTrigger>
                 </TabsList>
-                  <TabsContent value="TEXT" className="mt-6">
-                      <ContentDropzone
-                          sourceType="TEXT"
-                          textContent={textContent}
-                          file={null}
-                          onTextChange={setTextContent}
-                          onFileChange={() => {}}
-                          error={error}
-                          disabled={isLoading}
-                          locale={locale}
-                      />
-                  </TabsContent>
-                  <TabsContent value="DOCUMENT" className="mt-6">
+                <TabsContent value="TEXT" className="mt-6">
+                  <ContentDropzone
+                    sourceType="TEXT"
+                    textContent={textContent}
+                    file={null}
+                    onTextChange={setTextContent}
+                    onFileChange={() => {}}
+                    error={error}
+                    disabled={isLoading}
+                    locale={locale}
+                  />
+                </TabsContent>
+                <TabsContent value="DOCUMENT" className="mt-6">
                   <ContentDropzone
                     sourceType="DOCUMENT"
                     textContent=""
@@ -373,7 +382,9 @@ export function GeneratePage() {
                   <div className="flex min-h-[300px] items-center justify-center rounded-lg border-2 border-dashed border-muted">
                     <div className="text-center">
                       <Lock className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                      <p className="font-medium">{t(locale, "generate.uploadComingSoon")}</p>
+                      <p className="font-medium">
+                        {t(locale, "generate.uploadComingSoon")}
+                      </p>
                       <p className="text-sm text-muted-foreground mt-2">
                         {t(locale, "generate.createAccountToUnlock")}
                       </p>
@@ -384,7 +395,9 @@ export function GeneratePage() {
                   <div className="flex min-h-[300px] items-center justify-center rounded-lg border-2 border-dashed border-muted">
                     <div className="text-center">
                       <Lock className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                      <p className="font-medium">{t(locale, "generate.uploadComingSoon")}</p>
+                      <p className="font-medium">
+                        {t(locale, "generate.uploadComingSoon")}
+                      </p>
                       <p className="text-sm text-muted-foreground mt-2">
                         {t(locale, "generate.createAccountToUnlock")}
                       </p>
@@ -400,14 +413,17 @@ export function GeneratePage() {
                   disabled={true}
                   className="w-full sm:w-auto"
                 >
-                  <Sparkles className="h-4 w-4" />
+                  <Zap className="h-4 w-4" />
                   {t(locale, "generate.generateButton")}
                 </Button>
+                <p className="text-base text-muted-foreground text-center">
+                  {t(locale, "generate.noContent")}
+                </p>
                 <Link
                   href="/builder"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-base text-primary hover:underline transition-colors"
                 >
-                  {t(locale, "generate.noContent")}
+                  {t(locale, "generate.noContentDescription")}
                 </Link>
               </div>
             </div>
@@ -426,17 +442,31 @@ export function GeneratePage() {
               className="w-full"
             >
               <TabsList className="flex w-full overflow-x-auto sm:grid sm:grid-cols-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                <TabsTrigger value="TEXT" className="whitespace-nowrap">
+                <TabsTrigger
+                  value="TEXT"
+                  className="whitespace-nowrap font-nunito text-base font-black"
+                >
                   {t(locale, "generate.tabs.text")}
                 </TabsTrigger>
-                <TabsTrigger value="DOCUMENT" className="whitespace-nowrap">
+                <TabsTrigger
+                  value="DOCUMENT"
+                  className="whitespace-nowrap font-nunito text-base font-black"
+                >
                   {t(locale, "generate.tabs.document")}
                 </TabsTrigger>
-                <TabsTrigger value="IMAGE" disabled className="whitespace-nowrap">
+                <TabsTrigger
+                  value="IMAGE"
+                  disabled
+                  className="whitespace-nowrap font-nunito text-base font-black"
+                >
                   <Lock className="h-3 w-3 mr-2" />
                   {t(locale, "generate.tabs.image")}
                 </TabsTrigger>
-                <TabsTrigger value="VIDEO" disabled className="whitespace-nowrap">
+                <TabsTrigger
+                  value="VIDEO"
+                  disabled
+                  className="whitespace-nowrap font-nunito text-base font-black"
+                >
                   <Lock className="h-3 w-3 mr-2" />
                   {t(locale, "generate.tabs.video")}
                 </TabsTrigger>
@@ -471,10 +501,12 @@ export function GeneratePage() {
                 />
                 {textContent.length > 0 && (
                   <div className="mt-2 text-xs text-muted-foreground">
-                    {textContent.length} / {limits.maxTextLength || "∞"} {t(locale, "generate.characterCount")}
+                    {textContent.length} / {limits.maxTextLength || "∞"}{" "}
+                    {t(locale, "generate.characterCount")}
                     {textContent.length < limits.minTextLength && (
                       <span className="text-muted-foreground ml-2">
-                        ({t(locale, "generate.minimumRequired")} {limits.minTextLength})
+                        ({t(locale, "generate.minimumRequired")}{" "}
+                        {limits.minTextLength})
                       </span>
                     )}
                   </div>
@@ -485,7 +517,9 @@ export function GeneratePage() {
                 <div className="flex min-h-[300px] items-center justify-center rounded-lg border-2 border-dashed border-muted">
                   <div className="text-center">
                     <Lock className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                    <p className="font-medium">{t(locale, "generate.uploadComingSoon")}</p>
+                    <p className="font-medium">
+                      {t(locale, "generate.uploadComingSoon")}
+                    </p>
                     <p className="text-sm text-muted-foreground mt-2">
                       {t(locale, "generate.createAccountToUnlock")}
                     </p>
@@ -497,7 +531,9 @@ export function GeneratePage() {
                 <div className="flex min-h-[300px] items-center justify-center rounded-lg border-2 border-dashed border-muted">
                   <div className="text-center">
                     <Lock className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                    <p className="font-medium">{t(locale, "generate.uploadComingSoon")}</p>
+                    <p className="font-medium">
+                      {t(locale, "generate.uploadComingSoon")}
+                    </p>
                     <p className="text-sm text-muted-foreground mt-2">
                       {t(locale, "generate.createAccountToUnlock")}
                     </p>
@@ -505,36 +541,6 @@ export function GeneratePage() {
                 </div>
               </TabsContent>
             </Tabs>
-
-            {/* Coin Cost Info - Only show for authenticated users */}
-            {session?.user && session.user.role !== "ADMIN" && (
-              <Card className="bg-muted/50">
-                <CardContent className="pt-6">
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium">
-                      {t(locale, "generate.costInfo", { cost: "2" })}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {t(locale, "generate.currentBalance", {
-                        balance: (session.user.coinBalance || 0).toString(),
-                      })}
-                    </p>
-                    {!hasEnoughCoins && (
-                      <div className="mt-3 pt-3 border-t">
-                        <p className="text-sm text-destructive font-medium mb-2">
-                          {t(locale, "generate.notEnoughCoins")}
-                        </p>
-                        <Link href="/account/coins">
-                          <Button variant="primary" size="sm">
-                            {t(locale, "generate.viewOffers")}
-                          </Button>
-                        </Link>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
 
             {error && (
               <Alert variant="error">
@@ -551,30 +557,58 @@ export function GeneratePage() {
               </Alert>
             )}
 
-            <div className="flex flex-col items-center gap-4">
-              <Button
-                variant="primary"
-                size="lg"
-                onClick={handleGenerate}
-                disabled={
-                  isLoading ||
-                  (session?.user && (session.user.coinBalance || 0) < 2 && session.user.role !== "ADMIN") ||
-                  (activeTab === "DOCUMENT" && !file) ||
-                  (activeTab === "TEXT" && !textContent.trim())
-                }
-                isLoading={isLoading}
-                className="w-full sm:w-auto"
-              >
-                <Sparkles className="h-4 w-4" />
-                {isLoading ? t(locale, "generate.generating") : t(locale, "generate.generateButton")}
-              </Button>
-
-              <Link
-                href="/builder"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {t(locale, "generate.noContent")}
-              </Link>
+            <div className="flex flex-col items-center gap-3">
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <Button
+                  variant="primary"
+                  size="lg"
+                  onClick={handleGenerate}
+                  disabled={
+                    isLoading ||
+                    (session?.user &&
+                      (session.user.coinBalance || 0) < 2 &&
+                      session.user.role !== "ADMIN") ||
+                    (activeTab === "DOCUMENT" && !file) ||
+                    (activeTab === "TEXT" && !textContent.trim())
+                  }
+                  isLoading={isLoading}
+                  className="w-full sm:w-auto rounded-xl font-bold"
+                >
+                  <Zap className="h-4 w-4" />
+                  {isLoading
+                    ? t(locale, "generate.generating")
+                    : t(locale, "generate.generateButton")} {" "} ( {t(locale, "generate.costPerGeneration")} )
+                </Button>
+              </div>
+              {session?.user && session.user.role !== "ADMIN" && (
+                <p className="text-sm text-muted-foreground text-center">
+                  {hasEnoughCoins ? (
+                    t(locale, "generate.yourBalance", {
+                      balance: (session.user.coinBalance || 0).toString(),
+                    })
+                  ) : (
+                    <>
+                      {t(locale, "generate.notEnoughCoins")}
+                      {" · "}
+                      <Link
+                        href="/account/coins"
+                        className="font-semibold text-primary hover:underline"
+                      >
+                        {t(locale, "generate.viewOffers")}
+                      </Link>
+                    </>
+                  )}
+                </p>
+              )}
+              <p className="text-base text-muted-foreground text-center">
+                {t(locale, "generate.noContent")}{" "}
+                <Link
+                  href="/builder"
+                  className="text-base text-primary hover:underline transition-colors"
+                >
+                  {t(locale, "generate.noContentDescription")}
+                </Link>
+              </p>
             </div>
           </>
         )}

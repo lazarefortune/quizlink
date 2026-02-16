@@ -408,10 +408,10 @@ export function AccountContent({ user: initialUser }: AccountContentProps) {
         <div className="max-w-xl space-y-5 sm:space-y-6">
           {/* Compte */}
           <div className="space-y-2">
-            <h2 className="text-lg h2 font-semibold text-muted-foreground px-1">
+            <h2 className="text-lg h2 font-semibold text-muted-foreground px-1 uppercase">
               {locale === "fr" ? "Compte" : "Account"}
             </h2>
-            <Card>
+            <Card className="border-2">
               <CardContent className="p-1.5 space-y-0.5">
                 <SettingsRow
                   icon={User}
@@ -451,10 +451,10 @@ export function AccountContent({ user: initialUser }: AccountContentProps) {
 
           {/* Sécurité */}
           <div className="space-y-2">
-            <h2 className="text-lg h2 font-semibold text-muted-foreground px-1">
+            <h2 className="text-lg h2 font-semibold text-muted-foreground px-1 uppercase">
               {t(locale, "account.security.title")}
             </h2>
-            <Card>
+            <Card className="border-2">
               <CardContent className="p-1.5">
                 <SettingsRow
                   icon={Lock}
@@ -467,10 +467,10 @@ export function AccountContent({ user: initialUser }: AccountContentProps) {
 
           {/* Zone de danger */}
           <div className="space-y-2">
-            <h2 className="text-lg h2 font-semibold text-red-500 dark:text-red-400 px-1">
+            <h2 className="text-lg h2 font-semibold text-red-500 dark:text-red-400 px-1 uppercase">
               {t(locale, "account.dangerZone.title")}
             </h2>
-            <Card className="border-red-500 dark:border-red-400">
+            <Card className="border-2 border-red-500 dark:border-red-400">
               <CardContent className="p-1.5">
                 <SettingsRow
                   icon={Trash2}

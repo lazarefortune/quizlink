@@ -16,7 +16,7 @@ export function CoinsRequiredOverlay() {
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
             <Coins className="h-6 w-6 text-primary" />
           </div>
-          <CardTitle className="text-2xl">
+          <CardTitle className="text-2xl font-nunito font-black">
             {t(locale, "generate.insufficientCoinsTitle")}
           </CardTitle>
           <CardDescription className="text-base">
