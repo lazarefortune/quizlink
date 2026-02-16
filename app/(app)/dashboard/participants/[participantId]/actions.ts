@@ -812,42 +812,26 @@ export async function getParticipantAttemptDetails(
       return { success: false, error: "Unauthorized" };
     }
 
-    // Create a map of answers by questionId for quick lookup
-    const answersMap = new Map(
-      attempt.answers.map((answer) => {
-        const selectedOptionIds = Array.isArray(answer.selectedOptionIds)
-          ? (answer.selectedOptionIds as string[])
-          : [];
-        const correctOptions = answer.question.options.filter((opt) => opt.isCorrect);
-        const correctOptionIds = correctOptions.map((opt) => opt.id);
-        const selectedOptions = answer.question.options.filter((opt) =>
-          selectedOptionIds.includes(opt.id)
-        );
-
-        return [
-          answer.question.id,
-          {
-            questionId: answer.question.id,
-            questionLabel: answer.question.label,
-            questionType: answer.question.type,
-            selectedOptionIds: selectedOptionIds as string[],
-            selectedOptions: selectedOptions.map((opt) => ({
-              id: opt.id,
-              label: opt.label,
-            })),
-            correctOptionIds,
-            correctOptions: correctOptions.map((opt) => ({
-              id: opt.id,
-              label: opt.label,
-            })),
-            isCorrect: answer.isCorrect,
-            timeSpent: answer.timeSpent,
-            answeredAt: answer.answeredAt,
-          },
-        ];
-      })
+    // Debug: log counts for "Détails de la tentative" empty modal (pm2 logs quizlink)
+    const quizQuestionsCount = attempt.quizLink.quiz.questions?.length ?? 0;
+    const attemptAnswersCount = attempt.answers?.length ?? 0;
+    console.log(
+      "[getParticipantAttemptDetails] attemptId=%s quiz=%s attempt.answers=%s quiz.questions=%s",
+      attemptId,
+      attempt.quizLink.quiz.name,
+      attemptAnswersCount,
+      quizQuestionsCount
     );
 
+    // Create a map of answers by questionId for quick lookup (skip answers whose question is missing)
+    const answersWithQuestion = attempt.answers.filter((a) => a.question != null);
+    if (answersWithQuestion.length < attempt.answers.length) {
+      console.warn(
+        "[getParticipantAttemptDetails] attemptId=%s skipping %s answers with missing question",
+        attemptId,
+        attempt.answers.length - answersWithQuestion.length
+      );
+    }
     type AnswerItem = {
       questionId: string;
       questionLabel: string;
@@ -863,7 +847,7 @@ export async function getParticipantAttemptDetails(
 
     // Always build full answers list from attempt.answers so we never lose data
     // (e.g. when quiz.questions is empty in prod or IDs changed after quiz edit)
-    const answersFromAttempt: AnswerItem[] = attempt.answers.map((answer) => {
+    const answersFromAttempt: AnswerItem[] = answersWithQuestion.map((answer) => {
       const selectedOptionIds = Array.isArray(answer.selectedOptionIds)
         ? (answer.selectedOptionIds as string[])
         : [];
@@ -909,6 +893,13 @@ export async function getParticipantAttemptDetails(
 
     const questionOrder: Array<{ id: string; order: number }> = answers.map(
       (a, index) => ({ id: a.questionId, order: index })
+    );
+
+    console.log(
+      "[getParticipantAttemptDetails] attemptId=%s returning answers=%s questionOrder=%s",
+      attemptId,
+      answers.length,
+      questionOrder.length
     );
 
     return {
