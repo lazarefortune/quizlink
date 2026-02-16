@@ -82,6 +82,29 @@ export default function DashboardCommunityPage() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="p-4 sm:p-5 md:p-6 lg:p-8">
+        <div className="flex flex-col gap-4 mb-6">
+          <div className="h-8 w-40 bg-muted rounded-lg animate-pulse" />
+          <div className="h-4 w-96 max-w-full bg-muted/60 rounded animate-pulse" />
+          <div className="h-10 w-64 bg-muted rounded-lg animate-pulse" />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Card key={i} variant="playful">
+              <CardContent className="p-5 space-y-4">
+                <div className="h-5 w-3/4 bg-muted rounded animate-pulse" />
+                <div className="h-4 w-20 bg-muted/60 rounded animate-pulse" />
+                <div className="h-9 w-20 bg-muted rounded animate-pulse" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 sm:p-5 md:p-6 lg:p-8">
       <motion.div
@@ -121,36 +144,38 @@ export default function DashboardCommunityPage() {
           </div>
         )}
 
-        {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <Card key={i} variant="playful">
-                <CardContent className="p-5 space-y-4">
-                  <div className="h-5 w-3/4 bg-muted rounded animate-pulse" />
-                  <div className="h-4 w-20 bg-muted/60 rounded animate-pulse" />
-                  <div className="h-9 w-20 bg-muted rounded animate-pulse" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : quizzes.length === 0 ? (
-          <Card variant="playful" className="border-dashed">
-            <CardContent className="flex flex-col items-center justify-center py-12 sm:py-16 px-4">
-              <FileQuestion className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">
-                {t(locale, "publicQuizzes.noQuizzes")}
-              </h3>
-              <p className="text-sm text-muted-foreground text-center max-w-sm">
-                {t(locale, "publicQuizzes.noQuizzesDescription")}
-              </p>
-            </CardContent>
-          </Card>
+        {quizzes.length === 0 ? (
+          <motion.div custom={1} variants={fadeUp}>
+            <Card variant="playful" className="border-dashed">
+              <CardContent className="flex flex-col items-center justify-center py-12 sm:py-16 px-4">
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted mb-4">
+                  {searchQuery ? (
+                    <Search className="h-8 w-8 text-muted-foreground" />
+                  ) : (
+                    <FileQuestion className="h-8 w-8 text-muted-foreground" />
+                  )}
+                </div>
+                <h3 className="text-lg font-black mb-1">
+                  {searchQuery
+                    ? t(locale, "publicQuizzes.noSearchResults")
+                    : t(locale, "publicQuizzes.noQuizzes")}
+                </h3>
+                <p className="text-sm text-muted-foreground text-center max-w-sm">
+                  {searchQuery
+                    ? (locale === "fr"
+                        ? "Modifie ta recherche ou réessaie avec d'autres mots."
+                        : "Try different search terms or clear the search.")
+                    : t(locale, "publicQuizzes.noQuizzesDescription")}
+                </p>
+              </CardContent>
+            </Card>
+          </motion.div>
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-5">
-              {quizzes.map((quiz) => (
-                <div key={quiz.id}>
-                  <Card variant="playful" className="flex flex-col h-full">
+              {quizzes.map((quiz, i) => (
+                <motion.div key={quiz.id} custom={i + 1} variants={fadeUp}>
+                  <Card variant="playful" className="group flex flex-col h-full">
                     <CardContent className="flex flex-col flex-1 p-5">
                       <h3 className="text-lg font-bold leading-snug line-clamp-2 mb-4">
                         {quiz.name}
@@ -179,7 +204,7 @@ export default function DashboardCommunityPage() {
                       </Button>
                     </CardContent>
                   </Card>
-                </div>
+                </motion.div>
               ))}
             </div>
 

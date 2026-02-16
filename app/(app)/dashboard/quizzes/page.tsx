@@ -87,7 +87,7 @@ function CreateQuizModalTrigger({
                 <FileText className="h-7 w-7" />
               </span>
               <div className="text-center">
-                <p className="text-sm font-semibold">
+                <p className="text-sm font-black font-nunito">
                   {t(locale, "nav.createManually")}
                 </p>
               </div>
@@ -101,7 +101,7 @@ function CreateQuizModalTrigger({
                 <Sparkles className="h-7 w-7" />
               </span>
               <div className="text-center">
-                <p className="text-sm font-semibold">
+                <p className="text-sm font-black font-nunito">
                   {t(locale, "nav.createWithAI")}
                 </p>
               </div>
@@ -267,21 +267,33 @@ export default function DashboardQuizzesPage() {
             <Card variant="playful" className="border-dashed">
               <CardContent className="flex flex-col items-center justify-center py-12 sm:py-16 px-4">
                 <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted mb-4">
-                  <FileQuestion className="h-8 w-8 text-muted-foreground" />
+                  {searchQuery ? (
+                    <Search className="h-8 w-8 text-muted-foreground" />
+                  ) : (
+                    <FileQuestion className="h-8 w-8 text-muted-foreground" />
+                  )}
                 </div>
                 <h3 className="text-lg font-black mb-1">
-                  {t(locale, "dashboard.noQuizzes")}
+                  {searchQuery
+                    ? t(locale, "dashboard.noSearchResults")
+                    : t(locale, "dashboard.noQuizzes")}
                 </h3>
                 <p className="text-sm text-muted-foreground text-center max-w-sm mb-6">
-                  {locale === "fr"
-                    ? "Crée ton premier quiz manuellement ou avec l'IA pour commencer."
-                    : "Create your first quiz manually or with AI to get started."}
+                  {searchQuery
+                    ? (locale === "fr"
+                        ? "Modifie ta recherche ou réessaie avec d'autres mots."
+                        : "Try different search terms or clear the search.")
+                    : (locale === "fr"
+                        ? "Crée ton premier quiz manuellement ou avec l'IA pour commencer."
+                        : "Create your first quiz manually or with AI to get started.")}
                 </p>
-                <CreateQuizModalTrigger
-                  locale={locale}
-                  variant="primary"
-                  size="default"
-                />
+                {!searchQuery && (
+                  <CreateQuizModalTrigger
+                    locale={locale}
+                    variant="primary"
+                    size="default"
+                  />
+                )}
               </CardContent>
             </Card>
           </motion.div>
@@ -351,7 +363,7 @@ export default function DashboardQuizzesPage() {
                         </div>
                         {quiz.visibility === "PUBLIC" && (
                           <Button
-                            variant="secondary"
+                            variant="blue"
                             size="sm"
                             className="w-full gap-2"
                             onClick={() => handlePlay(quiz.id)}

@@ -25,6 +25,7 @@ export const en = {
     backToHome: "Back to home",
     noQuizzes: "No public quizzes yet",
     noQuizzesDescription: "Quizzes marked as public by their creators will appear here.",
+    noSearchResults: "No quizzes match your search.",
   },
 
   // Generate page
@@ -628,6 +629,7 @@ export const en = {
     subtitle: "Manage and track your quizzes",
     createQuiz: "Create Quiz",
     noQuizzes: "You haven't created any quizzes yet",
+    noSearchResults: "No quizzes match your search.",
     createFirstQuiz: "Create your first quiz",
     searchPlaceholder: "Search quiz...",
     pageOf: "Page {current} of {total}",

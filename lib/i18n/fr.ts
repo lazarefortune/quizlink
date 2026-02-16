@@ -25,6 +25,7 @@ export const fr = {
     backToHome: "Retour à l'accueil",
     noQuizzes: "Aucun quiz public pour le moment",
     noQuizzesDescription: "Les quiz marqués comme publics par leurs créateurs apparaîtront ici.",
+    noSearchResults: "Aucun quiz ne correspond à ta recherche.",
   },
 
   // Generate page
@@ -628,6 +629,7 @@ export const fr = {
     subtitle: "Gère et suis tes quiz",
     createQuiz: "Créer un Quiz",
     noQuizzes: "Tu n'as pas encore créé de quiz",
+    noSearchResults: "Aucun quiz ne correspond à ta recherche.",
     createFirstQuiz: "Créer ton premier quiz",
     searchPlaceholder: "Rechercher un quiz...",
     pageOf: "Page {current} sur {total}",
