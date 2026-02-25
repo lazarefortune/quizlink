@@ -18,6 +18,8 @@ import { generateQuizAction } from "@/app/(app)/generate/actions";
 import { generateQuizFromPdf } from "@/app/(app)/generate/pdf-actions";
 import { createQuizBuilderFromAiQuestions } from "@/lib/ai-quiz-adapter";
 import { saveQuiz } from "@/app/(app)/builder/actions";
+import { track } from "@/lib/analytics/track";
+import { AI_GENERATION_USED } from "@/lib/analytics/events";
 import { useToast } from "@/components/ui/toast";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
@@ -154,6 +156,11 @@ export function GeneratePage() {
         // Show success message
         showToast(t(locale, "builder.quizCreated"), "success");
 
+        track(AI_GENERATION_USED, {
+          quizId: saveResult.quizId ?? undefined,
+          coinsSpent: 2,
+        });
+
         // Small delay before redirecting to ensure session is updated
         await new Promise((resolve) => setTimeout(resolve, 500));
 
@@ -264,6 +271,11 @@ export function GeneratePage() {
 
       // Show success message
       showToast(t(locale, "builder.quizCreated"), "success");
+
+      track(AI_GENERATION_USED, {
+        quizId: saveResult.quizId ?? undefined,
+        coinsSpent: 2,
+      });
 
       // Small delay before redirecting to ensure session is updated
       await new Promise((resolve) => setTimeout(resolve, 500));

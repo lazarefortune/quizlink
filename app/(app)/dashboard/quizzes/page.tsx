@@ -30,6 +30,8 @@ import {
 } from "lucide-react";
 import { QuizOptionsMenu } from "@/components/quiz-options-menu";
 import { createOrGetQuizLink } from "@/app/quiz-link/actions";
+import { track } from "@/lib/analytics/track";
+import { PARTICIPANT_INVITED } from "@/lib/analytics/events";
 import {
   Dialog,
   DialogContent,
@@ -175,6 +177,7 @@ export default function DashboardQuizzesPage() {
     try {
       const result = await createOrGetQuizLink(quizId, true);
       if (result.success && baseUrl) {
+        track(PARTICIPANT_INVITED, { quizId, linkId: result.quizLink.id });
         window.open(`${baseUrl}/quiz/${result.quizLink.token}`, "_blank", "noopener,noreferrer");
       }
     } finally {

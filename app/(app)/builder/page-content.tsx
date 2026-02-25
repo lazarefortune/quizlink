@@ -41,6 +41,8 @@ import { Plus, Eye, AlertCircle, GripVertical, ChevronUp, ChevronDown, Play, Sav
 import { QuizMenu } from "@/components/quiz-menu";
 import { getQuizById } from "@/app/(app)/dashboard/actions";
 import { saveQuiz } from "@/app/(app)/builder/actions";
+import { track } from "@/lib/analytics/track";
+import { QUIZ_CREATED } from "@/lib/analytics/events";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/components/ui/toast";
 import { QuestionEditor } from "@/components/quiz-builder/question-editor";
@@ -309,6 +311,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
           setSavedQuizId(result.quizId);
           // Update quiz ID if it was a new quiz
           if (!isQuizSaved) {
+            track(QUIZ_CREATED, { quizId: result.quizId });
             setQuiz({ ...quiz, id: result.quizId });
             // Update URL with quizId for new quizzes
             router.replace(`/builder/${result.quizId}`);

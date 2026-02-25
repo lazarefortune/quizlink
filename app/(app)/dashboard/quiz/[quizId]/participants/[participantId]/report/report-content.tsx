@@ -34,6 +34,8 @@ import {
 } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
+import { track } from "@/lib/analytics/track";
+import { REPORT_GENERATED } from "@/lib/analytics/events";
 
 type ParticipantReportContentProps = {
   quizId: string;
@@ -169,6 +171,7 @@ export function ParticipantReportContent({
       const result = await generateQuizParticipantReportAction(quizId, participantId);
       if (result.success) {
         setReport(result.report);
+        track(REPORT_GENERATED, { quizId, participantId, coinsSpent: 4 });
         showToast(
           locale === "fr"
             ? "Rapport généré avec succès."

@@ -12,6 +12,8 @@ import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { verifyEmailAction, resendVerificationCodeAction } from "./actions";
 import { useToast } from "@/components/ui/toast";
+import { track } from "@/lib/analytics/track";
+import { EMAIL_VERIFIED } from "@/lib/analytics/events";
 
 function VerifyEmailForm() {
   const searchParams = useSearchParams();
@@ -52,6 +54,7 @@ function VerifyEmailForm() {
     try {
       const result = await verifyEmailAction(email, code);
       if (result.success) {
+        track(EMAIL_VERIFIED);
         showToast(t(locale, "auth.verifyEmail.success"), "success");
         // Small delay to show the toast before redirecting
         setTimeout(() => {

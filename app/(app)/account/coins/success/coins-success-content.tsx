@@ -4,6 +4,8 @@ import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
+import { track } from "@/lib/analytics/track";
+import { CHECKOUT_COMPLETED } from "@/lib/analytics/events";
 import {
   Card,
   CardContent,
@@ -36,6 +38,8 @@ export default function CoinsSuccessContent() {
       }
 
       hasProcessed.current = true;
+
+      track(CHECKOUT_COMPLETED, { sessionId });
 
       await new Promise((resolve) => setTimeout(resolve, 3000));
 

@@ -6,6 +6,8 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { track } from "@/lib/analytics/track";
+import { PRICING_VIEWED, CHECKOUT_STARTED } from "@/lib/analytics/events";
 import {
   Table,
   TableBody,
@@ -107,7 +109,12 @@ export function CoinsContent() {
     loadPacks();
   }, []);
 
+  useEffect(() => {
+    track(PRICING_VIEWED);
+  }, []);
+
   const handlePurchase = async (packId: string) => {
+    track(CHECKOUT_STARTED, { packId });
     setLoadingPackId(packId);
     try {
       const result = await createCheckoutSession(packId);

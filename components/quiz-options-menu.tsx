@@ -9,6 +9,8 @@ import { t } from "@/lib/i18n";
 import { useToast } from "@/components/ui/toast";
 import { deleteQuiz, duplicateQuiz } from "@/app/(app)/dashboard/actions";
 import { createOrGetQuizLink } from "@/app/quiz-link/actions";
+import { track } from "@/lib/analytics/track";
+import { PARTICIPANT_INVITED } from "@/lib/analytics/events";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -126,6 +128,7 @@ export function QuizOptionsMenu({
     try {
       const result = await createOrGetQuizLink(quizId, true);
       if (result.success) {
+        track(PARTICIPANT_INVITED, { quizId, linkId: result.quizLink.id });
         setShareLink(`${baseUrl}/quiz/${result.quizLink.token}`);
       } else {
         alert(result.error || t(locale, "dashboard.shareError"));

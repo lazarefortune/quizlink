@@ -30,6 +30,8 @@ import {
   finishQuizAttempt,
   abandonQuizAttempt,
 } from "@/app/quiz-link/play-actions";
+import { track } from "@/lib/analytics/track";
+import { ATTEMPT_COMPLETED } from "@/lib/analytics/events";
 
 type Question = {
   id: string;
@@ -361,6 +363,12 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
         setError(result.error);
         return;
       }
+
+      track(ATTEMPT_COMPLETED, {
+        quizId: attempt.quizLink.quiz.id,
+        attemptId: attempt.id,
+        participantId: attempt.participantId ?? undefined,
+      });
 
       // Redirect to results
       router.push(`/quiz/${token}/results/${attempt.id}`);

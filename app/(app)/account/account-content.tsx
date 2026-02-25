@@ -387,7 +387,7 @@ export function AccountContent({ user: initialUser }: AccountContentProps) {
   };
 
   return (
-    <div className="p-4 sm:p-5 md:p-6 lg:p-8 max-w-4xl mx-auto">
+    <div className="p-4 sm:p-5 md:p-6 lg:p-8 max-w-xl mx-auto">
       <div className="space-y-6 sm:space-y-8">
         {/* Profile header */}
         <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-5">

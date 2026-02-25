@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Zap } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
+import { track } from "@/lib/analytics/track";
+import { CTA_CLICK } from "@/lib/analytics/events";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -42,7 +44,7 @@ export function FinalCTA() {
               {t(locale, "landing.finalCta.subtitle")}
             </motion.p>
             <motion.div custom={2} variants={fadeUp}>
-              <Link href="/builder/preview">
+              <Link href="/builder/preview" onClick={() => track(CTA_CLICK, { cta: "create_quiz" })}>
                 <Button
                   variant="outline"
                   size="xl"

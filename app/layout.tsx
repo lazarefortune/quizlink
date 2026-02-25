@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { LocaleProvider } from "@/lib/i18n/locale-provider";
 import { SessionProvider } from "@/components/session-provider";
 import { ToastProvider } from "@/components/ui/toast";
+import { Providers } from "@/app/providers";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { FeedbackButton } from "@/components/feedback-button";
@@ -71,6 +72,7 @@ export default function RootLayout({
       <body className="antialiased font-sans">
         <LocaleProvider>
           <SessionProvider>
+            <Providers>
             <ThemeProvider
               attribute="class"
               defaultTheme="system"
@@ -86,6 +88,7 @@ export default function RootLayout({
                 </div>
               </ToastProvider>
             </ThemeProvider>
+            </Providers>
           </SessionProvider>
         </LocaleProvider>
       </body>

@@ -9,6 +9,8 @@ import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { deleteQuiz } from "@/app/(app)/dashboard/actions";
 import { createOrGetQuizLink } from "@/app/quiz-link/actions";
+import { track } from "@/lib/analytics/track";
+import { PARTICIPANT_INVITED } from "@/lib/analytics/events";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -81,6 +83,7 @@ export function QuizMenu({
     try {
       const result = await createOrGetQuizLink(quizId, true);
       if (result.success) {
+        track(PARTICIPANT_INVITED, { quizId, linkId: result.quizLink.id });
         setShareLink(`${baseUrl}/quiz/${result.quizLink.token}`);
       } else {
         alert(result.error || t(locale, "dashboard.shareError"));
