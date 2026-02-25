@@ -19,6 +19,7 @@ import { signUpAction } from "./actions";
 import { SignupSidePanel } from "@/components/auth/signup-side-panel";
 import { track } from "@/lib/analytics/track";
 import { SIGNUP_COMPLETED } from "@/lib/analytics/events";
+import { buildCommonEventProps } from "@/lib/analytics/props";
 import { Eye, EyeOff, ArrowRight, Mail, Lock, User, Check } from "lucide-react";
 
 export default function SignUpPage() {
@@ -50,7 +51,11 @@ export default function SignUpPage() {
     try {
       const result = await signUpAction(name.trim(), email, password, locale);
       if (result.success) {
-        track(SIGNUP_COMPLETED);
+        track(SIGNUP_COMPLETED, {
+          ...buildCommonEventProps({ preferredLanguage: locale }),
+          from_page: "signup",
+          language: locale === "fr" || locale === "en" ? locale : "fr",
+        });
         router.push(`/auth/verify-email?email=${encodeURIComponent(email)}`);
       } else {
         setError(result.error || t(locale, "auth.signUp.error"));

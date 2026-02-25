@@ -36,6 +36,7 @@ import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { track } from "@/lib/analytics/track";
 import { REPORT_GENERATED } from "@/lib/analytics/events";
+import { buildCommonEventProps } from "@/lib/analytics/props";
 
 type ParticipantReportContentProps = {
   quizId: string;
@@ -171,7 +172,12 @@ export function ParticipantReportContent({
       const result = await generateQuizParticipantReportAction(quizId, participantId);
       if (result.success) {
         setReport(result.report);
-        track(REPORT_GENERATED, { quizId, participantId, coinsSpent: 4 });
+        track(REPORT_GENERATED, {
+          ...buildCommonEventProps({ isLoggedIn: true, preferredLanguage: locale }),
+          quiz_id: quizId,
+          participant_id: participantId,
+          coins_spent: 4,
+        });
         showToast(
           locale === "fr"
             ? "Rapport généré avec succès."

@@ -14,6 +14,7 @@ import { verifyEmailAction, resendVerificationCodeAction } from "./actions";
 import { useToast } from "@/components/ui/toast";
 import { track } from "@/lib/analytics/track";
 import { EMAIL_VERIFIED } from "@/lib/analytics/events";
+import { buildCommonEventProps } from "@/lib/analytics/props";
 
 function VerifyEmailForm() {
   const searchParams = useSearchParams();
@@ -54,7 +55,10 @@ function VerifyEmailForm() {
     try {
       const result = await verifyEmailAction(email, code);
       if (result.success) {
-        track(EMAIL_VERIFIED);
+        track(EMAIL_VERIFIED, {
+          ...buildCommonEventProps({ preferredLanguage: locale }),
+          method: "code",
+        });
         showToast(t(locale, "auth.verifyEmail.success"), "success");
         // Small delay to show the toast before redirecting
         setTimeout(() => {

@@ -6,6 +6,8 @@ import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { track } from "@/lib/analytics/track";
 import { CHECKOUT_COMPLETED } from "@/lib/analytics/events";
+import { buildCommonEventProps } from "@/lib/analytics/props";
+import { getCheckoutSessionDetails } from "../actions";
 import {
   Card,
   CardContent,
@@ -39,7 +41,21 @@ export default function CoinsSuccessContent() {
 
       hasProcessed.current = true;
 
-      track(CHECKOUT_COMPLETED, { sessionId });
+      const details = await getCheckoutSessionDetails(sessionId);
+      track(CHECKOUT_COMPLETED, {
+        ...buildCommonEventProps({
+          isLoggedIn: true,
+          preferredLanguage: locale,
+        }),
+        ...(details.success
+          ? {
+              pack_id: details.packId,
+              coins_purchased: details.coinsPurchased,
+              price: details.price,
+              currency: details.currency,
+            }
+          : { session_id: sessionId }),
+      });
 
       await new Promise((resolve) => setTimeout(resolve, 3000));
 

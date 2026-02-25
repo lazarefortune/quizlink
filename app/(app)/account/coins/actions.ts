@@ -148,3 +148,70 @@ export async function createCheckoutSession(
     };
   }
 }
+
+export type CheckoutSessionDetails =
+  | {
+      success: true;
+      packId: string;
+      coinsPurchased: number;
+      price: number;
+      currency: string;
+    }
+  | { success: false; error: string };
+
+/**
+ * Get checkout session details for analytics (pack_id, coins, price).
+ * Call after redirect to success page; validates session belongs to user.
+ */
+export async function getCheckoutSessionDetails(
+  sessionId: string
+): Promise<CheckoutSessionDetails> {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const checkoutSession = await stripe.checkout.sessions.retrieve(sessionId, {
+      expand: [],
+    });
+
+    if (checkoutSession.payment_status !== "paid") {
+      return { success: false, error: "Payment not completed" };
+    }
+    const metadata = checkoutSession.metadata;
+    const packId = metadata?.packId;
+    const coinsStr = metadata?.coins;
+    if (!packId || !coinsStr) {
+      return { success: false, error: "Missing session metadata" };
+    }
+    if (metadata?.userId !== session.user.id) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const pack = await getCoinPack(packId);
+    if (!pack) {
+      return {
+        success: true,
+        packId,
+        coinsPurchased: parseInt(coinsStr, 10) || 0,
+        price: 0,
+        currency: "eur",
+      };
+    }
+
+    return {
+      success: true,
+      packId,
+      coinsPurchased: pack.coins,
+      price: pack.price,
+      currency: "eur",
+    };
+  } catch (error) {
+    console.error("[getCheckoutSessionDetails] Error:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to load session",
+    };
+  }
+}

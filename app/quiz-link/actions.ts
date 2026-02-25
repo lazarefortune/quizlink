@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 import crypto from "crypto";
 
 type CreateQuizLinkResponse =
-  | { success: true; quizLink: { id: string; token: string } }
+  | { success: true; quizLink: { id: string; token: string }; isFirstInviteForQuiz: boolean }
   | { success: false; error: string };
 
 type GetQuizLinkByTokenResponse =
@@ -112,7 +112,6 @@ export async function createOrGetQuizLink(
     });
 
     if (existingLink) {
-      // Update allowMultipleAttempts if different
       if (existingLink.allowMultipleAttempts !== allowMultipleAttempts) {
         const updated = await prisma.quizLink.update({
           where: { id: existingLink.id },
@@ -121,11 +120,13 @@ export async function createOrGetQuizLink(
         return {
           success: true,
           quizLink: { id: updated.id, token: updated.token },
+          isFirstInviteForQuiz: false,
         };
       }
       return {
         success: true,
         quizLink: { id: existingLink.id, token: existingLink.token },
+        isFirstInviteForQuiz: false,
       };
     }
 
@@ -156,6 +157,7 @@ export async function createOrGetQuizLink(
     return {
       success: true,
       quizLink: { id: quizLink.id, token: quizLink.token },
+      isFirstInviteForQuiz: true,
     };
   } catch (error) {
     console.error("Error creating quiz link:", error);

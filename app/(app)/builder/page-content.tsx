@@ -43,6 +43,7 @@ import { getQuizById } from "@/app/(app)/dashboard/actions";
 import { saveQuiz } from "@/app/(app)/builder/actions";
 import { track } from "@/lib/analytics/track";
 import { QUIZ_CREATED } from "@/lib/analytics/events";
+import { buildCommonEventProps } from "@/lib/analytics/props";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/components/ui/toast";
 import { QuestionEditor } from "@/components/quiz-builder/question-editor";
@@ -310,8 +311,25 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
         if (result.quizId) {
           setSavedQuizId(result.quizId);
           // Update quiz ID if it was a new quiz
-          if (!isQuizSaved) {
-            track(QUIZ_CREATED, { quizId: result.quizId });
+          if (!isQuizSaved && result.quizId) {
+            const settings = quiz.settings ?? {
+              showAnswerImmediately: false,
+              randomizeQuestions: false,
+              timeLimitPerQuestion: null,
+            };
+            track(QUIZ_CREATED, {
+              ...buildCommonEventProps({
+                isLoggedIn: true,
+                preferredLanguage: locale,
+              }),
+              quiz_id: result.quizId,
+              source: "builder",
+              visibility: quiz.visibility,
+              question_count: quiz.questions.length,
+              has_time_limit: settings.timeLimitPerQuestion != null && settings.timeLimitPerQuestion > 0,
+              show_answer_immediately: settings.showAnswerImmediately,
+              randomized: settings.randomizeQuestions,
+            });
             setQuiz({ ...quiz, id: result.quizId });
             // Update URL with quizId for new quizzes
             router.replace(`/builder/${result.quizId}`);

@@ -4,11 +4,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { track } from "@/lib/analytics/track";
 import { LANDING_VIEW, CTA_CLICK } from "@/lib/analytics/events";
+import { buildCommonEventProps } from "@/lib/analytics/props";
 import { ArrowRight, Sparkles, Zap, Star } from "lucide-react";
 
 const fadeUp = {
@@ -22,11 +24,19 @@ const fadeUp = {
 
 export function HeroSection() {
   const { locale } = useLocale();
+  const { data: session } = useSession();
   const [mascotError, setMascotError] = useState(false);
 
   useEffect(() => {
-    track(LANDING_VIEW);
-  }, []);
+    track(LANDING_VIEW, {
+      ...buildCommonEventProps({
+        page: "landing",
+        isLoggedIn: !!session?.user,
+        preferredLanguage: locale,
+      }),
+      page: "landing",
+    });
+  }, [session?.user, locale]);
 
   return (
     <section className="relative overflow-hidden pt-28 pb-12 sm:pt-32 sm:pb-16 md:pt-36 md:pb-20">
@@ -69,7 +79,20 @@ export function HeroSection() {
             </motion.p>
 
             <motion.div custom={3} variants={fadeUp} className="flex flex-wrap gap-4 justify-center lg:justify-start">
-              <Link href="/builder/preview" onClick={() => track(CTA_CLICK, { cta: "create_quiz" })}>
+              <Link
+                href="/builder/preview"
+                onClick={() =>
+                  track(CTA_CLICK, {
+                    ...buildCommonEventProps({
+                      page: "landing",
+                      isLoggedIn: !!session?.user,
+                      preferredLanguage: locale,
+                    }),
+                    cta_type: "create_quiz",
+                    page: "landing",
+                  })
+                }
+              >
                 <Button variant="hero" size="xl" className="text-lg w-full sm:w-auto">
                   <Zap className="h-5 w-5" />
                   {t(locale, "landing.hero.createButton")}

@@ -32,6 +32,7 @@ import {
 } from "@/app/quiz-link/play-actions";
 import { track } from "@/lib/analytics/track";
 import { ATTEMPT_COMPLETED } from "@/lib/analytics/events";
+import { buildCommonEventProps } from "@/lib/analytics/props";
 
 type Question = {
   id: string;
@@ -359,15 +360,18 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
       const result = await finishQuizAttempt(attempt.id);
 
       if (!result.success) {
-        setIsQuizFinished(false); // Reset if failed
+        setIsQuizFinished(false);
         setError(result.error);
         return;
       }
 
       track(ATTEMPT_COMPLETED, {
-        quizId: attempt.quizLink.quiz.id,
-        attemptId: attempt.id,
-        participantId: attempt.participantId ?? undefined,
+        ...buildCommonEventProps({ preferredLanguage: locale }),
+        quiz_id: attempt.quizLink.quiz.id,
+        participant_id: attempt.participantId ?? undefined,
+        score_pct: result.score ?? 0,
+        question_count: result.totalQuestions ?? 0,
+        duration_sec: result.durationSec,
       });
 
       // Redirect to results

@@ -11,6 +11,7 @@ import { deleteQuiz } from "@/app/(app)/dashboard/actions";
 import { createOrGetQuizLink } from "@/app/quiz-link/actions";
 import { track } from "@/lib/analytics/track";
 import { PARTICIPANT_INVITED } from "@/lib/analytics/events";
+import { buildCommonEventProps } from "@/lib/analytics/props";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -83,7 +84,12 @@ export function QuizMenu({
     try {
       const result = await createOrGetQuizLink(quizId, true);
       if (result.success) {
-        track(PARTICIPANT_INVITED, { quizId, linkId: result.quizLink.id });
+        track(PARTICIPANT_INVITED, {
+          ...buildCommonEventProps({ isLoggedIn: true, preferredLanguage: locale }),
+          quiz_id: quizId,
+          delivery: "link",
+          is_first_invite_for_quiz: result.isFirstInviteForQuiz,
+        });
         setShareLink(`${baseUrl}/quiz/${result.quizLink.token}`);
       } else {
         alert(result.error || t(locale, "dashboard.shareError"));

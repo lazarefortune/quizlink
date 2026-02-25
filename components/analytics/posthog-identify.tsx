@@ -25,14 +25,21 @@ export function PostHogIdentify(): null {
     if (lastIdRef.current === userId) return;
     lastIdRef.current = userId;
 
-    const user = session.user;
+    const user = session.user as {
+      email?: string;
+      name?: string;
+      role?: string;
+      coinBalance?: number;
+    };
+    const role = user.role === "ADMIN" ? "ADMIN" : "USER";
     identify(userId, {
       email: user.email ?? undefined,
       name: user.name ?? undefined,
-      role: (user as { role?: string }).role ?? undefined,
-      preferredLanguage: locale,
+      role,
+      preferredLanguage: locale === "fr" || locale === "en" ? locale : undefined,
+      coinsBalance: typeof user.coinBalance === "number" ? user.coinBalance : undefined,
     });
-  }, [session?.user?.id, session?.user?.email, session?.user?.name, status, locale]);
+  }, [session?.user?.id, session?.user?.email, session?.user?.name, session?.user?.coinBalance, status, locale]);
 
   return null;
 }

@@ -32,6 +32,7 @@ import { QuizOptionsMenu } from "@/components/quiz-options-menu";
 import { createOrGetQuizLink } from "@/app/quiz-link/actions";
 import { track } from "@/lib/analytics/track";
 import { PARTICIPANT_INVITED } from "@/lib/analytics/events";
+import { buildCommonEventProps } from "@/lib/analytics/props";
 import {
   Dialog,
   DialogContent,
@@ -177,7 +178,12 @@ export default function DashboardQuizzesPage() {
     try {
       const result = await createOrGetQuizLink(quizId, true);
       if (result.success && baseUrl) {
-        track(PARTICIPANT_INVITED, { quizId, linkId: result.quizLink.id });
+        track(PARTICIPANT_INVITED, {
+          ...buildCommonEventProps({ isLoggedIn: true, preferredLanguage: locale }),
+          quiz_id: quizId,
+          delivery: "link",
+          is_first_invite_for_quiz: result.isFirstInviteForQuiz,
+        });
         window.open(`${baseUrl}/quiz/${result.quizLink.token}`, "_blank", "noopener,noreferrer");
       }
     } finally {

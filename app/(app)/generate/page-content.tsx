@@ -20,6 +20,7 @@ import { createQuizBuilderFromAiQuestions } from "@/lib/ai-quiz-adapter";
 import { saveQuiz } from "@/app/(app)/builder/actions";
 import { track } from "@/lib/analytics/track";
 import { AI_GENERATION_USED } from "@/lib/analytics/events";
+import { buildCommonEventProps } from "@/lib/analytics/props";
 import { useToast } from "@/components/ui/toast";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
@@ -157,8 +158,12 @@ export function GeneratePage() {
         showToast(t(locale, "builder.quizCreated"), "success");
 
         track(AI_GENERATION_USED, {
-          quizId: saveResult.quizId ?? undefined,
-          coinsSpent: 2,
+          ...buildCommonEventProps({ isLoggedIn: true, preferredLanguage: locale }),
+          generation_type: "pdf",
+          question_count: quizBuilder.questions.length,
+          coins_spent: 2,
+          language: locale === "fr" || locale === "en" ? locale : "fr",
+          quiz_id: saveResult.quizId ?? undefined,
         });
 
         // Small delay before redirecting to ensure session is updated
@@ -273,8 +278,13 @@ export function GeneratePage() {
       showToast(t(locale, "builder.quizCreated"), "success");
 
       track(AI_GENERATION_USED, {
-        quizId: saveResult.quizId ?? undefined,
-        coinsSpent: 2,
+        ...buildCommonEventProps({ isLoggedIn: true, preferredLanguage: locale }),
+        generation_type: "text",
+        question_count: quizBuilder.questions.length,
+        coins_spent: 2,
+        text_length: textContent.trim().length,
+        language: locale === "fr" || locale === "en" ? locale : "fr",
+        quiz_id: saveResult.quizId ?? undefined,
       });
 
       // Small delay before redirecting to ensure session is updated

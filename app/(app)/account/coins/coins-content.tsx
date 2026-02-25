@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { track } from "@/lib/analytics/track";
 import { PRICING_VIEWED, CHECKOUT_STARTED } from "@/lib/analytics/events";
+import { buildCommonEventProps } from "@/lib/analytics/props";
 import {
   Table,
   TableBody,
@@ -110,11 +111,28 @@ export function CoinsContent() {
   }, []);
 
   useEffect(() => {
-    track(PRICING_VIEWED);
-  }, []);
+    track(PRICING_VIEWED, {
+      ...buildCommonEventProps({
+        page: "pricing",
+        isLoggedIn: true,
+        preferredLanguage: locale,
+      }),
+      page: "pricing",
+    });
+  }, [locale]);
 
   const handlePurchase = async (packId: string) => {
-    track(CHECKOUT_STARTED, { packId });
+    const pack = packs.find((p) => p.id === packId);
+    track(CHECKOUT_STARTED, {
+      ...buildCommonEventProps({
+        page: "pricing",
+        isLoggedIn: true,
+        preferredLanguage: locale,
+      }),
+      pack_id: packId,
+      price: pack?.price,
+      currency: "eur",
+    });
     setLoadingPackId(packId);
     try {
       const result = await createCheckoutSession(packId);

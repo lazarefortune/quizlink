@@ -16,6 +16,7 @@ type FinishQuizResponse =
       score: number;
       totalQuestions: number;
       correctAnswers: number;
+      durationSec?: number;
     }
   | { success: false; error: string };
 
@@ -179,31 +180,35 @@ export async function finishQuizAttempt(
       return { success: false, error: "Attempt not found" };
     }
 
-    if (attempt.status === "COMPLETED") {
-      // Return existing results
-      const totalQuestions = attempt.quizLink.quiz.questions.length;
-      const correctAnswers = attempt.answers.filter((a: any) => a.isCorrect).length;
-      const score = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
+    const totalQuestions = attempt.quizLink.quiz.questions.length;
+    const correctAnswers = attempt.answers.filter((a: any) => a.isCorrect).length;
+    const score = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
 
+    if (attempt.status === "COMPLETED") {
+      const finishedAt = attempt.finishedAt ?? attempt.startedAt;
+      const durationSec =
+        finishedAt && attempt.startedAt
+          ? Math.round((new Date(finishedAt).getTime() - new Date(attempt.startedAt).getTime()) / 1000)
+          : undefined;
       return {
         success: true,
         score,
         totalQuestions,
         correctAnswers,
+        durationSec,
       };
     }
 
-    // Calculate score
-    const totalQuestions = attempt.quizLink.quiz.questions.length;
-    const correctAnswers = attempt.answers.filter((a: any) => a.isCorrect).length;
-    const score = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
+    const finishedAt = new Date();
+    const durationSec = Math.round(
+      (finishedAt.getTime() - new Date(attempt.startedAt).getTime()) / 1000
+    );
 
-    // Update attempt
     await prisma.quizAttempt.update({
       where: { id: attemptId },
       data: {
         status: "COMPLETED",
-        finishedAt: new Date(),
+        finishedAt,
         score,
       },
     });
@@ -213,6 +218,7 @@ export async function finishQuizAttempt(
       score,
       totalQuestions,
       correctAnswers,
+      durationSec,
     };
   } catch (error) {
     console.error("Error finishing quiz:", error);

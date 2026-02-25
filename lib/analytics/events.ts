@@ -1,7 +1,9 @@
 /**
- * PostHog event name constants. Use these with track() instead of raw strings.
+ * PostHog event name constants. Use with track() and merge buildCommonEventProps().
+ * See lib/analytics/contract.ts for property types.
  */
 
+export { EVENTS } from "./contract";
 export const LANDING_VIEW = "landing_view";
 export const CTA_CLICK = "cta_click";
 export const SIGNUP_COMPLETED = "signup_completed";

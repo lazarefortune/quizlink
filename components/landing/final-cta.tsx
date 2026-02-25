@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Zap } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { track } from "@/lib/analytics/track";
 import { CTA_CLICK } from "@/lib/analytics/events";
+import { buildCommonEventProps } from "@/lib/analytics/props";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -20,6 +22,7 @@ const fadeUp = {
 
 export function FinalCTA() {
   const { locale } = useLocale();
+  const { data: session } = useSession();
 
   return (
     <section className="py-20">
@@ -44,7 +47,20 @@ export function FinalCTA() {
               {t(locale, "landing.finalCta.subtitle")}
             </motion.p>
             <motion.div custom={2} variants={fadeUp}>
-              <Link href="/builder/preview" onClick={() => track(CTA_CLICK, { cta: "create_quiz" })}>
+              <Link
+                href="/builder/preview"
+                onClick={() =>
+                  track(CTA_CLICK, {
+                    ...buildCommonEventProps({
+                      page: "landing",
+                      isLoggedIn: !!session?.user,
+                      preferredLanguage: locale,
+                    }),
+                    cta_type: "create_quiz",
+                    page: "landing",
+                  })
+                }
+              >
                 <Button
                   variant="outline"
                   size="xl"
