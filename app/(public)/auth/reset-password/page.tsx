@@ -281,90 +281,86 @@ function ResetPasswordForm() {
                 </p>
               </motion.div>
 
-              <motion.form
+              <form
                 onSubmit={handleSubmit}
-                variants={authFormItemVariants}
                 className="flex flex-col gap-6"
               >
                 {error && (
-              <div className="form-error" role="alert">
-                {error}
-              </div>
-            )}
+                  <div className="form-error" role="alert">
+                    {error}
+                  </div>
+                )}
 
-            <div className="form-group">
-              <Label htmlFor="reset-password" className="text-foreground">
-                {t(locale, "auth.resetPassword.newPassword")}
-              </Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                <Input
-                  id="reset-password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={8}
-                  placeholder={t(locale, "auth.passwordPlaceholder")}
-                  className="form-input-lg form-input-with-icon-left form-input-with-icon-right min-h-12 w-full rounded-lg border-2 border-border bg-background text-foreground placeholder:text-muted-foreground"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 z-10 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
-                  aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
+                <div className="form-group">
+                  <Label htmlFor="reset-password">
+                    {t(locale, "auth.resetPassword.newPassword")}
+                  </Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="reset-password"
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      minLength={8}
+                      placeholder={t(locale, "auth.passwordPlaceholder")}
+                      className="form-input-lg form-input-with-icon-left form-input-with-icon-right bg-secondary/50 border-border"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                      aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+                  {password.length > 0 && (
+                    <div
+                      className={`form-hint flex items-center gap-1.5 ${
+                        passwordOk ? "text-primary" : ""
+                      }`}
+                    >
+                      <Check className={passwordOk ? "h-3.5 w-3.5" : "h-3.5 w-3.5 opacity-50"} />
+                      <span>
+                        {locale === "fr" ? "8 caractères minimum" : "At least 8 characters"}
+                      </span>
+                    </div>
                   )}
-                </button>
-              </div>
-              {password.length > 0 && (
-                <div
-                  className={`form-hint flex items-center gap-1.5 ${
-                    passwordOk ? "text-primary" : ""
-                  }`}
-                >
-                  <Check className={passwordOk ? "h-3.5 w-3.5" : "h-3.5 w-3.5 opacity-50"} />
-                  <span>
-                    {locale === "fr" ? "8 caractères minimum" : "At least 8 characters"}
-                  </span>
                 </div>
-              )}
-            </div>
 
-            <Button
-              type="submit"
-              variant="primary"
-              size="lg"
-              className="h-12 w-full text-base font-semibold"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                t(locale, "common.loading")
-              ) : (
-                <>
-                  {t(locale, "auth.resetPassword.reset")}
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </>
-              )}
-            </Button>
-
-              <motion.p
-                variants={authFormItemVariants}
-                className="text-center text-sm text-muted-foreground"
-              >
-                <Link
-                  href="/auth/signin"
-                  className="inline-flex items-center gap-1 font-semibold text-primary transition-colors hover:text-primary/80"
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="lg"
+                  className="h-12 w-full text-base font-semibold"
+                  disabled={isLoading}
                 >
-                  <ArrowLeft className="h-3.5 w-3.5" />
-                  {t(locale, "auth.forgotPasswordPage.backToSignIn")}
-                </Link>
-              </motion.p>
-            </motion.form>
+                  {isLoading ? (
+                    t(locale, "common.loading")
+                  ) : (
+                    <>
+                      {t(locale, "auth.resetPassword.reset")}
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+
+                <p className="text-center text-sm text-muted-foreground">
+                  <Link
+                    href="/auth/signin"
+                    className="inline-flex items-center gap-1 font-semibold text-primary transition-colors hover:text-primary/80"
+                  >
+                    <ArrowLeft className="h-3.5 w-3.5" />
+                    {t(locale, "auth.forgotPasswordPage.backToSignIn")}
+                  </Link>
+                </p>
+              </form>
             </CardContent>
           </Card>
         </motion.div>
