@@ -17,6 +17,7 @@ type QuizDetailContentProps = {
   visibility: string;
   questions: QuizContentQuestion[];
   stats: {
+    totalQuestions: number;
     enrolledParticipantsCount: number;
     participants: Array<{
       id: string;

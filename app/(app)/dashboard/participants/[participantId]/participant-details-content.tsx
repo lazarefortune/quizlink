@@ -80,6 +80,7 @@ import { getUserQuizzes } from "@/app/(app)/builder/actions";
 import { ParticipantAvatar } from "@/components/participant-avatar";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { formatScoreFraction } from "@/lib/formatScore";
 
 type Participant = {
   id: string;
@@ -95,6 +96,7 @@ type Participant = {
     quizId: string;
     quizName: string;
     quizVisibility: string;
+    totalQuestions: number;
     allowMultipleAttempts: boolean;
     createdAt: Date;
     expiresAt: Date | null;
@@ -672,10 +674,10 @@ export function ParticipantDetailsContent({
                                   ? (locale === "fr" ? "tentative" : "attempt")
                                   : (locale === "fr" ? "tentatives" : "attempts")}
                               </span>
-                              {bestScore >= 0 && (
+                              {bestScore >= 0 && link.totalQuestions > 0 && (
                                 <span>
                                   {locale === "fr" ? "Meilleur" : "Best"}:{" "}
-                                  {bestScore.toFixed(0)}%
+                                  {formatScoreFraction(bestScore, link.totalQuestions)}
                                 </span>
                               )}
                               {lastAttempt && (

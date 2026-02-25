@@ -129,10 +129,10 @@ export function QuizResultsContent({ attempt }: QuizResultsContentProps) {
             {/* Score Summary */}
             <div className="text-center space-y-2">
               <div className="text-4xl font-bold">
-                {score.toFixed(1)}%
+                {correctAnswers} / {totalQuestions}
               </div>
               <div className="text-muted-foreground">
-                {correctAnswers} / {totalQuestions} {t(locale, "quiz.correctAnswers")}
+                {score.toFixed(0)}% {t(locale, "quiz.correctAnswers")}
               </div>
             </div>
 

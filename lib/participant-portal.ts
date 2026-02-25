@@ -13,6 +13,7 @@ export type ParticipantPortalQuiz = {
   quizId: string;
   quizName: string;
   linkToken: string;
+  totalQuestions: number;
   attemptsCount: number;
   bestScore: number | null;
   lastAttemptAt: Date | null;
@@ -51,7 +52,7 @@ export async function getParticipantPortal(
             token: true,
             quizId: true,
             expiresAt: true,
-            quiz: { select: { id: true, name: true } },
+            quiz: { select: { id: true, name: true, _count: { select: { questions: true } } } },
             attempts: {
               where: { status: "COMPLETED" },
               select: {
@@ -89,6 +90,7 @@ export async function getParticipantPortal(
         quizId: link.quiz.id,
         quizName: link.quiz.name,
         linkToken: link.token,
+        totalQuestions: link.quiz._count.questions,
         attemptsCount: attempts.length,
         bestScore,
         lastAttemptAt,

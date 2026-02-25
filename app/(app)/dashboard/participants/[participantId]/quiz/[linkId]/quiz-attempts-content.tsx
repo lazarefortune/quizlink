@@ -44,6 +44,7 @@ import {
 } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
+import { formatScoreFraction } from "@/lib/formatScore";
 import { useToast } from "@/components/ui/toast";
 import {
   deleteAllAttempts,
@@ -65,6 +66,7 @@ type QuizAttemptsContentProps = {
     quizId: string;
     quizName: string;
     allowMultipleAttempts: boolean;
+    totalQuestions: number;
     createdAt: Date;
     expiresAt: Date | null;
     revokedAt: Date | null;
@@ -300,7 +302,7 @@ export function QuizAttemptsContent({
               </div>
               <div>
                 <p className="text-2xl font-bold tabular-nums">
-                  {averageScore !== null ? `${averageScore}%` : "-"}
+                  {averageScore !== null ? formatScoreFraction(averageScore, link.totalQuestions) : "-"}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {locale === "fr" ? "Score moyen" : "Avg. score"}
@@ -315,7 +317,7 @@ export function QuizAttemptsContent({
               </div>
               <div>
                 <p className="text-2xl font-bold tabular-nums">
-                  {bestScore !== null ? `${bestScore.toFixed(0)}%` : "-"}
+                  {bestScore !== null ? formatScoreFraction(bestScore, link.totalQuestions) : "-"}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {locale === "fr" ? "Meilleur score" : "Best score"}
@@ -388,7 +390,7 @@ export function QuizAttemptsContent({
                             <TableCell className="font-medium">
                               <span suppressHydrationWarning>
                                 {attempt.score !== null
-                                  ? `${attempt.score.toFixed(1)}%`
+                                  ? formatScoreFraction(attempt.score, link.totalQuestions)
                                   : "-"}
                               </span>
                             </TableCell>
@@ -435,7 +437,7 @@ export function QuizAttemptsContent({
                         <p className="text-lg font-semibold">
                           <span suppressHydrationWarning>
                             {attempt.score !== null
-                              ? `${attempt.score.toFixed(1)}%`
+                              ? formatScoreFraction(attempt.score, link.totalQuestions)
                               : "-"}
                           </span>
                         </p>
@@ -519,9 +521,14 @@ export function QuizAttemptsContent({
                   </p>
                   <p className="text-lg font-semibold">
                     <span suppressHydrationWarning>
-                      {attemptDetails.score !== null
-                        ? `${attemptDetails.score.toFixed(1)}%`
-                        : "-"}
+                      {attemptDetails.score !== null && attemptDetails.answers
+                        ? formatScoreFraction(
+                            attemptDetails.score,
+                            attemptDetails.answers.length
+                          )
+                        : attemptDetails.score != null
+                          ? `${attemptDetails.score.toFixed(1)}%`
+                          : "-"}
                     </span>
                   </p>
                 </div>

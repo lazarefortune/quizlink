@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
+import { formatScoreFraction } from "@/lib/formatScore";
 import { ParticipantAvatar } from "@/components/participant-avatar";
 import { getAttemptDetails } from "./actions";
 import { cn } from "@/lib/utils";
@@ -375,10 +376,10 @@ export function QuizStatsContent({
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {stats.averageScore.toFixed(1)}%
+                {formatScoreFraction(stats.averageScore, stats.totalQuestions)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {stats.completionRate.toFixed(1)}% {t(locale, "dashboard.completionRate")}
+                {stats.averageScore.toFixed(0)}% · {stats.completionRate.toFixed(1)}% {t(locale, "dashboard.completionRate")}
               </p>
             </CardContent>
           </Card>
@@ -432,7 +433,7 @@ export function QuizStatsContent({
                       <TableCell>{participant.attemptsCount}</TableCell>
                       <TableCell>
                         {participant.lastScore !== null
-                          ? `${participant.lastScore.toFixed(1)}%`
+                          ? formatScoreFraction(participant.lastScore, stats.totalQuestions)
                           : "-"}
                       </TableCell>
                       <TableCell>
@@ -494,7 +495,7 @@ export function QuizStatsContent({
                 </div>
                 <div>
                   <p className="text-2xl font-bold tabular-nums">
-                    {attemptsStats.averageScore != null ? `${attemptsStats.averageScore.toFixed(0)}%` : "-"}
+                    {attemptsStats.averageScore != null ? formatScoreFraction(attemptsStats.averageScore, stats.totalQuestions) : "-"}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     {locale === "fr" ? "Score moyen" : "Avg. score"}
@@ -509,7 +510,7 @@ export function QuizStatsContent({
                 </div>
                 <div>
                   <p className="text-2xl font-bold tabular-nums">
-                    {attemptsStats.bestScore != null ? `${attemptsStats.bestScore.toFixed(0)}%` : "-"}
+                    {attemptsStats.bestScore != null ? formatScoreFraction(attemptsStats.bestScore, stats.totalQuestions) : "-"}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     {locale === "fr" ? "Meilleur score" : "Best score"}
@@ -564,7 +565,7 @@ export function QuizStatsContent({
                             </TableCell>
                             <TableCell>
                               {attempt.score !== null
-                                ? `${attempt.score.toFixed(1)}%`
+                                ? formatScoreFraction(attempt.score, stats.totalQuestions)
                                 : "-"}
                             </TableCell>
                             <TableCell>
@@ -612,7 +613,7 @@ export function QuizStatsContent({
                         <span>{formatDate(attempt.startedAt)}</span>
                         <span className="font-medium text-foreground">
                           {attempt.score !== null
-                            ? `${attempt.score.toFixed(1)}%`
+                            ? formatScoreFraction(attempt.score, stats.totalQuestions)
                             : "-"}
                         </span>
                       </div>
@@ -668,9 +669,14 @@ export function QuizStatsContent({
                       {t(locale, "dashboard.scoreLabel")}
                     </p>
                     <p className="text-lg font-semibold">
-                      {attemptDetails.score !== null
-                        ? `${attemptDetails.score.toFixed(1)}%`
-                        : "-"}
+                      {attemptDetails.score !== null && attemptDetails.answers
+                        ? formatScoreFraction(
+                            attemptDetails.score,
+                            attemptDetails.answers.length
+                          )
+                        : attemptDetails.score != null
+                          ? `${attemptDetails.score.toFixed(1)}%`
+                          : "-"}
                     </p>
                   </div>
                   <div>

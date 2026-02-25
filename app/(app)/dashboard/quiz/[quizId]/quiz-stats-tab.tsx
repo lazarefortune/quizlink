@@ -31,11 +31,13 @@ import {
 } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
+import { formatScoreFraction } from "@/lib/formatScore";
 import { cn } from "@/lib/utils";
 import { FormattedDate } from "@/components/ui/formatted-date";
 import { getAttemptDetails } from "./actions";
 
 type Stats = {
+  totalQuestions: number;
   enrolledParticipantsCount: number;
   participants: Array<{
     id: string;
@@ -72,6 +74,7 @@ export function QuizStatsTab({
   stats,
 }: QuizStatsTabProps) {
   const { locale } = useLocale();
+  const totalQuestions = stats.totalQuestions ?? 0;
   const [showParticipants, setShowParticipants] = useState(false);
   const [showAnonymous, setShowAnonymous] = useState(false);
   const [selectedAttemptId, setSelectedAttemptId] = useState<string | null>(null);
@@ -244,7 +247,7 @@ export function QuizStatsTab({
                     {formatDate(a.startedAt)}
                   </span>
                   <span className="tabular-nums">
-                    {a.score != null ? `${a.score.toFixed(0)}%` : "-"}
+                    {a.score != null ? formatScoreFraction(a.score, totalQuestions) : "-"}
                   </span>
                   <Button
                     variant="ghost"
@@ -302,7 +305,7 @@ export function QuizStatsTab({
                         {formatDate(attempt.startedAt)}
                       </TableCell>
                       <TableCell className="tabular-nums">
-                        {attempt.score != null ? `${attempt.score.toFixed(1)}%` : "-"}
+                        {attempt.score != null ? formatScoreFraction(attempt.score, totalQuestions) : "-"}
                       </TableCell>
                       <TableCell>
                         {getStatusBadge(
@@ -347,7 +350,7 @@ export function QuizStatsTab({
                   <div className="flex justify-between text-sm text-muted-foreground">
                     <span>{formatDate(attempt.startedAt)}</span>
                     <span className="font-medium text-foreground">
-                      {attempt.score != null ? `${attempt.score.toFixed(1)}%` : "-"}
+                      {attempt.score != null ? formatScoreFraction(attempt.score, totalQuestions) : "-"}
                     </span>
                   </div>
                   <Button
@@ -395,9 +398,14 @@ export function QuizStatsTab({
                     {t(locale, "dashboard.scoreLabel")}
                   </p>
                   <p className="text-lg font-semibold">
-                    {attemptDetails.score != null
-                      ? `${attemptDetails.score.toFixed(1)}%`
-                      : "-"}
+                    {attemptDetails.score != null && attemptDetails.answers
+                      ? formatScoreFraction(
+                          attemptDetails.score,
+                          attemptDetails.answers.length
+                        )
+                      : attemptDetails.score != null
+                        ? `${attemptDetails.score.toFixed(1)}%`
+                        : "-"}
                   </p>
                 </div>
                 <div>

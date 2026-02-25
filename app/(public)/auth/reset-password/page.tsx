@@ -293,11 +293,11 @@ function ResetPasswordForm() {
             )}
 
             <div className="form-group">
-              <Label htmlFor="reset-password">
+              <Label htmlFor="reset-password" className="text-foreground">
                 {t(locale, "auth.resetPassword.newPassword")}
               </Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Lock className="absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                 <Input
                   id="reset-password"
                   type={showPassword ? "text" : "password"}
@@ -306,12 +306,12 @@ function ResetPasswordForm() {
                   required
                   minLength={8}
                   placeholder={t(locale, "auth.passwordPlaceholder")}
-                  className="form-input-lg form-input-with-icon-left form-input-with-icon-right bg-secondary/50 border-border"
+                  className="form-input-lg form-input-with-icon-left form-input-with-icon-right min-h-12 w-full rounded-lg border-2 border-border bg-background text-foreground placeholder:text-muted-foreground"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                  className="absolute right-3 top-1/2 z-10 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
                   aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
                 >
                   {showPassword ? (

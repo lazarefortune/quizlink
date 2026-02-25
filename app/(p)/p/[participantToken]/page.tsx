@@ -12,14 +12,11 @@ import {
   Target,
   CalendarClock,
 } from "lucide-react";
+import { formatScoreFraction } from "@/lib/formatScore";
 
 type PageProps = {
   params: Promise<{ participantToken: string }>;
 };
-
-function formatScore(score: number) {
-  return `${Math.round(score)}%`;
-}
 
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat("fr-FR", {
@@ -143,9 +140,11 @@ export default async function ParticipantPortalPage({ params }: PageProps) {
                               <div>
                                 <span className="flex items-center gap-1.5">
                                   <Trophy className="h-4 w-4 text-warning" />
-                                  {q.bestScore != null
-                                    ? `Meilleur score : ${formatScore(q.bestScore)}`
-                                    : "—"}
+                                  {q.bestScore != null && q.totalQuestions > 0
+                                    ? `Meilleur score : ${formatScoreFraction(q.bestScore, q.totalQuestions)}`
+                                    : q.bestScore != null
+                                      ? `Meilleur score : ${Math.round(q.bestScore)}%`
+                                      : "—"}
                                 </span>
                               </div>
                               <div>

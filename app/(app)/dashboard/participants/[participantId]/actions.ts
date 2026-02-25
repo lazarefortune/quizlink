@@ -23,6 +23,7 @@ type GetParticipantDetailsResponse =
           quizId: string;
           quizName: string;
           quizVisibility: string;
+          totalQuestions: number;
           allowMultipleAttempts: boolean;
           createdAt: Date;
           expiresAt: Date | null;
@@ -75,6 +76,7 @@ export async function getParticipantDetails(
                 name: true,
                 visibility: true,
                 ownerId: true,
+                _count: { select: { questions: true } },
               },
             },
             attempts: {
@@ -127,6 +129,7 @@ export async function getParticipantDetails(
           quizId: link.quiz.id,
           quizName: link.quiz.name,
           quizVisibility: link.quiz.visibility,
+          totalQuestions: link.quiz._count.questions,
           allowMultipleAttempts: link.allowMultipleAttempts,
           createdAt: link.createdAt,
           expiresAt: link.expiresAt,
@@ -626,6 +629,7 @@ export async function getLinkDetails(
           token: string;
           quizId: string;
           quizName: string;
+          totalQuestions: number;
           allowMultipleAttempts: boolean;
           createdAt: Date;
           expiresAt: Date | null;
@@ -660,6 +664,7 @@ export async function getLinkDetails(
             id: true,
             name: true,
             ownerId: true,
+            _count: { select: { questions: true } },
           },
         },
         participant: {
@@ -701,6 +706,7 @@ export async function getLinkDetails(
           token: link.token,
           quizId: link.quiz.id,
           quizName: link.quiz.name,
+          totalQuestions: link.quiz._count.questions,
           allowMultipleAttempts: link.allowMultipleAttempts,
           createdAt: link.createdAt,
           expiresAt: link.expiresAt,
