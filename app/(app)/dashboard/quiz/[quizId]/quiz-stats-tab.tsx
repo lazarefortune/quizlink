@@ -431,6 +431,61 @@ export function QuizStatsTab({
                   <p className="text-sm"><FormattedDate date={attemptDetails.finishedAt} locale={locale} /></p>
                 </div>
               </div>
+
+              {(() => {
+                const totalQuestions = attemptDetails.questionOrder?.length ?? attemptDetails.answers.length;
+                const answeredCount = attemptDetails.answers.length;
+                const correctCount = attemptDetails.answers.filter((a) => a.isCorrect).length;
+                const incorrectCount = answeredCount - correctCount;
+                if (totalQuestions <= 0) return null;
+                const correctPct = (correctCount / totalQuestions) * 100;
+                const incorrectPct = (incorrectCount / totalQuestions) * 100;
+                const unansweredPct = 100 - correctPct - incorrectPct;
+                return (
+                  <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-sm font-medium">
+                        {t(locale, "dashboard.attemptQuestionProgress", {
+                          current: String(answeredCount),
+                          total: String(totalQuestions),
+                        })}
+                        {attemptDetails.status === "IN_PROGRESS" && (
+                          <span className="ml-1.5 text-muted-foreground font-normal">
+                            ({t(locale, "dashboard.inProgressLabel")})
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-sm text-muted-foreground tabular-nums">
+                        {t(locale, "dashboard.attemptProgressSummary", {
+                          correct: String(correctCount),
+                          incorrect: String(incorrectCount),
+                        })}
+                      </span>
+                    </div>
+                    <div className="flex h-3 w-full overflow-hidden rounded-full bg-muted">
+                      {correctPct > 0 && (
+                        <div
+                          className="h-full bg-green-600 transition-all duration-500 ease-out"
+                          style={{ width: `${correctPct}%` }}
+                        />
+                      )}
+                      {incorrectPct > 0 && (
+                        <div
+                          className="h-full bg-red-600 transition-all duration-500 ease-out"
+                          style={{ width: `${incorrectPct}%` }}
+                        />
+                      )}
+                      {unansweredPct > 0 && (
+                        <div
+                          className="h-full bg-muted-foreground/30 transition-all duration-500 ease-out"
+                          style={{ width: `${unansweredPct}%` }}
+                        />
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+
               <div className="border-t border-border pt-4">
                 <h3 className="font-medium mb-4">
                   {t(locale, "dashboard.attemptDetails")}

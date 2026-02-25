@@ -780,6 +780,8 @@ export const fr = {
     viewAttempt: "Voir la tentative",
     attemptDetailsDialog: "Détails de la tentative",
     attemptDetailsLoadFailed: "Impossible de charger les détails de la tentative.",
+    attemptQuestionProgress: "Question {current} / {total}",
+    attemptProgressSummary: "{correct} réussie(s), {incorrect} ratée(s)",
     questionLabel: "Question",
     yourAnswer: "Ta réponse",
     correctAnswer: "Bonne réponse",

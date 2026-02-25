@@ -780,6 +780,8 @@ export const en = {
     attemptDetails: "Attempt details",
     attemptDetailsDialog: "Attempt details",
     attemptDetailsLoadFailed: "Could not load attempt details.",
+    attemptQuestionProgress: "Question {current} / {total}",
+    attemptProgressSummary: "{correct} correct, {incorrect} incorrect",
     questionLabel: "Question",
     yourAnswerLabel: "Your answer",
     correctAnswerLabel: "Correct answer",
