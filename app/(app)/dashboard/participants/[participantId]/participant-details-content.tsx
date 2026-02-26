@@ -61,6 +61,8 @@ import {
   Ban,
   Share2,
   CalendarClock,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
@@ -149,6 +151,23 @@ export function ParticipantDetailsContent({
   const [portalEmailAddress, setPortalEmailAddress] = useState(participant.email || "");
   const [isSendingPortalEmail, setIsSendingPortalEmail] = useState(false);
   const [showPortalEmailField, setShowPortalEmailField] = useState(false);
+
+  const QUIZ_LINKS_PER_PAGE = 6;
+  const [quizLinksPage, setQuizLinksPage] = useState(1);
+  const totalLinksPages = Math.max(
+    1,
+    Math.ceil(participant.links.length / QUIZ_LINKS_PER_PAGE)
+  );
+  const paginatedLinks = participant.links.slice(
+    (quizLinksPage - 1) * QUIZ_LINKS_PER_PAGE,
+    quizLinksPage * QUIZ_LINKS_PER_PAGE
+  );
+
+  useEffect(() => {
+    if (quizLinksPage > totalLinksPages) {
+      setQuizLinksPage(1);
+    }
+  }, [quizLinksPage, totalLinksPages]);
 
   const baseUrl =
     typeof window !== "undefined"
@@ -588,62 +607,105 @@ export function ParticipantDetailsContent({
           </Card>
         </div>
 
-        {/* Quiz list */}
-        <div className="space-y-3">
-          <h2 className="text-lg font-semibold">
-            {locale === "fr" ? "Quiz inscrits" : "Enrolled quizzes"}
-          </h2>
-
-          {participant.links.length === 0 ? (
-            <Card className="border-dashed">
-              <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted mb-4">
-                  <FileText className="h-7 w-7 text-muted-foreground" />
+        {/* Quiz inscrits — section avec pagination */}
+        <Card>
+          <CardContent className="p-0">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 py-4 border-b border-border">
+              <div className="flex items-center gap-2">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+                  <FileText className="h-4 w-4 text-primary" />
                 </div>
-                <p className="text-muted-foreground">
+                <div>
+                  <h2 className="text-lg font-semibold">
+                    {locale === "fr" ? "Quiz inscrits" : "Enrolled quizzes"}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    {participant.links.length}{" "}
+                    {participant.links.length <= 1
+                      ? (locale === "fr" ? "quiz" : "quiz")
+                      : (locale === "fr" ? "quiz" : "quizzes")}
+                  </p>
+                </div>
+              </div>
+              {totalLinksPages > 1 && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span className="tabular-nums">
+                    {(quizLinksPage - 1) * QUIZ_LINKS_PER_PAGE + 1}–
+                    {Math.min(
+                      quizLinksPage * QUIZ_LINKS_PER_PAGE,
+                      participant.links.length
+                    )}{" "}
+                    {locale === "fr" ? "sur" : "of"}{" "}
+                    {participant.links.length}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {participant.links.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center px-4">
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted mb-4">
+                  <FileText className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <p className="font-medium text-foreground">
+                  {locale === "fr" ? "Aucun quiz" : "No quizzes"}
+                </p>
+                <p className="text-sm text-muted-foreground mt-1 max-w-sm">
                   {t(locale, "dashboard.noInvitations")}
                 </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-3">
-              {participant.links.map((link) => {
-                const lastAttempt =
-                  link.attempts.length > 0 ? link.attempts[0] : null;
-                const completedCount = link.attempts.filter(
-                  (a) => a.status === "COMPLETED",
-                ).length;
-                const bestScore = link.attempts
-                  .filter((a) => a.score !== null)
-                  .reduce(
-                    (best, a) => Math.max(best, a.score as number),
-                    -1,
-                  );
+              </div>
+            ) : (
+              <>
+                <div className="divide-y divide-border">
+                  {paginatedLinks.map((link) => {
+                    const lastAttempt =
+                      link.attempts.length > 0 ? link.attempts[0] : null;
+                    const bestScore = link.attempts
+                      .filter((a) => a.score !== null)
+                      .reduce(
+                        (best, a) => Math.max(best, a.score as number),
+                        -1
+                      );
+                    const isExpired =
+                      link.expiresAt &&
+                      new Date(link.expiresAt) < new Date();
 
-                return (
-                  <Card
-                    key={link.id}
-                    className={cn(
-                      link.revokedAt &&
-                        "border-orange-500/40 bg-orange-50/30 dark:bg-orange-950/10",
-                    )}
-                  >
-                    <CardContent className="p-4 sm:p-5">
-                      <div className="flex items-start justify-between gap-3">
-                        {/* Quiz info */}
-                        <div className="flex items-start gap-3 min-w-0 flex-1">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted mt-0.5">
-                            <FileText className="h-4 w-4 text-muted-foreground" />
+                    return (
+                      <div
+                        key={link.id}
+                        className={cn(
+                          "flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 sm:p-5 transition-colors hover:bg-muted/30",
+                          link.revokedAt &&
+                            "bg-orange-50/50 dark:bg-orange-950/10"
+                        )}
+                      >
+                        <div className="flex items-start gap-4 min-w-0 flex-1">
+                          <div
+                            className={cn(
+                              "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl",
+                              link.revokedAt
+                                ? "bg-orange-100 dark:bg-orange-900/30"
+                                : "bg-primary/10"
+                            )}
+                          >
+                            <FileText
+                              className={cn(
+                                "h-6 w-6",
+                                link.revokedAt
+                                  ? "text-orange-600 dark:text-orange-400"
+                                  : "text-primary"
+                              )}
+                            />
                           </div>
-                          <div className="min-w-0 flex-1">
+                          <div className="min-w-0 flex-1 space-y-1.5">
                             <div className="flex flex-wrap items-center gap-2">
-                              <p className="font-semibold truncate">
+                              <p className="font-semibold text-base truncate">
                                 {link.quizName}
                               </p>
                               {link.revokedAt && (
                                 <Badge
                                   variant="outline"
-                                  className="border-orange-500 text-orange-500 text-xs"
+                                  className="border-orange-500 text-orange-600 dark:text-orange-400 text-xs shrink-0"
                                 >
                                   {t(locale, "dashboard.revoked")}
                                 </Badge>
@@ -652,22 +714,22 @@ export function ParticipantDetailsContent({
                                 <Badge
                                   variant="outline"
                                   className={cn(
-                                    "text-xs gap-1",
-                                    new Date(link.expiresAt) < new Date()
+                                    "text-xs gap-1 shrink-0",
+                                    isExpired
                                       ? "border-destructive text-destructive"
-                                      : "border-muted-foreground text-muted-foreground",
+                                      : "border-muted-foreground text-muted-foreground"
                                   )}
                                 >
                                   <CalendarClock className="h-3 w-3" />
-                                  {new Date(link.expiresAt) < new Date()
+                                  {isExpired
                                     ? (locale === "fr" ? "Expiré" : "Expired")
                                     : (locale === "fr"
-                                        ? `Expire le ${formatDate(link.expiresAt)}`
+                                        ? `Expire ${formatDate(link.expiresAt)}`
                                         : `Expires ${formatDate(link.expiresAt)}`)}
                                 </Badge>
                               )}
                             </div>
-                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-sm text-muted-foreground">
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-0.5 text-sm text-muted-foreground">
                               <span>
                                 {link.attempts.length}{" "}
                                 {link.attempts.length <= 1
@@ -675,16 +737,17 @@ export function ParticipantDetailsContent({
                                   : (locale === "fr" ? "tentatives" : "attempts")}
                               </span>
                               {bestScore >= 0 && link.totalQuestions > 0 && (
-                                <span>
+                                <span className="tabular-nums">
                                   {locale === "fr" ? "Meilleur" : "Best"}:{" "}
-                                  {formatScoreFraction(bestScore, link.totalQuestions)}
+                                  {formatScoreFraction(
+                                    bestScore,
+                                    link.totalQuestions
+                                  )}
                                 </span>
                               )}
                               {lastAttempt && (
                                 <span>
-                                  {locale === "fr"
-                                    ? "Dernière"
-                                    : "Last"}:{" "}
+                                  {locale === "fr" ? "Dernière" : "Last"}:{" "}
                                   {formatDate(lastAttempt.startedAt)}
                                 </span>
                               )}
@@ -692,33 +755,27 @@ export function ParticipantDetailsContent({
                           </div>
                         </div>
 
-                        {/* Actions */}
-                        <div className="flex items-center gap-1 shrink-0">
+                        <div className="flex items-center gap-2 shrink-0 sm:pl-4">
                           {link.attempts.length > 0 && (
-                            <Link
-                              href={`/dashboard/participants/${participant.id}/quiz/${link.id}`}
-                              className="text-blue text-sm font-medium hidden sm:inline-flex items-center gap-1 hover:underline px-3 py-1.5"
-                            >
-                              {locale === "fr" ? "Voir plus" : "See more"}
-                              <ArrowRight className="h-3.5 w-3.5" />
-                            </Link>
+                            <Button variant="outline" size="sm" asChild>
+                              <Link
+                                href={`/dashboard/participants/${participant.id}/quiz/${link.id}`}
+                                className="gap-1.5"
+                              >
+                                <Eye className="h-4 w-4" />
+                                {locale === "fr" ? "Voir plus" : "See more"}
+                              </Link>
+                            </Button>
                           )}
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-9 w-9"
-                              >
+                              <Button variant="ghost" size="icon" className="h-9 w-9">
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               {link.attempts.length > 0 && (
-                                <DropdownMenuItem
-                                  className="sm:hidden"
-                                  asChild
-                                >
+                                <DropdownMenuItem className="sm:hidden" asChild>
                                   <Link
                                     href={`/dashboard/participants/${participant.id}/quiz/${link.id}`}
                                     className="flex items-center cursor-pointer"
@@ -780,8 +837,10 @@ export function ParticipantDetailsContent({
                                       setSelectedLink(link);
                                       setEditExpiresAt(
                                         link.expiresAt
-                                          ? new Date(link.expiresAt).toISOString().slice(0, 16)
-                                          : "",
+                                          ? new Date(
+                                              link.expiresAt
+                                            ).toISOString().slice(0, 16)
+                                          : ""
                                       );
                                       setShowExpirationDialog(true);
                                     }}
@@ -816,24 +875,51 @@ export function ParticipantDetailsContent({
                           </DropdownMenu>
                         </div>
                       </div>
+                    );
+                  })}
+                </div>
 
-                      {/* Mobile: "Voir plus" as full-width link */}
-                      {link.attempts.length > 0 && (
-                        <Link
-                          href={`/dashboard/participants/${participant.id}/quiz/${link.id}`}
-                          className="flex items-center justify-center gap-1 text-blue text-sm font-medium w-full mt-3 py-1.5 hover:underline sm:hidden"
-                        >
-                          {locale === "fr" ? "Voir plus" : "See more"}
-                          <ArrowRight className="h-3.5 w-3.5" />
-                        </Link>
-                      )}
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          )}
-        </div>
+                {totalLinksPages > 1 && (
+                  <div className="flex items-center justify-between gap-4 px-4 py-3 border-t border-border bg-muted/20">
+                    <p className="text-sm text-muted-foreground tabular-nums">
+                      {locale === "fr" ? "Page" : "Page"}{" "}
+                      {quizLinksPage} {locale === "fr" ? "sur" : "of"}{" "}
+                      {totalLinksPages}
+                    </p>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 gap-1"
+                        onClick={() =>
+                          setQuizLinksPage((p) => Math.max(1, p - 1))
+                        }
+                        disabled={quizLinksPage <= 1}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        {locale === "fr" ? "Précédent" : "Previous"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 gap-1"
+                        onClick={() =>
+                          setQuizLinksPage((p) =>
+                            Math.min(totalLinksPages, p + 1)
+                          )
+                        }
+                        disabled={quizLinksPage >= totalLinksPages}
+                      >
+                        {locale === "fr" ? "Suivant" : "Next"}
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* ==================== DIALOGS ==================== */}
