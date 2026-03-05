@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
 type SearchUsersResponse =
-  | { success: true; users: Array<{ id: string; email: string; name: string; role: string; coinBalance: number; createdAt: Date; _count: { quizzes: number } }> }
+  | { success: true; users: Array<{ id: string; email: string; name: string; role: string; coinBalance: number; createdAt: Date; verifiedAt: Date | null; _count: { quizzes: number } }> }
   | { success: false; error: string };
 
 export async function searchUsers(searchTerm: string): Promise<SearchUsersResponse> {
@@ -30,6 +30,7 @@ export async function searchUsers(searchTerm: string): Promise<SearchUsersRespon
         role: true,
         coinBalance: true,
         createdAt: true,
+        emailVerifiedAt: true,
         _count: {
           select: {
             quizzes: true,
@@ -39,7 +40,19 @@ export async function searchUsers(searchTerm: string): Promise<SearchUsersRespon
       orderBy: { createdAt: "desc" },
       take: 100,
     });
-    return { success: true, users };
+    return {
+      success: true,
+      users: users.map((u) => ({
+        id: u.id,
+        email: u.email,
+        name: u.name,
+        role: u.role,
+        coinBalance: u.coinBalance,
+        createdAt: u.createdAt,
+        verifiedAt: u.emailVerifiedAt,
+        _count: u._count,
+      })),
+    };
   } catch (error) {
     console.error("Error searching users:", error);
     return { success: false, error: "Failed to search users" };
@@ -244,6 +257,7 @@ export async function getAdminUserWithQuizzes(
         id: true,
         name: true,
         email: true,
+        emailVerifiedAt: true,
         role: true,
         coinBalance: true,
         createdAt: true,

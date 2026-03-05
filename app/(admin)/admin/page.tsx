@@ -20,6 +20,7 @@ export default async function AdminDashboardPage() {
       role: true,
       coinBalance: true,
       createdAt: true,
+      emailVerifiedAt: true,
       _count: {
         select: {
           quizzes: true,
@@ -30,5 +31,10 @@ export default async function AdminDashboardPage() {
     take: 100, // Limit to first 100 users
   });
 
-  return <AdminDashboardContent initialUsers={users} />;
+  const usersWithVerifiedAt = users.map((u) => ({
+    ...u,
+    verifiedAt: u.emailVerifiedAt,
+  }));
+
+  return <AdminDashboardContent initialUsers={usersWithVerifiedAt} />;
 }

@@ -37,6 +37,7 @@ type User = {
   name: string;
   role: string;
   coinBalance: number;
+  verifiedAt: Date | null;
   createdAt: Date;
   _count: {
     quizzes: number;
@@ -46,6 +47,17 @@ type User = {
 type AdminDashboardContentProps = {
   initialUsers: User[];
 };
+
+function formatDate(date: Date | null, locale: string): string {
+  if (!date) return "-";
+  return new Date(date).toLocaleDateString(locale, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
 export function AdminDashboardContent({ initialUsers }: AdminDashboardContentProps) {
   const { showToast } = useToast();
@@ -227,6 +239,7 @@ export function AdminDashboardContent({ initialUsers }: AdminDashboardContentPro
                   <TableHead>{t(locale, "admin.dashboard.name")}</TableHead>
                   <TableHead>{t(locale, "admin.dashboard.email")}</TableHead>
                   <TableHead>{t(locale, "admin.dashboard.role")}</TableHead>
+                  <TableHead>{t(locale, "admin.dashboard.verifiedAt")}</TableHead>
                   <TableHead className="text-right">
                     {t(locale, "admin.dashboard.coins")}
                   </TableHead>
@@ -265,6 +278,9 @@ export function AdminDashboardContent({ initialUsers }: AdminDashboardContentPro
                           {user.role}
                         </Badge>
                       </TableCell>
+                        <TableCell>
+                          {formatDate(user.verifiedAt, locale)}
+                        </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
                           <Coins className="h-4 w-4 text-primary" />
@@ -341,10 +357,14 @@ export function AdminDashboardContent({ initialUsers }: AdminDashboardContentPro
                       {user.role}
                     </Badge>
                   </div>
-                  <div className="flex items-center gap-4 text-sm">
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <span>
+                      {t(locale, "admin.dashboard.verifiedAt")}:{" "}
+                      {formatDate(user.verifiedAt, locale)}
+                    </span>
                     <div className="flex items-center gap-1">
                       <Coins className="h-4 w-4 text-primary" />
-                      <span className="font-medium tabular-nums">
+                      <span className="font-medium tabular-nums text-foreground">
                         {user.coinBalance}
                       </span>
                     </div>
@@ -423,6 +443,14 @@ export function AdminDashboardContent({ initialUsers }: AdminDashboardContentPro
                     >
                       {selectedUser.role}
                     </Badge>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground text-xs">
+                      {t(locale, "admin.dashboard.verifiedAt")}
+                    </Label>
+                    <p className="font-medium text-sm">
+                      {formatDate(selectedUser.verifiedAt, locale)}
+                    </p>
                   </div>
                   <div>
                     <Label className="text-muted-foreground text-xs">
