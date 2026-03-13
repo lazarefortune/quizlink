@@ -53,7 +53,7 @@ export function GeneratePage() {
     questionType: "MIXED",
     maxQuestions: 5,
     language: "fr",
-    visibility: "PUBLIC",
+    visibility: "PRIVATE",
     showAnswerImmediately: false,
     randomizeQuestions: false,
     timeLimitPerQuestion: null,

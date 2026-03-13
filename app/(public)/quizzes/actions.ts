@@ -6,6 +6,7 @@ export type PublicQuizItem = {
   id: string;
   name: string;
   questionsCount: number;
+  ownerName: string | null;
 };
 
 export async function getPublicQuizzes(): Promise<{
@@ -23,6 +24,11 @@ export async function getPublicQuizzes(): Promise<{
       select: {
         id: true,
         name: true,
+        owner: {
+          select: {
+            name: true,
+          },
+        },
         _count: { select: { questions: true } },
       },
       orderBy: { updatedAt: "desc" },
@@ -34,6 +40,7 @@ export async function getPublicQuizzes(): Promise<{
         id: q.id,
         name: q.name,
         questionsCount: q._count.questions,
+        ownerName: q.owner?.name ?? null,
       })),
     };
   } catch (error) {

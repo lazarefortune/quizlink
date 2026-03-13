@@ -3,6 +3,7 @@
  * Used for download and for sending by email (output as base64).
  */
 import type { ParticipantReportOutput } from "./participant-report-schema";
+import jsPDFConstructor from "jspdf";
 
 const FONT_SIZE_TITLE = 16;
 const FONT_SIZE_HEADING = 12;
@@ -53,8 +54,11 @@ export function buildReportPdfBlob(
   meta: { participantName: string; quizName: string },
   locale: "fr" | "en"
 ): Blob {
-  const { jsPDF } = require("jspdf");
-  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" }) as JsPDFDoc;
+  const doc = new jsPDFConstructor({
+    orientation: "portrait",
+    unit: "mm",
+    format: "a4",
+  }) as unknown as JsPDFDoc;
   let y = MARGIN;
 
   const t = (key: "title" | "summary" | "strengths" | "weaknesses" | "recurring" | "review" | "plan" | "tips" | "warnings") =>

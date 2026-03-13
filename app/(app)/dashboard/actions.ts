@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { QuizBuilder } from "@/types/quiz-builder";
 import { revalidatePath } from "next/cache";
+import { deductCoins } from "@/lib/coins";
 
 // Get dashboard statistics for the current user
 export async function getDashboardStats() {
@@ -416,6 +417,107 @@ export async function duplicateQuiz(quizId: string) {
     return {
       success: false,
       error: "Failed to duplicate quiz",
+    };
+  }
+}
+
+/**
+ * Make a quiz public by spending coins.
+ *
+ * Business rules:
+ * - Only the owner can change visibility.
+ * - If the quiz is already public, this is a no-op.
+ * - Regular users must spend 6 coins to make a quiz public.
+ * - Admins can make quizzes public without spending coins.
+ */
+export async function makeQuizPublicWithCoins(quizId: string) {
+  try {
+    if (!prisma) {
+      return {
+        success: false as const,
+        error: "Database not initialized",
+      };
+    }
+
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return {
+        success: false as const,
+        error: "You must be logged in",
+      };
+    }
+
+    const userId = session.user.id;
+    const userRole = session.user.role;
+
+    const quiz = await prisma.quiz.findUnique({
+      where: { id: quizId },
+      select: {
+        ownerId: true,
+        visibility: true,
+      },
+    });
+
+    if (!quiz) {
+      return {
+        success: false as const,
+        error: "Quiz not found",
+      };
+    }
+
+    if (quiz.ownerId !== userId) {
+      return {
+        success: false as const,
+        error: "You don't have permission to update this quiz",
+      };
+    }
+
+    if (quiz.visibility === "PUBLIC") {
+      return {
+        success: true as const,
+      };
+    }
+
+    if (userRole !== "ADMIN") {
+      const { success, error } = await deductCoins(
+        userId,
+        6,
+        "Make quiz public",
+      );
+
+      if (!success) {
+        if (error === "Insufficient coins") {
+          return {
+            success: false as const,
+            error: "INSUFFICIENT_COINS_FOR_PUBLIC",
+          };
+        }
+
+        return {
+          success: false as const,
+          error: error ?? "Failed to deduct coins",
+        };
+      }
+    }
+
+    await prisma.quiz.update({
+      where: { id: quizId },
+      data: { visibility: "PUBLIC" },
+    });
+
+    revalidatePath("/dashboard");
+    revalidatePath(`/dashboard/quiz/${quizId}`);
+    revalidatePath("/quizzes");
+
+    return {
+      success: true as const,
+    };
+  } catch (error) {
+    console.error("Error making quiz public with coins:", error);
+    return {
+      success: false as const,
+      error: "Failed to make quiz public",
     };
   }
 }

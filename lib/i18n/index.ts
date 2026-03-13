@@ -13,13 +13,18 @@ export function getTranslations(locale: Locale) {
   return translations[locale];
 }
 
-export function t(locale: Locale, key: string, params?: Record<string, string | number>): string {
+export function t(
+  locale: Locale,
+  key: string,
+  params?: Record<string, string | number>
+): string {
   const keys = key.split(".");
-  let value: any = translations[locale];
+  // Walk the nested translation object in a type-safe-ish way without using `any`
+  let value: unknown = translations[locale] as unknown;
 
   for (const k of keys) {
-    if (value && typeof value === "object" && k in value) {
-      value = value[k as keyof typeof value];
+    if (value && typeof value === "object" && k in (value as Record<string, unknown>)) {
+      value = (value as Record<string, unknown>)[k];
     } else {
       return key;
     }

@@ -53,7 +53,7 @@ export function FeaturesSection() {
               whileInView="visible"
               viewport={{ once: true, margin: "-30px" }}
               variants={fadeUp}
-              className="rounded-2xl border-2 border-border bg-card p-6  cursor-default"
+              className="rounded-2xl border-2 border-border bg-card p-6 cursor-default"
             >
               <div
                 className={`w-12 h-12 rounded-xl ${f.color} flex items-center justify-center mb-4`}

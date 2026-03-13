@@ -222,9 +222,25 @@ export async function getQuizStats(
       },
     });
 
-    const allAttempts = quizLinks.flatMap((link: any) => link.attempts);
+    type RawAttempt = {
+      id: string;
+      participantId: string | null;
+      participant: {
+        id: string;
+        name: string;
+        email: string | null;
+        avatar: string | null;
+      } | null;
+      score: number | null;
+      status: string;
+      startedAt: Date;
+      finishedAt: Date | null;
+      answers: unknown[];
+    };
+
+    const allAttempts = quizLinks.flatMap((link) => link.attempts as RawAttempt[]);
     const completedAttempts = allAttempts.filter(
-      (a: any) => a.status === "COMPLETED"
+      (a) => a.status === "COMPLETED"
     );
 
     // Calculate stats
@@ -233,20 +249,20 @@ export async function getQuizStats(
       (link: { participantId: string | null }) => link.participantId != null
     ).length;
     const attemptsWithParticipants = allAttempts.filter(
-      (a: { participantId: string | null }) => a.participantId !== null
+      (a) => a.participantId !== null
     );
     const uniqueParticipants = new Set(
-      attemptsWithParticipants.map((a: { participantId: string | null }) => a.participantId)
+      attemptsWithParticipants.map((a) => a.participantId)
     );
     const totalParticipants = uniqueParticipants.size;
     const totalAttempts = allAttempts.length;
     const anonymousAttemptsCount = allAttempts.filter(
-      (a: { participantId: string | null }) => a.participantId === null
+      (a) => a.participantId === null
     ).length;
 
     const averageScore =
       completedAttempts.length > 0
-        ? completedAttempts.reduce((sum: number, a: any) => sum + (a.score ?? 0), 0) /
+        ? completedAttempts.reduce((sum: number, a) => sum + (a.score ?? 0), 0) /
           completedAttempts.length
         : 0;
 
@@ -267,7 +283,7 @@ export async function getQuizStats(
       }
     >();
 
-    attemptsWithParticipants.forEach((attempt: any) => {
+    attemptsWithParticipants.forEach((attempt) => {
       const participant = attempt.participant;
       if (participant && !participantsMap.has(participant.id)) {
         participantsMap.set(participant.id, {
@@ -284,11 +300,12 @@ export async function getQuizStats(
     });
 
     const participants = Array.from(participantsMap.values()).map((p) => {
-      const completed = p.attempts.filter((a: any) => a.status === "COMPLETED");
-      const lastAttempt = completed.sort(
-        (a: any, b: any) =>
-          (b.finishedAt?.getTime() ?? 0) - (a.finishedAt?.getTime() ?? 0)
-      )[0];
+      const completed = p.attempts.filter((a) => a.status === "COMPLETED");
+      const lastAttempt = completed
+        .sort(
+          (a, b) =>
+            (b.finishedAt?.getTime() ?? 0) - (a.finishedAt?.getTime() ?? 0)
+        )[0];
 
       return {
         id: p.id,
@@ -303,37 +320,27 @@ export async function getQuizStats(
 
     // Get attempts list
     const attempts = allAttempts
-      .map(
-        (attempt: {
-          id: string;
-          participant: { name: string } | null;
-          score: number | null;
-          status: string;
-          startedAt: Date;
-          finishedAt: Date | null;
-          answers: unknown[];
-        }) => {
-          const duration =
-            attempt.finishedAt && attempt.startedAt
-              ? Math.floor(
-                  (attempt.finishedAt.getTime() - attempt.startedAt.getTime()) /
-                    1000
-                )
-              : null;
+      .map((attempt) => {
+        const duration =
+          attempt.finishedAt && attempt.startedAt
+            ? Math.floor(
+                (attempt.finishedAt.getTime() - attempt.startedAt.getTime()) /
+                  1000
+              )
+            : null;
 
-          return {
-            id: attempt.id,
-            participantName: attempt.participant ? attempt.participant.name : "Anonyme",
-            isAnonymous: !attempt.participant,
-            score: attempt.score,
-            duration,
-            status: attempt.status,
-            startedAt: attempt.startedAt,
-            finishedAt: attempt.finishedAt,
-            questionsAnswered: attempt.answers ? attempt.answers.length : 0,
-          };
-        }
-      )
+        return {
+          id: attempt.id,
+          participantName: attempt.participant ? attempt.participant.name : "Anonyme",
+          isAnonymous: !attempt.participant,
+          score: attempt.score,
+          duration,
+          status: attempt.status,
+          startedAt: attempt.startedAt,
+          finishedAt: attempt.finishedAt,
+          questionsAnswered: attempt.answers ? attempt.answers.length : 0,
+        };
+      })
       .sort(
         (a: { startedAt: Date }, b: { startedAt: Date }) =>
           b.startedAt.getTime() - a.startedAt.getTime()
@@ -422,27 +429,27 @@ export async function getAttemptDetails(
       return { success: false, error: "Unauthorized" };
     }
 
-    const answers = attempt.answers.map((answer: any) => {
+    const answers = attempt.answers.map((answer) => {
       const correctOptionIds = answer.question.options
-        .filter((opt: any) => opt.isCorrect)
-        .map((opt: any) => opt.id);
+        .filter((opt) => opt.isCorrect)
+        .map((opt) => opt.id);
 
       const selectedOptionIds = Array.isArray(answer.selectedOptionIds)
         ? answer.selectedOptionIds
         : [];
 
       // Get selected options with labels
-      const selectedOptions = answer.question.options.filter((opt: any) =>
+      const selectedOptions = answer.question.options.filter((opt) =>
         selectedOptionIds.includes(opt.id)
-      ).map((opt: any) => ({
+      ).map((opt) => ({
         id: opt.id,
         label: opt.label,
       }));
 
       // Get correct options with labels
       const correctOptions = answer.question.options
-        .filter((opt: any) => opt.isCorrect)
-        .map((opt: any) => ({
+        .filter((opt) => opt.isCorrect)
+        .map((opt) => ({
           id: opt.id,
           label: opt.label,
         }));

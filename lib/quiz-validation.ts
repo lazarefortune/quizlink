@@ -1,4 +1,4 @@
-import type { QuizBuilder, Question } from "@/types/quiz-builder";
+import type { QuizBuilder } from "@/types/quiz-builder";
 
 export type ValidationError = {
   field: string;

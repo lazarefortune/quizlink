@@ -190,7 +190,7 @@ export async function getUserQuizzes() {
     });
 
     // Get all quiz links and attempts separately
-    const quizIds = quizzes.map((q: any) => q.id);
+    const quizIds = quizzes.map((q) => q.id);
     const quizLinks = await prisma.quizLink.findMany({
       where: {
         quizId: { in: quizIds },
@@ -218,12 +218,32 @@ export async function getUserQuizzes() {
     });
 
     // Group attempts by quizId
-    const attemptsByQuizId = new Map<string, any[]>();
+    type RawAttempt = {
+      id: string;
+      startedAt: Date;
+      finishedAt: Date | null;
+      score: number | null;
+      status: string;
+      participant: { id: string; name: string } | null;
+    };
+
+    const attemptsByQuizId = new Map<
+      string,
+      Array<{
+        id: string;
+        participantName: string;
+        startedAt: Date;
+        finishedAt: Date | null;
+        score: number | null;
+        status: string;
+      }>
+    >();
+
     for (const link of quizLinks) {
       if (!attemptsByQuizId.has(link.quizId)) {
         attemptsByQuizId.set(link.quizId, []);
       }
-      const attempts = link.attempts.map((attempt: any) => ({
+      const attempts = link.attempts.map((attempt: RawAttempt) => ({
         id: attempt.id,
         participantName: attempt.participant?.name || "Unknown",
         startedAt: attempt.startedAt,
@@ -236,17 +256,17 @@ export async function getUserQuizzes() {
 
     return {
       success: true,
-      quizzes: quizzes.map((quiz: any) => ({
+      quizzes: quizzes.map((quiz) => ({
         id: quiz.id,
         name: quiz.name,
         visibility: quiz.visibility as "PRIVATE" | "PUBLIC",
-        settings: quiz.settings as any,
-        questions: quiz.questions.map((q: any) => ({
+        settings: quiz.settings as unknown,
+        questions: quiz.questions.map((q) => ({
           id: q.id,
           type: q.type as "MULTIPLE_CHOICE" | "CHECKBOX" | "TRUE_FALSE",
           label: q.label,
           image: q.image || undefined,
-          options: q.options.map((opt: any) => ({
+          options: q.options.map((opt) => ({
             id: opt.id,
             label: opt.label,
             isCorrect: opt.isCorrect,

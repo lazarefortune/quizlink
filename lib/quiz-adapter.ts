@@ -1,4 +1,4 @@
-import type { QuizBuilder, Question as BuilderQuestion } from "@/types/quiz-builder";
+import type { QuizBuilder } from "@/types/quiz-builder";
 import type { Quiz, Question as PlayerQuestion } from "@/types/quiz";
 
 export function adaptQuizBuilderToPlayer(quizBuilder: QuizBuilder): Quiz {

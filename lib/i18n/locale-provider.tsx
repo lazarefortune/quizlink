@@ -15,26 +15,29 @@ const LocaleContext = createContext<LocaleContextType | undefined>(undefined);
 export function LocaleProvider({ children }: { children: ReactNode }) {
   // Always start with "fr" to match server-side rendering
   const [locale, setLocaleState] = useState<Locale>("fr");
-  const [isMounted, setIsMounted] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
 
-  // After mount, read from localStorage and update
+  // After mount, read from localStorage and update once
   useEffect(() => {
-    setIsMounted(true);
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem(LOCALE_STORAGE_KEY);
       const initialLocale = (stored === "en" || stored === "fr" ? stored : "fr") as Locale;
       if (initialLocale !== locale) {
         setLocaleState(initialLocale);
       }
+      document.documentElement.lang = initialLocale;
     }
+    setIsHydrated(true);
+    // We intentionally only run this effect once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && isMounted) {
+    if (typeof window !== "undefined" && isHydrated) {
       localStorage.setItem(LOCALE_STORAGE_KEY, locale);
       document.documentElement.lang = locale;
     }
-  }, [locale, isMounted]);
+  }, [locale, isHydrated]);
 
   const setLocale = (newLocale: Locale) => {
     setLocaleState(newLocale);

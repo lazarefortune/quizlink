@@ -35,7 +35,6 @@ import {
   Underline,
   Strikethrough,
   Pen,
-  Sparkles,
 } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";

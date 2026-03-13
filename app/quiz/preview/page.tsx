@@ -17,6 +17,7 @@ import type { Quiz } from "@/types/quiz";
 export default function QuizPreviewPage() {
   const router = useRouter();
   const [quiz, setQuiz] = useState<Quiz | null>(null);
+  const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
     const quizData = sessionStorage.getItem("currentQuiz");
@@ -26,15 +27,18 @@ export default function QuizPreviewPage() {
     }
 
     try {
-      const parsedQuiz = JSON.parse(quizData);
+      const parsedQuiz: Quiz = JSON.parse(quizData);
       parsedQuiz.createdAt = new Date(parsedQuiz.createdAt);
       setQuiz(parsedQuiz);
     } catch {
       router.push("/generate");
+      return;
     }
+
+    setIsHydrated(true);
   }, [router]);
 
-  if (!quiz) {
+  if (!quiz || !isHydrated) {
     return (
       <div className="min-h-screen bg-background p-8">
         <div className="mx-auto max-w-2xl">

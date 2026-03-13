@@ -27,6 +27,8 @@ export const fr = {
     noQuizzes: "Aucun quiz public pour le moment",
     noQuizzesDescription: "Les quiz marqués comme publics par leurs créateurs apparaîtront ici.",
     noSearchResults: "Aucun quiz ne correspond à ta recherche.",
+    authorLabel: "Créé par",
+    anonymousAuthor: "Auteur anonyme",
   },
 
   // Generate page
@@ -658,6 +660,15 @@ export const fr = {
     public: "Public",
     privateQuiz: "Ce quiz est privé et ne peut pas être partagé",
     linkCopied: "Lien copié",
+    makePublicWithCoins: "Rendre public ({cost} coins)",
+    makePublicDialogTitle: "Rendre ce quiz public ?",
+    makePublicDialogDescription:
+      "Rendre ce quiz public coûtera {cost} coins. Ton solde actuel est de {balance} coins. Les quiz publics peuvent apparaître dans la page publique et être joués par tout le monde.",
+    makePublicConfirm: "Confirmer ({cost} coins)",
+    makePublicSuccess: "Ton quiz est maintenant public.",
+    makePublicError: "Impossible de rendre le quiz public. Réessaie.",
+    makePublicInsufficientCoins:
+      "Tu n'as pas assez de coins pour rendre ce quiz public. Achète des coins dans la Boutique.",
     deleteConfirmTitle: "Supprimer le quiz",
     deleteConfirmDescription: "Tu es sûr de vouloir supprimer le quiz \"{name}\" ? Cette action est irréversible.",
     deleteError: "Erreur lors de la suppression du quiz",

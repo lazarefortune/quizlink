@@ -27,6 +27,8 @@ export const en = {
     noQuizzes: "No public quizzes yet",
     noQuizzesDescription: "Quizzes marked as public by their creators will appear here.",
     noSearchResults: "No quizzes match your search.",
+    authorLabel: "Created by",
+    anonymousAuthor: "Anonymous author",
   },
 
   // Generate page
@@ -658,6 +660,15 @@ export const en = {
     public: "Public",
     privateQuiz: "This quiz is private and cannot be shared",
     linkCopied: "Link copied",
+    makePublicWithCoins: "Make public ({cost} coins)",
+    makePublicDialogTitle: "Make this quiz public?",
+    makePublicDialogDescription:
+      "Making this quiz public will cost {cost} coins. Your current balance is {balance} coins. Public quizzes can appear on the public quizzes page and be played by anyone.",
+    makePublicConfirm: "Confirm ({cost} coins)",
+    makePublicSuccess: "Your quiz is now public.",
+    makePublicError: "Could not make the quiz public. Please try again.",
+    makePublicInsufficientCoins:
+      "You don't have enough coins to make this quiz public. Buy coins in the Shop.",
     deleteConfirmTitle: "Delete quiz",
     deleteConfirmDescription: "Are you sure you want to delete the quiz \"{name}\"? This action cannot be undone.",
     deleteError: "Error deleting quiz",

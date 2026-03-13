@@ -226,7 +226,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
     return {
       id: `quiz-${Date.now()}`,
       name: "",
-      visibility: "PUBLIC",
+      visibility: "PRIVATE",
       settings: {
         showAnswerImmediately: false,
         randomizeQuestions: false,
