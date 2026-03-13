@@ -3,6 +3,8 @@
 import Image from "next/image";
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { Rocket, Sparkles, Target, Smartphone } from "lucide-react";
+
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 
@@ -16,9 +18,9 @@ const fadeUp = {
 };
 
 const steps = [
-  { emoji: "🎯", bg: "bg-primary", shadow: "var(--shadow-raised-primary)" },
-  { emoji: "✨", bg: "bg-blue", shadow: "var(--shadow-raised-blue)" },
-  { emoji: "🚀", bg: "bg-warning", shadow: "var(--shadow-raised-warning)" },
+  { Icon: Target, bg: "bg-primary", shadow: "var(--shadow-raised-primary)" },
+  { Icon: Sparkles, bg: "bg-blue", shadow: "var(--shadow-raised-blue)" },
+  { Icon: Rocket, bg: "bg-warning", shadow: "var(--shadow-raised-warning)" },
 ] as const;
 
 export function HowItWorksSection() {
@@ -51,10 +53,10 @@ export function HowItWorksSection() {
               className="text-center space-y-4"
             >
               <div
-                className={`w-16 h-16 rounded-2xl ${step.bg} text-primary-foreground flex items-center justify-center text-3xl mx-auto`}
+                className={`w-16 h-16 rounded-2xl ${step.bg} text-primary-foreground flex items-center justify-center mx-auto`}
                 style={{ boxShadow: step.shadow }}
               >
-                {step.emoji}
+                <step.Icon className="h-8 w-8" />
               </div>
               <h3 className="font-extrabold text-lg text-foreground">
                 {t(locale, `landing.howItWorks.step${(i + 1) as 1 | 2 | 3}.title`)}
@@ -84,8 +86,8 @@ export function HowItWorksSection() {
               onError={() => setPhoneImageError(true)}
             />
           ) : (
-            <div className="w-56 md:w-64 h-64 rounded-2xl bg-muted/50 flex items-center justify-center text-4xl" aria-hidden>
-              📱
+            <div className="w-56 md:w-64 h-64 rounded-2xl bg-muted/50 flex items-center justify-center" aria-hidden>
+              <Smartphone className="h-10 w-10 text-muted-foreground" />
             </div>
           )}
         </motion.div>

@@ -437,7 +437,7 @@ export const fr = {
       createButton: "C'est parti !",
       exploreButton: "Explorer les quiz",
       lovedBy: "Adoré par",
-      lovedByCount: "+2,000",
+      lovedByCount: "+100",
       lovedBySuffix: "joueurs",
       mascotBadge1: "10 questions ⚡",
       mascotBadge2: "En 5 sec ! 🤯",

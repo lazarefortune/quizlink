@@ -5,13 +5,13 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useSession } from "next-auth/react";
+import { Bird, ArrowRight, Sparkles, Zap, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { track } from "@/lib/analytics/track";
 import { LANDING_VIEW, CTA_CLICK } from "@/lib/analytics/events";
 import { buildCommonEventProps } from "@/lib/analytics/props";
-import { ArrowRight, Sparkles, Zap, Star } from "lucide-react";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -136,8 +136,11 @@ export function HeroSection() {
                   onError={() => setMascotError(true)}
                 />
               ) : (
-                <div className="w-full h-full rounded-3xl bg-primary/10 flex items-center justify-center text-6xl animate-float" aria-hidden>
-                  🦉
+                <div
+                  className="w-full h-full rounded-3xl bg-primary/10 flex items-center justify-center animate-float"
+                  aria-hidden
+                >
+                  <Bird className="h-24 w-24 text-primary" />
                 </div>
               )}
               <motion.div
