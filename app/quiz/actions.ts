@@ -10,7 +10,8 @@ import type {
   PrivateAnswer,
   QuizSession,
 } from "@/lib/quiz-session/quiz-session-types";
-import type { Quiz, Question } from "@/types/quiz";
+import type { Quiz, QuizSettings } from "@/types/quiz";
+import type { Prisma } from "@prisma/client";
 
 // Convert Quiz to session format
 function convertQuizToSession(quiz: Quiz): {
@@ -46,7 +47,7 @@ function convertQuizToSession(quiz: Quiz): {
 
 export async function startQuizAction(
   quiz: Quiz | (Partial<Quiz> & { id: string }),
-  participantName?: string
+  _participantName?: string
 ): Promise<StartQuizResponse> {
   try {
     // Check if quiz exists in database
@@ -74,19 +75,20 @@ export async function startQuizAction(
     let privateAnswers: PrivateAnswer[];
 
     if (dbQuiz) {
-      const settings = (dbQuiz.settings as any) || {
+      const settings = (dbQuiz.settings as QuizSettings) || {
         showAnswerImmediately: false,
         randomizeQuestions: false,
         timeLimitPerQuestion: null,
       };
 
       // Convert DB quiz to session format
-      let questions = dbQuiz.questions.map((q: any) => ({
+      type DbQuestion = { id: string; type: string; label: string; image: string | null; options: Array<{ id: string; label: string; isCorrect: boolean }> };
+      let questions = dbQuiz.questions.map((q: DbQuestion) => ({
         id: q.id,
         type: q.type as "MCQ" | "TRUE_FALSE" | "CHECKBOX",
         label: q.label,
         image: q.image || undefined,
-        options: q.options.map((opt: any) => ({
+        options: q.options.map((opt: { id: string; label: string; isCorrect: boolean }) => ({
           id: opt.id,
           label: opt.label,
           isCorrect: opt.isCorrect,
@@ -138,8 +140,8 @@ export async function startQuizAction(
     const session: QuizSession = {
       id: quizSessionId,
       quizId: dbQuiz?.id || quiz.id || "",
-      title: dbQuiz?.name || (quiz as any).title || "",
-      settings: (dbQuiz?.settings as any) || quiz.settings || {
+      title: dbQuiz?.name || (quiz as Partial<Quiz> & { id: string }).title || "",
+      settings: (dbQuiz?.settings as QuizSettings) || quiz.settings || {
         showAnswerImmediately: false,
         randomizeQuestions: false,
         timeLimitPerQuestion: null,
@@ -269,13 +271,14 @@ export async function submitAnswerAction(
     });
 
     // Save answer to database if attempt exists
-    const attemptId = (session as any).attemptId;
+    const sessionWithAttempt = session as QuizSession & { attemptId?: string };
+    const attemptId = sessionWithAttempt.attemptId;
     if (attemptId) {
       await prisma.quizAnswer.create({
         data: {
           attemptId,
           questionId,
-          selectedOptionIds: selectedOptionIds as any,
+          selectedOptionIds: selectedOptionIds as Prisma.InputJsonValue,
           isCorrect,
         },
       });
@@ -338,7 +341,7 @@ export async function getResultsAction(
     });
 
     // Finalize attempt in database if it exists
-    const attemptId = (session as any).attemptId;
+    const attemptId = (session as QuizSession & { attemptId?: string }).attemptId;
     if (attemptId) {
       const totalQuestions = session.publicQuestions.length;
       const score = (session.score / totalQuestions) * 100;

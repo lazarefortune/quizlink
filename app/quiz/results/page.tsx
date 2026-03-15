@@ -11,12 +11,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Alert } from "@/components/ui/alert";
 import { CheckCircle2, XCircle } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
-import { getResultsAction } from "@/app/quiz/actions";
 
 type QuizResults = {
   quizId: string;
@@ -33,7 +31,7 @@ export default function QuizResultsPage() {
   const { locale } = useLocale();
   const [results, setResults] = useState<QuizResults | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, _setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadResults() {

@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { QuizBuilder } from "@/types/quiz-builder";
 import { revalidatePath } from "next/cache";
+import type { Prisma } from "@prisma/client";
 
 export async function saveQuiz(quiz: QuizBuilder, quizId?: string) {
   try {
@@ -70,7 +71,7 @@ export async function saveQuiz(quiz: QuizBuilder, quizId?: string) {
           data: {
             name: quiz.name,
             visibility: quiz.visibility,
-            settings: quiz.settings as any,
+            settings: quiz.settings as Prisma.InputJsonValue,
             questions: {
               create: quiz.questions.map((q, index) => ({
                 type: q.type,
@@ -105,7 +106,7 @@ export async function saveQuiz(quiz: QuizBuilder, quizId?: string) {
         ownerId: session.user.id,
         name: quiz.name,
         visibility: quiz.visibility,
-        settings: quiz.settings as any,
+        settings: quiz.settings as Prisma.InputJsonValue,
         questions: {
           create: quiz.questions.map((q, index) => ({
             type: q.type,

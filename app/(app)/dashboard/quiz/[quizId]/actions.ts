@@ -434,9 +434,12 @@ export async function getAttemptDetails(
         .filter((opt) => opt.isCorrect)
         .map((opt) => opt.id);
 
-      const selectedOptionIds = Array.isArray(answer.selectedOptionIds)
+      const rawSelected = Array.isArray(answer.selectedOptionIds)
         ? answer.selectedOptionIds
         : [];
+      const selectedOptionIds = rawSelected.filter(
+        (id): id is string => typeof id === "string"
+      );
 
       // Get selected options with labels
       const selectedOptions = answer.question.options.filter((opt) =>

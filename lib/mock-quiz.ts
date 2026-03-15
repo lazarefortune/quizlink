@@ -42,7 +42,7 @@ function generateMockQuestions(
 export function generateMockQuiz(
   sourceType: "TEXT" | "PDF",
   questionCount: number,
-  sourceContent?: string
+  _sourceContent?: string
 ): Quiz {
   const quizId = `quiz-${Date.now()}-${Math.random().toString(36).substring(7)}`;
   const title = sourceType === "TEXT"

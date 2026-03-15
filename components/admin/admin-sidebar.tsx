@@ -14,7 +14,6 @@ import {
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
-import { Separator } from "@/components/ui/separator";
 
 const navItems = [
   { href: "/admin", label: "admin.nav.dashboard", icon: LayoutDashboard },

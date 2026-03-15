@@ -11,12 +11,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Alert } from "@/components/ui/alert";
 import { CheckCircle2, XCircle, RotateCcw, ArrowLeft } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 
-type Attempt = {
+export type Attempt = {
   id: string;
   score: number | null;
   quizLink: {
@@ -45,7 +44,7 @@ type Attempt = {
   answers: Array<{
     id: string;
     questionId: string;
-    selectedOptionIds: any;
+    selectedOptionIds: string[];
     isCorrect: boolean;
     timeSpent: number | null;
     question: {

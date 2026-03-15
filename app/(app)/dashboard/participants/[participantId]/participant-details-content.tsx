@@ -42,7 +42,6 @@ import {
 } from "@/components/ui/select";
 import {
   ArrowLeft,
-  ArrowRight,
   Mail,
   Trash2,
   Copy,
@@ -451,7 +450,7 @@ export function ParticipantDetailsContent({
     });
   };
 
-  const getStatusBadge = (status: string) => {
+  const _getStatusBadge = (status: string) => {
     switch (status) {
       case "COMPLETED":
         return (

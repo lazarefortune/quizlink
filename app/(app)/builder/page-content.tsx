@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, Suspense } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   DndContext,
@@ -37,7 +37,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Eye, AlertCircle, GripVertical, ChevronUp, ChevronDown, Play, Save } from "lucide-react";
+import { Plus, AlertCircle, GripVertical, ChevronUp, ChevronDown, Play, Save } from "lucide-react";
 import { QuizMenu } from "@/components/quiz-menu";
 import { getQuizById } from "@/app/(app)/dashboard/actions";
 import { saveQuiz } from "@/app/(app)/builder/actions";
@@ -56,6 +56,7 @@ import type {
   QuizBuilder,
   Question,
   QuestionType,
+  QuizSettings,
   QuizVisibility,
 } from "@/types/quiz-builder";
 import {Textarea} from "@/components/ui/textarea";
@@ -209,7 +210,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
   const router = useRouter();
   const searchParams = useSearchParams();
   const { locale } = useLocale();
-  const { data: session } = useSession();
+  useSession();
   const [quiz, setQuiz] = useState<QuizBuilder>(() => {
     if (typeof window !== "undefined") {
       const savedQuiz = sessionStorage.getItem("quizBuilder");
@@ -241,7 +242,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [newlyAddedQuestionId, setNewlyAddedQuestionId] = useState<string | null>(null);
   const [removingQuestionId, setRemovingQuestionId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [savedQuizId, setSavedQuizId] = useState<string | null>(null);
   const { showToast } = useToast();
@@ -262,7 +263,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
               id: result.quiz.id,
               name: result.quiz.name,
               visibility: result.quiz.visibility,
-              settings: result.quiz.settings,
+              settings: result.quiz.settings as QuizSettings,
               questions: result.quiz.questions.map((q: { id: string; type: string; label: string; image?: string; explanation?: string; options: { id: string; label: string; isCorrect: boolean }[] }) => ({
                 id: q.id,
                 type: q.type as QuestionType,

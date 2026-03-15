@@ -305,16 +305,7 @@ export async function getAdminUserWithQuizzes(
       },
     });
 
-    // Count total attempts per quiz
-    const quizIds = quizzes.map((q) => q.id);
-    const attemptCounts = quizIds.length > 0
-      ? await prisma.quizAttempt.groupBy({
-          by: ["quizLinkId"],
-          where: { quizLink: { quizId: { in: quizIds } } },
-        })
-      : [];
-
-    // Build a map of quizId → total attempts
+    // Build a map of quizId → total attempts (from included link._count.attempts)
     const quizAttemptMap = new Map<string, number>();
     for (const quiz of quizzes) {
       let total = 0;

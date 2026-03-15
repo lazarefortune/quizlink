@@ -26,7 +26,7 @@ type TopbarProps = {
   className?: string;
 };
 
-export function Topbar({ title, className }: TopbarProps) {
+export function Topbar({ title: _title, className }: TopbarProps) {
   const { data: session } = useSession();
   const { locale } = useLocale();
   const router = useRouter();

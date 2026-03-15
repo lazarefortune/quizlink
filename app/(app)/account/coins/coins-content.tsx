@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,7 +25,6 @@ import {
   Coins,
   ArrowUpCircle,
   ArrowDownCircle,
-  Sparkles,
   ShoppingBag,
   Check,
   Loader2,
@@ -61,7 +58,6 @@ type CoinPack = {
 
 export function CoinsContent() {
   const { locale } = useLocale();
-  const router = useRouter();
   const { showToast } = useToast();
   const [transactions, setTransactions] = useState<CoinTransaction[]>([]);
   const [balance, setBalance] = useState<number>(0);

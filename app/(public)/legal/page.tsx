@@ -12,7 +12,7 @@ export default function LegalPage() {
           <Link href="/">
             <Button variant="ghost" className="mb-6">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Retour à l'accueil
+              Retour à l&apos;accueil
             </Button>
           </Link>
           <h1 className="text-4xl font-bold mb-2">Mentions légales</h1>
@@ -118,7 +118,7 @@ export default function LegalPage() {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                L'ensemble des contenus (textes, images, logos, code) présents sur le site sont la propriété exclusive de Lazare Fortune, sauf mention contraire. Toute reproduction ou diffusion sans autorisation est interdite.
+                L&apos;ensemble des contenus (textes, images, logos, code) présents sur le site sont la propriété exclusive de Lazare Fortune, sauf mention contraire. Toute reproduction ou diffusion sans autorisation est interdite.
               </p>
             </CardContent>
           </Card>
@@ -130,10 +130,10 @@ export default function LegalPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-muted-foreground">
-                Les informations personnelles collectées via ce site sont utilisées uniquement pour les finalités déclarées (création de compte, gestion des quiz, statistiques). Conformément au RGPD, tu disposes d'un droit d'accès, de rectification et de suppression de tes données.
+                Les informations personnelles collectées via ce site sont utilisées uniquement pour les finalités déclarées (création de compte, gestion des quiz, statistiques). Conformément au RGPD, tu disposes d&apos;un droit d&apos;accès, de rectification et de suppression de tes données.
               </p>
               <p className="text-muted-foreground">
-                Pour exercer ce droit, tu peux nous contacter à l'adresse suivante :{" "}
+                Pour exercer ce droit, tu peux nous contacter à l&apos;adresse suivante :{" "}
                 <a
                   href="mailto:lazarefortune@gmail.com"
                   className="text-primary hover:underline"
@@ -151,7 +151,7 @@ export default function LegalPage() {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                Pour toute question concernant les mentions légales du site, tu peux contacter Lazare Fortune à l'adresse suivante :{" "}
+                Pour toute question concernant les mentions légales du site, tu peux contacter Lazare Fortune à l&apos;adresse suivante :{" "}
                 <a
                   href="mailto:lazarefortune@gmail.com"
                   className="text-primary hover:underline"

@@ -17,7 +17,7 @@ type SidebarProps = {
 };
 
 export function Sidebar({
-  isAdmin = false,
+  isAdmin: _isAdmin = false,
   onNavClick,
   className,
 }: SidebarProps) {

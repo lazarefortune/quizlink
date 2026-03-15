@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import crypto from "crypto";
+import type { Prisma } from "@prisma/client";
 
 type CreateQuizLinkResponse =
   | { success: true; quizLink: { id: string; token: string }; isFirstInviteForQuiz: boolean }
@@ -29,7 +30,7 @@ type GetQuizLinkByTokenResponse =
           id: string;
           name: string;
           visibility: string;
-          settings: any;
+          settings: Record<string, unknown>;
           questions: Array<{
             id: string;
             type: string;
@@ -308,12 +309,12 @@ export async function getQuizLinkByToken(
       if (quizLink.participantId) {
         // For personalized links, check if this participant has completed
         hasCompletedAttempt = quizLink.attempts.some(
-          (a: any) => a.participantId === quizLink.participantId && a.status === "COMPLETED"
+          (a) => a.participantId === quizLink.participantId
         );
       } else {
-        // For public links (anonymous), check if any anonymous attempt is completed
+        // For public links (anonymous), check if any anonymous attempt is completed (attempts are already filtered by status COMPLETED)
         hasCompletedAttempt = quizLink.attempts.some(
-          (a: any) => a.participantId === null && a.status === "COMPLETED"
+          (a) => a.participantId === null
         );
       }
     }
@@ -342,14 +343,14 @@ export async function getQuizLinkByToken(
           id: quizLink.quiz.id,
           name: quizLink.quiz.name,
           visibility: quizLink.quiz.visibility,
-          settings: quizLink.quiz.settings as any,
-          questions: quizLink.quiz.questions.map((q: any) => ({
+          settings: quizLink.quiz.settings as Record<string, unknown>,
+          questions: quizLink.quiz.questions.map((q: { id: string; type: string; label: string; image: string | null; order: number; options: Array<{ id: string; label: string; isCorrect: boolean }> }) => ({
             id: q.id,
             type: q.type,
             label: q.label,
             image: q.image,
             order: q.order,
-            options: q.options.map((opt: any) => ({
+            options: q.options.map((opt: { id: string; label: string; isCorrect: boolean }) => ({
               id: opt.id,
               label: opt.label,
               isCorrect: opt.isCorrect,
@@ -472,7 +473,7 @@ export async function startQuizAttempt(
       if (!quizLink.allowMultipleAttempts) {
         // Check for any completed attempt for this participant
         const existingCompleted = quizLink.attempts.find(
-          (a: any) => a.participantId === participantId && a.status === "COMPLETED"
+          (a: { participantId: string | null; status: string }) => a.participantId === participantId && a.status === "COMPLETED"
         );
         if (existingCompleted) {
           return {
@@ -494,7 +495,7 @@ export async function startQuizAttempt(
       // For single-attempt anonymous quizzes, check if any anonymous attempt is completed
       if (!quizLink.allowMultipleAttempts) {
         const existingCompleted = quizLink.attempts.find(
-          (a: any) => a.participantId === null && a.status === "COMPLETED"
+          (a: { participantId: string | null; status: string }) => a.participantId === null && a.status === "COMPLETED"
         );
         if (existingCompleted) {
           return {
@@ -519,7 +520,7 @@ export async function startQuizAttempt(
             }
           : {}),
         status: "IN_PROGRESS",
-      } as any, // Type assertion needed because Prisma types don't handle optional relations well
+      } as Prisma.QuizAttemptCreateInput,
     });
 
     return {

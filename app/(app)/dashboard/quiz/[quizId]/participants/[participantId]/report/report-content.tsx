@@ -100,7 +100,7 @@ export function ParticipantReportContent({
         locale === "fr" ? "Téléchargement démarré." : "Download started.",
         "success"
       );
-    } catch (e) {
+    } catch (_e) {
       showToast(
         locale === "fr" ? "Erreur lors du téléchargement du PDF." : "Error downloading PDF.",
         "error"
@@ -145,7 +145,7 @@ export function ParticipantReportContent({
             : result.error;
         setEmailError(msg);
       }
-    } catch (e) {
+    } catch (_e) {
       setEmailError(
         locale === "fr"
           ? "Erreur lors de l'envoi de l'email."
@@ -195,7 +195,7 @@ export function ParticipantReportContent({
                 : result.error;
         setError(msg);
       }
-    } catch (e) {
+    } catch (_e) {
       setError(
         locale === "fr"
           ? "Erreur lors de la génération du rapport."
@@ -586,7 +586,7 @@ export function ParticipantReportContent({
 }
 
 function ReportSection({
-  id,
+  id: _id,
   title,
   icon,
   open,

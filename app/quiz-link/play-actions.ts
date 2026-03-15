@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
 
 type SubmitAnswerResponse =
   | {
@@ -64,7 +65,7 @@ export async function submitAnswerForAttempt(
 
     // Find the question
     const question = attempt.quizLink.quiz.questions.find(
-      (q: any) => q.id === questionId
+      (q: { id: string; options: Array<{ id: string; isCorrect: boolean }> }) => q.id === questionId
     );
 
     if (!question) {
@@ -77,7 +78,7 @@ export async function submitAnswerForAttempt(
     }
 
     // Validate that all selectedOptionIds are valid for this question
-    const validOptionIds = new Set(question.options.map((opt: any) => opt.id));
+    const validOptionIds = new Set(question.options.map((opt: { id: string }) => opt.id));
     const invalidOptions = selectedOptionIds.filter((id) => !validOptionIds.has(id));
     if (invalidOptions.length > 0) {
       return { success: false, error: "Options invalides sélectionnées" };
@@ -85,8 +86,8 @@ export async function submitAnswerForAttempt(
 
     // Get correct option IDs
     const correctOptionIds = question.options
-      .filter((opt: any) => opt.isCorrect)
-      .map((opt: any) => opt.id);
+      .filter((opt: { isCorrect: boolean }) => opt.isCorrect)
+      .map((opt: { id: string }) => opt.id);
 
     // Check if answer is correct
     const userAnswerSet = new Set(selectedOptionIds);
@@ -108,7 +109,7 @@ export async function submitAnswerForAttempt(
       await prisma.quizAnswer.update({
         where: { id: existingAnswer.id },
         data: {
-          selectedOptionIds: selectedOptionIds as any,
+          selectedOptionIds: selectedOptionIds as Prisma.InputJsonValue,
           isCorrect,
           timeSpent: timeSpent || null,
         },
@@ -119,7 +120,7 @@ export async function submitAnswerForAttempt(
         data: {
           attemptId,
           questionId,
-          selectedOptionIds: selectedOptionIds as any,
+          selectedOptionIds: selectedOptionIds as Prisma.InputJsonValue,
           isCorrect,
           timeSpent: timeSpent || null,
         },
@@ -181,7 +182,7 @@ export async function finishQuizAttempt(
     }
 
     const totalQuestions = attempt.quizLink.quiz.questions.length;
-    const correctAnswers = attempt.answers.filter((a: any) => a.isCorrect).length;
+    const correctAnswers = attempt.answers.filter((a: { isCorrect: boolean }) => a.isCorrect).length;
     const score = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
 
     if (attempt.status === "COMPLETED") {

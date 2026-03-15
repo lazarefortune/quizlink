@@ -50,6 +50,7 @@ function ResetPasswordForm() {
       setIsValid(false);
       setError(t(locale, "auth.resetPassword.invalidToken"));
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- validateToken is stable, intentional deps
   }, [searchParams, locale]);
 
   const validateToken = async (tokenValue: string) => {

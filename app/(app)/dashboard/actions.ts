@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import type { QuizBuilder } from "@/types/quiz-builder";
 import { revalidatePath } from "next/cache";
 import { deductCoins } from "@/lib/coins";
+import type { Prisma } from "@prisma/client";
 
 // Get dashboard statistics for the current user
 export async function getDashboardStats() {
@@ -166,7 +167,7 @@ export async function getQuizById(quizId: string) {
         id: quiz.id,
         name: quiz.name,
         visibility: quiz.visibility as "PRIVATE" | "PUBLIC",
-        settings: quiz.settings as any,
+        settings: quiz.settings as Prisma.InputJsonValue,
         questions: quiz.questions.map((q: { id: string; type: string; label: string; image: string | null; explanation: string | null; options: { id: string; label: string; isCorrect: boolean }[] }) => ({
           id: q.id,
           type: q.type as "MULTIPLE_CHOICE" | "CHECKBOX" | "TRUE_FALSE",
@@ -251,7 +252,7 @@ export async function updateQuiz(quizId: string, quiz: QuizBuilder) {
         data: {
           name: quiz.name,
           visibility: quiz.visibility,
-          settings: quiz.settings as any,
+          settings: quiz.settings as Prisma.InputJsonValue,
             questions: {
               create: quiz.questions.map((q, index) => ({
                 type: q.type,
@@ -388,15 +389,15 @@ export async function duplicateQuiz(quizId: string) {
         ownerId: session.user.id,
         name: `${originalQuiz.name} (Copy)`,
         visibility: originalQuiz.visibility,
-        settings: originalQuiz.settings as any,
+        settings: originalQuiz.settings as Prisma.InputJsonValue,
         questions: {
-          create: originalQuiz.questions.map((q: any) => ({
+          create: originalQuiz.questions.map((q: { type: string; label: string; image: string | null; order: number; options: Array<{ label: string; isCorrect: boolean }> }) => ({
             type: q.type,
             label: q.label,
             image: q.image,
             order: q.order,
             options: {
-              create: q.options.map((opt: any) => ({
+              create: q.options.map((opt: { label: string; isCorrect: boolean }) => ({
                 label: opt.label,
                 isCorrect: opt.isCorrect,
               })),

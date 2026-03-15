@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,31 +14,34 @@ import {
 import { Badge } from "@/components/ui/badge";
 import type { Quiz } from "@/types/quiz";
 
+function getClientQuizSnapshot(): Quiz | null {
+  if (typeof window === "undefined") return null;
+  const quizData = sessionStorage.getItem("currentQuiz");
+  if (!quizData) return null;
+  try {
+    const parsed: Quiz = JSON.parse(quizData);
+    parsed.createdAt = new Date(parsed.createdAt);
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
 export default function QuizPreviewPage() {
   const router = useRouter();
-  const [quiz, setQuiz] = useState<Quiz | null>(null);
-  const [isHydrated, setIsHydrated] = useState(false);
+  const quiz = useSyncExternalStore(
+    () => () => {},
+    getClientQuizSnapshot,
+    () => null
+  );
 
   useEffect(() => {
-    const quizData = sessionStorage.getItem("currentQuiz");
-    if (!quizData) {
+    if (typeof window !== "undefined" && !getClientQuizSnapshot()) {
       router.push("/generate");
-      return;
     }
-
-    try {
-      const parsedQuiz: Quiz = JSON.parse(quizData);
-      parsedQuiz.createdAt = new Date(parsedQuiz.createdAt);
-      setQuiz(parsedQuiz);
-    } catch {
-      router.push("/generate");
-      return;
-    }
-
-    setIsHydrated(true);
   }, [router]);
 
-  if (!quiz || !isHydrated) {
+  if (!quiz) {
     return (
       <div className="min-h-screen bg-background p-8">
         <div className="mx-auto max-w-2xl">

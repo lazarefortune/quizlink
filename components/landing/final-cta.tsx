@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useSession } from "next-auth/react";
-import { Brain, Gamepad2, PartyPopper, Sparkles, Star, Target, Zap } from "lucide-react";
+import { Brain, Gamepad2, PartyPopper, Star, Target, Zap } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useLocale } from "@/lib/i18n/use-locale";

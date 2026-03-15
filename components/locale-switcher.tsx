@@ -1,7 +1,6 @@
 "use client";
 
 import { useLocale } from "@/lib/i18n/use-locale";
-import { t } from "@/lib/i18n";
 import {
   Select,
   SelectContent,

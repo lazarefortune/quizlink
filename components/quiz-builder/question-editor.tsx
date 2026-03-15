@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -59,11 +60,11 @@ type QuestionEditorProps = {
 export function QuestionEditor({
   question,
   index,
-  totalQuestions,
+  totalQuestions: _totalQuestions,
   onChange,
   onDelete,
-  onMoveUp,
-  onMoveDown,
+  onMoveUp: _onMoveUp,
+  onMoveDown: _onMoveDown,
   errors = [],
 }: QuestionEditorProps) {
   const { locale } = useLocale();
@@ -411,11 +412,13 @@ export function QuestionEditor({
             {/* Image Placeholder */}
             <div className="w-full sm:w-32 md:w-40 shrink-0">
               {imagePreview ? (
-                <div className="space-y-2">
-                  <img
+                <div className="space-y-2 relative w-full h-24 sm:h-32 md:h-40">
+                  <Image
                     src={imagePreview}
                     alt="Question preview"
-                    className="w-full h-24 sm:h-32 md:h-40 object-cover rounded-md border border-border"
+                    fill
+                    className="object-cover rounded-md border border-border"
+                    unoptimized
                   />
                   <Button
                     variant="ghost"

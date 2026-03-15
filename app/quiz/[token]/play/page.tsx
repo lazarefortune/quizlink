@@ -23,7 +23,7 @@ export default async function QuizPlayPage({ params, searchParams }: PageProps) 
           <div className="max-w-md w-full text-center">
             <h1 className="text-2xl font-bold mb-4">Lien invalide</h1>
             <p className="text-muted-foreground">
-              Ce lien personnalisé n'est pas valide.
+              Ce lien personnalisé n&apos;est pas valide.
             </p>
           </div>
         </div>
@@ -36,7 +36,7 @@ export default async function QuizPlayPage({ params, searchParams }: PageProps) 
           <div className="max-w-md w-full text-center">
             <h1 className="text-2xl font-bold mb-4">Accès non autorisé</h1>
             <p className="text-muted-foreground">
-              Ce lien ne t'appartient pas.
+              Ce lien ne t&apos;appartient pas.
             </p>
           </div>
         </div>
@@ -68,7 +68,7 @@ export default async function QuizPlayPage({ params, searchParams }: PageProps) 
         <div className="max-w-md w-full text-center">
           <h1 className="text-2xl font-bold mb-4">Tentative non trouvée</h1>
           <p className="text-muted-foreground">
-            L'identifiant de tentative est manquant.
+            L&apos;identifiant de tentative est manquant.
           </p>
         </div>
       </div>
@@ -105,7 +105,7 @@ export default async function QuizPlayPage({ params, searchParams }: PageProps) 
         <div className="max-w-md w-full text-center">
           <h1 className="text-2xl font-bold mb-4">Tentative non trouvée</h1>
           <p className="text-muted-foreground">
-            Cette tentative n'existe pas ou a été supprimée.
+            Cette tentative n&apos;existe pas ou a été supprimée.
           </p>
         </div>
       </div>
@@ -118,7 +118,7 @@ export default async function QuizPlayPage({ params, searchParams }: PageProps) 
         <div className="max-w-md w-full text-center">
           <h1 className="text-2xl font-bold mb-4">Accès non autorisé</h1>
           <p className="text-muted-foreground">
-            Cette tentative n'appartient pas à ce quiz.
+            Cette tentative n&apos;appartient pas à ce quiz.
           </p>
         </div>
       </div>
@@ -141,7 +141,7 @@ export default async function QuizPlayPage({ params, searchParams }: PageProps) 
   return (
     <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center">Chargement...</div>}>
       <QuizPlayContent
-        attempt={attempt}
+        attempt={attempt as import("./quiz-play-content").Attempt}
         token={token}
       />
     </Suspense>

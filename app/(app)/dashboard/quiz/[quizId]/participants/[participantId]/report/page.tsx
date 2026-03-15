@@ -24,7 +24,7 @@ export default async function QuizParticipantReportPage({ params }: PageProps) {
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="max-w-md w-full text-center">
           <h1 className="text-2xl font-bold mb-4">Accès non autorisé</h1>
-          <p className="text-muted-foreground">Quiz introuvable ou tu n'as pas accès.</p>
+          <p className="text-muted-foreground">Quiz introuvable ou tu n&apos;as pas accès.</p>
         </div>
       </div>
     );
@@ -39,7 +39,7 @@ export default async function QuizParticipantReportPage({ params }: PageProps) {
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="max-w-md w-full text-center">
           <h1 className="text-2xl font-bold mb-4">Participant introuvable</h1>
-          <p className="text-muted-foreground">Ce participant n'existe pas.</p>
+          <p className="text-muted-foreground">Ce participant n&apos;existe pas.</p>
         </div>
       </div>
     );
@@ -55,7 +55,7 @@ export default async function QuizParticipantReportPage({ params }: PageProps) {
         <div className="max-w-md w-full text-center">
           <h1 className="text-2xl font-bold mb-4">Aucune tentative</h1>
           <p className="text-muted-foreground">
-            Ce participant n'a pas encore de tentative pour ce quiz. Le rapport IA est disponible après au moins une tentative.
+            Ce participant n&apos;a pas encore de tentative pour ce quiz. Le rapport IA est disponible après au moins une tentative.
           </p>
         </div>
       </div>

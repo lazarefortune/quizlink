@@ -13,7 +13,6 @@ import {
   Edit2,
   Trash2,
   Loader2,
-  Coins,
   ArrowLeft,
 } from "lucide-react";
 import {
@@ -63,6 +62,7 @@ export function AdminPacksContent() {
 
   useEffect(() => {
     fetchPacks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchPacks is stable, mount-only init
   }, []);
 
   const fetchPacks = async () => {

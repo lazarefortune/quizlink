@@ -108,7 +108,7 @@ export async function generateQuizFromPdf(
     language: string;
   }
 ): Promise<
-  | { success: true; title: string; questions: any[] }
+  | { success: true; title: string; questions: Array<{ id: string; type: string; label: string; options: Array<{ id: string; label: string; isCorrect: boolean }> }> }
   | { success: false; error: string }
 > {
   try {

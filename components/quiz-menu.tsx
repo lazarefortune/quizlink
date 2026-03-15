@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
 import { MoreVertical, Share2, Trash2, Check, Lock, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,7 +42,6 @@ export function QuizMenu({
   visibility,
   onDeleted,
 }: QuizMenuProps) {
-  const router = useRouter();
   const { locale } = useLocale();
   const [isOpen, setIsOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);

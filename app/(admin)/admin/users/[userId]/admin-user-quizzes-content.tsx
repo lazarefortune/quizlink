@@ -436,7 +436,7 @@ function QuizExpandable({
 function ParticipantExpandable({
   participant,
   locale,
-  dateLocale,
+  dateLocale: _dateLocale,
   baseUrl,
   onCopy,
 }: {

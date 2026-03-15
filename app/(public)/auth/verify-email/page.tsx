@@ -67,7 +67,7 @@ function VerifyEmailForm() {
       } else {
         setError(result.error || t(locale, "auth.verifyEmail.error"));
       }
-    } catch (err) {
+    } catch (_err) {
       setError(t(locale, "auth.verifyEmail.error"));
     } finally {
       setIsLoading(false);
@@ -91,7 +91,7 @@ function VerifyEmailForm() {
       } else {
         setError(result.error || t(locale, "auth.verifyEmail.resendError"));
       }
-    } catch (err) {
+    } catch (_err) {
       setError(t(locale, "auth.verifyEmail.resendError"));
     } finally {
       setIsResending(false);

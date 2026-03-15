@@ -259,12 +259,12 @@ describe("participant-report-schema", () => {
     });
 
     it("should reject missing summary", () => {
-      const { summary: _, ...rest } = validReport;
+      const { summary: _summary, ...rest } = validReport;
       expect(() => participantReportOutputSchema.parse(rest)).toThrow();
     });
 
     it("should reject missing strengths", () => {
-      const { strengths: _, ...rest } = validReport;
+      const { strengths: _strengths, ...rest } = validReport;
       expect(() => participantReportOutputSchema.parse(rest)).toThrow();
     });
 

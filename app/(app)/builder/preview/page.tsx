@@ -6,7 +6,7 @@ import { BuilderPageContent } from "../page-content";
 import { useSession } from "next-auth/react";
 
 export default function BuilderPreviewPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
 
   useEffect(() => {

@@ -39,6 +39,7 @@ export function PostHogIdentify(): null {
       preferredLanguage: locale === "fr" || locale === "en" ? locale : undefined,
       coinsBalance: typeof user.coinBalance === "number" ? user.coinBalance : undefined,
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- identify when session.user identity fields change; full session.user would cause unnecessary runs
   }, [session?.user?.id, session?.user?.email, session?.user?.name, session?.user?.coinBalance, status, locale]);
 
   return null;

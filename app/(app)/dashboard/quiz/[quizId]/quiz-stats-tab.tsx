@@ -69,7 +69,7 @@ type QuizStatsTabProps = {
 const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
 
 export function QuizStatsTab({
-  quizId,
+  quizId: _quizId,
   quizName,
   stats,
 }: QuizStatsTabProps) {

@@ -17,7 +17,7 @@ export default function NotFound() {
             Page non trouvée
           </h2>
           <p className="text-lg text-muted-foreground">
-            Désolé, la page que tu cherches n'existe pas ou a été déplacée.
+            Désolé, la page que tu cherches n&apos;existe pas ou a été déplacée.
           </p>
         </div>
 
@@ -26,7 +26,7 @@ export default function NotFound() {
           <Link href="/">
             <Button variant="primary" size="lg" className="w-full sm:w-auto">
               <Home className="mr-2 h-5 w-5" />
-              Retour à l'accueil
+              Retour à l&apos;accueil
             </Button>
           </Link>
           <Button

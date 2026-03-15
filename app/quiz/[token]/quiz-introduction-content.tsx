@@ -12,7 +12,6 @@ import {
   AlertCircle,
   ArrowLeft,
   RefreshCw,
-  Info,
   AlertTriangle,
 } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";

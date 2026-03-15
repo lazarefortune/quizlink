@@ -10,7 +10,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { Lock, Sparkles, Coins, Zap } from "lucide-react";
+import { Lock, Zap } from "lucide-react";
 import { ContentDropzone } from "@/components/generate/content-dropzone";
 import { GenerationOptionsModal } from "@/components/generate/generation-options-modal";
 import { getAiLimits, validateTextLength, validateQuestionCount } from "@/lib/ai/ai-limits";
@@ -27,7 +27,7 @@ import { t } from "@/lib/i18n";
 import { useSession } from "next-auth/react";
 import { Alert } from "@/components/ui/alert";
 import { CoinsRequiredOverlay } from "@/components/coins-required-overlay";
-import type { QuizVisibility } from "@/types/quiz-builder";
+import type { Question, QuizVisibility } from "@/types/quiz-builder";
 
 type GenerationOptions = {
   questionType: string;
@@ -117,7 +117,7 @@ export function GeneratePage() {
           return;
         }
 
-        const quizBuilder = createQuizBuilderFromAiQuestions(result.questions, {
+        const quizBuilder = createQuizBuilderFromAiQuestions(result.questions as Question[], {
           name: result.title || t(locale, "generate.title"),
           visibility: options.visibility,
           settings: {
@@ -237,7 +237,7 @@ export function GeneratePage() {
         return;
       }
 
-      const quizBuilder = createQuizBuilderFromAiQuestions(result.questions, {
+      const quizBuilder = createQuizBuilderFromAiQuestions(result.questions as Question[], {
         name: result.title || t(locale, "generate.title"),
         visibility: options.visibility,
         settings: {

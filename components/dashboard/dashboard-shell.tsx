@@ -40,7 +40,7 @@ export function DashboardShell({ children, title }: DashboardShellProps) {
   const { locale } = useLocale();
   const { data: session } = useSession();
 
-  const pageTitle = title ?? getTitleFromPath(pathname, locale);
+  const _pageTitle = title ?? getTitleFromPath(pathname, locale);
   const isAdmin = session?.user?.role === "ADMIN";
 
   return (

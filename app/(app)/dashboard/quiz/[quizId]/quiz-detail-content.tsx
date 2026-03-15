@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Pencil, CheckCircle2, Circle } from "lucide-react";
@@ -51,7 +50,7 @@ function questionTypeLabel(type: string, locale: string): string {
 export function QuizDetailContent({
   quizId,
   quizName,
-  visibility,
+  visibility: _visibility,
   questions,
   stats,
 }: QuizDetailContentProps) {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, Suspense } from "react";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -426,11 +427,12 @@ function QuizPlayPageContent() {
         <Card>
           <CardHeader>
             {currentQuestion.image && (
-              <div className="mb-4">
-                <img
+              <div className="mb-4 relative w-full h-64">
+                <Image
                   src={currentQuestion.image}
                   alt="Question"
-                  className="w-full max-h-64 object-contain rounded-md border"
+                  fill
+                  className="object-contain rounded-md border"
                 />
               </div>
             )}

@@ -128,7 +128,7 @@ export function QuizAttemptsContent({
   const bestScore =
     allScores.length > 0 ? Math.max(...allScores) : null;
 
-  const formatDate = (date: Date | null) => {
+  const _formatDate = (date: Date | null) => {
     if (!date) return "-";
     return new Date(date).toLocaleDateString(locale, {
       year: "numeric",

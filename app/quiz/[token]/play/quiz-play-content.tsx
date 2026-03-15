@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -48,7 +49,7 @@ type Question = {
   }>;
 };
 
-type Attempt = {
+export type Attempt = {
   id: string;
   quizLinkId: string;
   participantId: string | null;
@@ -57,7 +58,7 @@ type Attempt = {
     quiz: {
       id: string;
       name: string;
-      settings: any;
+      settings: { showAnswerImmediately?: boolean; randomizeQuestions?: boolean; timeLimitPerQuestion?: number | null };
       questions: Question[];
     };
   };
@@ -135,7 +136,8 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
         isVerified: false,
       }))
     );
-  }, [attempt.id]); // Only depend on attempt.id, not the whole attempt object
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: init answers from attempt once per attempt.id
+  }, [attempt.id]);
 
   // Reset question start time only when the question index changes
   useEffect(() => {
@@ -186,6 +188,7 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
     }, 1000);
 
     return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- handleFinish/questions intentionally excluded to avoid restarting timer on answer change
   }, [currentQuestionIndex, settings.timeLimitPerQuestion, questions.length, isCurrentAnswerVerified]);
 
   // Prevent window close/refresh when quiz is in progress
@@ -511,11 +514,12 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
         <Card>
           <CardHeader>
             {currentQuestion.image && (
-              <div className="mb-4">
-                <img
+              <div className="mb-4 relative w-full h-64">
+                <Image
                   src={currentQuestion.image}
                   alt="Question"
-                  className="w-full max-h-64 object-contain rounded-md border"
+                  fill
+                  className="object-contain rounded-md border"
                 />
               </div>
             )}
