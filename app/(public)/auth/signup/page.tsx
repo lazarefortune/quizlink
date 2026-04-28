@@ -20,7 +20,9 @@ import { SignupSidePanel } from "@/components/auth/signup-side-panel";
 import { track } from "@/lib/analytics/track";
 import { SIGNUP_COMPLETED } from "@/lib/analytics/events";
 import { buildCommonEventProps } from "@/lib/analytics/props";
+import { signIn as nextAuthSignIn } from "next-auth/react";
 import { Eye, EyeOff, ArrowRight, Mail, Lock, User, Check } from "lucide-react";
+import { GoogleIcon } from "@/components/ui/google-icon";
 
 export default function SignUpPage() {
   const [name, setName] = useState("");
@@ -119,6 +121,26 @@ export default function SignUpPage() {
                 <p className="text-base leading-relaxed text-muted-foreground">
                   {t(locale, "auth.signUp.description")}
                 </p>
+              </motion.div>
+
+              {/* Google sign-up */}
+              <motion.div variants={authFormItemVariants} className="flex flex-col gap-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="lg"
+                  className="h-12 w-full gap-3"
+                  onClick={() => nextAuthSignIn("google", { callbackUrl: "/dashboard" })}
+                >
+                  <GoogleIcon className="h-5 w-5" />
+                  {t(locale, "auth.googleSignUp")}
+                </Button>
+
+                <div className="relative flex items-center gap-3">
+                  <div className="h-px flex-1 bg-border" />
+                  <span className="text-xs text-muted-foreground">{t(locale, "auth.orSeparator")}</span>
+                  <div className="h-px flex-1 bg-border" />
+                </div>
               </motion.div>
 
               <motion.form

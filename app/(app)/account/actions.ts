@@ -102,6 +102,10 @@ export async function changePassword(
       return { success: false, error: "User not found" };
     }
 
+    if (!user.passwordHash) {
+      return { success: false, error: "This account uses Google sign-in. Password change is not available." };
+    }
+
     // Verify current password
     const isCurrentPasswordValid = await bcrypt.compare(
       currentPassword,
@@ -309,9 +313,101 @@ export async function verifyEmailChange(
   }
 }
 
+type UnlinkGoogleResponse = {
+  success: boolean;
+  error?: string;
+};
+
 /**
- * Delete user account and all associated data
+ * Unlink Google account — only allowed if the user has a password
  */
+export async function unlinkGoogleAccount(): Promise<UnlinkGoogleResponse> {
+  try {
+    if (!prisma) {
+      return { success: false, error: "Database not initialized" };
+    }
+
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { googleId: true, passwordHash: true },
+    });
+
+    if (!user) {
+      return { success: false, error: "User not found" };
+    }
+
+    if (!user.googleId) {
+      return { success: false, error: "No Google account linked" };
+    }
+
+    if (!user.passwordHash) {
+      return {
+        success: false,
+        error: "Cannot unlink Google when it is the only sign-in method. Set a password first.",
+      };
+    }
+
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: { googleId: null },
+    });
+
+    revalidatePath("/account");
+    return { success: true };
+  } catch (error) {
+    console.error("Error unlinking Google account:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to unlink Google account",
+    };
+  }
+}
+
+/**
+ * Delete account for Google-only users (no password required)
+ */
+export async function deleteAccountGoogle(): Promise<DeleteAccountResponse> {
+  try {
+    if (!prisma) {
+      return { success: false, error: "Database not initialized" };
+    }
+
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { passwordHash: true },
+    });
+
+    if (!user) {
+      return { success: false, error: "User not found" };
+    }
+
+    if (user.passwordHash) {
+      return { success: false, error: "Password is required to delete this account" };
+    }
+
+    await prisma.user.delete({
+      where: { id: session.user.id },
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting Google account:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to delete account",
+    };
+  }
+}
 export async function deleteAccount(
   password: string
 ): Promise<DeleteAccountResponse> {
@@ -333,6 +429,10 @@ export async function deleteAccount(
 
     if (!user) {
       return { success: false, error: "User not found" };
+    }
+
+    if (!user.passwordHash) {
+      return { success: false, error: "This account uses Google sign-in. Please contact support to delete your account." };
     }
 
     // Verify password

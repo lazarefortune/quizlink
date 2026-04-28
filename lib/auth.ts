@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import Google from "next-auth/providers/google";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
@@ -7,6 +8,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
   trustHost: true,
   providers: [
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      allowDangerousEmailAccountLinking: true,
+    }),
     Credentials({
       name: "Credentials",
       credentials: {
@@ -34,17 +40,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
-        // Check if email is verified
         if (!user.emailVerifiedAt) {
-          // Return null to indicate authentication failure
-          // We'll handle the EMAIL_NOT_VERIFIED case in the sign-in page
           return null;
         }
 
-        const isPasswordValid = await bcrypt.compare(
-          password,
-          user.passwordHash
-        );
+        if (!user.passwordHash) {
+          // Google-only account — cannot sign in with credentials
+          return null;
+        }
+
+        const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
 
         if (!isPasswordValid) {
           return null;
@@ -64,8 +69,72 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     signIn: "/auth/signin",
   },
   callbacks: {
-    async jwt({ token, user, trigger }) {
-      // On initial login, set token from user
+    async signIn({ user, account, profile }) {
+      if (account?.provider === "google") {
+        if (!user.email || !prisma) return false;
+
+        const existingUser = await prisma.user.findUnique({
+          where: { email: user.email },
+        });
+
+        if (!existingUser) {
+          await prisma.user.create({
+            data: {
+              email: user.email,
+              name: user.name || profile?.name || "Utilisateur",
+              passwordHash: null,
+              googleId: profile?.sub ?? null,
+              emailVerifiedAt: new Date(),
+            },
+          });
+        } else if (!existingUser.googleId && profile?.sub) {
+          await prisma.user.update({
+            where: { email: user.email },
+            data: {
+              googleId: profile.sub,
+              emailVerifiedAt: existingUser.emailVerifiedAt ?? new Date(),
+            },
+          });
+        }
+
+        return true;
+      }
+
+      return true;
+    },
+
+    async jwt({ token, user, account, trigger }) {
+      // Google OAuth — first sign-in
+      if (account?.provider === "google" && user) {
+        if (prisma && user.email) {
+          try {
+            const dbUser = await prisma.user.findUnique({
+              where: { email: user.email },
+              select: {
+                id: true,
+                email: true,
+                name: true,
+                role: true,
+                coinBalance: true,
+              },
+            });
+
+            if (dbUser) {
+              token.id = dbUser.id;
+              token.email = dbUser.email;
+              token.name = dbUser.name;
+              token.role = dbUser.role;
+              token.coinBalance = dbUser.coinBalance;
+              return token;
+            }
+          } catch (error) {
+            console.error("Error fetching Google user in jwt callback:", error);
+          }
+        }
+        return token;
+      }
+
+      // Credentials — first sign-in
       if (user) {
         token.id = user.id;
         token.email = user.email;
@@ -75,9 +144,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return token;
       }
 
-      // Always fetch latest user data from database if we have a token ID
-      // This ensures the session is always up-to-date
-      // When trigger is "update", force refresh from database
+      // Subsequent requests — refresh from DB
       if (token.id && prisma) {
         try {
           const dbUser = await prisma.user.findUnique({
@@ -92,7 +159,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           });
 
           if (dbUser) {
-            // Only update if data has changed to avoid unnecessary updates
             const nameChanged = token.name !== dbUser.name;
             const emailChanged = token.email !== dbUser.email;
             const roleChanged = token.role !== dbUser.role;
@@ -119,6 +185,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       return token;
     },
+
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;

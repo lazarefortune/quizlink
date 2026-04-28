@@ -20,6 +20,8 @@ export default async function AccountPage() {
       preferredLanguage: true,
       emailVerifiedAt: true,
       createdAt: true,
+      googleId: true,
+      passwordHash: true,
     },
   });
 
@@ -27,10 +29,11 @@ export default async function AccountPage() {
     redirect("/auth/signin");
   }
 
-  // Ensure preferredLanguage is a valid value
   const userWithTypedLanguage = {
     ...user,
     preferredLanguage: (user.preferredLanguage === "en" ? "en" : "fr") as "fr" | "en",
+    hasGoogleAccount: !!user.googleId,
+    hasPassword: !!user.passwordHash,
   };
 
   return <AccountContent user={userWithTypedLanguage} />;

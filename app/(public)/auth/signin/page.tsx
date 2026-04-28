@@ -20,6 +20,7 @@ import { checkEmailVerified } from "./actions";
 import { useToast } from "@/components/ui/toast";
 import { SigninSidePanel } from "@/components/auth/signin-side-panel";
 import { ArrowRight, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { GoogleIcon } from "@/components/ui/google-icon";
 
 function SignInForm() {
   const searchParams = useSearchParams();
@@ -120,6 +121,26 @@ function SignInForm() {
             <p className="text-base leading-relaxed text-muted-foreground">
               {t(locale, "auth.signIn.description")}
             </p>
+          </motion.div>
+
+          {/* Google sign-in */}
+          <motion.div variants={authFormItemVariants} className="flex flex-col gap-4">
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              className="h-12 w-full gap-3"
+              onClick={() => nextAuthSignIn("google", { callbackUrl: "/dashboard" })}
+            >
+              <GoogleIcon className="h-5 w-5" />
+              {t(locale, "auth.googleSignIn")}
+            </Button>
+
+            <div className="relative flex items-center gap-3">
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-xs text-muted-foreground">{t(locale, "auth.orSeparator")}</span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
           </motion.div>
 
           <motion.form

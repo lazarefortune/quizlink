@@ -14,7 +14,8 @@ model User {
   id                      String                   @id @default(cuid())
   email                   String                   @unique
   name                    String                   @db.VarChar(255)
-  passwordHash            String                   @map("password_hash")
+  passwordHash            String?                  @map("password_hash")
+  googleId                String?                  @unique @map("google_id")
   emailVerifiedAt         DateTime?                @map("email_verified_at")
   preferredLanguage       String                   @default("fr") @map("preferred_language") // "fr" | "en"
   role                    String                   @default("USER") @map("role") // "USER" | "ADMIN"

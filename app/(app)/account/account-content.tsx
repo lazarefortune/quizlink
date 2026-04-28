@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { signOut, useSession } from "next-auth/react";
+import { signOut, signIn, useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -40,6 +40,8 @@ import {
   requestEmailChange,
   verifyEmailChange,
   deleteAccount,
+  deleteAccountGoogle,
+  unlinkGoogleAccount,
 } from "./actions";
 import {
   Eye,
@@ -52,6 +54,7 @@ import {
   Coins,
   Trash2,
 } from "lucide-react";
+import { GoogleIcon } from "@/components/ui/google-icon";
 import { format } from "date-fns";
 import { fr as frLocale, enUS } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -64,6 +67,8 @@ type UserData = {
   preferredLanguage: "fr" | "en";
   emailVerifiedAt: Date | null;
   createdAt: Date;
+  hasGoogleAccount: boolean;
+  hasPassword: boolean;
 };
 
 type AccountContentProps = {
@@ -185,6 +190,11 @@ export function AccountContent({ user: initialUser }: AccountContentProps) {
   const [deletePassword, setDeletePassword] = useState("");
   const [showDeletePassword, setShowDeletePassword] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+
+  // Google link/unlink state
+  const [showUnlinkGoogleDialog, setShowUnlinkGoogleDialog] = useState(false);
+  const [isUnlinkingGoogle, setIsUnlinkingGoogle] = useState(false);
+  const [isLinkingGoogle, setIsLinkingGoogle] = useState(false);
 
   const memberSince = format(new Date(initialUser.createdAt), "MMMM yyyy", {
     locale: locale === "fr" ? frLocale : enUS,
@@ -327,17 +337,23 @@ export function AccountContent({ user: initialUser }: AccountContentProps) {
   };
 
   const handleDeleteAccount = async () => {
-    if (!deletePassword) {
-      toast.showToast(
-        t(locale, "account.passwordRequiredForDeletion"),
-        "error",
-      );
-      return;
-    }
-
     setIsDeletingAccount(true);
     try {
-      const result = await deleteAccount(deletePassword);
+      let result;
+      if (initialUser.hasPassword) {
+        if (!deletePassword) {
+          toast.showToast(
+            t(locale, "account.passwordRequiredForDeletion"),
+            "error",
+          );
+          setIsDeletingAccount(false);
+          return;
+        }
+        result = await deleteAccount(deletePassword);
+      } else {
+        result = await deleteAccountGoogle();
+      }
+
       if (result.success) {
         await signOut({ redirect: true, callbackUrl: "/" });
       } else {
@@ -350,6 +366,32 @@ export function AccountContent({ user: initialUser }: AccountContentProps) {
     } catch {
       toast.showToast(t(locale, "account.deleteAccountError"), "error");
       setIsDeletingAccount(false);
+    }
+  };
+
+  const handleLinkGoogle = async () => {
+    setIsLinkingGoogle(true);
+    await signIn("google", { callbackUrl: "/account" });
+  };
+
+  const handleUnlinkGoogle = async () => {
+    setIsUnlinkingGoogle(true);
+    try {
+      const result = await unlinkGoogleAccount();
+      if (result.success) {
+        toast.showToast(t(locale, "account.security.googleUnlinked"), "success");
+        setShowUnlinkGoogleDialog(false);
+        router.refresh();
+      } else {
+        toast.showToast(
+          result.error || t(locale, "account.security.googleUnlinkError"),
+          "error",
+        );
+      }
+    } catch {
+      toast.showToast(t(locale, "account.security.googleUnlinkError"), "error");
+    } finally {
+      setIsUnlinkingGoogle(false);
     }
   };
 
@@ -455,12 +497,70 @@ export function AccountContent({ user: initialUser }: AccountContentProps) {
               {t(locale, "account.security.title")}
             </h2>
             <Card className="border-2">
-              <CardContent className="p-1.5">
-                <SettingsRow
-                  icon={Lock}
-                  label={t(locale, "account.security.changePassword")}
-                  onClick={() => setShowPasswordDialog(true)}
-                />
+              <CardContent className="p-1.5 space-y-0.5">
+                {/* Google lié */}
+                {initialUser.hasGoogleAccount && (
+                  <div className="rounded-lg border border-border/70 bg-muted/20 px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted">
+                        <GoogleIcon className="h-4 w-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-base font-medium">
+                          {t(locale, "account.security.googleConnected")}
+                        </p>
+                        <p className="text-sm text-muted-foreground truncate mt-0.5">
+                          {initialUser.email}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {initialUser.hasGoogleAccount && initialUser.hasPassword && (
+                  <SettingsRow
+                    icon={GoogleIcon}
+                    label={t(locale, "account.security.googleUnlink")}
+                    onClick={() => setShowUnlinkGoogleDialog(true)}
+                    isDestructive
+                  />
+                )}
+
+                {/* Lier Google si pas encore lié */}
+                {!initialUser.hasGoogleAccount && (
+                  <button
+                    type="button"
+                    className="w-full text-left"
+                    onClick={handleLinkGoogle}
+                    disabled={isLinkingGoogle}
+                  >
+                    <div className="flex items-center gap-3 sm:gap-4 px-4 py-3 transition-colors cursor-pointer rounded-lg hover:bg-muted/60 active:bg-muted">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted">
+                        <GoogleIcon className="h-4 w-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-base font-medium">
+                          {isLinkingGoogle
+                            ? t(locale, "common.loading")
+                            : t(locale, "account.security.googleLink")}
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-0.5">
+                          {t(locale, "account.security.googleLinkDescription")}
+                        </p>
+                      </div>
+                      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/40" />
+                    </div>
+                  </button>
+                )}
+
+                {/* Changer le mot de passe */}
+                {initialUser.hasPassword && (
+                  <SettingsRow
+                    icon={Lock}
+                    label={t(locale, "account.security.changePassword")}
+                    onClick={() => setShowPasswordDialog(true)}
+                  />
+                )}
               </CardContent>
             </Card>
           </div>
@@ -811,6 +911,34 @@ export function AccountContent({ user: initialUser }: AccountContentProps) {
         </DialogContent>
       </Dialog>
 
+      {/* Unlink Google Dialog */}
+      <AlertDialog open={showUnlinkGoogleDialog} onOpenChange={setShowUnlinkGoogleDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t(locale, "account.security.googleUnlinkConfirmTitle")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t(locale, "account.security.googleUnlinkConfirmDescription")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isUnlinkingGoogle}>
+              {t(locale, "common.cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleUnlinkGoogle}
+              disabled={isUnlinkingGoogle}
+              className={buttonVariants({ variant: "destructive" })}
+            >
+              {isUnlinkingGoogle
+                ? t(locale, "common.loading")
+                : t(locale, "account.security.googleUnlink")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Delete Account Dialog */}
       <AlertDialog
         open={showDeleteDialog}
@@ -827,41 +955,48 @@ export function AccountContent({ user: initialUser }: AccountContentProps) {
               {t(locale, "account.dangerZone.deleteConfirmTitle")}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {t(locale, "account.dangerZone.deleteConfirmDescription")}
+              {initialUser.hasPassword
+                ? t(locale, "account.dangerZone.deleteConfirmDescription")
+                : t(locale, "account.dangerZone.deleteGoogleConfirmDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="space-y-2 py-2">
-            <Label htmlFor="dialog-deletePassword">
-              {t(locale, "account.dangerZone.password")}
-            </Label>
-            <div className="relative">
-              <Input
-                id="dialog-deletePassword"
-                type={showDeletePassword ? "text" : "password"}
-                value={deletePassword}
-                onChange={(e) => setDeletePassword(e.target.value)}
-                className="pr-10"
-              />
-              <button
-                type="button"
-                onClick={() => setShowDeletePassword(!showDeletePassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                {showDeletePassword ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-              </button>
+          {initialUser.hasPassword && (
+            <div className="space-y-2 py-2">
+              <Label htmlFor="dialog-deletePassword">
+                {t(locale, "account.dangerZone.password")}
+              </Label>
+              <div className="relative">
+                <Input
+                  id="dialog-deletePassword"
+                  type={showDeletePassword ? "text" : "password"}
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowDeletePassword(!showDeletePassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showDeletePassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
             </div>
-          </div>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeletingAccount}>
               {t(locale, "common.cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteAccount}
-              disabled={isDeletingAccount || !deletePassword}
+              disabled={
+                isDeletingAccount ||
+                (initialUser.hasPassword && !deletePassword)
+              }
               className={buttonVariants({ variant: "destructive" })}
             >
               {isDeletingAccount
