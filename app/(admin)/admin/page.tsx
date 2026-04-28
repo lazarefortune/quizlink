@@ -19,6 +19,7 @@ export default async function AdminDashboardPage() {
       name: true,
       role: true,
       coinBalance: true,
+      googleId: true,
       createdAt: true,
       emailVerifiedAt: true,
       _count: {
@@ -34,6 +35,7 @@ export default async function AdminDashboardPage() {
   const usersWithVerifiedAt = users.map((u) => ({
     ...u,
     verifiedAt: u.emailVerifiedAt,
+    hasGoogleAccount: Boolean(u.googleId),
   }));
 
   return <AdminDashboardContent initialUsers={usersWithVerifiedAt} />;

@@ -39,6 +39,7 @@ type User = {
   coinBalance: number;
   verifiedAt: Date | null;
   createdAt: Date;
+  hasGoogleAccount: boolean;
   _count: {
     quizzes: number;
   };
@@ -239,6 +240,7 @@ export function AdminDashboardContent({ initialUsers }: AdminDashboardContentPro
                   <TableHead>{t(locale, "admin.dashboard.name")}</TableHead>
                   <TableHead>{t(locale, "admin.dashboard.email")}</TableHead>
                   <TableHead>{t(locale, "admin.dashboard.role")}</TableHead>
+                  <TableHead>{t(locale, "admin.dashboard.authMethod")}</TableHead>
                   <TableHead>{t(locale, "admin.dashboard.verifiedAt")}</TableHead>
                   <TableHead className="text-right">
                     {t(locale, "admin.dashboard.coins")}
@@ -276,6 +278,17 @@ export function AdminDashboardContent({ initialUsers }: AdminDashboardContentPro
                           }
                         >
                           {user.role}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            user.hasGoogleAccount ? "default" : "secondary"
+                          }
+                        >
+                          {user.hasGoogleAccount
+                            ? t(locale, "admin.dashboard.authGoogle")
+                            : t(locale, "admin.dashboard.authPassword")}
                         </Badge>
                       </TableCell>
                         <TableCell>
@@ -355,6 +368,15 @@ export function AdminDashboardContent({ initialUsers }: AdminDashboardContentPro
                       variant={user.role === "ADMIN" ? "default" : "secondary"}
                     >
                       {user.role}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      variant={user.hasGoogleAccount ? "default" : "secondary"}
+                    >
+                      {user.hasGoogleAccount
+                        ? t(locale, "admin.dashboard.authGoogle")
+                        : t(locale, "admin.dashboard.authPassword")}
                     </Badge>
                   </div>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
