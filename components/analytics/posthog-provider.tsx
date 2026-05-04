@@ -26,16 +26,39 @@ type PostHogClientConfig = NonNullable<Parameters<typeof posthog.init>[1]>;
 
 const posthogApiHost = getPosthogProxyBasePath();
 
+/**
+ * Next.js + App Router: inject recorder / deps in `head` (not `body`) to avoid
+ * hydration issues and broken session replay. See PostHog JS `defaults` / `external_scripts_inject_target`.
+ */
+const POSTHOG_JS_DEFAULTS = "2026-01-30" as const;
+
+function buildSharedInitOptions(): Pick<
+  PostHogClientConfig,
+  | "api_host"
+  | "ui_host"
+  | "defaults"
+  | "external_scripts_inject_target"
+  | "capture_pageview"
+  | "capture_pageleave"
+  | "autocapture"
+  | "person_profiles"
+> {
+  return {
+    api_host: posthogApiHost,
+    ui_host: "https://eu.posthog.com",
+    defaults: POSTHOG_JS_DEFAULTS,
+    external_scripts_inject_target: "head",
+    capture_pageview: false,
+    capture_pageleave: true,
+    autocapture: false,
+    person_profiles: "identified_only",
+  };
+}
+
 function buildInitOptions(sessionReplay: boolean): PostHogClientConfig {
   if (sessionReplay) {
     return {
-      api_host: posthogApiHost,
-      ui_host: "https://eu.posthog.com",
-      capture_pageview: false,
-      capture_pageleave: true,
-      autocapture: false,
-      person_profiles: "identified_only",
-      disable_session_recording: false,
+      ...buildSharedInitOptions(),
       session_recording: {
         maskAllInputs: true,
         maskInputOptions: {
@@ -48,12 +71,7 @@ function buildInitOptions(sessionReplay: boolean): PostHogClientConfig {
   }
 
   return {
-    api_host: posthogApiHost,
-    ui_host: "https://eu.posthog.com",
-    capture_pageview: false,
-    capture_pageleave: true,
-    autocapture: false,
-    person_profiles: "identified_only",
+    ...buildSharedInitOptions(),
     disable_session_recording: true,
   };
 }
@@ -126,6 +144,16 @@ export function PostHogProviderClient({ children }: { children: ReactNode }) {
       if (!hasInitializedPosthog) {
         posthog.init(apiKey, buildInitOptions(consent.sessionReplay));
         hasInitializedPosthog = true;
+        if (consent.sessionReplay) {
+          queueMicrotask(() => {
+            try {
+              const ph = posthog as unknown as PostHogRecordingControls;
+              ph.startSessionRecording?.();
+            } catch {
+              /* noop */
+            }
+          });
+        }
       } else {
         posthog.opt_in_capturing();
         syncSessionRecording(consent.sessionReplay);
