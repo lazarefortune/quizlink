@@ -3,16 +3,18 @@
 import { useState, useEffect, useRef } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { User, LogOut, Settings, Shield } from "lucide-react";
+import { Cookie, User, LogOut, Settings, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import Link from "next/link";
+import { useCookieConsent } from "@/components/cookie-consent/cookie-consent-context";
 
 export function UserMenu() {
   const { data: session, update: updateSession } = useSession();
   const router = useRouter();
   const { locale } = useLocale();
+  const { openConsentPanel } = useCookieConsent();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -111,6 +113,17 @@ export function UserMenu() {
                   <Settings className="h-4 w-4" />
                   {t(locale, "userMenu.settings")}
                 </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    openConsentPanel();
+                    setIsOpen(false);
+                  }}
+                  className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent rounded-md transition-colors text-left"
+                >
+                  <Cookie className="h-4 w-4" />
+                  {t(locale, "cookieConsent.footerLink")}
+                </button>
                 {session.user.role === "ADMIN" && (
                   <Link
                     href="/admin"

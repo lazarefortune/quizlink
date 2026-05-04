@@ -5,10 +5,12 @@ import { usePathname } from "next/navigation";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { LocaleSwitcher } from "@/components/locale-switcher";
+import { useCookieConsent } from "@/components/cookie-consent/cookie-consent-context";
 
 export function Footer() {
   const pathname = usePathname();
   const { locale } = useLocale();
+  const { openConsentPanel } = useCookieConsent();
 
   const hideFooter =
     pathname?.startsWith("/dashboard") ||
@@ -72,6 +74,15 @@ export function Footer() {
                 >
                   {t(locale, "footer.legal.legalNotice")}
                 </Link>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => openConsentPanel()}
+                  className="text-muted-foreground hover:text-foreground transition-colors text-left"
+                >
+                  {t(locale, "cookieConsent.footerLink")}
+                </button>
               </li>
             </ul>
           </div>

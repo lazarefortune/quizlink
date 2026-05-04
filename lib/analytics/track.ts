@@ -6,12 +6,14 @@
  */
 
 import posthog from "posthog-js";
+import { getClientConsentAllowsAnalytics } from "@/lib/cookie-consent/consent-gate";
 
 export function track(
   eventName: string,
   properties?: Record<string, unknown>
 ): void {
   if (typeof window === "undefined") return;
+  if (!getClientConsentAllowsAnalytics()) return;
   try {
     posthog.capture(eventName, properties);
   } catch {

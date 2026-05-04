@@ -30,30 +30,77 @@ const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
     onOverlayClick?: () => void;
+    /** No X button (e.g. GDPR consent that must be resolved via actions). */
+    hideCloseButton?: boolean;
+    /** Higher z-index, blocks Escape and outside dismiss (must use buttons to leave). */
+    blocking?: boolean;
   }
->(({ className, children, onOverlayClick, ...props }, ref) => (
-  <DialogPortal>
-    <DialogOverlay onClick={onOverlayClick} />
-    <div className="fixed inset-0 z-[102] flex min-w-0 items-center justify-center overflow-x-hidden overflow-y-auto p-4 sm:p-6">
-      <DialogPrimitive.Content
-        ref={ref}
+>(
+  (
+    {
+      className,
+      children,
+      onOverlayClick,
+      hideCloseButton,
+      blocking,
+      onEscapeKeyDown,
+      onPointerDownOutside,
+      onInteractOutside,
+      ...props
+    },
+    ref,
+  ) => (
+    <DialogPortal>
+      <DialogOverlay
+        onClick={onOverlayClick}
+        className={cn(blocking ? "z-[199]" : undefined)}
+      />
+      <div
         className={cn(
-          "quizlink-dialog-content grid w-full min-w-0 max-w-full gap-4 border border-border bg-background p-4 shadow-lg sm:max-w-5xl sm:rounded-lg sm:p-6",
-          "max-h-[90vh] overflow-y-auto overflow-x-hidden",
-          "opacity-0",
-          className
+          "fixed inset-0 flex min-w-0 items-center justify-center overflow-x-hidden overflow-y-auto p-4 sm:p-6",
+          blocking ? "z-[200]" : "z-[102]",
         )}
-        {...props}
       >
-        {children}
-        <DialogPrimitive.Close className="absolute right-3 top-3 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground cursor-pointer sm:right-4 sm:top-4">
-          <X className="h-4 w-4" />
-          <span className="sr-only">Close</span>
-        </DialogPrimitive.Close>
-      </DialogPrimitive.Content>
-    </div>
-  </DialogPortal>
-));
+        <DialogPrimitive.Content
+          ref={ref}
+          className={cn(
+            "quizlink-dialog-content relative grid w-full min-w-0 max-w-full gap-4 border border-border bg-background p-4 shadow-lg sm:max-w-5xl sm:rounded-lg sm:p-6",
+            "max-h-[90vh] overflow-y-auto overflow-x-hidden",
+            "opacity-0",
+            className,
+          )}
+          onEscapeKeyDown={(event) => {
+            if (blocking) {
+              event.preventDefault();
+            }
+            onEscapeKeyDown?.(event);
+          }}
+          onPointerDownOutside={(event) => {
+            if (blocking) {
+              event.preventDefault();
+            }
+            onPointerDownOutside?.(event);
+          }}
+          onInteractOutside={(event) => {
+            if (blocking) {
+              event.preventDefault();
+            }
+            onInteractOutside?.(event);
+          }}
+          {...props}
+        >
+          {children}
+          {!hideCloseButton ? (
+            <DialogPrimitive.Close className="absolute right-3 top-3 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground cursor-pointer sm:right-4 sm:top-4">
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close</span>
+            </DialogPrimitive.Close>
+          ) : null}
+        </DialogPrimitive.Content>
+      </div>
+    </DialogPortal>
+  ),
+);
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
 const DialogHeader = ({
@@ -87,7 +134,7 @@ DialogFooter.displayName = "DialogFooter";
 const DialogTitle = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Title>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Title>
->(({ className, ...props }, ref) => (
+>(({ className, id: _unusedTitleId, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
     className={cn(
@@ -102,7 +149,7 @@ DialogTitle.displayName = DialogPrimitive.Title.displayName;
 const DialogDescription = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Description>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description>
->(({ className, ...props }, ref) => (
+>(({ className, id: _unusedDescriptionId, ...props }, ref) => (
   <DialogPrimitive.Description
     ref={ref}
     className={cn("text-sm text-muted-foreground", className)}

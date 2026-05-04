@@ -1046,6 +1046,54 @@ export const fr = {
     },
   },
 
+  cookieConsent: {
+    banner: {
+      title: "Aide-nous à faire évoluer QuizLink",
+      description:
+        "Les statistiques et le replay de session (optionnels) nous permettent de voir ce qui coince, d’améliorer les parcours et de corriger les bugs plus vite — toujours via nos serveurs EU et sans cookies tiers publicitaires. Les cookies strictement nécessaires au site restent actifs.",
+      changeHint:
+        "Tu peux modifier ou retirer ton accord à tout moment : « Gérer mes cookies » en bas de page, ou depuis ton espace compte.",
+      acceptAll: "Accepter et soutenir",
+      rejectOptional: "Continuer sans optionnel",
+      customize: "Choisir les options",
+    },
+    panel: {
+      title: "Préférences cookies",
+      intro:
+        "Tu gardes la main : ces réglages sont modifiables quand tu veux (pied de page ou compte).",
+      storageNote:
+        "Tes choix sont enregistrés localement sur ton appareil (première partie uniquement), pas dans des cookies tiers.",
+      cancel: "Annuler",
+      save: "Enregistrer mes préférences",
+      essential: {
+        title: "Essentiels",
+        description:
+          "Indispensables au fonctionnement du site : session de connexion, sécurité (ex. CSRF) et mémorisation de ce consentement.",
+        examples:
+          "Exemples : jetons d’authentification, jetons de sécurité, stockage du consentement.",
+      },
+      analytics: {
+        title: "Analytique",
+        description:
+          "Nous aide à prioriser les bonnes évolutions : pages visitées, parcours, erreurs — données envoyées à PostHog via notre domaine uniquement.",
+        examples:
+          "Exemples : pages vues, navigation, indicateurs agrégés pour améliorer le produit.",
+      },
+      sessionReplay: {
+        title: "Enregistrement de session (replay)",
+        description:
+          "Utile pour reproduire un bug ou comprendre une friction ; tout est optionnel et les champs sensibles restent masqués.",
+        examples:
+          "Exemples : clics, défilement, aperçus de page — champs sensibles masqués.",
+      },
+    },
+    footerLink: "Gérer mes cookies",
+    account: {
+      rowTitle: "Cookies & confidentialité",
+      rowHint: "Réglages modifiables à tout moment",
+    },
+  },
+
   // Footer
   footer: {
     about: {

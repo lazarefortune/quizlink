@@ -1043,6 +1043,53 @@ export const en = {
     },
   },
 
+  cookieConsent: {
+    banner: {
+      title: "Help us improve QuizLink",
+      description:
+        "Optional analytics and session replay help us spot issues, fix bugs faster, and improve flows — always routed through our EU setup with no third‑party ad cookies. Essential cookies that keep the site working stay on.",
+      changeHint:
+        "You can change or withdraw consent anytime: “Cookie settings” in the footer, or from your account when signed in.",
+      acceptAll: "Accept & support",
+      rejectOptional: "Continue without optional",
+      customize: "Choose options",
+    },
+    panel: {
+      title: "Cookie preferences",
+      intro:
+        "You stay in control — update these settings anytime (footer link or account).",
+      storageNote:
+        "Your choices are stored locally on your device (first-party only), not in third-party cookies.",
+      cancel: "Cancel",
+      save: "Save preferences",
+      essential: {
+        title: "Essential",
+        description:
+          "Required for the site to work: sign-in session, security (e.g. CSRF), and remembering this consent.",
+        examples: "Examples: authentication tokens, security tokens, consent storage.",
+      },
+      analytics: {
+        title: "Analytics",
+        description:
+          "Helps us prioritise the right improvements: pages visited, journeys, friction points — sent to PostHog only via our own domain.",
+        examples:
+          "Examples: page views, navigation, aggregated metrics to build a better product.",
+      },
+      sessionReplay: {
+        title: "Session replay",
+        description:
+          "Useful to reproduce a bug or understand UX issues; fully optional and sensitive inputs stay masked.",
+        examples:
+          "Examples: clicks, scrolls, page snapshots — sensitive fields masked.",
+      },
+    },
+    footerLink: "Cookie settings",
+    account: {
+      rowTitle: "Cookies & privacy",
+      rowHint: "Change anytime",
+    },
+  },
+
   // Footer
   footer: {
     about: {

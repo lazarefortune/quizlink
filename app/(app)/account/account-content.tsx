@@ -53,12 +53,14 @@ import {
   Languages,
   Coins,
   Trash2,
+  Cookie,
 } from "lucide-react";
 import { GoogleIcon } from "@/components/ui/google-icon";
 import { format } from "date-fns";
 import { fr as frLocale, enUS } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
+import { useCookieConsent } from "@/components/cookie-consent/cookie-consent-context";
 
 type UserData = {
   id: string;
@@ -149,6 +151,7 @@ function SettingsRow({
 }
 
 export function AccountContent({ user: initialUser }: AccountContentProps) {
+  const { openConsentPanel } = useCookieConsent();
   const router = useRouter();
   const { locale, setLocale } = useLocale();
   const toast = useToast();
@@ -481,6 +484,12 @@ export function AccountContent({ user: initialUser }: AccountContentProps) {
                       : "English"
                   }
                   onClick={() => setShowLanguageDialog(true)}
+                />
+                <SettingsRow
+                  icon={Cookie}
+                  label={t(locale, "cookieConsent.account.rowTitle")}
+                  value={t(locale, "cookieConsent.account.rowHint")}
+                  onClick={() => openConsentPanel()}
                 />
                 <SettingsRow
                   icon={Coins}

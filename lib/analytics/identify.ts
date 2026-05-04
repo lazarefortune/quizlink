@@ -7,6 +7,7 @@
  */
 
 import posthog from "posthog-js";
+import { getClientConsentAllowsAnalytics } from "@/lib/cookie-consent/consent-gate";
 
 export type IdentifyTraits = {
   email?: string;
@@ -20,6 +21,7 @@ export type IdentifyTraits = {
 
 export function identify(userId: string, traits?: IdentifyTraits): void {
   if (typeof window === "undefined") return;
+  if (!getClientConsentAllowsAnalytics()) return;
   try {
     posthog.identify(userId, traits);
   } catch {
