@@ -12,7 +12,7 @@ const buttonVariants = cva(
       variant: {
         default: "bg-primary text-primary-foreground btn-bouncy-primary",
         primary: "bg-primary text-primary-foreground btn-bouncy-primary",
-        destructive: "bg-destructive text-destructive-foreground btn-bouncy",
+        destructive: "bg-destructive text-destructive-foreground btn-bouncy-destructive",
         outline: "border-2 border-border bg-card text-foreground btn-bouncy hover:bg-secondary",
         outlineBlue:
           "border-2 border-blue bg-card text-blue btn-bouncy hover:bg-blue/10 dark:hover:bg-blue/15",

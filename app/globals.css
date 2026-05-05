@@ -73,6 +73,7 @@
   --shadow-gaming-depth-purple-pressed: 0 2px 0 hsl(var(--purple-shadow));
   /* Aliases for landing (raised colored blocks) */
   --shadow-raised-primary: 0 4px 0 hsl(var(--primary-shadow));
+  --shadow-raised-destructive: 0 4px 0 hsl(var(--destructive-shadow));
   --shadow-raised-highlight: 0 4px 0 hsl(35 100% 35%);
   --shadow-raised-blue: 0 4px 0 hsl(var(--blue-shadow));
   --shadow-raised-warning: 0 4px 0 hsl(38 95% 40%);
@@ -139,6 +140,7 @@
   --shadow-gaming-depth-purple: 0 4px 0 hsl(var(--purple-shadow));
   --shadow-gaming-depth-purple-pressed: 0 2px 0 hsl(var(--purple-shadow));
   --shadow-raised-primary: 0 4px 0 hsl(var(--primary-shadow));
+  --shadow-raised-destructive: 0 4px 0 hsl(var(--destructive-shadow));
   --shadow-raised-highlight: 0 4px 0 hsl(35 95% 30%);
   --shadow-raised-blue: 0 4px 0 hsl(var(--blue-shadow));
   --shadow-raised-warning: 0 4px 0 hsl(38 90% 38%);
@@ -185,6 +187,19 @@
   filter: brightness(1.08);
 }
 .btn-bouncy-primary:active {
+  box-shadow: none;
+  transform: translateY(4px);
+}
+
+.btn-bouncy-destructive {
+  box-shadow: var(--shadow-raised-destructive);
+  transition: all 0.1s ease;
+  transform: translateY(0);
+}
+.btn-bouncy-destructive:hover {
+  filter: brightness(1.08);
+}
+.btn-bouncy-destructive:active {
   box-shadow: none;
   transform: translateY(4px);
 }
