@@ -78,7 +78,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         });
 
         if (!existingUser) {
-          await prisma.user.create({
+          const createdUser = await prisma.user.create({
             data: {
               email: user.email,
               name: user.name || profile?.name || "Utilisateur",
@@ -86,6 +86,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               googleId: profile?.sub ?? null,
               emailVerifiedAt: new Date(),
             },
+          });
+
+          await prisma.$transaction(async (tx) => {
+            await Promise.all([
+              tx.user.update({
+                where: { id: createdUser.id },
+                data: { coinBalance: 4 },
+              }),
+              tx.coinTransaction.create({
+                data: {
+                  userId: createdUser.id,
+                  amount: 4,
+                  reason: "Welcome bonus - Account creation",
+                },
+              }),
+            ]);
           });
         } else if (!existingUser.googleId && profile?.sub) {
           await prisma.user.update({
