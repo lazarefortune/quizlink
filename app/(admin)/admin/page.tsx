@@ -1,7 +1,6 @@
 import { auth } from "@/lib/auth";
 import { buildDailySignupSeries } from "@/lib/adminMetrics";
 import { prisma } from "@/lib/prisma";
-import { USER_AUTH_EVENT_TYPES } from "@/lib/userAuthEvents";
 import { getTotalSignupsEver } from "@/lib/userLifecycleEvents";
 import { AdminDashboardContent } from "./admin-dashboard-content";
 
@@ -29,9 +28,6 @@ export default async function AdminDashboardPage() {
           ? "Bonsoir"
           : "Good evening";
 
-  const signupsLast30DaysStart = new Date();
-  signupsLast30DaysStart.setHours(0, 0, 0, 0);
-  signupsLast30DaysStart.setDate(signupsLast30DaysStart.getDate() - 30);
   const signupsLast365DaysStart = new Date();
   signupsLast365DaysStart.setHours(0, 0, 0, 0);
   signupsLast365DaysStart.setDate(signupsLast365DaysStart.getDate() - 365);
@@ -39,25 +35,20 @@ export default async function AdminDashboardPage() {
   const [
     totalSignupsEver,
     totalUsersCurrent,
-    loginSuccessLast30Days,
-    loginFailuresLast30Days,
+    totalQuizzesEver,
+    coinPurchasesEver,
     signupEventsLast365Days,
   ] = await Promise.all([
     getTotalSignupsEver(prisma),
     prisma.user.count(),
-    prisma.userAuthEvent.count({
+    prisma.quiz.count(),
+    prisma.coinTransaction.count({
       where: {
-        eventType: USER_AUTH_EVENT_TYPES.LOGIN_SUCCESS,
-        createdAt: {
-          gte: signupsLast30DaysStart,
+        amount: {
+          gt: 0,
         },
-      },
-    }),
-    prisma.userAuthEvent.count({
-      where: {
-        eventType: USER_AUTH_EVENT_TYPES.LOGIN_FAILURE,
-        createdAt: {
-          gte: signupsLast30DaysStart,
+        reason: {
+          startsWith: "Achat pack ",
         },
       },
     }),
@@ -91,8 +82,8 @@ export default async function AdminDashboardPage() {
       metrics={{
         totalSignupsEver,
         totalUsersCurrent,
-        loginSuccessLast30Days,
-        loginFailuresLast30Days,
+        totalQuizzesEver,
+        coinPurchasesEver,
       }}
       signupTrend={signupTrend}
     />

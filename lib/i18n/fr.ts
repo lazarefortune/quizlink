@@ -902,7 +902,7 @@ export const fr = {
     },
     dashboard: {
       title: "Dashboard Administrateur",
-      description: "Suivi des inscriptions réelles et connexions",
+      description: "Suivi des inscriptions réelles et de l'activité produit",
       searchUsers: "Rechercher des utilisateurs",
       searchDescription: "Recherchez des utilisateurs par nom ou email",
       searchPlaceholder: "Nom ou email...",
@@ -920,6 +920,8 @@ export const fr = {
       signupsLast30Days: "Inscriptions (30j)",
       loginSuccessLast30Days: "Connexions réussies (30j)",
       loginFailuresLast30Days: "Échecs de connexion (30j)",
+      totalQuizzesEver: "Quiz créés",
+      coinPurchasesEver: "Achats de coins",
       realSignupTrend: "Tendance des inscriptions",
       realSignupChartTitle: "Evolution des inscriptions réelles",
       openUsersPage: "Ouvrir la page utilisateurs",

@@ -116,6 +116,7 @@ export async function POST(request: NextRequest) {
       // 4. Check for duplicate processing (idempotency)
       // Use payment_intent ID or session ID as idempotency key
       const idempotencyKey = `stripe_${session.id}`;
+      const purchaseReason = `Achat pack ${packId} (${idempotencyKey})`;
 
       // Check if we've already processed this payment
       const existingTransaction = await prisma.coinTransaction.findFirst({
@@ -136,7 +137,7 @@ export async function POST(request: NextRequest) {
       const result = await creditCoins(
         userId,
         coinAmount,
-        `Achat pack ${packId}`,
+        purchaseReason,
         true, // skipAuthCheck for webhook
         "STRIPE"
       );

@@ -1,40 +1,23 @@
 import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth";
-import { normalizePage, normalizePageSize } from "@/lib/adminMetrics";
+import { normalizePageSize } from "@/lib/adminMetrics";
 import { prisma } from "@/lib/prisma";
 
 import { AdminUsersContent } from "./admin-users-content";
 
-type AdminUsersPageProps = {
-  searchParams?: Promise<{
-    page?: string;
-    pageSize?: string;
-    search?: string;
-  }>;
-};
-
-export default async function AdminUsersPage({ searchParams }: AdminUsersPageProps) {
+export default async function AdminUsersPage() {
   const session = await auth();
   if (!session?.user?.id || session.user.role !== "ADMIN") {
     redirect("/dashboard");
   }
 
-  const params = (await searchParams) ?? {};
-  const pageSize = normalizePageSize(params.pageSize);
-  const currentPage = normalizePage(params.page);
-  const search = params.search?.trim() ?? "";
-
-  const where = search
-    ? {
-        OR: [{ email: { contains: search } }, { name: { contains: search } }],
-      }
-    : {};
+  const pageSize = normalizePageSize(undefined);
+  const currentPage = 1;
 
   const [totalUsers, users] = await Promise.all([
-    prisma.user.count({ where }),
+    prisma.user.count(),
     prisma.user.findMany({
-      where,
       select: {
         id: true,
         email: true,
@@ -52,7 +35,7 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
         },
       },
       orderBy: { createdAt: "desc" },
-      skip: (currentPage - 1) * pageSize,
+      skip: 0,
       take: pageSize,
     }),
   ]);
@@ -69,7 +52,6 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
       currentPage={currentPage}
       pageSize={pageSize}
       totalUsers={totalUsers}
-      search={search}
     />
   );
 }

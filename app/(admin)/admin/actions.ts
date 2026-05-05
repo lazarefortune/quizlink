@@ -8,6 +8,55 @@ type SearchUsersResponse =
   | { success: true; users: Array<{ id: string; email: string; name: string; role: string; coinBalance: number; createdAt: Date; verifiedAt: Date | null; lastLoginAt: Date | null; hasGoogleAccount: boolean; _count: { quizzes: number } }> }
   | { success: false; error: string };
 
+type AdminUserListItem = {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  coinBalance: number;
+  createdAt: Date;
+  verifiedAt: Date | null;
+  lastLoginAt: Date | null;
+  hasGoogleAccount: boolean;
+  _count: { quizzes: number };
+};
+
+type GetUsersPageResponse =
+  | {
+      success: true;
+      users: AdminUserListItem[];
+      totalUsers: number;
+      currentPage: number;
+      pageSize: number;
+    }
+  | { success: false; error: string };
+
+function mapAdminUserListItem(user: {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  coinBalance: number;
+  googleId: string | null;
+  createdAt: Date;
+  emailVerifiedAt: Date | null;
+  lastLoginAt: Date | null;
+  _count: { quizzes: number };
+}): AdminUserListItem {
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    coinBalance: user.coinBalance,
+    createdAt: user.createdAt,
+    verifiedAt: user.emailVerifiedAt,
+    lastLoginAt: user.lastLoginAt,
+    hasGoogleAccount: Boolean(user.googleId),
+    _count: user._count,
+  };
+}
+
 export async function searchUsers(searchTerm: string): Promise<SearchUsersResponse> {
   const session = await auth();
   if (!session?.user || session.user.role !== "ADMIN") {
@@ -44,22 +93,62 @@ export async function searchUsers(searchTerm: string): Promise<SearchUsersRespon
     });
     return {
       success: true,
-      users: users.map((u) => ({
-        id: u.id,
-        email: u.email,
-        name: u.name,
-        role: u.role,
-        coinBalance: u.coinBalance,
-        createdAt: u.createdAt,
-        verifiedAt: u.emailVerifiedAt,
-        lastLoginAt: u.lastLoginAt,
-        hasGoogleAccount: Boolean(u.googleId),
-        _count: u._count,
-      })),
+      users: users.map(mapAdminUserListItem),
     };
   } catch (error) {
     console.error("Error searching users:", error);
     return { success: false, error: "Failed to search users" };
+  }
+}
+
+export async function getUsersPageAction(
+  page: number,
+  pageSize: number
+): Promise<GetUsersPageResponse> {
+  const session = await auth();
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const safePage = Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
+  const safePageSize = Number.isFinite(pageSize) && pageSize > 0 ? Math.floor(pageSize) : 25;
+
+  try {
+    const [totalUsers, users] = await Promise.all([
+      prisma.user.count(),
+      prisma.user.findMany({
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          coinBalance: true,
+          googleId: true,
+          createdAt: true,
+          emailVerifiedAt: true,
+          lastLoginAt: true,
+          _count: {
+            select: {
+              quizzes: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        skip: (safePage - 1) * safePageSize,
+        take: safePageSize,
+      }),
+    ]);
+
+    return {
+      success: true,
+      users: users.map(mapAdminUserListItem),
+      totalUsers,
+      currentPage: safePage,
+      pageSize: safePageSize,
+    };
+  } catch (error) {
+    console.error("Error fetching paginated users:", error);
+    return { success: false, error: "Failed to fetch users" };
   }
 }
 

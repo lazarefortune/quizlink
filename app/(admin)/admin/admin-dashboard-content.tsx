@@ -1,9 +1,10 @@
 "use client";
 import { motion } from "framer-motion";
+import type { ReactNode } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
-import { Eye, Minus, Users } from "lucide-react";
+import { Coins, FileText, Users } from "lucide-react";
 import { RealSignupsChart } from "@/components/admin/real-signups-chart";
 
 type AdminDashboardContentProps = {
@@ -13,8 +14,8 @@ type AdminDashboardContentProps = {
   metrics: {
     totalSignupsEver: number;
     totalUsersCurrent: number;
-    loginSuccessLast30Days: number;
-    loginFailuresLast30Days: number;
+    totalQuizzesEver: number;
+    coinPurchasesEver: number;
   };
   signupTrend: Array<{
     dateKey: string;
@@ -22,6 +23,30 @@ type AdminDashboardContentProps = {
     signups: number;
   }>;
 };
+
+type StatCardProps = {
+  value: string;
+  label: string;
+  icon: ReactNode;
+};
+
+function StatCard({ value, label, icon }: StatCardProps) {
+  return (
+    <Card className="group relative h-full overflow-hidden border border-slate-300 bg-white shadow-none transition-all duration-300 hover:bg-slate-100/50 dark:border-border dark:bg-card dark:hover:bg-secondary">
+      <CardContent className="relative flex h-full flex-col p-5">
+        <span className="text-base font-semibold text-slate-600 dark:text-slate-400">
+          {label}
+        </span>
+        <div className="mt-6 flex-1">
+          <p className="text-3xl font-medium text-slate-800 tabular-nums dark:text-slate-200">{value}</p>
+        </div>
+        <div className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-slate-100 text-slate-900 dark:border-border dark:bg-card dark:text-slate-100">
+          {icon}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export function AdminDashboardContent({
   currentUserName,
@@ -33,7 +58,7 @@ export function AdminDashboardContent({
   const { locale } = useLocale();
 
   return (
-    <div className="p-4 sm:p-5 md:p-6 lg:p-8">
+    <div className="px-1 lg:px-3">
       <div>
         <div className="mb-6">
           <p className="text-sm text-muted-foreground capitalize">
@@ -45,82 +70,54 @@ export function AdminDashboardContent({
           </h1>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-10">
+        <div className="mb-10 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <motion.div
+            className="h-full"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.05 }}
           >
-          <Card className="col-span-1">
-            <CardContent className="p-5 flex items-center gap-3 relative">
-              <div className="absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-sm border border-border text-muted-foreground">
-                <Users className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-base font-medium text-muted-foreground">
-                  {t(locale, "admin.dashboard.signupsEver")}
-                </p>
-                <p className="mt-6 text-3xl font-bold font-mono">{metrics.totalSignupsEver}</p>
-              </div>
-            </CardContent>
-          </Card>
+            <StatCard
+              value={metrics.totalSignupsEver.toLocaleString(locale === "fr" ? "fr-FR" : "en-US")}
+              label={t(locale, "admin.dashboard.signupsEver")}
+              icon={<Users className="h-4 w-4" />}
+            />
           </motion.div>
           <motion.div
+            className="h-full"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.1 }}
           >
-          <Card className="col-span-1">
-            <CardContent className="p-5 flex items-center gap-3 relative">
-              <div className="absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-sm border border-border text-muted-foreground">
-                <Users className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-base font-medium text-muted-foreground">
-                  {t(locale, "admin.dashboard.usersList")}
-                </p>
-                <p className="mt-6 text-3xl font-bold font-mono">{metrics.totalUsersCurrent}</p>
-              </div>
-            </CardContent>
-          </Card>
+            <StatCard
+              value={metrics.totalUsersCurrent.toLocaleString(locale === "fr" ? "fr-FR" : "en-US")}
+              label={t(locale, "admin.dashboard.usersList")}
+              icon={<Users className="h-4 w-4" />}
+            />
           </motion.div>
           <motion.div
+            className="h-full"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.15 }}
           >
-          <Card className="col-span-1">
-            <CardContent className="p-5 flex items-center gap-3 relative">
-              <div className="absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-sm border border-border text-muted-foreground">
-                <Eye className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-base font-medium text-muted-foreground">
-                  {t(locale, "admin.dashboard.loginSuccessLast30Days")}
-                </p>
-                <p className="mt-6 text-3xl font-bold font-mono">{metrics.loginSuccessLast30Days}</p>
-              </div>
-            </CardContent>
-          </Card>
+            <StatCard
+              value={metrics.totalQuizzesEver.toLocaleString(locale === "fr" ? "fr-FR" : "en-US")}
+              label={t(locale, "admin.dashboard.totalQuizzesEver")}
+              icon={<FileText className="h-4 w-4" />}
+            />
           </motion.div>
           <motion.div
+            className="h-full"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.2 }}
           >
-          <Card className="col-span-1">
-            <CardContent className="p-5 flex items-center gap-3 relative">
-              <div className="absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-sm border border-border text-muted-foreground">
-                <Minus className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-base font-medium text-muted-foreground">
-                  {t(locale, "admin.dashboard.loginFailuresLast30Days")}
-                </p>
-                <p className="mt-6 text-3xl font-bold font-mono">{metrics.loginFailuresLast30Days}</p>
-              </div>
-            </CardContent>
-          </Card>
+            <StatCard
+              value={metrics.coinPurchasesEver.toLocaleString(locale === "fr" ? "fr-FR" : "en-US")}
+              label={t(locale, "admin.dashboard.coinPurchasesEver")}
+              icon={<Coins className="h-4 w-4" />}
+            />
           </motion.div>
         </div>
 

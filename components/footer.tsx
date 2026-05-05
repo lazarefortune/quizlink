@@ -13,6 +13,7 @@ export function Footer() {
   const { openConsentPanel } = useCookieConsent();
 
   const hideFooter =
+    pathname?.startsWith("/admin") ||
     pathname?.startsWith("/dashboard") ||
     pathname?.startsWith("/auth") ||
     pathname?.startsWith("/generate") ||

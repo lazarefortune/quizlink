@@ -899,7 +899,7 @@ export const en = {
     },
     dashboard: {
       title: "Admin Dashboard",
-      description: "Monitor real signups and login activity",
+      description: "Monitor real signups and product activity",
       searchUsers: "Search users",
       searchDescription: "Search users by name or email",
       searchPlaceholder: "Name or email...",
@@ -917,6 +917,8 @@ export const en = {
       signupsLast30Days: "Signups (30d)",
       loginSuccessLast30Days: "Successful logins (30d)",
       loginFailuresLast30Days: "Failed logins (30d)",
+      totalQuizzesEver: "Quizzes created",
+      coinPurchasesEver: "Coin purchases",
       realSignupTrend: "Signup trend",
       realSignupChartTitle: "Real signup evolution",
       openUsersPage: "Open users page",
