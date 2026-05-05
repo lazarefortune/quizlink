@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { sendVerificationEmail } from "@/lib/email";
 import { initializeUserCoins } from "@/lib/coins";
+import { recordUserLifecycleEvent, USER_LIFECYCLE_EVENT_TYPES } from "@/lib/userLifecycleEvents";
 
 function generateVerificationCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -76,6 +77,8 @@ export async function signUpAction(
         },
       },
     });
+
+    await recordUserLifecycleEvent(prisma, user.id, USER_LIFECYCLE_EVENT_TYPES.SIGNUP);
 
     // Initialize coins for new user (4 free coins)
     await initializeUserCoins(user.id);

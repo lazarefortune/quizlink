@@ -20,6 +20,7 @@ model User {
   preferredLanguage       String                   @default("fr") @map("preferred_language") // "fr" | "en"
   role                    String                   @default("USER") @map("role") // "USER" | "ADMIN"
   coinBalance             Int                      @default(0) @map("coin_balance")
+  lastLoginAt             DateTime?                @map("last_login_at")
   createdAt               DateTime                 @default(now()) @map("created_at")
   quizzes                 Quiz[]
   emailVerificationTokens EmailVerificationToken[]
@@ -28,8 +29,40 @@ model User {
   createdParticipants     Participant[]
   coinTransactions        CoinTransaction[]
   feedbacks               Feedback[]
+  lifecycleEvents         UserLifecycleEvent[]
+  authEvents              UserAuthEvent[]
 
   @@map("users")
+}
+
+model UserLifecycleEvent {
+  id        String   @id @default(cuid())
+  userId    String?  @map("user_id")
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  eventType String   @map("event_type") @db.VarChar(50) // "SIGNUP" | "ACCOUNT_DELETION"
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([eventType])
+  @@index([createdAt])
+  @@map("user_lifecycle_events")
+}
+
+model UserAuthEvent {
+  id            String    @id @default(cuid())
+  userId        String?   @map("user_id")
+  user          User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  eventType     String    @map("event_type") @db.VarChar(50) // LOGIN_SUCCESS | LOGIN_FAILURE
+  authProvider  String?   @map("auth_provider") @db.VarChar(50) // credentials | google
+  ipAddressHash String?   @map("ip_address_hash") @db.VarChar(64)
+  userAgent     String?   @map("user_agent") @db.VarChar(500)
+  failureReason String?   @map("failure_reason") @db.VarChar(100)
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([eventType])
+  @@index([createdAt])
+  @@map("user_auth_events")
 }
 
 model EmailVerificationToken {

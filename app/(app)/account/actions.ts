@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import bcrypt from "bcryptjs";
 import { sendEmailChangeCode } from "@/lib/email";
 import { revalidatePath } from "next/cache";
+import { recordUserLifecycleEvent, USER_LIFECYCLE_EVENT_TYPES } from "@/lib/userLifecycleEvents";
 
 function generateVerificationCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -395,8 +396,11 @@ export async function deleteAccountGoogle(): Promise<DeleteAccountResponse> {
       return { success: false, error: "Password is required to delete this account" };
     }
 
-    await prisma.user.delete({
-      where: { id: session.user.id },
+    await prisma.$transaction(async (tx) => {
+      await recordUserLifecycleEvent(tx, session.user.id, USER_LIFECYCLE_EVENT_TYPES.ACCOUNT_DELETION);
+      await tx.user.delete({
+        where: { id: session.user.id },
+      });
     });
 
     return { success: true };
@@ -443,8 +447,11 @@ export async function deleteAccount(
     }
 
     // Delete user (cascade will delete all associated data)
-    await prisma.user.delete({
-      where: { id: session.user.id },
+    await prisma.$transaction(async (tx) => {
+      await recordUserLifecycleEvent(tx, session.user.id, USER_LIFECYCLE_EVENT_TYPES.ACCOUNT_DELETION);
+      await tx.user.delete({
+        where: { id: session.user.id },
+      });
     });
 
     return { success: true };
