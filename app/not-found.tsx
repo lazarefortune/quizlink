@@ -29,15 +29,16 @@ export default function NotFound() {
               Retour à l&apos;accueil
             </Button>
           </Link>
-          <Button
-            variant="outline"
-            size="lg"
-            onClick={() => window.history.back()}
-            className="w-full sm:w-auto"
-          >
-            <ArrowLeft className="mr-2 h-5 w-5" />
-            Page précédente
-          </Button>
+          <Link href="/dashboard">
+            <Button
+              variant="outline"
+              size="lg"
+              className="w-full sm:w-auto"
+            >
+              <ArrowLeft className="mr-2 h-5 w-5" />
+              Aller au dashboard
+            </Button>
+          </Link>
         </div>
 
         {/* Decorative elements */}

@@ -15,7 +15,8 @@
     "prisma:studio": "prisma studio",
     "promote:admin": "npx tsx scripts/promote-admin.ts",
     "seed:coin-packs": "npx tsx scripts/seed-coin-packs.ts",
-    "backfill:signup-events": "npx tsx scripts/backfill-signup-events.ts"
+    "backfill:signup-events": "npx tsx scripts/backfill-signup-events.ts",
+    "seed:dev-users": "npx tsx scripts/seed-dev-users.ts"
   },
   "dependencies": {
     "@dicebear/collection": "^9.3.1",
@@ -55,6 +56,7 @@
     "react-day-picker": "^9.13.0",
     "react-dom": "19.2.3",
     "react-icons": "^5.5.0",
+    "recharts": "^3.8.1",
     "stripe": "^20.2.0",
     "tailwind-merge": "^3.4.0",
     "zod": "^4.3.6"

@@ -889,7 +889,8 @@ export const en = {
     nav: {
       title: "Admin",
       subtitle: "Backoffice",
-      dashboard: "Users",
+      dashboard: "Dashboard",
+      users: "Users",
       coins: "Coins",
       packs: "Packs",
       feedback: "Feedback",
@@ -898,7 +899,7 @@ export const en = {
     },
     dashboard: {
       title: "Admin Dashboard",
-      description: "Manage users and their coins",
+      description: "Monitor real signups and login activity",
       searchUsers: "Search users",
       searchDescription: "Search users by name or email",
       searchPlaceholder: "Name or email...",
@@ -916,6 +917,9 @@ export const en = {
       signupsLast30Days: "Signups (30d)",
       loginSuccessLast30Days: "Successful logins (30d)",
       loginFailuresLast30Days: "Failed logins (30d)",
+      realSignupTrend: "Signup trend",
+      realSignupChartTitle: "Real signup evolution",
+      openUsersPage: "Open users page",
       createdAt: "Created at",
       verifiedAt: "Verified at",
       lastLoginAt: "Last login",
@@ -927,6 +931,14 @@ export const en = {
       noUsers: "No users found",
       manageCoins: "Coin Management",
       viewQuizzes: "View quizzes",
+    },
+    users: {
+      title: "Users",
+      description: "Complete user list with pagination",
+      perPage: "Per page",
+      previous: "Previous",
+      next: "Next",
+      pageIndicator: "Page",
     },
     userQuizzes: {
       title: "User quizzes",

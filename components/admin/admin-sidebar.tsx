@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useSyncExternalStore } from "react";
 import {
   LayoutDashboard,
+  Users,
   Coins,
   Package,
   MessageSquare,
@@ -17,6 +18,7 @@ import { t } from "@/lib/i18n";
 
 const navItems = [
   { href: "/admin", label: "admin.nav.dashboard", icon: LayoutDashboard },
+  { href: "/admin/users", label: "admin.nav.users", icon: Users },
   { href: "/admin/coins", label: "admin.nav.coins", icon: Coins },
   { href: "/admin/packs", label: "admin.nav.packs", icon: Package },
   { href: "/admin/feedback", label: "admin.nav.feedback", icon: MessageSquare },
@@ -24,7 +26,18 @@ const navItems = [
 ];
 
 export function AdminSidebar({ onNavClick }: { onNavClick?: () => void }) {
-  const pathname = usePathname();
+  const pathname = useSyncExternalStore(
+    (onStoreChange) => {
+      window.addEventListener("popstate", onStoreChange);
+      window.addEventListener("hashchange", onStoreChange);
+      return () => {
+        window.removeEventListener("popstate", onStoreChange);
+        window.removeEventListener("hashchange", onStoreChange);
+      };
+    },
+    () => window.location.pathname,
+    () => ""
+  );
   const { locale } = useLocale();
 
   const isActive = (href: string) => {

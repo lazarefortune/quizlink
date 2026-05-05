@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { usePathname } from "next/navigation";
 import { MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FeedbackModal } from "@/components/feedback-modal";
@@ -9,6 +10,7 @@ import { FeedbackModal } from "@/components/feedback-modal";
 export function FeedbackButton() {
   const [isOpen, setIsOpen] = useState(false);
   const { data: session } = useSession();
+  const pathname = usePathname();
 
   useEffect(() => {
     const handleOpen = () => setIsOpen(true);
@@ -17,7 +19,7 @@ export function FeedbackButton() {
   }, []);
 
   // Only show feedback button for authenticated users
-  if (!session?.user) {
+  if (!session?.user || pathname?.startsWith("/admin")) {
     return null;
   }
 
