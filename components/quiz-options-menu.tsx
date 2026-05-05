@@ -7,7 +7,6 @@ import {
   Check,
   Coins,
   Edit,
-  Lock,
   MoreHorizontal,
   Share2,
   Trash2,
@@ -248,38 +247,27 @@ export function QuizOptionsMenu({
                     {t(locale, "dashboard.edit")}
                   </button>
                 )}
-                {visibility === "PUBLIC" ? (
+                <button
+                  onClick={handleShareClick}
+                  className="flex items-center gap-2 w-full px-3 py-2 text-base hover:cursor-pointer hover:bg-accent rounded-md transition-colors text-left"
+                >
+                  <Share2 className="h-4 w-4" />
+                  {t(locale, "dashboard.share")}
+                </button>
+                {visibility === "PRIVATE" ? (
                   <button
-                    onClick={handleShareClick}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-base hover:cursor-pointer hover:bg-accent rounded-md transition-colors text-left"
+                    onClick={() => {
+                      setShowMakePublicDialog(true);
+                      setIsOpen(false);
+                    }}
+                    className="mt-1 flex items-center gap-2 w-full px-3 py-2 text-base hover:cursor-pointer hover:bg-accent rounded-md transition-colors text-left"
                   >
-                    <Share2 className="h-4 w-4" />
-                    {t(locale, "dashboard.share")}
+                    <Coins className="h-4 w-4" />
+                    {t(locale, "dashboard.makePublicWithCoins", {
+                      cost: "6",
+                    })}
                   </button>
-                ) : (
-                  <>
-                    <button
-                      disabled
-                      className="flex items-center gap-2 w-full px-3 py-2 text-base text-muted-foreground cursor-not-allowed rounded-md opacity-50"
-                      title={t(locale, "dashboard.privateQuiz")}
-                    >
-                      <Lock className="h-4 w-4" />
-                      {t(locale, "dashboard.share")}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowMakePublicDialog(true);
-                        setIsOpen(false);
-                      }}
-                      className="mt-1 flex items-center gap-2 w-full px-3 py-2 text-base hover:cursor-pointer hover:bg-accent rounded-md transition-colors text-left"
-                    >
-                      <Coins className="h-4 w-4" />
-                      {t(locale, "dashboard.makePublicWithCoins", {
-                        cost: "6",
-                      })}
-                    </button>
-                  </>
-                )}
+                ) : null}
                 <button
                   onClick={() => {
                     handleDuplicate();
@@ -342,9 +330,9 @@ export function QuizOptionsMenu({
       <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
         <DialogContent onOverlayClick={() => setShowShareDialog(false)}>
           <DialogHeader>
-            <DialogTitle>{t(locale, "dashboard.publicPlayLinkTitle")}</DialogTitle>
+            <DialogTitle>{t(locale, "dashboard.sharePlayLinkTitle")}</DialogTitle>
             <DialogDescription>
-              {t(locale, "dashboard.publicPlayLinkDescription")}
+              {t(locale, "dashboard.sharePlayLinkDescription")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">

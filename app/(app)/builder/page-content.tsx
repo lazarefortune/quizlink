@@ -679,7 +679,6 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
                   <QuizMenu
                     quizId={savedQuizId}
                     quizName={quiz.name}
-                    visibility={quiz.visibility}
                     onDeleted={() => {
                       router.push("/dashboard");
                     }}

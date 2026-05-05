@@ -530,10 +530,6 @@ export async function createParticipantLink(
       return { success: false, error: "Unauthorized" };
     }
 
-    if (quiz.visibility !== "PUBLIC") {
-      return { success: false, error: "Only public quizzes can be shared" };
-    }
-
     // Verify participant exists
     const participant = await prisma.participant.findUnique({
       where: { id: participantId },

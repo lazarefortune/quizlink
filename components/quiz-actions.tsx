@@ -11,11 +11,14 @@ import {
   Copy,
   Share2,
   Check,
-  Lock,
 } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { deleteQuiz, duplicateQuiz } from "@/app/(app)/dashboard/actions";
+import { createOrGetQuizLink } from "@/app/quiz-link/actions";
+import { track } from "@/lib/analytics/track";
+import { PARTICIPANT_INVITED } from "@/lib/analytics/events";
+import { buildCommonEventProps } from "@/lib/analytics/props";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,7 +40,6 @@ import {
 type QuizActionsProps = {
   quizId: string;
   quizName: string;
-  visibility: "PRIVATE" | "PUBLIC";
   onDeleted?: () => void;
   onDuplicated?: (newQuizId: string) => void;
 };
@@ -45,7 +47,6 @@ type QuizActionsProps = {
 export function QuizActions({
   quizId,
   quizName,
-  visibility,
   onDeleted,
   onDuplicated,
 }: QuizActionsProps) {
@@ -56,6 +57,8 @@ export function QuizActions({
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [shareLink, setShareLink] = useState("");
+  const [isLoadingShareLink, setIsLoadingShareLink] = useState(false);
 
   const baseUrl =
     typeof window !== "undefined"
@@ -98,10 +101,31 @@ export function QuizActions({
     }
   };
 
-  const shareLink = `${baseUrl}/quiz/play?quizId=${quizId}`;
-
-  const handleShareClick = () => {
+  const handleShareClick = async () => {
     setShowShareDialog(true);
+    setIsLoadingShareLink(true);
+    setShareLink("");
+    try {
+      const result = await createOrGetQuizLink(quizId, true);
+      if (result.success) {
+        track(PARTICIPANT_INVITED, {
+          ...buildCommonEventProps({ isLoggedIn: true, preferredLanguage: locale }),
+          quiz_id: quizId,
+          delivery: "link",
+          is_first_invite_for_quiz: result.isFirstInviteForQuiz,
+        });
+        setShareLink(`${baseUrl}/quiz/${result.quizLink.token}`);
+      } else {
+        alert(result.error || t(locale, "dashboard.shareError"));
+        setShowShareDialog(false);
+      }
+    } catch (error) {
+      console.error("Error creating quiz link:", error);
+      alert(t(locale, "dashboard.shareError"));
+      setShowShareDialog(false);
+    } finally {
+      setIsLoadingShareLink(false);
+    }
   };
 
   const handleCopyLink = () => {
@@ -152,28 +176,15 @@ export function QuizActions({
           <Edit className="h-3 w-3 mr-1" />
           {t(locale, "dashboard.edit")}
         </Button>
-        {visibility === "PUBLIC" ? (
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={handleShareClick}
-            className="flex-1 min-w-[100px]"
-          >
-            <Share2 className="h-3 w-3 mr-1" />
-            {t(locale, "dashboard.share")}
-          </Button>
-        ) : (
-          <Button
-            variant="secondary"
-            size="sm"
-            disabled
-            className="flex-1 min-w-[100px]"
-            title={t(locale, "dashboard.privateQuiz")}
-          >
-            <Lock className="h-3 w-3 mr-1" />
-            {t(locale, "dashboard.private")}
-          </Button>
-        )}
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={handleShareClick}
+          className="flex-1 min-w-[100px]"
+        >
+          <Share2 className="h-3 w-3 mr-1" />
+          {t(locale, "dashboard.share")}
+        </Button>
         <Button
           variant="secondary"
           size="sm"
@@ -229,38 +240,45 @@ export function QuizActions({
       <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t(locale, "dashboard.publicPlayLinkTitle")}</DialogTitle>
+            <DialogTitle>{t(locale, "dashboard.sharePlayLinkTitle")}</DialogTitle>
             <DialogDescription>
-              {t(locale, "dashboard.publicPlayLinkDescription")}
+              {t(locale, "dashboard.sharePlayLinkDescription")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="flex gap-2">
-              <Input
-                value={shareLink}
-                readOnly
-                className="flex-1 font-mono text-sm"
-                onClick={(e) => (e.target as HTMLInputElement).select()}
-              />
-              <Button
-                onClick={handleCopyLink}
-                variant={linkCopied ? "secondary" : "primary"}
-                size="default"
-                className="shrink-0"
-              >
-                {linkCopied ? (
-                  <>
-                    <Check className="h-4 w-4 mr-2" />
-                    {t(locale, "dashboard.copied")}
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-4 w-4 mr-2" />
-                    {t(locale, "dashboard.copy")}
-                  </>
-                )}
-              </Button>
-            </div>
+            {isLoadingShareLink ? (
+              <p className="text-sm text-muted-foreground">
+                {t(locale, "common.loading")}
+              </p>
+            ) : (
+              <div className="flex gap-2">
+                <Input
+                  value={shareLink}
+                  readOnly
+                  className="flex-1 font-mono text-sm"
+                  onClick={(e) => (e.target as HTMLInputElement).select()}
+                />
+                <Button
+                  onClick={handleCopyLink}
+                  variant={linkCopied ? "secondary" : "primary"}
+                  size="default"
+                  className="shrink-0"
+                  disabled={!shareLink}
+                >
+                  {linkCopied ? (
+                    <>
+                      <Check className="h-4 w-4 mr-2" />
+                      {t(locale, "dashboard.copied")}
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-4 w-4 mr-2" />
+                      {t(locale, "dashboard.copy")}
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>

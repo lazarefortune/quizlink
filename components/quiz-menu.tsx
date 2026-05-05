@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { MoreVertical, Share2, Trash2, Check, Lock, Copy } from "lucide-react";
+import { MoreVertical, Share2, Trash2, Check, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useLocale } from "@/lib/i18n/use-locale";
@@ -32,14 +32,12 @@ import {
 type QuizMenuProps = {
   quizId: string;
   quizName: string;
-  visibility: "PRIVATE" | "PUBLIC";
   onDeleted?: () => void;
 };
 
 export function QuizMenu({
   quizId,
   quizName,
-  visibility,
   onDeleted,
 }: QuizMenuProps) {
   const { locale } = useLocale();
@@ -162,23 +160,13 @@ export function QuizMenu({
             {/* Dropdown */}
             <div className="absolute right-0 mt-2 w-48 rounded-md border border-border bg-popover shadow-lg z-50" onClick={(e) => e.stopPropagation()}>
               <div className="p-1">
-                {visibility === "PUBLIC" ? (
-                  <button
-                    onClick={handleShareClick}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent rounded-md transition-colors text-left"
-                  >
-                    <Share2 className="h-4 w-4" />
-                    {t(locale, "dashboard.share")}
-                  </button>
-                ) : (
-                  <div
-                    className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground rounded-md"
-                    title={t(locale, "dashboard.privateQuiz")}
-                  >
-                    <Lock className="h-4 w-4" />
-                    {t(locale, "dashboard.private")}
-                  </div>
-                )}
+                <button
+                  onClick={handleShareClick}
+                  className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent rounded-md transition-colors text-left"
+                >
+                  <Share2 className="h-4 w-4" />
+                  {t(locale, "dashboard.share")}
+                </button>
                 <button
                   onClick={() => {
                     setShowDeleteDialog(true);
@@ -227,9 +215,9 @@ export function QuizMenu({
       <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
         <DialogContent onOverlayClick={() => setShowShareDialog(false)}>
           <DialogHeader>
-            <DialogTitle>{t(locale, "dashboard.publicPlayLinkTitle")}</DialogTitle>
+            <DialogTitle>{t(locale, "dashboard.sharePlayLinkTitle")}</DialogTitle>
             <DialogDescription>
-              {t(locale, "dashboard.publicPlayLinkDescription")}
+              {t(locale, "dashboard.sharePlayLinkDescription")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">

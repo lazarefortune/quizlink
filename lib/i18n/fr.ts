@@ -665,14 +665,14 @@ export const fr = {
     share: "Partager",
     shareQuiz: "Partager le Quiz",
     shareDescription: "Copie ce lien pour partager ton quiz avec d'autres personnes",
-    publicPlayLinkTitle: "Lien de jeu public",
-    publicPlayLinkDescription:
-      "N'importe qui peut jouer via ce lien en anonyme. Pour envoyer un lien à un participant précis et suivre ses progrès, ouvre le quiz puis va dans la section Participants.",
+    sharePlayLinkTitle: "Lien de partage",
+    sharePlayLinkDescription:
+      "Toute personne avec ce lien peut jouer. Les quiz privés n'apparaissent pas dans la galerie publique : seules les personnes à qui tu envoies le lien peuvent y accéder. Pour inviter un participant précis et suivre ses progrès, ouvre le quiz puis va dans la section Participants.",
     copy: "Copier",
     copied: "Copié",
     private: "Privé",
     public: "Public",
-    privateQuiz: "Ce quiz est privé et ne peut pas être partagé",
+    privateQuiz: "Privé — n'apparaît pas dans la galerie publique",
     linkCopied: "Lien copié",
     makePublicWithCoins: "Rendre public ({cost} coins)",
     makePublicDialogTitle: "Rendre ce quiz public ?",

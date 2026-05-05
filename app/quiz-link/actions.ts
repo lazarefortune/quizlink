@@ -103,13 +103,9 @@ export async function createOrGetQuizLink(
       return { success: false, error: "Unauthorized" };
     }
 
-    if (quiz.visibility !== "PUBLIC") {
-      return { success: false, error: "Only public quizzes can be shared" };
-    }
-
-    // Check if a link already exists
+    // General share link (not tied to a participant); works for PRIVATE and PUBLIC.
     const existingLink = await prisma.quizLink.findFirst({
-      where: { quizId },
+      where: { quizId, participantId: null },
     });
 
     if (existingLink) {
@@ -151,6 +147,7 @@ export async function createOrGetQuizLink(
       data: {
         quizId,
         token,
+        participantId: null,
         allowMultipleAttempts,
       },
     });
