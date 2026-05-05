@@ -38,6 +38,7 @@ type User = {
   role: string;
   coinBalance: number;
   verifiedAt: Date | null;
+  lastLoginAt: Date | null;
   createdAt: Date;
   hasGoogleAccount: boolean;
   _count: {
@@ -47,6 +48,12 @@ type User = {
 
 type AdminDashboardContentProps = {
   initialUsers: User[];
+  metrics: {
+    totalSignupsEver: number;
+    signupsLast30Days: number;
+    loginSuccessLast30Days: number;
+    loginFailuresLast30Days: number;
+  };
 };
 
 function formatDate(date: Date | null, locale: string): string {
@@ -60,7 +67,7 @@ function formatDate(date: Date | null, locale: string): string {
   });
 }
 
-export function AdminDashboardContent({ initialUsers }: AdminDashboardContentProps) {
+export function AdminDashboardContent({ initialUsers, metrics }: AdminDashboardContentProps) {
   const { showToast } = useToast();
   const { locale } = useLocale();
   const [users, setUsers] = useState<User[]>(initialUsers);
@@ -161,7 +168,7 @@ export function AdminDashboardContent({ initialUsers }: AdminDashboardContentPro
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           <Card>
             <CardContent className="p-4 flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue/10 text-blue">
@@ -175,32 +182,58 @@ export function AdminDashboardContent({ initialUsers }: AdminDashboardContentPro
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="col-span-1">
             <CardContent className="p-4 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <FileText className="h-5 w-5" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-success/10 text-success">
+                <Users className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-2xl font-bold tabular-nums">
-                  {users.reduce((sum, u) => sum + u._count.quizzes, 0)}
-                </p>
+                <p className="text-2xl font-bold tabular-nums">{metrics.totalSignupsEver}</p>
                 <p className="text-xs text-muted-foreground">
-                  {t(locale, "admin.dashboard.quizzes")}
+                  {t(locale, "admin.dashboard.signupsEver")}
                 </p>
               </div>
             </CardContent>
           </Card>
-          <Card className="col-span-2 sm:col-span-1">
+          <Card className="col-span-1">
             <CardContent className="p-4 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-warning/10 text-warning">
-                <Coins className="h-5 w-5" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-success/10 text-success">
+                <Plus className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold tabular-nums">{metrics.signupsLast30Days}</p>
+                <p className="text-xs text-muted-foreground">
+                  {t(locale, "admin.dashboard.signupsLast30Days")}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="col-span-1">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-success/10 text-success">
+                <Eye className="h-5 w-5" />
               </div>
               <div>
                 <p className="text-2xl font-bold tabular-nums">
-                  {users.reduce((sum, u) => sum + u.coinBalance, 0)}
+                  {metrics.loginSuccessLast30Days}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {t(locale, "admin.dashboard.coins")}
+                  {t(locale, "admin.dashboard.loginSuccessLast30Days")}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="col-span-1">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-warning/10 text-warning">
+                <Minus className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold tabular-nums">
+                  {metrics.loginFailuresLast30Days}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {t(locale, "admin.dashboard.loginFailuresLast30Days")}
                 </p>
               </div>
             </CardContent>
@@ -242,6 +275,7 @@ export function AdminDashboardContent({ initialUsers }: AdminDashboardContentPro
                   <TableHead>{t(locale, "admin.dashboard.role")}</TableHead>
                   <TableHead>{t(locale, "admin.dashboard.authMethod")}</TableHead>
                   <TableHead>{t(locale, "admin.dashboard.verifiedAt")}</TableHead>
+                  <TableHead>{t(locale, "admin.dashboard.lastLoginAt")}</TableHead>
                   <TableHead className="text-right">
                     {t(locale, "admin.dashboard.coins")}
                   </TableHead>
@@ -258,7 +292,7 @@ export function AdminDashboardContent({ initialUsers }: AdminDashboardContentPro
                 {users.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={7}
+                      colSpan={10}
                       className="text-center text-muted-foreground py-8"
                     >
                       {t(locale, "admin.dashboard.noUsers")}
@@ -291,9 +325,12 @@ export function AdminDashboardContent({ initialUsers }: AdminDashboardContentPro
                             : t(locale, "admin.dashboard.authPassword")}
                         </Badge>
                       </TableCell>
-                        <TableCell>
+                      <TableCell>
                           {formatDate(user.verifiedAt, locale)}
-                        </TableCell>
+                      </TableCell>
+                      <TableCell>
+                        {formatDate(user.lastLoginAt, locale)}
+                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
                           <Coins className="h-4 w-4 text-primary" />
@@ -383,6 +420,10 @@ export function AdminDashboardContent({ initialUsers }: AdminDashboardContentPro
                     <span>
                       {t(locale, "admin.dashboard.verifiedAt")}:{" "}
                       {formatDate(user.verifiedAt, locale)}
+                    </span>
+                    <span>
+                      {t(locale, "admin.dashboard.lastLoginAt")}:{" "}
+                      {formatDate(user.lastLoginAt, locale)}
                     </span>
                     <div className="flex items-center gap-1">
                       <Coins className="h-4 w-4 text-primary" />

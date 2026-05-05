@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
 type SearchUsersResponse =
-  | { success: true; users: Array<{ id: string; email: string; name: string; role: string; coinBalance: number; createdAt: Date; verifiedAt: Date | null; hasGoogleAccount: boolean; _count: { quizzes: number } }> }
+  | { success: true; users: Array<{ id: string; email: string; name: string; role: string; coinBalance: number; createdAt: Date; verifiedAt: Date | null; lastLoginAt: Date | null; hasGoogleAccount: boolean; _count: { quizzes: number } }> }
   | { success: false; error: string };
 
 export async function searchUsers(searchTerm: string): Promise<SearchUsersResponse> {
@@ -32,6 +32,7 @@ export async function searchUsers(searchTerm: string): Promise<SearchUsersRespon
         googleId: true,
         createdAt: true,
         emailVerifiedAt: true,
+        lastLoginAt: true,
         _count: {
           select: {
             quizzes: true,
@@ -51,6 +52,7 @@ export async function searchUsers(searchTerm: string): Promise<SearchUsersRespon
         coinBalance: u.coinBalance,
         createdAt: u.createdAt,
         verifiedAt: u.emailVerifiedAt,
+        lastLoginAt: u.lastLoginAt,
         hasGoogleAccount: Boolean(u.googleId),
         _count: u._count,
       })),

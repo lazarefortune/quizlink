@@ -14,7 +14,8 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "promote:admin": "npx tsx scripts/promote-admin.ts",
-    "seed:coin-packs": "npx tsx scripts/seed-coin-packs.ts"
+    "seed:coin-packs": "npx tsx scripts/seed-coin-packs.ts",
+    "backfill:signup-events": "npx tsx scripts/backfill-signup-events.ts"
   },
   "dependencies": {
     "@dicebear/collection": "^9.3.1",
