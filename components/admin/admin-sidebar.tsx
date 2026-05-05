@@ -14,7 +14,6 @@ import {
   ArrowLeft,
   X,
   User,
-  Settings,
   LogOut,
   UserRound,
 } from "lucide-react";
@@ -41,11 +40,16 @@ const navItems = [
 ];
 
 type AdminSidebarProps = {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
+  onNavClick?: () => void;
 };
 
-export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
+export function AdminSidebar({
+  isOpen = true,
+  onClose,
+  onNavClick,
+}: AdminSidebarProps) {
   const [pathname, setPathname] = useState<string>("");
   const { locale } = useLocale();
   const { data: session } = useSession();
@@ -74,12 +78,17 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
     window.location.href = "/";
   };
 
+  const handleNavClick = () => {
+    onNavClick?.();
+    onClose?.();
+  };
+
   return (
     <>
       {isOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
-          onClick={onClose}
+          onClick={handleNavClick}
           aria-hidden="true"
         />
       )}
@@ -100,7 +109,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
           <Button
             variant="ghost"
             size="icon"
-            onClick={onClose}
+            onClick={handleNavClick}
             aria-label="Fermer le menu admin"
             className="h-9 w-9"
           >
@@ -117,7 +126,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
             href="/admin"
             onClick={() => {
               setPathname("/admin");
-              onClose();
+              handleNavClick();
             }}
             className="font-bold text-lg text-foreground"
           >
@@ -136,7 +145,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                 href={item.href}
                 onClick={() => {
                   setPathname(item.href);
-                  onClose();
+                  handleNavClick();
                 }}
                 className={cn(
                   "flex items-center gap-3 rounded-md px-4 py-2.5 text-base font-bold transition-colors",
@@ -158,7 +167,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
             href="/dashboard"
             onClick={() => {
               setPathname("/dashboard");
-              onClose();
+              handleNavClick();
             }}
             className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-base font-bold text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
           >
