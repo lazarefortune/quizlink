@@ -219,15 +219,20 @@ export default function DashboardQuizzesPage() {
     setPlayLoadingQuizId(quizId);
     try {
       const result = await createOrGetQuizLink(quizId, true);
-      if (result.success && baseUrl) {
+      if (result.success) {
         track(PARTICIPANT_INVITED, {
           ...buildCommonEventProps({ isLoggedIn: true, preferredLanguage: locale }),
           quiz_id: quizId,
           delivery: "link",
           is_first_invite_for_quiz: result.isFirstInviteForQuiz,
         });
-        window.open(`${baseUrl}/quiz/${result.quizLink.token}`, "_blank", "noopener,noreferrer");
+        router.push(`/quiz/${result.quizLink.token}`);
+      } else {
+        showToast(result.error || t(locale, "dashboard.shareError"), "error");
       }
+    } catch (error) {
+      console.error("Error getting quiz link:", error);
+      showToast(t(locale, "dashboard.shareError"), "error");
     } finally {
       setPlayLoadingQuizId(null);
     }
@@ -237,12 +242,25 @@ export default function DashboardQuizzesPage() {
     setCopyLoadingQuizId(quizId);
     try {
       const result = await createOrGetQuizLink(quizId, true);
-      if (!result.success || !baseUrl) {
-        showToast(result.success ? t(locale, "dashboard.shareError") : result.error, "error");
+      if (!result.success) {
+        showToast(result.error || t(locale, "dashboard.shareError"), "error");
         return;
       }
       const shareUrl = `${baseUrl}/quiz/${result.quizLink.token}`;
-      await navigator.clipboard.writeText(shareUrl);
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+      } catch {
+        // Fallback for browsers where clipboard API is unavailable after async
+        const textarea = document.createElement("textarea");
+        textarea.value = shareUrl;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
       setCopiedQuizId(quizId);
       setTimeout(() => setCopiedQuizId(null), 2000);
       showToast(t(locale, "dashboard.linkCopied"), "success");

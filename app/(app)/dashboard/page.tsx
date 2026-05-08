@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -45,6 +46,7 @@ type DashboardStats = {
 };
 
 export default function DashboardPage() {
+  const router = useRouter();
   const { data: session } = useSession();
   const { locale } = useLocale();
   const { showToast } = useToast();
@@ -103,7 +105,20 @@ export default function DashboardPage() {
     try {
       const shareUrl = await getShareUrl(quizId);
       if (!shareUrl) return;
-      await navigator.clipboard.writeText(shareUrl);
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+      } catch {
+        // Fallback for browsers where clipboard API is unavailable after async
+        const textarea = document.createElement("textarea");
+        textarea.value = shareUrl;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
       setCopiedQuizId(quizId);
       setTimeout(() => setCopiedQuizId(null), 2000);
       showToast(t(locale, "dashboard.linkCopied"), "success");
@@ -118,10 +133,15 @@ export default function DashboardPage() {
   const handlePlay = async (quizId: string) => {
     setPlayLoadingQuizId(quizId);
     try {
-      const shareUrl = await getShareUrl(quizId);
-      if (shareUrl) {
-        window.open(shareUrl, "_blank", "noopener,noreferrer");
+      const result = await createOrGetQuizLink(quizId, true);
+      if (result.success) {
+        router.push(`/quiz/${result.quizLink.token}`);
+      } else {
+        showToast(result.error || t(locale, "dashboard.shareError"), "error");
       }
+    } catch (error) {
+      console.error("Error getting quiz link:", error);
+      showToast(t(locale, "dashboard.shareError"), "error");
     } finally {
       setPlayLoadingQuizId(null);
     }

@@ -698,6 +698,7 @@ export const fr = {
     public: "Public",
     privateQuiz: "Privé — n'apparaît pas dans la galerie publique",
     linkCopied: "Lien copié",
+    shareError: "Impossible de générer le lien de partage",
     makePublicWithCoins: "Rendre public ({cost} coins)",
     makePublicDialogTitle: "Rendre ce quiz public ?",
     makePublicDialogDescription:
