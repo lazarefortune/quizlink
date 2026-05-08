@@ -322,9 +322,11 @@ export default function DashboardQuizzesPage() {
                 {t(locale, "dashboard.title")}
               </h2>
             </div>
+            {quizzes.length > 0 && (
             <div className="shrink-0">
               <CreateQuizModalTrigger locale={locale} />
             </div>
+            )}
           </div>
           <form
             onSubmit={handleSearchSubmit}
@@ -360,7 +362,7 @@ export default function DashboardQuizzesPage() {
         {/* Empty state */}
         {quizzes.length === 0 ? (
           <motion.div custom={1} variants={fadeUp}>
-            <Card variant="playful" className="border-dashed">
+            <Card className="border-none">
               <CardContent className="flex flex-col items-center justify-center py-12 sm:py-16 px-4">
                 <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted mb-4">
                   {searchQuery ? (

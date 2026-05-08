@@ -284,10 +284,10 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
         .finally(() => {
           setIsLoading(false);
         });
-    } else if (!quizId && savedQuizId) {
-      // If URL doesn't have quizId but we have a savedQuizId, update URL
-      router.replace(`/builder/${savedQuizId}`);
     }
+    // Do not router.replace to `/builder/${savedQuizId}` here when `savedQuizId` was just
+    // set after creating a quiz: it races with `router.push` to `/dashboard/quiz/.../success`
+    // and cancels the success redirect. URL sync after save is handled in handleSave when needed.
   }, [initialQuizId, searchParams, savedQuizId, router, locale, showToast]);
 
   const handleSave = async () => {

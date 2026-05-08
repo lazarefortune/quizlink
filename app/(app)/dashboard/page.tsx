@@ -340,7 +340,7 @@ export default function DashboardPage() {
             animate={fadeIn.animate}
             transition={fadeIn.transition(0.4)}
           >
-            <Card variant="playful" className="border-dashed">
+            <Card className="border-none">
               <CardContent className="flex flex-col items-center justify-center px-4 py-12 text-center">
                 <h3 className="mb-1 text-lg font-black">
                   {t(locale, "dashboard.home.emptyTitle")}
