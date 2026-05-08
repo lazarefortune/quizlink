@@ -380,6 +380,7 @@ export const fr = {
   builder: {
     title: "Créateur de Quiz",
     subtitle: "Crée et personnalise ton quiz manuellement",
+    optionsTitle: "Options du quiz",
     validationErrors: "Erreurs de Validation",
     quizMetadata: "Métadonnées du Quiz",
     quizMetadataDescription: "Infos de base sur ton quiz",

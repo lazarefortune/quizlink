@@ -610,6 +610,17 @@ textarea {
   animation: question-remove 0.4s ease-in forwards;
 }
 
+/* Mobile Safari/Chrome: éviter les “bandes” quand les barres d’UI changent de hauteur.
+   Tailwind `min-h-screen` = 100vh, ce qui peut être supérieur à 100dvh quand la barre d’adresse est visible. */
+@media (max-width: 640px) {
+  .min-h-screen {
+    min-height: 100dvh !important;
+  }
+  .h-screen {
+    height: 100dvh !important;
+  }
+}
+
 /* Toast enter animation */
 @keyframes toast-enter {
   from {

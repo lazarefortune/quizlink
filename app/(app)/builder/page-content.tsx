@@ -222,7 +222,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
       name: "",
       visibility: "PRIVATE",
       settings: {
-        showAnswerImmediately: false,
+        showAnswerImmediately: true,
         randomizeQuestions: false,
         timeLimitPerQuestion: null,
       },
@@ -489,7 +489,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
         <aside className="w-full lg:w-80 border-r border-b border-border/60 lg:border-b-0 bg-muted/30 lg:overflow-y-auto shrink-0 relative z-10">
           <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
             <div>
-              <h2 className="uppercase h1 text-lg font-semibold mb-3 sm:mb-4">{t(locale, "options.title")}</h2>
+              <h2 className="uppercase h1 text-lg font-semibold mb-3 sm:mb-4">{t(locale, "builder.optionsTitle")}</h2>
             </div>
 
             <div className="space-y-3 sm:space-y-4">

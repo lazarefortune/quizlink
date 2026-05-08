@@ -10,7 +10,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { Lock, Zap } from "lucide-react";
+import { Zap } from "lucide-react";
 import { ContentDropzone } from "@/components/generate/content-dropzone";
 import { GenerationOptionsModal } from "@/components/generate/generation-options-modal";
 import { getAiLimits, validateTextLength, validateQuestionCount } from "@/lib/ai/ai-limits";
@@ -44,7 +44,7 @@ export function GeneratePage() {
   const { locale } = useLocale();
   const { showToast } = useToast();
   const { data: session, update: updateSession } = useSession();
-  const [activeTab, setActiveTab] = useState< "TEXT" | "DOCUMENT" | "IMAGE" | "VIDEO">("TEXT");
+  const [activeTab, setActiveTab] = useState<"TEXT" | "DOCUMENT">("TEXT");
   const [textContent, setTextContent] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -351,28 +351,12 @@ export function GeneratePage() {
                 }}
                 className="w-full"
               >
-                <TabsList className="flex w-full overflow-x-auto sm:grid sm:grid-cols-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                <TabsList className="flex w-full overflow-x-auto sm:grid sm:grid-cols-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                   <TabsTrigger value="TEXT" className="whitespace-nowrap">
                     {t(locale, "generate.tabs.text")}
                   </TabsTrigger>
                   <TabsTrigger value="DOCUMENT" className="whitespace-nowrap">
                     {t(locale, "generate.tabs.document")}
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="IMAGE"
-                    disabled
-                    className="whitespace-nowrap"
-                  >
-                    <Lock className="h-3 w-3 mr-2" />
-                    {t(locale, "generate.tabs.image")}
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="VIDEO"
-                    disabled
-                    className="whitespace-nowrap"
-                  >
-                    <Lock className="h-3 w-3 mr-2" />
-                    {t(locale, "generate.tabs.video")}
                   </TabsTrigger>
                 </TabsList>
                 <TabsContent value="TEXT" className="mt-6">
@@ -398,32 +382,6 @@ export function GeneratePage() {
                     disabled={isLoading}
                     locale={locale}
                   />
-                </TabsContent>
-                <TabsContent value="IMAGE" className="mt-6">
-                  <div className="flex min-h-[300px] items-center justify-center rounded-lg border-2 border-dashed border-muted">
-                    <div className="text-center">
-                      <Lock className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                      <p className="font-medium">
-                        {t(locale, "generate.uploadComingSoon")}
-                      </p>
-                      <p className="text-sm text-muted-foreground mt-2">
-                        {t(locale, "generate.createAccountToUnlock")}
-                      </p>
-                    </div>
-                  </div>
-                </TabsContent>
-                <TabsContent value="VIDEO" className="mt-6">
-                  <div className="flex min-h-[300px] items-center justify-center rounded-lg border-2 border-dashed border-muted">
-                    <div className="text-center">
-                      <Lock className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                      <p className="font-medium">
-                        {t(locale, "generate.uploadComingSoon")}
-                      </p>
-                      <p className="text-sm text-muted-foreground mt-2">
-                        {t(locale, "generate.createAccountToUnlock")}
-                      </p>
-                    </div>
-                  </div>
                 </TabsContent>
               </Tabs>
               <div className="flex flex-col items-center gap-4 mt-6">
@@ -462,7 +420,7 @@ export function GeneratePage() {
               }}
               className="w-full"
             >
-              <TabsList className="flex w-full overflow-x-auto sm:grid sm:grid-cols-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <TabsList className="flex w-full overflow-x-auto sm:grid sm:grid-cols-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 <TabsTrigger
                   value="TEXT"
                   className="whitespace-nowrap font-nunito text-base font-black"
@@ -474,22 +432,6 @@ export function GeneratePage() {
                   className="whitespace-nowrap font-nunito text-base font-black"
                 >
                   {t(locale, "generate.tabs.document")}
-                </TabsTrigger>
-                <TabsTrigger
-                  value="IMAGE"
-                  disabled
-                  className="whitespace-nowrap font-nunito text-base font-black"
-                >
-                  <Lock className="h-3 w-3 mr-2" />
-                  {t(locale, "generate.tabs.image")}
-                </TabsTrigger>
-                <TabsTrigger
-                  value="VIDEO"
-                  disabled
-                  className="whitespace-nowrap font-nunito text-base font-black"
-                >
-                  <Lock className="h-3 w-3 mr-2" />
-                  {t(locale, "generate.tabs.video")}
                 </TabsTrigger>
               </TabsList>
 
@@ -534,33 +476,6 @@ export function GeneratePage() {
                 )}
               </TabsContent>
 
-              <TabsContent value="IMAGE" className="mt-6">
-                <div className="flex min-h-[300px] items-center justify-center rounded-lg border-2 border-dashed border-muted">
-                  <div className="text-center">
-                    <Lock className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                    <p className="font-medium">
-                      {t(locale, "generate.uploadComingSoon")}
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      {t(locale, "generate.createAccountToUnlock")}
-                    </p>
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="VIDEO" className="mt-6">
-                <div className="flex min-h-[300px] items-center justify-center rounded-lg border-2 border-dashed border-muted">
-                  <div className="text-center">
-                    <Lock className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                    <p className="font-medium">
-                      {t(locale, "generate.uploadComingSoon")}
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      {t(locale, "generate.createAccountToUnlock")}
-                    </p>
-                  </div>
-                </div>
-              </TabsContent>
             </Tabs>
 
             {error && (

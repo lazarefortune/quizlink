@@ -316,7 +316,7 @@ export default function DashboardQuizzesPage() {
           variants={fadeUp}
           className="flex flex-col gap-4"
         >
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div className="flex gap-2 flex-row items-center justify-between mb-3">
             <div className="flex flex-col gap-2">
               <h2 className="text-2xl font-black text-foreground sm:text-3xl">
                 {t(locale, "dashboard.title")}
@@ -436,7 +436,7 @@ export default function DashboardQuizzesPage() {
                         )}
                       </p>
 
-                      <div className="mt-auto pt-3 border-t border-border/60 space-y-2">
+                      <div className="mt-auto pt-3 border-t border-border/60 space-y-5">
                         <div className="flex items-center gap-2">
                           <Button
                             variant="blue"

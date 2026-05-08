@@ -94,7 +94,7 @@ export function DashboardMobileNavSheet() {
       >
         <div className="flex min-h-0 flex-1 flex-col">
           <div
-            className="pointer-events-none shrink-0 bg-transparent h-[calc(env(safe-area-inset-top,0px)+4rem)] sm:h-[calc(env(safe-area-inset-top,0px)+3.5rem)]"
+            className="pointer-events-none shrink-0 bg-transparent h-[env(safe-area-inset-top,0px)] sm:h-[env(safe-area-inset-top,0px)]"
             aria-hidden
           />
           <SheetClose asChild>
@@ -107,7 +107,7 @@ export function DashboardMobileNavSheet() {
               </span>
             </Link>
           </SheetClose>
-          <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-3 pb-8">
+          <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-3 pb-4">
             <div>
               <p className="mb-2 px-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
                 Navigation

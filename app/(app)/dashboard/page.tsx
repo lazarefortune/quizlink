@@ -208,7 +208,8 @@ export default function DashboardPage() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-foreground">
-                      {displayStats.coinBalance} {t(locale, "account.coins.coins")}
+                      {displayStats.coinBalance}{" "}
+                      {t(locale, "account.coins.coins")}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {t(locale, "dashboard.home.coinsDescription")}
@@ -233,7 +234,7 @@ export default function DashboardPage() {
             animate={fadeIn.animate}
             transition={fadeIn.transition(0.3)}
           >
-            <div className="mb-4 flex items-center justify-between">
+            <div className="mb-4 flex gap-2 flex-row items-center justify-between">
               <h2 className="text-xl font-black text-foreground">
                 {t(locale, "dashboard.home.recentQuizzesTitle")}
               </h2>
@@ -253,7 +254,10 @@ export default function DashboardPage() {
                   animate={fadeIn.animate}
                   transition={fadeIn.transition(0.35 + index * 0.06)}
                 >
-                  <Card variant="playful" className="group flex h-full flex-col">
+                  <Card
+                    variant="playful"
+                    className="group flex h-full flex-col"
+                  >
                     <CardContent className="flex flex-1 flex-col p-5">
                       <Link
                         href={`/dashboard/quiz/${quiz.id}/preview`}
@@ -278,7 +282,7 @@ export default function DashboardPage() {
                         </span>
                       </div>
 
-                      <div className="mt-auto space-y-2 border-t border-border/60 pt-3">
+                      <div className="mt-auto space-y-5 border-t border-border/60 pt-3">
                         <Button
                           variant="blue"
                           size="sm"
@@ -289,36 +293,43 @@ export default function DashboardPage() {
                           <Play className="h-4 w-4" />
                           {playLoadingQuizId === quiz.id
                             ? t(locale, "common.loading")
-                            : t(locale, "dashboard.home.testQuiz")}
+                            : t(locale, "publicQuizzes.play")}
                         </Button>
 
                         <div className="grid grid-cols-2 gap-2">
                           <Button
-                            variant={copiedQuizId === quiz.id ? "secondary" : "outline"}
+                            variant={
+                              copiedQuizId === quiz.id ? "secondary" : "outline"
+                            }
                             size="sm"
                             className="w-full gap-2"
                             onClick={() => handleCopyLink(quiz.id)}
                             disabled={copyLoadingQuizId !== null}
                           >
                             <Copy className="h-4 w-4" />
-                            {copyLoadingQuizId === quiz.id
-                              ? t(locale, "common.loading")
-                              : copiedQuizId === quiz.id
-                                ? t(locale, "dashboard.linkCopied")
-                                : (
-                                  <>
-                                    <span className="sm:hidden">
-                                      {locale === "fr" ? "Lien" : "Link"}
-                                    </span>
-                                    <span className="hidden sm:inline">
-                                      {locale === "fr" ? "Copier le lien" : "Copy link"}
-                                    </span>
-                                  </>
-                                )}
+                            {copyLoadingQuizId === quiz.id ? (
+                              t(locale, "common.loading")
+                            ) : copiedQuizId === quiz.id ? (
+                              t(locale, "dashboard.linkCopied")
+                            ) : (
+                              <>
+                                <span className="sm:hidden">
+                                  {locale === "fr" ? "Lien" : "Link"}
+                                </span>
+                                <span className="hidden sm:inline">
+                                  {locale === "fr"
+                                    ? "Copier le lien"
+                                    : "Copy link"}
+                                </span>
+                              </>
+                            )}
                           </Button>
 
                           <Button variant="outline" size="sm" asChild>
-                            <Link href={`/dashboard/quiz/${quiz.id}`} className="gap-2">
+                            <Link
+                              href={`/dashboard/quiz/${quiz.id}`}
+                              className="gap-2"
+                            >
                               <BarChart3 className="h-4 w-4" />
                               {t(locale, "dashboard.results")}
                             </Link>
