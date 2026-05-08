@@ -4,10 +4,11 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, CheckCircle2, Circle, Copy, Pencil, Play } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Circle, Copy, Pencil, Play, Trash2 } from "lucide-react";
 
 import type { QuizContentQuestion } from "../actions";
 import { createOrGetQuizLink } from "@/app/quiz-link/actions";
+import { deleteQuiz } from "@/app/(app)/dashboard/actions";
 import { track } from "@/lib/analytics/track";
 import { PARTICIPANT_INVITED } from "@/lib/analytics/events";
 import { buildCommonEventProps } from "@/lib/analytics/props";
@@ -16,6 +17,16 @@ import { t } from "@/lib/i18n";
 import { useToast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type QuizPreviewContentProps = {
   quizId: string;
@@ -30,6 +41,22 @@ function questionTypeLabel(type: string, locale: string): string {
   return type;
 }
 
+async function writeToClipboard(text: string): Promise<void> {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    document.execCommand("copy");
+    document.body.removeChild(textarea);
+  }
+}
+
 export function QuizPreviewContent({
   quizId,
   quizName,
@@ -40,36 +67,27 @@ export function QuizPreviewContent({
   const { showToast } = useToast();
   const [playLoading, setPlayLoading] = useState(false);
   const [copyLoading, setCopyLoading] = useState(false);
-
-  const baseUrl =
-    typeof window !== "undefined"
-      ? window.location.origin
-      : process.env.NEXT_PUBLIC_APP_URL ?? "";
-
-  const getShareUrl = async (): Promise<string | null> => {
-    const result = await createOrGetQuizLink(quizId, true);
-    if (!result.success || !baseUrl) {
-      showToast(result.success ? t(locale, "dashboard.shareError") : result.error, "error");
-      return null;
-    }
-
-    track(PARTICIPANT_INVITED, {
-      ...buildCommonEventProps({ isLoggedIn: true, preferredLanguage: locale }),
-      quiz_id: quizId,
-      delivery: "link",
-      is_first_invite_for_quiz: result.isFirstInviteForQuiz,
-    });
-
-    return `${baseUrl}/quiz/${result.quizLink.token}`;
-  };
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handlePlay = async () => {
     setPlayLoading(true);
     try {
-      const shareUrl = await getShareUrl();
-      if (shareUrl) {
-        window.open(shareUrl, "_blank", "noopener,noreferrer");
+      const result = await createOrGetQuizLink(quizId, true);
+      if (result.success) {
+        track(PARTICIPANT_INVITED, {
+          ...buildCommonEventProps({ isLoggedIn: true, preferredLanguage: locale }),
+          quiz_id: quizId,
+          delivery: "link",
+          is_first_invite_for_quiz: result.isFirstInviteForQuiz,
+        });
+        router.push(`/quiz/${result.quizLink.token}`);
+      } else {
+        showToast(result.error || t(locale, "dashboard.shareError"), "error");
       }
+    } catch (error) {
+      console.error("Error getting quiz link:", error);
+      showToast(t(locale, "dashboard.shareError"), "error");
     } finally {
       setPlayLoading(false);
     }
@@ -78,15 +96,44 @@ export function QuizPreviewContent({
   const handleCopyLink = async () => {
     setCopyLoading(true);
     try {
-      const shareUrl = await getShareUrl();
-      if (!shareUrl) return;
-      await navigator.clipboard.writeText(shareUrl);
+      const result = await createOrGetQuizLink(quizId, true);
+      if (!result.success) {
+        showToast(result.error || t(locale, "dashboard.shareError"), "error");
+        return;
+      }
+      track(PARTICIPANT_INVITED, {
+        ...buildCommonEventProps({ isLoggedIn: true, preferredLanguage: locale }),
+        quiz_id: quizId,
+        delivery: "link",
+        is_first_invite_for_quiz: result.isFirstInviteForQuiz,
+      });
+      const shareUrl = `${window.location.origin}/quiz/${result.quizLink.token}`;
+      await writeToClipboard(shareUrl);
       showToast(t(locale, "dashboard.linkCopied"), "success");
     } catch (error) {
       console.error("Error copying quiz link:", error);
       showToast(t(locale, "dashboard.shareError"), "error");
     } finally {
       setCopyLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const result = await deleteQuiz(quizId);
+      if (result.success) {
+        showToast(t(locale, "dashboard.quizDeletedSuccess"), "success");
+        router.push("/dashboard/quizzes");
+      } else {
+        showToast(result.error || t(locale, "dashboard.deleteError"), "error");
+      }
+    } catch (error) {
+      console.error("Error deleting quiz:", error);
+      showToast(t(locale, "dashboard.deleteError"), "error");
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
     }
   };
 
@@ -141,6 +188,15 @@ export function QuizPreviewContent({
               >
                 <Pencil className="h-4 w-4" />
                 {t(locale, "dashboard.editQuiz")}
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                className="gap-2"
+                onClick={() => setShowDeleteDialog(true)}
+              >
+                <Trash2 className="h-4 w-4" />
+                {t(locale, "dashboard.delete")}
               </Button>
             </div>
           </div>
@@ -202,6 +258,29 @@ export function QuizPreviewContent({
           ))}
         </section>
       </div>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t(locale, "dashboard.deleteConfirmTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t(locale, "dashboard.deleteConfirmDescription", { name: quizName })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>
+              {t(locale, "common.cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? t(locale, "common.loading") : t(locale, "dashboard.delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

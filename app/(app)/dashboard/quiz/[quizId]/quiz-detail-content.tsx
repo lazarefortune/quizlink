@@ -3,17 +3,44 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, Pencil, Copy, Play } from "lucide-react";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { ArrowLeft, Pencil, Copy, Play, Trash2 } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import type { QuizContentQuestion } from "./actions";
 import { QuizStatsTab } from "./quiz-stats-tab";
 import { createOrGetQuizLink } from "@/app/quiz-link/actions";
+import { deleteQuiz } from "@/app/(app)/dashboard/actions";
 import { useToast } from "@/components/ui/toast";
 import { track } from "@/lib/analytics/track";
 import { PARTICIPANT_INVITED } from "@/lib/analytics/events";
 import { buildCommonEventProps } from "@/lib/analytics/props";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+async function writeToClipboard(text: string): Promise<void> {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    document.execCommand("copy");
+    document.body.removeChild(textarea);
+  }
+}
 
 type QuizDetailContentProps = {
   quizId: string;
@@ -57,6 +84,8 @@ export function QuizDetailContent({
   const { showToast } = useToast();
   const [playLoading, setPlayLoading] = useState(false);
   const [copyLoading, setCopyLoading] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
   const getDisplayStatus = (status: string, startedAt: Date | null): string => {
     if (status !== "IN_PROGRESS" || !startedAt) return status;
@@ -88,30 +117,24 @@ export function QuizDetailContent({
       ? window.location.origin
       : process.env.NEXT_PUBLIC_APP_URL ?? "";
 
-  const getShareUrl = async (): Promise<string | null> => {
-    const result = await createOrGetQuizLink(quizId, true);
-    if (!result.success || !baseUrl) {
-      showToast(result.success ? t(locale, "dashboard.shareError") : result.error, "error");
-      return null;
-    }
-
-    track(PARTICIPANT_INVITED, {
-      ...buildCommonEventProps({ isLoggedIn: true, preferredLanguage: locale }),
-      quiz_id: quizId,
-      delivery: "link",
-      is_first_invite_for_quiz: result.isFirstInviteForQuiz,
-    });
-
-    return `${baseUrl}/quiz/${result.quizLink.token}`;
-  };
-
   const handlePlay = async () => {
     setPlayLoading(true);
     try {
-      const shareUrl = await getShareUrl();
-      if (shareUrl) {
-        window.open(shareUrl, "_blank", "noopener,noreferrer");
+      const result = await createOrGetQuizLink(quizId, true);
+      if (result.success) {
+        track(PARTICIPANT_INVITED, {
+          ...buildCommonEventProps({ isLoggedIn: true, preferredLanguage: locale }),
+          quiz_id: quizId,
+          delivery: "link",
+          is_first_invite_for_quiz: result.isFirstInviteForQuiz,
+        });
+        router.push(`/quiz/${result.quizLink.token}`);
+      } else {
+        showToast(result.error || t(locale, "dashboard.shareError"), "error");
       }
+    } catch (error) {
+      console.error("Error getting quiz link:", error);
+      showToast(t(locale, "dashboard.shareError"), "error");
     } finally {
       setPlayLoading(false);
     }
@@ -120,15 +143,44 @@ export function QuizDetailContent({
   const handleCopyLink = async () => {
     setCopyLoading(true);
     try {
-      const shareUrl = await getShareUrl();
-      if (!shareUrl) return;
-      await navigator.clipboard.writeText(shareUrl);
+      const result = await createOrGetQuizLink(quizId, true);
+      if (!result.success) {
+        showToast(result.error || t(locale, "dashboard.shareError"), "error");
+        return;
+      }
+      track(PARTICIPANT_INVITED, {
+        ...buildCommonEventProps({ isLoggedIn: true, preferredLanguage: locale }),
+        quiz_id: quizId,
+        delivery: "link",
+        is_first_invite_for_quiz: result.isFirstInviteForQuiz,
+      });
+      const shareUrl = `${window.location.origin}/quiz/${result.quizLink.token}`;
+      await writeToClipboard(shareUrl);
       showToast(t(locale, "dashboard.linkCopied"), "success");
     } catch (error) {
       console.error("Error copying quiz link:", error);
       showToast(t(locale, "dashboard.shareError"), "error");
     } finally {
       setCopyLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const result = await deleteQuiz(quizId);
+      if (result.success) {
+        showToast(t(locale, "dashboard.quizDeletedSuccess"), "success");
+        router.push("/dashboard/quizzes");
+      } else {
+        showToast(result.error || t(locale, "dashboard.deleteError"), "error");
+      }
+    } catch (error) {
+      console.error("Error deleting quiz:", error);
+      showToast(t(locale, "dashboard.deleteError"), "error");
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
     }
   };
 
@@ -192,6 +244,14 @@ export function QuizDetailContent({
                 <Pencil className="h-4 w-4" />
                 {t(locale, "dashboard.editQuiz")}
               </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                className="gap-2"
+                onClick={() => setShowDeleteDialog(true)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </div>
@@ -238,6 +298,29 @@ export function QuizDetailContent({
           />
         </section>
       </div>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t(locale, "dashboard.deleteConfirmTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t(locale, "dashboard.deleteConfirmDescription", { name: quizName })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>
+              {t(locale, "common.cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className={buttonVariants({ variant: "destructive" })}
+            >
+              {isDeleting ? t(locale, "common.loading") : t(locale, "dashboard.delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
