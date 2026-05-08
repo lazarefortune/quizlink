@@ -127,7 +127,7 @@ export function HeroSection() {
             <div className="relative w-72 md:w-96 aspect-square flex items-center justify-center">
               {!mascotError ? (
                 <Image
-                  src="/mascot.jpg"
+                  src="/mascotte.png"
                   alt="QuizLink mascotte"
                   width={384}
                   height={384}

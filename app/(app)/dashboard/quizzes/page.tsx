@@ -419,7 +419,6 @@ export default function DashboardQuizzesPage() {
               {quizzes.map((quiz, i) => (
                 <motion.div key={quiz.id} custom={i + 1} variants={fadeUp}>
                   <Card
-                    variant="playful"
                     className="group flex flex-col h-full"
                   >
                     <CardContent className="flex flex-col flex-1 p-5">

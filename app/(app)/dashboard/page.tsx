@@ -275,7 +275,6 @@ export default function DashboardPage() {
                   transition={fadeIn.transition(0.35 + index * 0.06)}
                 >
                   <Card
-                    variant="playful"
                     className="group flex h-full flex-col"
                   >
                     <CardContent className="flex flex-1 flex-col p-5">

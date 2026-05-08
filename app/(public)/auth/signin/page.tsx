@@ -100,7 +100,7 @@ function SignInForm() {
                     className="relative h-24 w-24 drop-shadow-md"
                   >
                     <Image
-                      src="/mascot.jpg"
+                      src="/mascotte.png"
                       alt="QuizLink mascotte"
                       fill
                       className="object-contain"
