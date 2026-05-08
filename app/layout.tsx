@@ -80,9 +80,9 @@ export default function RootLayout({
               disableTransitionOnChange
             >
               <ToastProvider>
-                <div className="flex min-h-screen flex-col">
+                <div className="flex min-h-dvh flex-col">
                   <Header />
-                  <main className="flex-1">{children}</main>
+                  <main className="flex min-h-0 flex-1 flex-col">{children}</main>
                   <Footer />
                   <FeedbackButton />
                 </div>

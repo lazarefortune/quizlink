@@ -81,7 +81,7 @@ export function DashboardMobileNavSheet() {
           type="button"
           variant="ghost"
           size="icon"
-          className="h-10 w-10 shrink-0"
+          className="h-9 w-9 shrink-0"
           aria-label={locale === "fr" ? "Ouvrir le menu" : "Open menu"}
         >
           <Menu className="h-6 w-6" />
@@ -89,9 +89,14 @@ export function DashboardMobileNavSheet() {
       </SheetTrigger>
       <SheetContent
         side="right"
-        className="flex h-full max-h-dvh w-[min(24rem,94vw)] max-w-none flex-col gap-0 overflow-hidden rounded-l-3xl border-border bg-card p-0 pt-12 shadow-2xl sm:w-[min(26rem,92vw)] 2xl:w-[min(28rem,90vw)]"
+        closeButtonClassName="right-3 top-[calc(env(safe-area-inset-top,0px)+0.875rem)] opacity-90 sm:right-4 sm:top-[calc(env(safe-area-inset-top,0px)+0.625rem)] [&_svg]:size-6"
+        className="flex h-full max-h-dvh w-[min(24rem,94vw)] max-w-none flex-col gap-0 overflow-hidden rounded-l-3xl border-border bg-card p-0 shadow-2xl sm:w-[min(26rem,92vw)] 2xl:w-[min(28rem,90vw)]"
       >
         <div className="flex min-h-0 flex-1 flex-col">
+          <div
+            className="pointer-events-none shrink-0 bg-transparent h-[calc(env(safe-area-inset-top,0px)+4rem)] sm:h-[calc(env(safe-area-inset-top,0px)+3.5rem)]"
+            aria-hidden
+          />
           <SheetClose asChild>
             <Link
               href="/dashboard"

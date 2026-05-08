@@ -38,6 +38,8 @@ type SheetContentProps = React.ComponentPropsWithoutRef<
   side?: "left" | "right" | "top" | "bottom";
   showCloseButton?: boolean;
   overlayClassName?: string;
+  /** Overrides / extends default positioning and hit area for the close control */
+  closeButtonClassName?: string;
 };
 
 const sheetEnterEase =
@@ -52,6 +54,7 @@ const SheetContent = React.forwardRef<
       side = "left",
       showCloseButton = true,
       overlayClassName,
+      closeButtonClassName,
       className,
       children,
       ...props
@@ -63,7 +66,7 @@ const SheetContent = React.forwardRef<
       <DialogPrimitive.Content
         ref={ref}
         className={cn(
-          "fixed z-[101] gap-4 bg-background shadow-xl outline-none",
+          "fixed z-[101] gap-4 bg-background p-0 shadow-xl outline-none",
           "data-[state=open]:animate-in data-[state=closed]:animate-out",
           "duration-300",
           sheetEnterEase,
@@ -92,16 +95,22 @@ const SheetContent = React.forwardRef<
         )}
         {...props}
       >
-        <SheetTitle className="sr-only">Panel</SheetTitle>
-        {children}
-        {showCloseButton && (
-          <DialogPrimitive.Close
-            className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none cursor-pointer"
-            aria-label="Close"
-          >
-            <X className="h-5 w-5" />
-          </DialogPrimitive.Close>
-        )}
+        {/* relative: absolute close button is scoped to the sheet pane, not the viewport */}
+        <div className="relative flex h-full min-h-0 w-full flex-col">
+          <SheetTitle className="sr-only">Panel</SheetTitle>
+          {children}
+          {showCloseButton && (
+            <DialogPrimitive.Close
+              className={cn(
+                "absolute right-4 top-4 z-10 inline-flex size-9 shrink-0 items-center justify-center rounded-md opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none cursor-pointer",
+                closeButtonClassName,
+              )}
+              aria-label="Close"
+            >
+              <X className="size-5" aria-hidden />
+            </DialogPrimitive.Close>
+          )}
+        </div>
       </DialogPrimitive.Content>
     </SheetPortal>
   ),
