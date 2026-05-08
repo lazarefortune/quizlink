@@ -19,15 +19,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  ChevronDown,
-  ChevronUp,
   Eye,
   CheckCircle2,
   Clock,
   AlertCircle,
-  Users,
-  UserX,
   ListChecks,
+  Copy,
 } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
@@ -64,6 +61,8 @@ type QuizStatsTabProps = {
   quizId: string;
   quizName: string;
   stats: Stats;
+  onCopyLink?: () => Promise<void> | void;
+  isCopyLoading?: boolean;
 };
 
 const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
@@ -72,11 +71,11 @@ export function QuizStatsTab({
   quizId: _quizId,
   quizName,
   stats,
+  onCopyLink,
+  isCopyLoading = false,
 }: QuizStatsTabProps) {
   const { locale } = useLocale();
   const totalQuestions = stats.totalQuestions ?? 0;
-  const [showParticipants, setShowParticipants] = useState(false);
-  const [showAnonymous, setShowAnonymous] = useState(false);
   const [selectedAttemptId, setSelectedAttemptId] = useState<string | null>(null);
   const [attemptDetails, setAttemptDetails] = useState<{
     participantName: string;
@@ -162,122 +161,38 @@ export function QuizStatsTab({
     }
   };
 
-  const anonymousAttempts = stats.attempts.filter((a) => a.isAnonymous);
-
   return (
-    <div className="space-y-8">
-      {/* Participants inscrits */}
+    <div className="space-y-6">
       <section>
-        <button
-          type="button"
-          onClick={() => setShowParticipants(!showParticipants)}
-          className="flex items-center justify-between w-full text-left py-2 border-b border-border"
-        >
-          <span className="flex items-center gap-2 font-medium">
-            <Users className="h-4 w-4 text-muted-foreground" />
-            {t(locale, "dashboard.enrolledParticipants")}
-          </span>
-          <span className="flex items-center gap-2 text-muted-foreground">
-            <span className="tabular-nums">{stats.enrolledParticipantsCount}</span>
-            {showParticipants ? (
-              <ChevronUp className="h-4 w-4" />
-            ) : (
-              <ChevronDown className="h-4 w-4" />
-            )}
-          </span>
-        </button>
-        {showParticipants && (
-          <ul className="mt-3 space-y-2 text-sm">
-            {stats.participants.length === 0 ? (
-              <li className="text-muted-foreground py-2">
-                {t(locale, "dashboard.noParticipants")}
-              </li>
-            ) : (
-              stats.participants.map((p) => (
-                <li key={p.id} className="flex justify-between items-center py-1.5">
-                  <span>{p.name}</span>
-                  {p.email && (
-                    <span className="text-muted-foreground text-xs truncate max-w-[180px]">
-                      {p.email}
-                    </span>
-                  )}
-                  <span className="text-muted-foreground tabular-nums">
-                    {p.attemptsCount} {t(locale, "dashboard.attempts")}
-                  </span>
-                </li>
-              ))
-            )}
-          </ul>
-        )}
-      </section>
-
-      {/* Tentatives anonymes */}
-      <section>
-        <button
-          type="button"
-          onClick={() => setShowAnonymous(!showAnonymous)}
-          className="flex items-center justify-between w-full text-left py-2 border-b border-border"
-        >
-          <span className="flex items-center gap-2 font-medium">
-            <UserX className="h-4 w-4 text-muted-foreground" />
-            {t(locale, "dashboard.anonymousAttempts")}
-          </span>
-          <span className="flex items-center gap-2 text-muted-foreground">
-            <span className="tabular-nums">{stats.anonymousAttemptsCount}</span>
-            {showAnonymous ? (
-              <ChevronUp className="h-4 w-4" />
-            ) : (
-              <ChevronDown className="h-4 w-4" />
-            )}
-          </span>
-        </button>
-        {showAnonymous && (
-          <ul className="mt-3 space-y-2 text-sm">
-            {anonymousAttempts.length === 0 ? (
-              <li className="text-muted-foreground py-2">
-                {locale === "fr" ? "Aucune tentative anonyme" : "No anonymous attempts"}
-              </li>
-            ) : (
-              anonymousAttempts.map((a) => (
-                <li
-                  key={a.id}
-                  className="flex justify-between items-center py-1.5 border-b border-border/50 last:border-0"
-                >
-                  <span className="text-muted-foreground">
-                    {formatDate(a.startedAt)}
-                  </span>
-                  <span className="tabular-nums">
-                    {a.score != null ? formatScoreFraction(a.score, totalQuestions) : "-"}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 text-xs"
-                    onClick={() => handleViewAttempt(a.id)}
-                  >
-                    <Eye className="h-3 w-3 mr-1" />
-                    {t(locale, "dashboard.viewAttempt")}
-                  </Button>
-                </li>
-              ))
-            )}
-          </ul>
-        )}
-      </section>
-
-      {/* Toutes les tentatives */}
-      <section>
-        <h3 className="font-medium flex items-center gap-2 py-2 border-b border-border">
+        <h3 className="flex items-center gap-2 border-b border-border pb-3 text-base font-semibold">
           <ListChecks className="h-4 w-4 text-muted-foreground" />
-          {t(locale, "dashboard.attemptsLabel")}
+          {t(locale, "dashboard.resultsLabel")}
         </h3>
         {stats.attempts.length === 0 ? (
-          <p className="text-sm text-muted-foreground py-6">
-            {t(locale, "dashboard.noAttemptsYet")}
-          </p>
+          <div className="py-8 text-center space-y-4">
+            <p className="text-sm text-muted-foreground">
+              {locale === "fr"
+                ? "Aucun résultat pour le moment."
+                : "No results yet."}
+            </p>
+            {onCopyLink && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={onCopyLink}
+                disabled={isCopyLoading}
+              >
+                <Copy className="h-4 w-4" />
+                {isCopyLoading
+                  ? t(locale, "common.loading")
+                  : t(locale, "dashboard.copyLink")}
+              </Button>
+            )}
+          </div>
         ) : (
           <>
-            <div className="hidden sm:block overflow-x-auto mt-3">
+            <div className="mt-4 hidden overflow-x-auto rounded-xl border border-border sm:block">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -314,13 +229,13 @@ export function QuizStatsTab({
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
-                          className="h-8"
+                          className="h-8 gap-2"
                           onClick={() => handleViewAttempt(attempt.id)}
                         >
                           <Eye className="h-4 w-4 mr-1" />
-                          {t(locale, "dashboard.viewAttempt")}
+                          {t(locale, "dashboard.viewAnswers")}
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -328,11 +243,11 @@ export function QuizStatsTab({
                 </TableBody>
               </Table>
             </div>
-            <div className="sm:hidden space-y-2 mt-3">
+            <div className="mt-4 space-y-3 sm:hidden">
               {stats.attempts.map((attempt) => (
                 <div
                   key={attempt.id}
-                  className="flex flex-col gap-2 py-3 border-b border-border last:border-0"
+                  className="rounded-xl border border-border bg-card p-4 space-y-3"
                 >
                   <div className="flex justify-between items-start">
                     <span className="font-medium text-sm">
@@ -354,13 +269,13 @@ export function QuizStatsTab({
                     </span>
                   </div>
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
-                    className="w-full text-primary"
+                    className="w-full gap-2"
                     onClick={() => handleViewAttempt(attempt.id)}
                   >
-                    <Eye className="h-4 w-4 mr-1" />
-                    {t(locale, "dashboard.viewAttempt")}
+                    <Eye className="h-4 w-4" />
+                    {t(locale, "dashboard.viewAnswers")}
                   </Button>
                 </div>
               ))}
@@ -379,11 +294,17 @@ export function QuizStatsTab({
           }
         }}
       >
-        <DialogContent className="max-w-[min(95vw,1400px)] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[min(95vw,1100px)] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{t(locale, "dashboard.attemptDetailsDialog")}</DialogTitle>
+            <DialogTitle>
+              {attemptDetails
+                ? t(locale, "dashboard.answersOf", {
+                    name: attemptDetails.participantName,
+                  })
+                : t(locale, "dashboard.answersDetailTitle")}
+            </DialogTitle>
             <DialogDescription>
-              {attemptDetails && `${quizName} — ${attemptDetails.participantName}`}
+              {attemptDetails && `${quizName}`}
             </DialogDescription>
           </DialogHeader>
           {isLoadingDetails ? (
@@ -391,13 +312,13 @@ export function QuizStatsTab({
               <p>{t(locale, "common.loading")}</p>
             </div>
           ) : attemptDetails ? (
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">
+            <div className="space-y-8">
+              <div className="grid grid-cols-2 gap-4 rounded-xl border border-border bg-muted/30 p-4 md:grid-cols-4">
+                <div className="space-y-1">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">
                     {t(locale, "dashboard.scoreLabel")}
                   </p>
-                  <p className="text-lg font-semibold">
+                  <p className="text-xl font-bold">
                     {attemptDetails.score != null && attemptDetails.answers
                       ? formatScoreFraction(
                           attemptDetails.score,
@@ -408,8 +329,8 @@ export function QuizStatsTab({
                         : "-"}
                   </p>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">
+                <div className="space-y-1">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">
                     {t(locale, "dashboard.statusLabel")}
                   </p>
                   <div className="mt-1">
@@ -418,14 +339,14 @@ export function QuizStatsTab({
                     )}
                   </div>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">
+                <div className="space-y-1">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">
                     {t(locale, "dashboard.startedAtLabel")}
                   </p>
                   <p className="text-sm"><FormattedDate date={attemptDetails.startedAt} locale={locale} /></p>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">
+                <div className="space-y-1">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">
                     {t(locale, "dashboard.finishedAtLabel")}
                   </p>
                   <p className="text-sm"><FormattedDate date={attemptDetails.finishedAt} locale={locale} /></p>
@@ -486,9 +407,9 @@ export function QuizStatsTab({
                 );
               })()}
 
-              <div className="border-t border-border pt-4">
-                <h3 className="font-medium mb-4">
-                  {t(locale, "dashboard.attemptDetails")}
+              <div className="border-t border-border pt-6">
+                <h3 className="mb-4 text-base font-semibold">
+                  {t(locale, "dashboard.answersDetailTitle")}
                 </h3>
                 <div className="space-y-4">
                   {(() => {
@@ -504,14 +425,14 @@ export function QuizStatsTab({
                       <div
                         key={answer.questionId}
                         className={cn(
-                          "border rounded-lg p-4 space-y-3",
+                          "rounded-xl border p-4 sm:p-5 space-y-4",
                           answer.isCorrect
-                            ? "border-green-700 dark:border-green-800 bg-green-50/50 dark:bg-green-950/20"
-                            : "border-red-700 dark:border-red-800 bg-red-50/50 dark:bg-red-950/20",
+                            ? "border-green-600/50 bg-green-50/60 dark:border-green-700/60 dark:bg-green-950/20"
+                            : "border-red-600/50 bg-red-50/60 dark:border-red-700/60 dark:bg-red-950/20",
                         )}
                       >
                         <div className="flex items-start justify-between">
-                          <h4 className="text-sm text-muted-foreground uppercase">
+                          <h4 className="text-xs uppercase tracking-wide text-muted-foreground">
                             {t(locale, "dashboard.questionLabel")} {index + 1}
                           </h4>
                           {answer.isCorrect ? (
@@ -532,7 +453,7 @@ export function QuizStatsTab({
                             </Badge>
                           )}
                         </div>
-                        <p className="font-semibold">{answer.questionLabel}</p>
+                        <p className="text-base font-semibold">{answer.questionLabel}</p>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                           <div>
                             <p className="text-muted-foreground mb-1 uppercase text-xs">
@@ -583,7 +504,7 @@ export function QuizStatsTab({
                             </div>
                           </div>
                         </div>
-                        <p className="text-xs text-muted-foreground pt-2 border-t border-border">
+                        <p className="border-t border-border pt-2 text-xs text-muted-foreground">
                           {t(locale, "dashboard.timeSpentLabel")}:{" "}
                           {answer.timeSpent != null
                             ? formatDuration(answer.timeSpent)

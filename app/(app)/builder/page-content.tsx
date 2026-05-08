@@ -27,13 +27,6 @@ import {
   Card,
   CardContent,
 } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { Badge } from "@/components/ui/badge";
@@ -52,12 +45,12 @@ import { adaptQuizBuilderToPlayer } from "@/lib/quiz-adapter";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { buildQuizSuccessPath, shouldRedirectToQuizSuccess } from "@/lib/quiz-success";
 import type {
   QuizBuilder,
   Question,
   QuestionType,
   QuizSettings,
-  QuizVisibility,
 } from "@/types/quiz-builder";
 import {Textarea} from "@/components/ui/textarea";
 
@@ -248,7 +241,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
   const { showToast } = useToast();
 
   // Check if quiz exists in database (ID starts with "cl" for Prisma cuid)
-  const isQuizSaved = savedQuizId !== null || (quiz.id && quiz.id.startsWith("cl"));
+  const isQuizSaved = savedQuizId !== null || Boolean(quiz.id?.startsWith("cl"));
 
   // Load quiz from URL if quizId is present
   useEffect(() => {
@@ -306,6 +299,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
 
     setIsSaving(true);
     try {
+      const isExistingQuiz = isQuizSaved;
       const result = await saveQuiz(quiz, savedQuizId || undefined);
 
       if (result.success) {
@@ -332,8 +326,15 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
               randomized: settings.randomizeQuestions,
             });
             setQuiz({ ...quiz, id: result.quizId });
-            // Update URL with quizId for new quizzes
-            router.replace(`/builder/${result.quizId}`);
+            if (
+              shouldRedirectToQuizSuccess({
+                isExistingQuiz,
+                quizId: result.quizId,
+              })
+            ) {
+              router.push(buildQuizSuccessPath(result.quizId));
+              return;
+            }
           }
         }
 
@@ -513,29 +514,6 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
                     </p>
                   )}
                 </div>
-              </div>
-
-              <div className="space-y-1.5 sm:space-y-2">
-                <label className="text-sm font-medium">
-                  {t(locale, "builder.visibility")}
-                </label>
-                <Select
-                  value={quiz.visibility}
-                  onValueChange={(value) =>
-                    setQuiz({
-                      ...quiz,
-                      visibility: value as QuizVisibility,
-                    })
-                  }
-                >
-                  <SelectTrigger className="text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="PRIVATE">{t(locale, "options.private")}</SelectItem>
-                    <SelectItem value="PUBLIC">{t(locale, "options.public")}</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
             </div>
 

@@ -3,6 +3,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { QuizBuilder } from "@/types/quiz-builder";
+import { getUserQuizCreationVisibility } from "./user-quiz-visibility";
 import { revalidatePath } from "next/cache";
 import type { Prisma } from "@prisma/client";
 
@@ -105,7 +106,7 @@ export async function saveQuiz(quiz: QuizBuilder, quizId?: string) {
       data: {
         ownerId: session.user.id,
         name: quiz.name,
-        visibility: quiz.visibility,
+        visibility: getUserQuizCreationVisibility(),
         settings: quiz.settings as Prisma.InputJsonValue,
         questions: {
           create: quiz.questions.map((q, index) => ({

@@ -20,7 +20,10 @@ export async function getPublicQuizzes(): Promise<{
     }
 
     const quizzes = await prisma.quiz.findMany({
-      where: { visibility: "PUBLIC" },
+      where: {
+        ownerId: null,
+        featuredAt: { not: null },
+      },
       select: {
         id: true,
         name: true,
@@ -31,7 +34,7 @@ export async function getPublicQuizzes(): Promise<{
         },
         _count: { select: { questions: true } },
       },
-      orderBy: { updatedAt: "desc" },
+      orderBy: { featuredAt: "desc" },
     });
 
     return {

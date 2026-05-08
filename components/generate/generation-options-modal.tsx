@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -26,13 +26,11 @@ import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { useToast } from "@/components/ui/toast";
 import { t } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
-import type { QuizVisibility } from "@/types/quiz-builder";
 
 type GenerationOptions = {
   questionType: string;
   maxQuestions: number;
   language: string;
-  visibility: QuizVisibility;
   showAnswerImmediately: boolean;
   randomizeQuestions: boolean;
   timeLimitPerQuestion: number | null;
@@ -57,11 +55,13 @@ export function GenerationOptionsModal({
   const [localOptions, setLocalOptions] = useState(options);
   const { showToast } = useToast();
 
-  useEffect(() => {
-    setLocalOptions(options);
-  }, [options]);
-
   const isDisabled = (option: string) => disabledOptions.includes(option);
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (open) {
+      setLocalOptions(options);
+    }
+  };
 
   const handleSave = () => {
     onOptionsChange(localOptions);
@@ -75,7 +75,7 @@ export function GenerationOptionsModal({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button variant="outline" size="default" className="gap-2">
           <Settings2 className="h-4 w-4" />
@@ -208,33 +208,6 @@ export function GenerationOptionsModal({
           </div>
 
           <div className="border-t border-border pt-4 space-y-4">
-            <div className="space-y-1.5">
-              <Label className="text-sm font-medium">
-                {t(locale, "options.visibility")}
-              </Label>
-              <Select
-                value={localOptions.visibility}
-                onValueChange={(value) =>
-                  setLocalOptions({
-                    ...localOptions,
-                    visibility: value as QuizVisibility,
-                  })
-                }
-              >
-                <SelectTrigger className="rounded-lg">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="PRIVATE">
-                    {t(locale, "options.private")}
-                  </SelectItem>
-                  <SelectItem value="PUBLIC">
-                    {t(locale, "options.public")}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2 min-w-0">
                 <Label className="text-sm font-medium truncate">

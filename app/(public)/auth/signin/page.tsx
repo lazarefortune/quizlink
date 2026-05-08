@@ -136,7 +136,7 @@ function SignInForm() {
               {t(locale, "auth.googleSignIn")}
             </Button>
 
-            <div className="relative flex items-center gap-3">
+            <div className="relative flex items-center gap-3 mb-4">
               <div className="h-px flex-1 bg-border" />
               <span className="text-xs text-muted-foreground">{t(locale, "auth.orSeparator")}</span>
               <div className="h-px flex-1 bg-border" />
@@ -226,7 +226,7 @@ function SignInForm() {
 
               <motion.p
                 variants={authFormItemVariants}
-                className="mt-8 text-center text-sm text-muted-foreground"
+                className="mt-8 text-center text-base text-muted-foreground"
               >
                 {t(locale, "auth.noAccount")}{" "}
                 <Link

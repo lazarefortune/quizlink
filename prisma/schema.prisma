@@ -23,6 +23,8 @@ model User {
   lastLoginAt             DateTime?                @map("last_login_at")
   createdAt               DateTime                 @default(now()) @map("created_at")
   quizzes                 Quiz[]
+  createdEditorialQuizzes Quiz[]                   @relation("QuizCreatedByAdmin")
+  updatedEditorialQuizzes Quiz[]                   @relation("QuizUpdatedByAdmin")
   emailVerificationTokens EmailVerificationToken[]
   passwordResetTokens     PasswordResetToken[]
   emailChangeTokens       EmailChangeToken[]
@@ -106,20 +108,28 @@ model EmailChangeToken {
 }
 
 model Quiz {
-  id          String     @id @default(cuid())
-  ownerId     String?    @map("owner_id")
-  owner       User?      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  name        String
-  visibility  String // PRIVATE | PUBLIC
-  settings    Json // Quiz settings as JSON
-  isAnonymous Boolean    @default(false) @map("is_anonymous")
-  expiresAt   DateTime?  @map("expires_at")
-  createdAt   DateTime   @default(now()) @map("created_at")
-  updatedAt   DateTime   @updatedAt @map("updated_at")
-  questions   Question[]
-  links       QuizLink[]
+  id               String     @id @default(cuid())
+  ownerId          String?    @map("owner_id")
+  owner            User?      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  createdByAdminId String?    @map("created_by_admin_id")
+  createdByAdmin   User?      @relation("QuizCreatedByAdmin", fields: [createdByAdminId], references: [id], onDelete: SetNull)
+  updatedByAdminId String?    @map("updated_by_admin_id")
+  updatedByAdmin   User?      @relation("QuizUpdatedByAdmin", fields: [updatedByAdminId], references: [id], onDelete: SetNull)
+  name             String
+  visibility       String // PRIVATE | PUBLIC
+  featuredAt       DateTime?  @map("featured_at")
+  settings         Json // Quiz settings as JSON
+  isAnonymous      Boolean    @default(false) @map("is_anonymous")
+  expiresAt        DateTime?  @map("expires_at")
+  createdAt        DateTime   @default(now()) @map("created_at")
+  updatedAt        DateTime   @updatedAt @map("updated_at")
+  questions        Question[]
+  links            QuizLink[]
 
   @@index([isAnonymous])
+  @@index([featuredAt])
+  @@index([createdByAdminId])
+  @@index([updatedByAdminId])
   @@index([expiresAt])
   @@map("quizzes")
 }

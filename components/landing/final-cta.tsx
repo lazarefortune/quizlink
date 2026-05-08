@@ -68,7 +68,7 @@ export function FinalCTA() {
             </motion.p>
             <motion.div custom={2} variants={fadeUp}>
               <Link
-                href="/builder/preview"
+                href="/auth/signup"
                 onClick={() =>
                   track(CTA_CLICK, {
                     ...buildCommonEventProps({
@@ -76,7 +76,7 @@ export function FinalCTA() {
                       isLoggedIn: !!session?.user,
                       preferredLanguage: locale,
                     }),
-                    cta_type: "create_quiz",
+                    cta_type: "register",
                     page: "landing",
                   })
                 }

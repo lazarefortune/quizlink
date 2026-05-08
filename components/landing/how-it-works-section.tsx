@@ -75,7 +75,7 @@ export function HowItWorksSection() {
           transition={{ delay: 0.4, duration: 0.5, ease: "easeOut" }}
           className="flex justify-center mt-12"
         >
-          {!phoneImageError ? (
+          {/* {!phoneImageError ? (
             <Image
               src="/quiz-phone.png"
               alt="Quiz sur mobile"
@@ -89,7 +89,7 @@ export function HowItWorksSection() {
             <div className="w-56 md:w-64 h-64 rounded-2xl bg-muted/50 flex items-center justify-center" aria-hidden>
               <Smartphone className="h-10 w-10 text-muted-foreground" />
             </div>
-          )}
+          )} */}
         </motion.div>
       </div>
     </section>

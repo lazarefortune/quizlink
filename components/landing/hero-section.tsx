@@ -80,7 +80,7 @@ export function HeroSection() {
 
             <motion.div custom={3} variants={fadeUp} className="flex flex-wrap gap-4 justify-center lg:justify-start">
               <Link
-                href="/builder/preview"
+                href="/auth/signup"
                 onClick={() =>
                   track(CTA_CLICK, {
                     ...buildCommonEventProps({
@@ -88,7 +88,7 @@ export function HeroSection() {
                       isLoggedIn: !!session?.user,
                       preferredLanguage: locale,
                     }),
-                    cta_type: "create_quiz",
+                    cta_type: "register",
                     page: "landing",
                   })
                 }

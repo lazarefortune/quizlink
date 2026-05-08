@@ -31,7 +31,8 @@ export async function getPublicQuizzesPage(
     }
 
     const where = {
-      visibility: "PUBLIC" as const,
+      ownerId: null,
+      featuredAt: { not: null },
       ...(search?.trim()
         ? { name: { contains: search.trim() } }
         : {}),
@@ -45,7 +46,7 @@ export async function getPublicQuizzesPage(
           name: true,
           _count: { select: { questions: true } },
         },
-        orderBy: { updatedAt: "desc" },
+        orderBy: { featuredAt: "desc" },
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),

@@ -27,13 +27,13 @@ import { t } from "@/lib/i18n";
 import { useSession } from "next-auth/react";
 import { Alert } from "@/components/ui/alert";
 import { CoinsRequiredOverlay } from "@/components/coins-required-overlay";
-import type { Question, QuizVisibility } from "@/types/quiz-builder";
+import type { Question } from "@/types/quiz-builder";
+import { buildQuizSuccessPath } from "@/lib/quiz-success";
 
 type GenerationOptions = {
   questionType: string;
   maxQuestions: number;
   language: string;
-  visibility: QuizVisibility;
   showAnswerImmediately: boolean;
   randomizeQuestions: boolean;
   timeLimitPerQuestion: number | null;
@@ -53,7 +53,6 @@ export function GeneratePage() {
     questionType: "MIXED",
     maxQuestions: 5,
     language: "fr",
-    visibility: "PRIVATE",
     showAnswerImmediately: false,
     randomizeQuestions: false,
     timeLimitPerQuestion: null,
@@ -119,7 +118,7 @@ export function GeneratePage() {
 
         const quizBuilder = createQuizBuilderFromAiQuestions(result.questions as Question[], {
           name: result.title || t(locale, "generate.title"),
-          visibility: options.visibility,
+          visibility: "PRIVATE",
           settings: {
             showAnswerImmediately: options.showAnswerImmediately,
             randomizeQuestions: options.randomizeQuestions,
@@ -169,9 +168,9 @@ export function GeneratePage() {
         // Small delay before redirecting to ensure session is updated
         await new Promise((resolve) => setTimeout(resolve, 500));
 
-        // Redirect to builder - this will trigger a full page load which will refresh the session
+        // Redirect to success page after creation
         if (saveResult.quizId) {
-          window.location.href = `/builder/${saveResult.quizId}`;
+          window.location.href = buildQuizSuccessPath(saveResult.quizId);
         } else {
           window.location.href = "/builder";
         }
@@ -239,7 +238,7 @@ export function GeneratePage() {
 
       const quizBuilder = createQuizBuilderFromAiQuestions(result.questions as Question[], {
         name: result.title || t(locale, "generate.title"),
-        visibility: options.visibility,
+        visibility: "PRIVATE",
         settings: {
           showAnswerImmediately: options.showAnswerImmediately,
           randomizeQuestions: options.randomizeQuestions,
@@ -290,9 +289,9 @@ export function GeneratePage() {
       // Small delay before redirecting to ensure session is updated
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      // Redirect to builder - this will trigger a full page load which will refresh the session
+      // Redirect to success page after creation
       if (saveResult.quizId) {
-        window.location.href = `/builder/${saveResult.quizId}`;
+        window.location.href = buildQuizSuccessPath(saveResult.quizId);
       } else {
         window.location.href = "/builder";
       }

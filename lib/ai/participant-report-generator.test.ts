@@ -54,6 +54,17 @@ const validReportPayload: ParticipantReportPayload = {
     tooSlowQuestions: [],
   },
   examples: [],
+  constraints: {
+    language: "fr",
+    maxReportLength: "medium",
+    focus: [
+      "strengths",
+      "weaknesses",
+      "recurring questions",
+      "why",
+      "study plan",
+    ],
+  },
 };
 
 const validReportJson = {

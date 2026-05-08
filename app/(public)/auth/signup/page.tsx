@@ -136,7 +136,7 @@ export default function SignUpPage() {
                   {t(locale, "auth.googleSignUp")}
                 </Button>
 
-                <div className="relative flex items-center gap-3">
+                <div className="relative flex items-center gap-3 mb-4">
                   <div className="h-px flex-1 bg-border" />
                   <span className="text-xs text-muted-foreground">{t(locale, "auth.orSeparator")}</span>
                   <div className="h-px flex-1 bg-border" />
@@ -156,7 +156,7 @@ export default function SignUpPage() {
 
                 <div className="form-group">
                   <Label htmlFor="signup-name">
-                    {t(locale, "auth.name")} <span className="text-destructive">*</span>
+                    {t(locale, "auth.name")}
                   </Label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -249,7 +249,7 @@ export default function SignUpPage() {
 
               <motion.p
                 variants={authFormItemVariants}
-                className="mt-6 text-center text-sm text-muted-foreground"
+                className="mt-6 text-center text-base text-muted-foreground"
               >
                 {t(locale, "auth.hasAccount")}{" "}
                 <Link

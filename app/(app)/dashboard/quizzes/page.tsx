@@ -6,12 +6,19 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   getUserQuizzesPaginated,
   type UserQuizListItem,
 } from "@/app/(app)/builder/actions";
+import { deleteQuiz } from "@/app/(app)/dashboard/actions";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t, type Locale } from "@/lib/i18n";
 import {
@@ -21,14 +28,18 @@ import {
   FileQuestion,
   Users,
   MessageSquare,
-  Globe,
-  Lock,
   Search,
   ChevronLeft,
   ChevronRight,
   Play,
+  Copy,
+  BarChart3,
+  MoreHorizontal,
+  Eye,
+  Edit,
+  Trash2,
+  X,
 } from "lucide-react";
-import { QuizOptionsMenu } from "@/components/quiz-options-menu";
 import { createOrGetQuizLink } from "@/app/quiz-link/actions";
 import { track } from "@/lib/analytics/track";
 import { PARTICIPANT_INVITED } from "@/lib/analytics/events";
@@ -39,6 +50,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const PAGE_SIZE = 12;
 
@@ -119,6 +140,7 @@ function CreateQuizModalTrigger({
 export default function DashboardQuizzesPage() {
   const router = useRouter();
   const { locale } = useLocale();
+  const { showToast } = useToast();
   const [quizzes, setQuizzes] = useState<UserQuizListItem[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -126,6 +148,12 @@ export default function DashboardQuizzesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [playLoadingQuizId, setPlayLoadingQuizId] = useState<string | null>(null);
+  const [copyLoadingQuizId, setCopyLoadingQuizId] = useState<string | null>(null);
+  const [copiedQuizId, setCopiedQuizId] = useState<string | null>(null);
+  const [quizPendingDelete, setQuizPendingDelete] = useState<UserQuizListItem | null>(
+    null,
+  );
+  const [isDeletingQuiz, setIsDeletingQuiz] = useState(false);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -160,8 +188,22 @@ export default function DashboardQuizzesPage() {
     setPage(1);
   };
 
+  const handleClearSearch = () => {
+    setSearchInput("");
+    setSearchQuery("");
+    setPage(1);
+  };
+
   const handleEdit = (quizId: string) => {
     router.push(`/builder/${quizId}`);
+  };
+
+  const handleOpenQuizDetails = (quizId: string) => {
+    router.push(`/dashboard/quiz/${quizId}`);
+  };
+
+  const handleOpenQuizPreview = (quizId: string) => {
+    router.push(`/dashboard/quiz/${quizId}/preview`);
   };
 
   const refreshCurrentPage = () => {
@@ -188,6 +230,48 @@ export default function DashboardQuizzesPage() {
       }
     } finally {
       setPlayLoadingQuizId(null);
+    }
+  };
+
+  const handleCopyLink = async (quizId: string) => {
+    setCopyLoadingQuizId(quizId);
+    try {
+      const result = await createOrGetQuizLink(quizId, true);
+      if (!result.success || !baseUrl) {
+        showToast(result.success ? t(locale, "dashboard.shareError") : result.error, "error");
+        return;
+      }
+      const shareUrl = `${baseUrl}/quiz/${result.quizLink.token}`;
+      await navigator.clipboard.writeText(shareUrl);
+      setCopiedQuizId(quizId);
+      setTimeout(() => setCopiedQuizId(null), 2000);
+      showToast(t(locale, "dashboard.linkCopied"), "success");
+    } catch (error) {
+      console.error("Error copying quiz link:", error);
+      showToast(t(locale, "dashboard.shareError"), "error");
+    } finally {
+      setCopyLoadingQuizId(null);
+    }
+  };
+
+  const handleDeleteQuiz = async () => {
+    if (!quizPendingDelete) return;
+
+    setIsDeletingQuiz(true);
+    try {
+      const result = await deleteQuiz(quizPendingDelete.id);
+      if (result.success) {
+        showToast(t(locale, "dashboard.quizDeletedSuccess"), "success");
+        setQuizPendingDelete(null);
+        refreshCurrentPage();
+      } else {
+        showToast(result.error || t(locale, "dashboard.deleteError"), "error");
+      }
+    } catch (error) {
+      console.error("Error deleting quiz:", error);
+      showToast(t(locale, "dashboard.deleteError"), "error");
+    } finally {
+      setIsDeletingQuiz(false);
     }
   };
 
@@ -237,13 +321,6 @@ export default function DashboardQuizzesPage() {
               <h2 className="text-2xl font-black text-foreground sm:text-3xl">
                 {t(locale, "dashboard.title")}
               </h2>
-              <Link
-                href="/dashboard/community"
-                className="md:hidden inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-fit"
-              >
-                <Globe className="h-4 w-4 shrink-0" />
-                {t(locale, "dashboard.sidebar.community")}
-              </Link>
             </div>
             <div className="shrink-0">
               <CreateQuizModalTrigger locale={locale} />
@@ -260,12 +337,22 @@ export default function DashboardQuizzesPage() {
                 placeholder={t(locale, "dashboard.searchPlaceholder")}
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                className="pl-9"
+                className="pl-9 pr-9"
                 aria-label={t(locale, "common.search")}
               />
+              {searchInput.trim().length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleClearSearch}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  aria-label={locale === "fr" ? "Effacer la recherche" : "Clear search"}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
             <Button type="submit" variant="secondary" size="default">
-              {t(locale, "common.search")}
+              <Search className="h-4 w-4" />
             </Button>
           </form>
         </motion.div>
@@ -317,10 +404,10 @@ export default function DashboardQuizzesPage() {
                   >
                     <CardContent className="flex flex-col flex-1 p-5">
                       <Link
-                        href={`/dashboard/quiz/${quiz.id}`}
+                        href={`/dashboard/quiz/${quiz.id}/preview`}
                         className="block flex-1 mb-4"
                       >
-                        <h3 className="text-lg font-bold leading-snug line-clamp-2 wrap-break-word text-foreground group-hover:text-blue transition-colors">
+                        <h3 className="text-lg font-bold leading-snug line-clamp-2 wrap-break-word text-foreground transition-colors hover:text-blue">
                           {quiz.name}
                         </h3>
                       </Link>
@@ -340,41 +427,19 @@ export default function DashboardQuizzesPage() {
                         </span>
                       </div>
 
-                      <div className="flex flex-col gap-2 mt-auto pt-3 border-t border-border/60">
-                        <div className="flex items-center justify-between">
-                          <Badge
-                            variant={
-                              quiz.visibility === "PUBLIC"
-                                ? "primarySoft"
-                                : "warningSoft"
-                            }
-                            className="text-sm font-extrabold font-nunito uppercase"
-                          >
-                            {quiz.visibility === "PUBLIC" ? (
-                              <Globe className="h-3.5 w-3.5" />
-                            ) : (
-                              <Lock className="h-3.5 w-3.5" />
-                            )}
-                            <span className="ml-2">
-                              {quiz.visibility === "PUBLIC"
-                                ? t(locale, "dashboard.public")
-                                : t(locale, "dashboard.private")}
-                            </span>
-                          </Badge>
-                            <QuizOptionsMenu
-                            quizId={quiz.id}
-                            quizName={quiz.name}
-                            visibility={quiz.visibility}
-                            onDeleted={refreshCurrentPage}
-                            onDuplicated={refreshCurrentPage}
-                            onEdit={() => handleEdit(quiz.id)}
-                          />
-                        </div>
-                        {quiz.visibility === "PUBLIC" && (
+                      <p className="mb-3 text-xs text-muted-foreground">
+                        {t(locale, "dashboard.createdOn")}{" "}
+                        {new Date(quiz.createdAt).toLocaleDateString(
+                          locale === "fr" ? "fr-FR" : "en-US",
+                        )}
+                      </p>
+
+                      <div className="mt-auto pt-3 border-t border-border/60 space-y-2">
+                        <div className="flex items-center gap-2">
                           <Button
                             variant="blue"
                             size="sm"
-                            className="w-full gap-2"
+                            className="flex-1 gap-2"
                             onClick={() => handlePlay(quiz.id)}
                             disabled={playLoadingQuizId !== null}
                           >
@@ -387,7 +452,76 @@ export default function DashboardQuizzesPage() {
                               </>
                             )}
                           </Button>
-                        )}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-9 w-9 shrink-0"
+                                aria-label={t(locale, "dashboard.actionsLabel")}
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-44">
+                              <DropdownMenuItem
+                                onClick={() => handleOpenQuizPreview(quiz.id)}
+                                className="gap-2"
+                              >
+                                <Eye className="h-4 w-4" />
+                                {locale === "fr" ? "Voir le quiz" : "View quiz"}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleEdit(quiz.id)}
+                                className="gap-2"
+                              >
+                                <Edit className="h-4 w-4" />
+                                {t(locale, "dashboard.edit")}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => setQuizPendingDelete(quiz)}
+                                className="gap-2 text-destructive focus:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                {t(locale, "dashboard.delete")}
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            variant={copiedQuizId === quiz.id ? "secondary" : "outline"}
+                            size="sm"
+                            className="w-full gap-2"
+                            onClick={() => handleCopyLink(quiz.id)}
+                            disabled={copyLoadingQuizId !== null}
+                          >
+                            <Copy className="h-4 w-4" />
+                            {copyLoadingQuizId === quiz.id ? (
+                              t(locale, "common.loading")
+                            ) : copiedQuizId === quiz.id ? (
+                              t(locale, "dashboard.linkCopied")
+                            ) : (
+                              <>
+                                <span className="sm:hidden">
+                                  {locale === "fr" ? "Lien" : "Link"}
+                                </span>
+                                <span className="hidden sm:inline">
+                                  {t(locale, "dashboard.copyLink")}
+                                </span>
+                              </>
+                            )}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full gap-2"
+                            onClick={() => handleOpenQuizDetails(quiz.id)}
+                          >
+                            <BarChart3 className="h-4 w-4" />
+                            {t(locale, "dashboard.results")}
+                          </Button>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -427,6 +561,39 @@ export default function DashboardQuizzesPage() {
           </>
         )}
       </motion.div>
+      <AlertDialog
+        open={quizPendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && !isDeletingQuiz) {
+            setQuizPendingDelete(null);
+          }
+        }}
+      >
+        <AlertDialogContent onOverlayClick={() => !isDeletingQuiz && setQuizPendingDelete(null)}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t(locale, "dashboard.deleteConfirmTitle")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t(locale, "dashboard.deleteConfirmDescription", {
+                name: quizPendingDelete?.name ?? "",
+              })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingQuiz}>
+              {t(locale, "common.cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteQuiz}
+              disabled={isDeletingQuiz}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeletingQuiz ? t(locale, "common.loading") : t(locale, "dashboard.delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

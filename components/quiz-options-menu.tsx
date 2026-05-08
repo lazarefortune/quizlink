@@ -2,10 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
 import {
   Check,
-  Coins,
   Edit,
   MoreHorizontal,
   Share2,
@@ -20,7 +18,6 @@ import { useToast } from "@/components/ui/toast";
 import {
   deleteQuiz,
   duplicateQuiz,
-  makeQuizPublicWithCoins,
 } from "@/app/(app)/dashboard/actions";
 import { createOrGetQuizLink } from "@/app/quiz-link/actions";
 import { track } from "@/lib/analytics/track";
@@ -48,7 +45,6 @@ import { Input } from "@/components/ui/input";
 type QuizOptionsMenuProps = {
   quizId: string;
   quizName: string;
-  visibility: "PRIVATE" | "PUBLIC";
   onDeleted?: () => void;
   onDuplicated?: (newQuizId: string) => void;
   onEdit?: () => void;
@@ -57,7 +53,6 @@ type QuizOptionsMenuProps = {
 export function QuizOptionsMenu({
   quizId,
   quizName,
-  visibility,
   onDeleted,
   onDuplicated,
   onEdit,
@@ -65,7 +60,6 @@ export function QuizOptionsMenu({
   const router = useRouter();
   const { locale } = useLocale();
   const { showToast } = useToast();
-  const { data: session } = useSession();
   const [isOpen, setIsOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -74,8 +68,6 @@ export function QuizOptionsMenu({
   const [linkCopied, setLinkCopied] = useState(false);
   const [shareLink, setShareLink] = useState<string>("");
   const [isLoadingLink, setIsLoadingLink] = useState(false);
-  const [showMakePublicDialog, setShowMakePublicDialog] = useState(false);
-  const [isMakingPublic, setIsMakingPublic] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const baseUrl =
@@ -184,34 +176,6 @@ export function QuizOptionsMenu({
     }
   };
 
-  const handleMakePublic = async () => {
-    setIsMakingPublic(true);
-    try {
-      const result = await makeQuizPublicWithCoins(quizId);
-
-      if (result.success) {
-        showToast(t(locale, "dashboard.makePublicSuccess"), "success");
-        setShowMakePublicDialog(false);
-        router.refresh();
-      } else if (result.error === "INSUFFICIENT_COINS_FOR_PUBLIC") {
-        showToast(
-          t(locale, "dashboard.makePublicInsufficientCoins"),
-          "error",
-        );
-      } else {
-        showToast(
-          result.error || t(locale, "dashboard.makePublicError"),
-          "error",
-        );
-      }
-    } catch (error) {
-      console.error("Error making quiz public:", error);
-      showToast(t(locale, "dashboard.makePublicError"), "error");
-    } finally {
-      setIsMakingPublic(false);
-    }
-  };
-
   return (
     <>
       <div className="relative" ref={menuRef}>
@@ -252,22 +216,8 @@ export function QuizOptionsMenu({
                   className="flex items-center gap-2 w-full px-3 py-2 text-base hover:cursor-pointer hover:bg-accent rounded-md transition-colors text-left"
                 >
                   <Share2 className="h-4 w-4" />
-                  {t(locale, "dashboard.share")}
+                  {t(locale, "dashboard.shareWithLink")}
                 </button>
-                {visibility === "PRIVATE" ? (
-                  <button
-                    onClick={() => {
-                      setShowMakePublicDialog(true);
-                      setIsOpen(false);
-                    }}
-                    className="mt-1 flex items-center gap-2 w-full px-3 py-2 text-base hover:cursor-pointer hover:bg-accent rounded-md transition-colors text-left"
-                  >
-                    <Coins className="h-4 w-4" />
-                    {t(locale, "dashboard.makePublicWithCoins", {
-                      cost: "6",
-                    })}
-                  </button>
-                ) : null}
                 <button
                   onClick={() => {
                     handleDuplicate();
@@ -371,42 +321,6 @@ export function QuizOptionsMenu({
           </div>
         </DialogContent>
       </Dialog>
-
-      <AlertDialog
-        open={showMakePublicDialog}
-        onOpenChange={setShowMakePublicDialog}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {t(locale, "dashboard.makePublicDialogTitle")}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {t(locale, "dashboard.makePublicDialogDescription", {
-                cost: "6",
-                balance:
-                  session?.user?.coinBalance != null
-                    ? String(session.user.coinBalance)
-                    : "?",
-              })}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>
-              {t(locale, "common.cancel")}
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleMakePublic}
-              disabled={isMakingPublic}
-              className={buttonVariants({ variant: "primary" })}
-            >
-              {isMakingPublic
-                ? t(locale, "common.loading")
-                : t(locale, "dashboard.makePublicConfirm", { cost: "6" })}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 }

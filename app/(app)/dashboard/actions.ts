@@ -21,8 +21,12 @@ export async function getDashboardStats() {
 
     const userId = session.user.id;
 
-    const [quizCount, participantCount, attemptStats, recentQuizzes] =
+    const [user, quizCount, participantCount, attemptStats, recentQuizzes] =
       await Promise.all([
+        prisma.user.findUnique({
+          where: { id: userId },
+          select: { coinBalance: true },
+        }),
         // Total quizzes owned
         prisma.quiz.count({ where: { ownerId: userId } }),
         // Total participants created by user
@@ -80,6 +84,7 @@ export async function getDashboardStats() {
     return {
       success: true as const,
       stats: {
+        coinBalance: user?.coinBalance ?? 0,
         quizCount,
         participantCount,
         totalAttempts,

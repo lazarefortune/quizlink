@@ -116,9 +116,6 @@ export function Header() {
               className="inline-flex items-center gap-2 rounded-lg transition-opacity hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2"
               aria-label={locale === "fr" ? "Retour à l'accueil" : "Back to home"}
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary header-logo-shadow">
-                <span className="font-nunito text-xl font-black text-primary-foreground">Q</span>
-              </div>
               <span className="font-nunito text-xl font-black tracking-tight text-foreground">
                 Quiz<span className="text-primary">Link</span>
               </span>
@@ -132,7 +129,7 @@ export function Header() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "text-base font-medium transition-colors hover:text-primary",
+                  "text-lg font-bold transition-colors hover:text-primary",
                   isActive(item.href)
                     ? "text-foreground"
                     : "text-muted-foreground"
@@ -141,47 +138,24 @@ export function Header() {
                 {item.label}
               </Link>
             ))}
-            {/* Create button with dropdown for all users */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="secondary" size="sm" className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  {t(locale, "nav.create")}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="center">
-                <DropdownMenuItem asChild>
-                  <Link href={session?.user ? "/builder" : "/builder/preview"} className="flex items-center gap-2 text-base">
-                    <FileText className="h-4 w-4" />
-                    {t(locale, "nav.createManually")}
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href={session?.user ? "/generate" : "/generate/preview"} className="flex items-center gap-2 text-base">
-                    <Sparkles className="h-4 w-4" />
-                    {t(locale, "nav.createWithAI")}
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </nav>
 
-              {/* Right side controls */}
-              <div className="flex items-center gap-3">
-                {session?.user && (
-                  <Link href="/account/coins" className="hidden md:flex items-center gap-1.5 px-3 py-2.5 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors border border-primary/20">
-                    <Coins className="h-6 w-6" />
-                    <span className="text-base font-medium">{session.user.coinBalance || 0}</span>
-                  </Link>
-                )}
-                {/* Group: theme + auth/profile — réduit l’impression d’espacement entre ghost buttons */}
-                <div className="flex items-center rounded-lg border border-border/60 bg-muted/40 dark:bg-muted/20 py-0.5 px-1 md:pl-0.5 md:pr-1 gap-0.5">
-                  <ThemeToggle />
-                  <div className="hidden md:block w-px self-stretch min-h-6 bg-border/60 shrink-0" aria-hidden />
-                  <div className="hidden md:block">
-                    <UserMenu />
-                  </div>
+            {/* Right side controls */}
+            <div className="flex items-center gap-3">
+            {session?.user && (
+                <Link href="/account/coins" className="hidden md:flex items-center gap-1.5 px-3 py-2.5 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors border border-primary/20">
+                <Coins className="h-6 w-6" />
+                <span className="text-base font-medium">{session.user.coinBalance || 0}</span>
+                </Link>
+            )}
+            {/* Group: theme + auth/profile — réduit l’impression d’espacement entre ghost buttons */}
+            <div className="flex items-center rounded-lg border border-border/60 bg-muted/40 dark:bg-muted/20 py-0.5 px-1 md:pl-0.5 md:pr-1 gap-0.5">
+                <ThemeToggle />
+                <div className="hidden md:block w-px self-stretch min-h-6 bg-border/60 shrink-0" aria-hidden />
+                <div className="hidden md:block">
+                <UserMenu />
                 </div>
+            </div>
 
             {/* Mobile menu button */}
             <Button
