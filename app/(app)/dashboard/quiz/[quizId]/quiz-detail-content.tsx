@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { ArrowLeft, Pencil, Copy, Play, Trash2 } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
@@ -314,7 +314,7 @@ export function QuizDetailContent({
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isDeleting}
-              className={buttonVariants({ variant: "destructive" })}
+              className="bg-destructive text-destructive-foreground btn-bouncy-destructive hover:bg-destructive/90 focus-visible:ring-destructive"
             >
               {isDeleting ? t(locale, "common.loading") : t(locale, "dashboard.delete")}
             </AlertDialogAction>

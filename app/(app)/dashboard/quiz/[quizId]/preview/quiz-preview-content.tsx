@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, CheckCircle2, Circle, Copy, Pencil, Play, Trash2 } from "lucide-react";
+import { ArrowLeft, BarChart2, CheckCircle2, Circle, Copy, Pencil, Play, Trash2 } from "lucide-react";
 
 import type { QuizContentQuestion } from "../actions";
 import { createOrGetQuizLink } from "@/app/quiz-link/actions";
@@ -180,6 +180,12 @@ export function QuizPreviewContent({
                 <Play className="h-4 w-4" />
                 {playLoading ? t(locale, "common.loading") : t(locale, "dashboard.testQuiz")}
               </Button>
+              <Link href={`/dashboard/quiz/${quizId}`}>
+                <Button variant="secondary" size="sm" className="gap-2">
+                  <BarChart2 className="h-4 w-4" />
+                  {t(locale, "dashboard.viewAnswers")}
+                </Button>
+              </Link>
               <Button
                 variant="default"
                 size="sm"
@@ -196,7 +202,6 @@ export function QuizPreviewContent({
                 onClick={() => setShowDeleteDialog(true)}
               >
                 <Trash2 className="h-4 w-4" />
-                {t(locale, "dashboard.delete")}
               </Button>
             </div>
           </div>
@@ -274,7 +279,7 @@ export function QuizPreviewContent({
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground btn-bouncy-destructive hover:bg-destructive/90 focus-visible:ring-destructive"
             >
               {isDeleting ? t(locale, "common.loading") : t(locale, "dashboard.delete")}
             </AlertDialogAction>

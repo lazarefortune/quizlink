@@ -320,9 +320,30 @@ export async function deleteQuiz(quizId: string) {
       };
     }
 
-    // Delete quiz (cascade will handle questions, options, attempts, answers)
-    await prisma.quiz.delete({
-      where: { id: quizId },
+    // QuizAnswer has onDelete: Restrict on questionId, so we must manually
+    // delete answers before the cascade reaches the questions.
+    await prisma.$transaction(async (tx) => {
+      const links = await tx.quizLink.findMany({
+        where: { quizId },
+        select: { id: true },
+      });
+
+      if (links.length > 0) {
+        const linkIds = links.map((l) => l.id);
+        const attempts = await tx.quizAttempt.findMany({
+          where: { quizLinkId: { in: linkIds } },
+          select: { id: true },
+        });
+
+        if (attempts.length > 0) {
+          await tx.quizAnswer.deleteMany({
+            where: { attemptId: { in: attempts.map((a) => a.id) } },
+          });
+        }
+      }
+
+      // Cascade now handles: QuizLinks → QuizAttempts, Questions → Options
+      await tx.quiz.delete({ where: { id: quizId } });
     });
 
     revalidatePath("/dashboard");
