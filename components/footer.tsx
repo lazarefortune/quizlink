@@ -78,6 +78,30 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link
+                  href="/legal/terms"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {t(locale, "footer.legal.terms")}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/legal/privacy"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {t(locale, "footer.legal.privacy")}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/legal/cookies"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {t(locale, "footer.legal.cookies")}
+                </Link>
+              </li>
+              <li>
                 <button
                   type="button"
                   onClick={() => openConsentPanel()}

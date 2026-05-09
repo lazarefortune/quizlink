@@ -17,8 +17,49 @@ export default function LegalPage() {
               Retour à l&apos;accueil
             </Button>
           </Link>
-          <h1 className="text-4xl font-bold mb-2">Mentions légales</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-4xl font-bold mb-2">Informations légales</h1>
+          <p className="text-muted-foreground mb-6">
+            Retrouve ici les documents qui encadrent l&apos;utilisation de QuizLink.
+          </p>
+
+          <Card className="mb-10">
+            <CardHeader>
+              <CardTitle>Documents</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2 text-sm">
+                <li>
+                  <a
+                    href="#mentions-legales"
+                    className="text-primary font-medium hover:underline"
+                  >
+                    Mentions légales
+                  </a>
+                  <span className="text-muted-foreground"> — éditeur, hébergement, propriété intellectuelle</span>
+                </li>
+                <li>
+                  <Link href="/legal/terms" className="text-primary font-medium hover:underline">
+                    Conditions générales d&apos;utilisation
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/legal/privacy" className="text-primary font-medium hover:underline">
+                    Politique de confidentialité
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/legal/cookies" className="text-primary font-medium hover:underline">
+                    Politique cookies
+                  </Link>
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
+
+          <h2 id="mentions-legales" className="text-2xl font-bold scroll-mt-24 mb-2">
+            Mentions légales
+          </h2>
+          <p className="text-muted-foreground mb-8">
             Dernière mise à jour : {new Date().toLocaleDateString("fr-FR", {
               year: "numeric",
               month: "long",

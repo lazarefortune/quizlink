@@ -1165,6 +1165,7 @@ export const en = {
       legalNotice: "Legal notice",
       privacy: "Privacy",
       terms: "Terms of service",
+      cookies: "Cookie policy",
     },
     contact: {
       title: "Contact",

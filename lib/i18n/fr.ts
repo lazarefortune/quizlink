@@ -1170,6 +1170,7 @@ export const fr = {
       legalNotice: "Mentions légales",
       privacy: "Confidentialité",
       terms: "Conditions d'utilisation",
+      cookies: "Politique cookies",
     },
     contact: {
       title: "Contact",
