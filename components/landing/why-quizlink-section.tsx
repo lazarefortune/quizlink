@@ -1,10 +1,12 @@
 "use client";
 
+import { CheckCircle2 } from "lucide-react";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AnimateOnScroll } from "@/components/animate-on-scroll";
+import { BrandQuizLinkText } from "@/components/BrandQuizLinkText";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
-import { CheckCircle2 } from "lucide-react";
 
 export function WhyQuizLinkSection() {
   const { locale } = useLocale();
@@ -31,6 +33,7 @@ export function WhyQuizLinkSection() {
           <div className="text-center mb-12 sm:mb-16">
             <h2 className="h1 text-3xl font-bold sm:text-4xl md:text-5xl">
               {t(locale, "landing.whyQuizLink.title")}
+              <BrandQuizLinkText className="inline" />
             </h2>
             <p className="mt-4 text-lg text-muted-foreground sm:text-xl">
               {t(locale, "landing.whyQuizLink.subtitle")}

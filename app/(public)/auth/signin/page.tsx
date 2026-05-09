@@ -115,7 +115,7 @@ function SignInForm() {
             variants={authFormItemVariants}
             className="mb-8 flex flex-col gap-2"
           >
-            <h1 className="font-heading text-3xl font-nunito font-black tracking-tight text-foreground text-balance">
+            <h1 className="font-heading text-3xl font-fredoka font-black tracking-tight text-foreground text-balance">
               {t(locale, "auth.signIn.title")}
             </h1>
             <p className="text-base leading-relaxed text-muted-foreground">

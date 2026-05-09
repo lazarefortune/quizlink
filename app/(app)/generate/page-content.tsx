@@ -423,13 +423,13 @@ export function GeneratePage() {
               <TabsList className="flex w-full overflow-x-auto sm:grid sm:grid-cols-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 <TabsTrigger
                   value="TEXT"
-                  className="whitespace-nowrap font-nunito text-base font-black"
+                  className="whitespace-nowrap font-fredoka text-base font-black"
                 >
                   {t(locale, "generate.tabs.text")}
                 </TabsTrigger>
                 <TabsTrigger
                   value="DOCUMENT"
-                  className="whitespace-nowrap font-nunito text-base font-black"
+                  className="whitespace-nowrap font-fredoka text-base font-black"
                 >
                   {t(locale, "generate.tabs.document")}
                 </TabsTrigger>

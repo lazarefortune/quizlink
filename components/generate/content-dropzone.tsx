@@ -121,7 +121,7 @@ export function ContentDropzone({
             <div className="flex flex-col items-center gap-4 p-8">
               <FileText className="h-12 w-12 text-primary" />
               <div className="text-center">
-                <p className="font-nunito font-black text-lg">{file.name}</p>
+                <p className="font-fredoka font-black text-lg">{file.name}</p>
                 <p className="text-sm text-muted-foreground">
                   {(file.size / 1024 / 1024).toFixed(2)} MB
                 </p>

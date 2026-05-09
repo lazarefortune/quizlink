@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Coins, ArrowUp } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { BrandQuizLinkText } from "@/components/BrandQuizLinkText";
 
 import { DashboardMobileNavSheet } from "./dashboard-mobile-nav-sheet";
 import { useScrollBehavior } from "./useScrollBehavior";
@@ -35,7 +36,7 @@ export function Topbar({ className }: TopbarProps) {
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
           <Link href="/dashboard" className="flex min-w-0 items-center gap-2">
             <span className="truncate font-black text-xl text-foreground">
-              Quiz<span className="text-primary">Link</span>
+              <BrandQuizLinkText />
             </span>
           </Link>
         </div>

@@ -1,14 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
-import { FileText, Plus, House, Coins } from "lucide-react";
+import { Coins, FileText, House, Plus } from "lucide-react";
 import { useSession } from "next-auth/react";
 
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { BrandQuizLinkText } from "@/components/BrandQuizLinkText";
 
+import { Button } from "@/components/ui/button";
 import { DashboardUserMenu } from "./dashboard-user-menu";
 import { NavItem } from "./nav-item";
 
@@ -36,7 +37,7 @@ export function Sidebar({ onNavClick, className }: SidebarProps) {
           className="flex items-center gap-2.5"
         >
           <span className="font-black text-lg text-foreground">
-            Quiz<span className="text-primary">Link</span>
+            <BrandQuizLinkText />
           </span>
         </Link>
       </div>
@@ -63,21 +64,55 @@ export function Sidebar({ onNavClick, className }: SidebarProps) {
       </nav>
 
       <div className="shrink-0 px-3 pb-3">
-        <Link
-          href="/account/coins"
-          onClick={onNavClick}
-          className="block rounded-2xl border border-border bg-muted/30 p-3 transition-colors hover:bg-muted/50"
+        <div
+          className={cn(
+            "rounded-2xl border-2 p-3",
+            "border-sky-200/50 bg-[#E5F6FF] shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]",
+            "dark:border-white/10 dark:bg-[#23363d] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]",
+          )}
         >
-          <div className="flex items-center gap-2">
-            <Coins className="h-5 w-5 shrink-0 text-blue" />
-            <span className="font-black tabular-nums text-lg text-blue">
-              {coinBalance}
-            </span>
+          <div className="flex items-center gap-3">
+            <div
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#1CB0F6]/20 text-[#0284c7] dark:bg-white/15 dark:text-white"
+              aria-hidden
+            >
+              <Coins className="h-5 w-5" strokeWidth={2.25} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-black uppercase tracking-wide text-[#4B4B4B] dark:text-white/70">
+                {t(locale, "nav.coins")}
+              </p>
+              <p className="font-black tabular-nums text-2xl leading-none tracking-tight text-[#4B4B4B] dark:text-white">
+                {coinBalance}
+              </p>
+            </div>
           </div>
-          <p className="mt-1.5 text-xs leading-snug text-muted-foreground">
+          <p className="mt-2 font-fredoka text-xs font-medium leading-snug text-[#4B4B4B]/85 dark:text-white/55">
             {t(locale, "dashboard.sidebar.coinsHint")}
           </p>
-        </Link>
+          <Button
+            asChild
+            variant="ghost"
+            className={cn(
+              "mt-3 h-12 w-full rounded-xl border-0 px-4 font-black uppercase tracking-wide transition-[transform,box-shadow,filter]",
+              "bg-[#1CB0F6] text-white shadow-[0_6px_0_#1899d6]",
+              "hover:-translate-y-0.5 hover:bg-[#1CB0F6] hover:brightness-105 hover:shadow-[0_8px_0_#1899d6]",
+              "active:translate-y-1 active:brightness-100 active:shadow-[0_2px_0_#1899d6]",
+              "focus-visible:ring-2 focus-visible:ring-[#1CB0F6]/45 focus-visible:ring-offset-2 focus-visible:ring-offset-[#E5F6FF]",
+              "dark:bg-[#49c0f8] dark:text-[#131f24] dark:shadow-[0_6px_0_#1899d6]",
+              "dark:hover:bg-[#49c0f8] dark:hover:brightness-105 dark:hover:shadow-[0_8px_0_#1899d6]",
+              "dark:active:shadow-[0_2px_0_#1899d6]",
+              "dark:focus-visible:ring-white/35 dark:focus-visible:ring-offset-[#23363d]",
+            )}
+          >
+            <Link
+              href="/account/coins"
+              onClick={onNavClick}
+            >
+              {t(locale, "dashboard.home.manageCoins")}
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="shrink-0 border-t border-border/60 p-3">

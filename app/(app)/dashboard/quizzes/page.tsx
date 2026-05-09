@@ -111,7 +111,7 @@ function CreateQuizModalTrigger({
                 <FileText className="h-7 w-7" />
               </span>
               <div className="text-center">
-                <p className="text-sm font-black font-nunito">
+                <p className="text-sm font-black font-fredoka">
                   {t(locale, "nav.createManually")}
                 </p>
               </div>
@@ -125,7 +125,7 @@ function CreateQuizModalTrigger({
                 <Sparkles className="h-7 w-7" />
               </span>
               <div className="text-center">
-                <p className="text-sm font-black font-nunito">
+                <p className="text-sm font-black font-fredoka">
                   {t(locale, "nav.createWithAI")}
                 </p>
               </div>

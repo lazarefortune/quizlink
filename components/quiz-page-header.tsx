@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { BrandQuizLinkText } from "@/components/BrandQuizLinkText";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export function QuizPageHeader() {
@@ -16,7 +17,7 @@ export function QuizPageHeader() {
             <span className="font-heading text-lg font-bold text-primary-foreground">Q</span>
           </div>
           <span className="text-2xl font-bold tracking-tight text-foreground">
-            Quiz<span className="text-primary">Link</span>
+            <BrandQuizLinkText />
           </span>
         </Link>
         <ThemeToggle />

@@ -1,10 +1,12 @@
 "use client";
 
+import { GraduationCap, ClipboardCheck, BookOpen, Brain } from "lucide-react";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AnimateOnScroll } from "@/components/animate-on-scroll";
+import { BrandQuizLinkText } from "@/components/BrandQuizLinkText";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
-import { GraduationCap, ClipboardCheck, BookOpen, Brain } from "lucide-react";
 
 export function UseCasesSection() {
   const { locale } = useLocale();
@@ -41,6 +43,7 @@ export function UseCasesSection() {
               {t(locale, "landing.useCases.title")}
             </h2>
             <p className="mt-4 text-lg text-muted-foreground sm:text-xl">
+              <BrandQuizLinkText className="inline" />
               {t(locale, "landing.useCases.subtitle")}
             </p>
           </div>

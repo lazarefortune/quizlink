@@ -6,6 +6,7 @@ import { Sparkles, PenLine } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { BrandQuizLinkText } from "@/components/BrandQuizLinkText";
 
 export default function DashboardCreatePage() {
   const { locale } = useLocale();
@@ -41,9 +42,17 @@ export default function DashboardCreatePage() {
                   {isFrench ? "Créer avec l'IA" : "Create with AI"}
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  {isFrench
-                    ? "Colle un texte ou donne un sujet, QuizLink génère les questions."
-                    : "Paste text or give a topic, QuizLink generates the questions."}
+                  {isFrench ? (
+                    <>
+                      Colle un texte ou donne un sujet,{" "}
+                      <BrandQuizLinkText className="inline" /> génère les questions.
+                    </>
+                  ) : (
+                    <>
+                      Paste text or give a topic,{" "}
+                      <BrandQuizLinkText className="inline" /> generates the questions.
+                    </>
+                  )}
                 </p>
               </div>
               <Button variant="blue" asChild className="w-full">

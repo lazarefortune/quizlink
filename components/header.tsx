@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { BrandQuizLinkText } from "@/components/BrandQuizLinkText";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import {
@@ -116,8 +117,8 @@ export function Header() {
               className="inline-flex items-center gap-2 rounded-lg transition-opacity hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2"
               aria-label={locale === "fr" ? "Retour à l'accueil" : "Back to home"}
             >
-              <span className="font-nunito text-xl font-black tracking-tight text-foreground">
-                Quiz<span className="text-primary">Link</span>
+              <span className="font-fredoka text-xl font-black tracking-tight text-foreground">
+                <BrandQuizLinkText />
               </span>
             </Link>
           </div>
@@ -208,10 +209,10 @@ export function Header() {
                   className="inline-flex items-center gap-2 rounded-lg transition-opacity hover:opacity-80"
                 >
 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary header-logo-shadow">
-                  <span className="font-nunito text-xl font-black text-primary-foreground">Q</span>
+                  <span className="font-fredoka text-xl font-black text-primary-foreground">Q</span>
                 </div>
-                <span className="font-nunito text-xl font-black tracking-tight text-foreground">
-                  Quiz<span className="text-primary">Link</span>
+                <span className="font-fredoka text-xl font-black tracking-tight text-foreground">
+                  <BrandQuizLinkText />
                 </span>
                 </Link>
                 <Button

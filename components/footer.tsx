@@ -6,6 +6,7 @@ import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { useCookieConsent } from "@/components/cookie-consent/cookie-consent-context";
+import { BrandQuizLinkText } from "@/components/BrandQuizLinkText";
 
 export function Footer() {
   const pathname = usePathname();
@@ -26,8 +27,8 @@ export function Footer() {
   return (
     <footer className="border-t-2 border-border bg-background py-8">
       <div className="mx-auto max-w-6xl px-4">
-        <span className="font-nunito text-xl font-black tracking-tight text-foreground block text-center mb-8">
-          Quiz<span className="text-primary">Link</span>
+        <span className="font-fredoka text-xl font-black tracking-tight text-foreground block text-center mb-8">
+          <BrandQuizLinkText />
         </span>
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {/* About */}
@@ -36,7 +37,8 @@ export function Footer() {
               {t(locale, "footer.about.title")}
             </h3>
             <p className="text-sm text-muted-foreground">
-              {t(locale, "footer.about.description")}
+              <BrandQuizLinkText />
+              {t(locale, "footer.about.descriptionAfterBrand")}
             </p>
             <div className="text-sm text-muted-foreground">
               <p>
@@ -128,7 +130,8 @@ export function Footer() {
         {/* Bottom */}
         <div className="mt-8 border-t border-border pt-8 text-center text-sm text-muted-foreground font-semibold">
           <p>
-            © {new Date().getFullYear()} QuizLink · {t(locale, "footer.rights")}{" "}
+            © {new Date().getFullYear()} <BrandQuizLinkText className="inline" /> ·{" "}
+            {t(locale, "footer.rights")}{" "}
             · {t(locale, "footer.createdBy")}{" "}
             <Link
               href="https://lazarefortune.com"

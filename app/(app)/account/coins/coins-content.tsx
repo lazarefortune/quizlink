@@ -255,17 +255,17 @@ export function CoinsContent() {
                     )}
                     <CardContent className="p-5 sm:p-6 space-y-4">
                       <div>
-                        <p className="font-nunito font-black text-foreground text-lg uppercase">
+                        <p className="font-fredoka font-black text-foreground text-lg uppercase">
                           {pack.displayName}
                         </p>
                         <div className="flex items-center gap-1.5 mt-1">
                           <Coins className="h-5 w-5 text-primary" />
-                          <span className="text-base font-nunito font-semibold text-muted-foreground">
+                          <span className="text-base font-fredoka font-semibold text-muted-foreground">
                             {pack.coins} {t(locale, "account.coins.coins")}
                           </span>
                         </div>
                       </div>
-                      <p className="font-nunito text-3xl font-black text-foreground">
+                      <p className="font-fredoka text-3xl font-black text-foreground">
                         {pack.price}€
                       </p>
                       <ul className="space-y-1.5 text-sm text-muted-foreground">

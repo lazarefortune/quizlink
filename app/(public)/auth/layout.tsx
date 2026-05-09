@@ -1,6 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
 
+import { BrandQuizLinkText } from "@/components/BrandQuizLinkText";
+
 export default function AuthLayout({
   children,
 }: {
@@ -14,14 +16,9 @@ export default function AuthLayout({
           className="flex items-center gap-2.5 transition-opacity hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2 rounded-lg"
           aria-label="Retour à l'accueil"
         >
-          <Image
-            src="/logo-quizlink.png"
-            alt="QuizLink"
-            width={32}
-            height={32}
-            className="h-8 w-8 object-contain"
-          />
-          <span className="text-lg font-bold text-foreground">QuizLink</span>
+          <span className="text-lg font-bold text-foreground">
+            <BrandQuizLinkText />
+          </span>
         </Link>
       </header>
       <main className="flex-1 flex flex-col">{children}</main>

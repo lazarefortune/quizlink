@@ -9,8 +9,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { BrandQuizLinkText } from "@/components/BrandQuizLinkText";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
+
 import { useCookieConsent } from "./cookie-consent-context";
 
 export function CookieConsentBanner() {
@@ -35,6 +37,7 @@ export function CookieConsentBanner() {
         <DialogHeader className="space-y-3 text-left">
           <DialogTitle className="text-xl font-semibold leading-snug sm:text-2xl">
             {t(locale, "cookieConsent.banner.title")}
+            <BrandQuizLinkText className="inline" />
           </DialogTitle>
           <DialogDescription className="text-base leading-relaxed">
             {t(locale, "cookieConsent.banner.description")}

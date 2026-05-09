@@ -23,6 +23,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
+import { BrandQuizLinkText } from "@/components/BrandQuizLinkText";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 
@@ -103,7 +104,7 @@ export function DashboardMobileNavSheet() {
               className="flex h-14 shrink-0 items-center border-b border-border/60 px-4 transition-colors hover:bg-muted/40"
             >
               <span className="font-black text-lg text-foreground">
-                Quiz<span className="text-primary">Link</span>
+                <BrandQuizLinkText />
               </span>
             </Link>
           </SheetClose>

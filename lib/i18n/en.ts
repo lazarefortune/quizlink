@@ -587,7 +587,7 @@ export const en = {
     },
     useCases: {
       title: "Use cases",
-      subtitle: "QuizLink adapts to all your assessment needs",
+      subtitle: " adapts to all your assessment needs",
       training: {
         title: "Training",
         description: "Create training quizzes to validate knowledge acquired by your learners.",
@@ -606,7 +606,7 @@ export const en = {
       },
     },
     whyQuizLink: {
-      title: "Why QuizLink",
+      title: "Why ",
       subtitle: "A professional assessment tool, not just a quiz generator",
       noDisposable: {
         title: "No disposable quizzes",
@@ -637,6 +637,10 @@ export const en = {
     },
     welcome: {
       titleGreeting: "Hello, ",
+      titleGreetingMorning: "Good morning, ",
+      titleGreetingAfternoon: "Good afternoon, ",
+      titleGreetingEvening: "Good evening, ",
+      titleGreetingNight: "Hi, ",
       subtitle: "Welcome to your space. Manage your quizzes and participants at a glance.",
       myQuizzes: "My quizzes",
       myQuizzesDesc: "View and manage all your quizzes",
@@ -656,8 +660,11 @@ export const en = {
       seeAll: "View all",
       copyLink: "Link",
       testQuiz: "Test",
-      emptyTitle: "You have not created any quizzes yet.",
-      emptyDescription: "Start by creating your first quiz.",
+      onboardingWelcomeSubtitle: "Everything you need to get started in minutes.",
+      onboardingTitle: "Ready to create your first quiz?",
+      onboardingDescription:
+        "Use AI generation or build manually, then share your link.",
+      onboardingFlowHint: "Create → Share → Track results",
     },
     title: "My Quizzes",
     subtitle: "Manage and track your quizzes",
@@ -1100,7 +1107,7 @@ export const en = {
 
   cookieConsent: {
     banner: {
-      title: "Help us improve QuizLink",
+      title: "Help us improve ",
       description:
         "Optional analytics and session replay help us spot issues, fix bugs faster, and improve flows — always routed through our EU setup with no third‑party ad cookies. Essential cookies that keep the site working stay on.",
       changeHint:
@@ -1149,7 +1156,8 @@ export const en = {
   footer: {
     about: {
       title: "About",
-      description: "QuizLink is a professional platform for creating and sharing quizzes.",
+      descriptionAfterBrand:
+        " is a professional platform for creating and sharing quizzes.",
       author: "Created by",
     },
     legal: {

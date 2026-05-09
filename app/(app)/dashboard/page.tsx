@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
@@ -27,6 +27,20 @@ import { useToast } from "@/components/ui/toast";
 import { track } from "@/lib/analytics/track";
 import { PARTICIPANT_INVITED } from "@/lib/analytics/events";
 import { buildCommonEventProps } from "@/lib/analytics/props";
+import {
+  resolveDashboardWelcomeGreetingKey,
+  type DashboardWelcomeGreetingKey,
+} from "@/lib/dashboardWelcomeGreeting";
+
+const noopSubscribe = (): (() => void) => () => {};
+
+function getWelcomeGreetingClientSnapshot(): DashboardWelcomeGreetingKey {
+  return resolveDashboardWelcomeGreetingKey();
+}
+
+function getWelcomeGreetingServerSnapshot(): DashboardWelcomeGreetingKey {
+  return "dashboard.welcome.titleGreetingMorning";
+}
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -56,6 +70,12 @@ export default function DashboardPage() {
   const [copyLoadingQuizId, setCopyLoadingQuizId] = useState<string | null>(null);
   const [copiedQuizId, setCopiedQuizId] = useState<string | null>(null);
 
+  const welcomeGreetingKey = useSyncExternalStore(
+    noopSubscribe,
+    getWelcomeGreetingClientSnapshot,
+    getWelcomeGreetingServerSnapshot
+  );
+
   const name =
     session?.user?.name?.split(" ")[0] ||
     session?.user?.email ||
@@ -77,6 +97,9 @@ export default function DashboardPage() {
     quizCount: 0,
     recentQuizzes: [],
   };
+
+  const showOnboarding = !isLoading && stats !== null && stats.quizCount === 0;
+  const showStandardDashboard = !isLoading && !showOnboarding;
 
   const baseUrl =
     typeof window !== "undefined"
@@ -157,98 +180,155 @@ export default function DashboardPage() {
           transition={fadeIn.transition(0)}
         >
           <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
-            {t(locale, "dashboard.welcome.titleGreeting")}
+            {t(locale, welcomeGreetingKey)}
             <span className="text-primary capitalize">{name}</span>
           </h1>
           <p className="mt-1 text-base text-muted-foreground">
-            {t(locale, "dashboard.home.subtitle")}
+            {t(
+              locale,
+              showOnboarding
+                ? "dashboard.home.onboardingWelcomeSubtitle"
+                : "dashboard.home.subtitle"
+            )}
           </p>
         </motion.div>
 
-        {/* Primary actions */}
-        <motion.div
-          initial={fadeIn.initial}
-          animate={fadeIn.animate}
-          transition={fadeIn.transition(0.1)}
-        >
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <Link href="/generate" className="block">
-              <Card className="group border-2 transition-all hover:border-blue/30">
-                <CardContent className="flex items-center gap-4 p-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue/10">
-                    <Sparkles className="h-5 w-5 text-blue" />
-                  </div>
-                  <p className="font-bold text-foreground">
-                    {t(locale, "dashboard.home.ctaCreateWithAi")}
-                  </p>
-                </CardContent>
-              </Card>
-            </Link>
-
-            <Link href="/builder" className="block">
-              <Card className="group border-2 transition-all hover:border-primary/30">
-                <CardContent className="flex items-center gap-4 p-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-                    <Plus className="h-5 w-5 text-primary" />
-                  </div>
-                  <p className="font-bold text-foreground">
-                    {t(locale, "dashboard.home.ctaCreateManually")}
-                  </p>
-                </CardContent>
-              </Card>
-            </Link>
-
-            <Link href="/dashboard/quizzes" className="block">
-              <Card className="group border-2 transition-all hover:border-blue/30">
-                <CardContent className="flex items-center gap-4 p-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue/10">
-                    <FileText className="h-5 w-5 text-blue" />
-                  </div>
-                  <p className="font-bold text-foreground">
-                    {t(locale, "dashboard.home.ctaSeeMyQuizzes")}
-                  </p>
-                </CardContent>
-              </Card>
-            </Link>
-          </div>
-        </motion.div>
-
-        {/* Coins block (secondary) */}
-        {!isLoading && (
-          <motion.div
-            initial={fadeIn.initial}
-            animate={fadeIn.animate}
-            transition={fadeIn.transition(0.2)}
-          >
-            <Card className="border border-border/70">
-              <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
-                    <Coins className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">
-                      {displayStats.coinBalance}{" "}
-                      {t(locale, "account.coins.coins")}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {t(locale, "dashboard.home.coinsDescription")}
-                    </p>
-                  </div>
-                </div>
-                <Link
-                  href="/account/coins"
-                  className="text-sm font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-                >
-                  {t(locale, "dashboard.home.manageCoins")}
-                </Link>
+        {isLoading && (
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <div className="h-8 max-w-md animate-pulse rounded-lg bg-muted" />
+              <div className="h-4 max-w-sm animate-pulse rounded bg-muted/70" />
+            </div>
+            <Card>
+              <CardContent className="space-y-4 p-6">
+                <div className="h-6 max-w-xs animate-pulse rounded bg-muted" />
+                <div className="h-4 w-full max-w-lg animate-pulse rounded bg-muted/60" />
+                <div className="h-11 max-w-md animate-pulse rounded-2xl bg-muted" />
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
+        )}
+
+        {showOnboarding && (
+          <>
+            <motion.div
+              initial={fadeIn.initial}
+              animate={fadeIn.animate}
+              transition={fadeIn.transition(0.15)}
+              className="mx-auto w-full max-w-lg"
+            >
+              <Card className="border-2 border-border bg-card shadow-sm">
+                <CardContent className="flex flex-col items-center px-4 py-10 text-center sm:px-8">
+                  <h2 className="mb-2 text-xl font-black tracking-tight text-foreground sm:text-2xl">
+                    {t(locale, "dashboard.home.onboardingTitle")}
+                  </h2>
+                  <p className="mb-8 max-w-md text-sm text-muted-foreground sm:text-base">
+                    {t(locale, "dashboard.home.onboardingDescription")}
+                  </p>
+                  <div className="flex w-full flex-col gap-3 sm:flex-row sm:justify-center">
+                    <Button variant="primary" asChild className="w-full sm:w-auto">
+                      <Link href="/generate" className="gap-2">
+                        <Sparkles className="h-4 w-4" />
+                        {t(locale, "dashboard.home.ctaCreateWithAi")}
+                      </Link>
+                    </Button>
+                    <Button variant="outline" asChild className="w-full sm:w-auto">
+                      <Link href="/builder" className="gap-2">
+                        <Plus className="h-4 w-4" />
+                        {t(locale, "dashboard.home.ctaCreateManually")}
+                      </Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </>
+        )}
+
+        {showStandardDashboard && (
+          <>
+            <motion.div
+              initial={fadeIn.initial}
+              animate={fadeIn.animate}
+              transition={fadeIn.transition(0.1)}
+            >
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <Link href="/generate" className="block">
+                  <Card className="group border-2 transition-all hover:border-blue/30">
+                    <CardContent className="flex items-center gap-4 p-4">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue/10">
+                        <Sparkles className="h-5 w-5 text-blue" />
+                      </div>
+                      <p className="font-bold text-foreground">
+                        {t(locale, "dashboard.home.ctaCreateWithAi")}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </Link>
+
+                <Link href="/builder" className="block">
+                  <Card className="group border-2 transition-all hover:border-primary/30">
+                    <CardContent className="flex items-center gap-4 p-4">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                        <Plus className="h-5 w-5 text-primary" />
+                      </div>
+                      <p className="font-bold text-foreground">
+                        {t(locale, "dashboard.home.ctaCreateManually")}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </Link>
+
+                <Link href="/dashboard/quizzes" className="block">
+                  <Card className="group border-2 transition-all hover:border-blue/30">
+                    <CardContent className="flex items-center gap-4 p-4">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue/10">
+                        <FileText className="h-5 w-5 text-blue" />
+                      </div>
+                      <p className="font-bold text-foreground">
+                        {t(locale, "dashboard.home.ctaSeeMyQuizzes")}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </Link>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={fadeIn.initial}
+              animate={fadeIn.animate}
+              transition={fadeIn.transition(0.2)}
+            >
+              <Card className="border border-border/70">
+                <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
+                      <Coins className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <p className="text-base font-semibold text-foreground">
+                        {displayStats.coinBalance}{" "}
+                        {t(locale, "account.coins.coins")}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {t(locale, "dashboard.home.coinsDescription")}
+                      </p>
+                    </div>
+                  </div>
+                  <Link
+                    href="/account/coins"
+                    className="text-sm font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                  >
+                    {t(locale, "dashboard.home.manageCoins")}
+                  </Link>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </>
         )}
 
         {/* Recent quizzes */}
-        {!isLoading && stats && stats.recentQuizzes.length > 0 && (
+        {showStandardDashboard && stats && stats.recentQuizzes.length > 0 && (
           <motion.div
             initial={fadeIn.initial}
             animate={fadeIn.animate}
@@ -361,58 +441,6 @@ export default function DashboardPage() {
               ))}
             </div>
           </motion.div>
-        )}
-
-        {/* Empty state */}
-        {!isLoading && displayStats.quizCount === 0 && (
-          <motion.div
-            initial={fadeIn.initial}
-            animate={fadeIn.animate}
-            transition={fadeIn.transition(0.4)}
-          >
-            <Card className="border-none">
-              <CardContent className="flex flex-col items-center justify-center px-4 py-12 text-center">
-                <h3 className="mb-1 text-lg font-black">
-                  {t(locale, "dashboard.home.emptyTitle")}
-                </h3>
-                <p className="mb-6 text-sm text-muted-foreground">
-                  {t(locale, "dashboard.home.emptyDescription")}
-                </p>
-                <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-                  <Button variant="outline" asChild>
-                    <Link href="/generate" className="gap-2">
-                      <Sparkles className="h-4 w-4" />
-                      {t(locale, "dashboard.home.ctaCreateWithAi")}
-                    </Link>
-                  </Button>
-                  <Button variant="primary" asChild>
-                    <Link href="/builder" className="gap-2">
-                      <Plus className="h-4 w-4" />
-                      {t(locale, "dashboard.home.ctaCreateManually")}
-                    </Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
-
-        {isLoading && (
-          <div className="space-y-3">
-            {[1, 2, 3].map((item) => (
-              <Card key={item}>
-                <CardContent className="space-y-3 p-4">
-                  <div className="h-5 w-1/3 animate-pulse rounded bg-muted" />
-                  <div className="h-4 w-1/2 animate-pulse rounded bg-muted/60" />
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                    <div className="h-9 animate-pulse rounded bg-muted" />
-                    <div className="h-9 animate-pulse rounded bg-muted" />
-                    <div className="h-9 animate-pulse rounded bg-muted" />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
         )}
       </div>
     </div>

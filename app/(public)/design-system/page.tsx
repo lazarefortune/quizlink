@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/toast";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { BrandQuizLinkText } from "@/components/BrandQuizLinkText";
 import {
   Dialog,
   DialogClose,
@@ -129,7 +130,9 @@ export default function DesignSystemPage() {
             <h1 className="font-sans text-xl font-extrabold text-foreground">
               Design System
             </h1>
-            <p className="text-sm text-muted-foreground">QuizLink UI Kit</p>
+            <p className="text-sm text-muted-foreground">
+              <BrandQuizLinkText className="inline" /> UI Kit
+            </p>
           </div>
           <ThemeToggle />
         </div>
@@ -235,15 +238,15 @@ export default function DesignSystemPage() {
                   Font
                 </span>
                 <p className="mt-1 font-sans text-2xl font-extrabold text-foreground">
-                  Nunito — The quick brown fox
+                  Fredoka — The quick brown fox
                 </p>
               </div>
               <Separator />
               <div className="space-y-3">
-                <p className="font-nunito text-4xl font-extrabold text-foreground">
+                <p className="font-fredoka text-4xl font-extrabold text-foreground">
                   Heading 1
                 </p>
-                <p className="font-nunito text-2xl font-bold text-foreground">
+                <p className="font-fredoka text-2xl font-bold text-foreground">
                   Heading 2
                 </p>
                 <p className="text-base text-foreground">
@@ -443,7 +446,7 @@ export default function DesignSystemPage() {
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="item-1">
                   <AccordionTrigger className="font-bold">
-                    C&apos;est quoi QuizLink ?
+                    C&apos;est quoi <BrandQuizLinkText className="inline" /> ?
                   </AccordionTrigger>
                   <AccordionContent>
                     Une plateforme pour créer et partager des quiz. Apprends en
@@ -464,7 +467,7 @@ export default function DesignSystemPage() {
                     Est-ce gratuit ?
                   </AccordionTrigger>
                   <AccordionContent>
-                    Oui, QuizLink est gratuit. Crée autant de quiz que tu veux.
+                    Oui, <BrandQuizLinkText className="inline" /> est gratuit. Crée autant de quiz que tu veux.
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>

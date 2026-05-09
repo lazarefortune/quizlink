@@ -587,7 +587,7 @@ export const fr = {
     },
     useCases: {
       title: "Cas d'usage",
-      subtitle: "QuizLink s'adapte à tous tes besoins d'évaluation",
+      subtitle: " s'adapte à tous tes besoins d'évaluation",
       training: {
         title: "Formation",
         description: "Crée des quiz de formation pour valider les connaissances acquises par tes apprenants.",
@@ -606,7 +606,7 @@ export const fr = {
       },
     },
     whyQuizLink: {
-      title: "Pourquoi QuizLink",
+      title: "Pourquoi ",
       subtitle: "Un outil d'évaluation professionnel, pas un simple générateur de quiz",
       noDisposable: {
         title: "Pas de quiz jetables",
@@ -637,6 +637,10 @@ export const fr = {
     },
     welcome: {
       titleGreeting: "Bonjour, ",
+      titleGreetingMorning: "Bonjour, ",
+      titleGreetingAfternoon: "Bon après-midi, ",
+      titleGreetingEvening: "Bonsoir, ",
+      titleGreetingNight: "Salut, ",
       subtitle: "Bienvenue sur ton espace. Gère tes quiz et participants en un clin d’œil.",
       myQuizzes: "Mes quiz",
       myQuizzesDesc: "Voir et gérer tous tes quiz",
@@ -656,8 +660,12 @@ export const fr = {
       seeAll: "Voir tout",
       copyLink: "Lien",
       testQuiz: "Tester",
-      emptyTitle: "Tu n’as pas encore créé de quiz.",
-      emptyDescription: "Commence par créer ton premier quiz.",
+      onboardingWelcomeSubtitle:
+        "Par ici pour lancer ton premier quiz en quelques minutes.",
+      onboardingTitle: "Prêt à créer ton premier quiz ?",
+      onboardingDescription:
+        "Choisis la génération IA ou le mode manuel, puis partage ton lien.",
+      onboardingFlowHint: "Créer → Partager → Suivre les résultats",
     },
     title: "Mes Quiz",
     subtitle: "Gère et suis tes quiz",
@@ -1103,7 +1111,7 @@ export const fr = {
 
   cookieConsent: {
     banner: {
-      title: "Aide-nous à faire évoluer QuizLink",
+      title: "Aide-nous à faire évoluer ",
       description:
         "Les statistiques et le replay de session (optionnels) nous permettent de voir ce qui coince, d’améliorer les parcours et de corriger les bugs plus vite — toujours via nos serveurs EU et sans cookies tiers publicitaires. Les cookies strictement nécessaires au site restent actifs.",
       changeHint:
@@ -1153,7 +1161,8 @@ export const fr = {
   footer: {
     about: {
       title: "À propos",
-      description: "QuizLink est une plateforme professionnelle de création et de partage de quiz.",
+      descriptionAfterBrand:
+        " est une plateforme professionnelle de création et de partage de quiz.",
       author: "Créé par",
     },
     legal: {

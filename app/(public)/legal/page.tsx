@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Mail, Globe } from "lucide-react";
 
+import { BrandQuizLinkText } from "@/components/BrandQuizLinkText";
+
 export default function LegalPage() {
   return (
     <div className="min-h-screen bg-background">
@@ -33,7 +35,11 @@ export default function LegalPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-muted-foreground">
-                Le site <strong className="text-foreground">QuizLink</strong> est édité par :
+                Le site{" "}
+                <strong className="text-foreground">
+                  <BrandQuizLinkText />
+                </strong>{" "}
+                est édité par :
               </p>
               <div className="bg-muted/50 rounded-lg p-4 space-y-2 text-sm">
                 <p>
@@ -166,7 +172,8 @@ export default function LegalPage() {
         {/* Footer note */}
         <div className="mt-12 pt-8 border-t text-center text-sm text-muted-foreground">
           <p>
-            © {new Date().getFullYear()} QuizLink. Tous droits réservés.
+            © {new Date().getFullYear()}{" "}
+            <BrandQuizLinkText className="inline" />. Tous droits réservés.
           </p>
         </div>
       </div>
