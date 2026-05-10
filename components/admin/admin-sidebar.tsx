@@ -10,6 +10,7 @@ import {
   MessageSquare,
   Shield,
   BarChart3,
+  Settings,
   ArrowLeft,
   X,
 } from "lucide-react";
@@ -26,6 +27,7 @@ const navItems = [
   { href: "/admin/packs", label: "admin.nav.packs", icon: Package },
   { href: "/admin/feedback", label: "admin.nav.feedback", icon: MessageSquare },
   { href: "/admin/analytics", label: "admin.nav.analytics", icon: BarChart3 },
+  { href: "/admin/settings", label: "admin.nav.settings", icon: Settings },
 ];
 
 type AdminSidebarProps = {

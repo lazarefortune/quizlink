@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { submitFeedbackSchema } from "@/lib/schemas/feedback.schema";
 import type { SubmitFeedbackInput } from "@/lib/schemas/feedback.schema";
+import { sendSupportNotificationIfNeeded } from "@/lib/sendSupportNotificationIfNeeded";
 
 const MAX_SUBMISSIONS_PER_HOUR = 5;
 const MAX_ANONYMOUS_SUBMISSIONS_PER_HOUR = 30;
@@ -74,7 +75,7 @@ async function createFeedbackCore(
       }
     }
 
-    await prisma.feedback.create({
+    const created = await prisma.feedback.create({
       data: {
         userId,
         type: validatedInput.type,
@@ -83,7 +84,14 @@ async function createFeedbackCore(
         userAgent: validatedInput.userAgent,
         status: "NEW",
       },
+      select: { id: true },
     });
+
+    try {
+      await sendSupportNotificationIfNeeded(created.id);
+    } catch (error) {
+      console.error("[createFeedbackAction] Support notification error:", error);
+    }
 
     return { success: true };
   } catch (error) {

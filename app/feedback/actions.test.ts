@@ -3,9 +3,15 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const mockAuth = vi.fn();
 const mockCreate = vi.fn();
 const mockCount = vi.fn();
+const mockSendSupportNotificationIfNeeded = vi.fn();
 
 vi.mock("@/lib/auth", () => ({
   auth: () => mockAuth(),
+}));
+
+vi.mock("@/lib/sendSupportNotificationIfNeeded", () => ({
+  sendSupportNotificationIfNeeded: (...args: unknown[]) =>
+    mockSendSupportNotificationIfNeeded(...args),
 }));
 
 vi.mock("@/lib/prisma", () => ({
@@ -24,7 +30,8 @@ describe("createFeedbackAction", () => {
     vi.clearAllMocks();
     mockAuth.mockResolvedValue({ user: { id: "user-1" } });
     mockCount.mockResolvedValue(0);
-    mockCreate.mockResolvedValue({});
+    mockCreate.mockResolvedValue({ id: "feedback-new" });
+    mockSendSupportNotificationIfNeeded.mockResolvedValue(undefined);
   });
 
   it("creates feedback with userId when session exists", async () => {
@@ -45,7 +52,9 @@ describe("createFeedbackAction", () => {
         userAgent: "Mozilla/5.0",
         status: "NEW",
       },
+      select: { id: true },
     });
+    expect(mockSendSupportNotificationIfNeeded).toHaveBeenCalledWith("feedback-new");
   });
 
   it("creates feedback with null userId when there is no session", async () => {
@@ -68,7 +77,22 @@ describe("createFeedbackAction", () => {
         userAgent: "",
         status: "NEW",
       },
+      select: { id: true },
     });
+    expect(mockSendSupportNotificationIfNeeded).toHaveBeenCalledWith("feedback-new");
+  });
+
+  it("returns success when support notification fails after create", async () => {
+    mockSendSupportNotificationIfNeeded.mockRejectedValue(new Error("notify failed"));
+
+    const result = await createFeedbackAction({
+      type: "BUG",
+      message: "Something is broken here",
+      page: "/dashboard",
+      userAgent: "Mozilla/5.0",
+    });
+
+    expect(result).toEqual({ success: true });
   });
 
   it("returns validation error without creating when page is invalid", async () => {

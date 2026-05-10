@@ -125,6 +125,102 @@ export async function sendWelcomeEmail({
   return sendEmail({ to, subject, html, from: getWelcomeFromEmail() });
 }
 
+const FEEDBACK_NOTIFY_TYPE_LABELS_FR: Record<"BUG" | "SUGGESTION" | "FEEDBACK", string> = {
+  BUG: "Bug",
+  SUGGESTION: "Suggestion",
+  FEEDBACK: "Feedback",
+};
+
+export type SupportFeedbackNotificationType = keyof typeof FEEDBACK_NOTIFY_TYPE_LABELS_FR;
+
+export async function sendSupportFeedbackNotificationEmail({
+  recipients,
+  feedbackId,
+  type,
+  message,
+  page,
+  userEmail,
+  userName,
+  createdAt,
+  adminUrl,
+}: {
+  recipients: string[];
+  feedbackId: string;
+  type: SupportFeedbackNotificationType;
+  message: string;
+  page: string;
+  userEmail?: string | null;
+  userName?: string | null;
+  createdAt: Date;
+  adminUrl: string;
+}): Promise<{ success: boolean; error?: string }> {
+  if (recipients.length === 0) {
+    return { success: true };
+  }
+
+  const typeLabel = FEEDBACK_NOTIFY_TYPE_LABELS_FR[type];
+  const subject = `[QuizLink Support] Nouveau message : ${typeLabel}`;
+
+  const userDisplayParts: string[] = [];
+  if (userName?.trim()) {
+    userDisplayParts.push(userName.trim());
+  }
+  if (userEmail?.trim()) {
+    userDisplayParts.push(userEmail.trim());
+  }
+  const userLine = userDisplayParts.length > 0 ? userDisplayParts.join(" — ") : "Anonyme";
+
+  const dateLine = createdAt.toLocaleString("fr-FR", {
+    dateStyle: "long",
+    timeStyle: "short",
+  });
+
+  const safeMessage = escapeHtmlForEmail(message);
+  const safePage = escapeHtmlForEmail(page);
+  const safeUserLine = escapeHtmlForEmail(userLine);
+  const safeAdminUrl = escapeHtmlForEmail(adminUrl);
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      </head>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <!-- ref:${escapeHtmlForEmail(feedbackId)} -->
+        <h1 style="color: #2563eb;">Nouveau message support reçu</h1>
+        <p><strong>Type :</strong> ${escapeHtmlForEmail(typeLabel)}</p>
+        <p><strong>Utilisateur :</strong> ${safeUserLine}</p>
+        <p><strong>Page :</strong> ${safePage}</p>
+        <p><strong>Date :</strong> ${escapeHtmlForEmail(dateLine)}</p>
+        <p><strong>Message :</strong></p>
+        <div style="background-color: #f9fafb; border-radius: 8px; padding: 16px; white-space: pre-wrap;">${safeMessage}</div>
+        <p style="margin-top: 24px;"><strong>Lien admin :</strong><br>
+          <a href="${adminUrl.replace(/"/g, "")}" style="color: #2563eb; word-break: break-all;">${safeAdminUrl}</a>
+        </p>
+      </body>
+    </html>
+  `;
+
+  let allOk = true;
+  let lastError: string | undefined;
+
+  for (const to of recipients) {
+    const result = await sendEmail({ to, subject, html });
+    if (!result.success) {
+      allOk = false;
+      lastError = result.error;
+      console.error("[sendSupportFeedbackNotificationEmail] Failed for recipient:", to);
+    }
+  }
+
+  if (!allOk) {
+    return { success: false, error: lastError ?? "Failed to send email" };
+  }
+  return { success: true };
+}
+
 export async function sendEmail({
   to,
   subject,
