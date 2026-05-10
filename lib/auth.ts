@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import type { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { initializeUserCoins } from "@/lib/coins";
 import { getAuthAuditFieldsFromHeaders, type AuthAuditFields } from "@/lib/authAuditContext";
 import bcrypt from "bcryptjs";
 import {
@@ -126,21 +127,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth((req: NextRequest | 
 
             await recordUserLifecycleEvent(prisma, createdUser.id, USER_LIFECYCLE_EVENT_TYPES.SIGNUP);
 
-            await prisma.$transaction(async (tx) => {
-              await Promise.all([
-                tx.user.update({
-                  where: { id: createdUser.id },
-                  data: { coinBalance: 4 },
-                }),
-                tx.coinTransaction.create({
-                  data: {
-                    userId: createdUser.id,
-                    amount: 4,
-                    reason: "Welcome bonus - Account creation",
-                  },
-                }),
-              ]);
-            });
+            await initializeUserCoins(createdUser.id);
           } else if (!existingUser.googleId && profile?.sub) {
             await prisma.user.update({
               where: { email: user.email },

@@ -35,22 +35,114 @@ const getFromEmail = () => {
   return process.env.SMTP_FROM || "noreply@quizlink.fr";
 };
 
+/** From address for the welcome email (reply-friendly default when SMTP_FROM is unset). */
+const getWelcomeFromEmail = () => {
+  return process.env.SMTP_FROM || "contact@quizlink.fr";
+};
+
+function escapeHtmlForEmail(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+export async function sendWelcomeEmail({
+  to,
+  name,
+  coinBalance,
+  locale = "fr",
+}: {
+  to: string;
+  name: string;
+  coinBalance: number;
+  locale?: "fr" | "en";
+}): Promise<{ success: boolean; error?: string }> {
+  const baseUrl =
+    process.env.NEXTAUTH_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    "http://localhost:3000";
+  const createUrl = `${baseUrl}/dashboard/create`;
+  const safeName = escapeHtmlForEmail(name);
+
+  const subject =
+    locale === "fr"
+      ? "Bienvenue sur QuizLink 🎉"
+      : "Welcome to QuizLink 🎉";
+
+  const html =
+    locale === "fr"
+      ? `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      </head>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h1 style="color: #2563eb;">Bienvenue sur QuizLink</h1>
+        <p>Bonjour ${safeName},</p>
+        <p>Moi c'est Lazare, le créateur de QuizLink.</p>
+        <p>Je suis ravi de t'accueillir ici.</p>
+        <p>J'ai créé QuizLink pour rendre la création de quiz plus simple, plus rapide et plus agréable, que ce soit pour réviser, animer un cours, tester des connaissances ou partager une activité.</p>
+        <p>Ton compte est prêt et tu as actuellement <strong>${coinBalance}</strong> coins pour tester la génération de quiz avec l'IA.</p>
+        <p>Le plus simple maintenant : crée ton premier quiz, partage le lien, et regarde les réponses arriver.</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${createUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Créer mon premier quiz</a>
+        </div>
+        <p style="word-break: break-all; color: #6b7280; font-size: 14px;">Ou ouvre ce lien : ${createUrl}</p>
+        <p>Si tu as une idée, une remarque ou un bug à me partager, tu peux simplement répondre à cet email. Ça m'aide énormément à améliorer QuizLink.</p>
+        <p style="margin-top: 30px; color: #6b7280; font-size: 14px;">À très vite,<br>Lazare<br>Créateur de QuizLink</p>
+      </body>
+    </html>
+  `
+      : `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      </head>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h1 style="color: #2563eb;">Welcome to QuizLink</h1>
+        <p>Hello ${safeName},</p>
+        <p>I'm Lazare, the creator of QuizLink.</p>
+        <p>I'm really glad to have you here.</p>
+        <p>I built QuizLink to make quiz creation simpler, faster and more enjoyable — whether you're studying, running a class, testing knowledge, or sharing an activity.</p>
+        <p>Your account is ready, and you currently have <strong>${coinBalance}</strong> coin${coinBalance === 1 ? "" : "s"} to try AI-powered quiz generation.</p>
+        <p>The simplest next step: create your first quiz, share the link, and watch the responses come in.</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${createUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Create my first quiz</a>
+        </div>
+        <p style="word-break: break-all; color: #6b7280; font-size: 14px;">Or open this link: ${createUrl}</p>
+        <p>If you have an idea, feedback, or a bug to share, just hit reply to this email — it helps me improve QuizLink a lot.</p>
+        <p style="margin-top: 30px; color: #6b7280; font-size: 14px;">See you soon,<br>Lazare<br>Creator of QuizLink</p>
+      </body>
+    </html>
+  `;
+
+  return sendEmail({ to, subject, html, from: getWelcomeFromEmail() });
+}
+
 export async function sendEmail({
   to,
   subject,
   html,
   text,
   attachments,
+  from,
 }: {
   to: string;
   subject: string;
   html: string;
   text?: string;
   attachments?: Array<{ filename: string; content: Buffer }>;
+  from?: string;
 }) {
   try {
     await transporter.sendMail({
-      from: getFromEmail(),
+      from: from ?? getFromEmail(),
       to,
       subject,
       html,

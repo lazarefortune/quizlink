@@ -12,6 +12,7 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 const mockUserUpdate = vi.fn();
+const mockSendWelcomeEmailIfNeeded = vi.fn();
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -19,6 +20,11 @@ vi.mock("@/lib/prisma", () => ({
       update: (...args: unknown[]) => mockUserUpdate(...args),
     },
   },
+}));
+
+vi.mock("@/lib/sendWelcomeEmailIfNeeded", () => ({
+  sendWelcomeEmailIfNeeded: (...args: unknown[]) =>
+    mockSendWelcomeEmailIfNeeded(...args),
 }));
 
 import { acceptLegalDocumentsAction } from "./actions";
@@ -32,6 +38,7 @@ describe("acceptLegalDocumentsAction", () => {
     });
     mockAuth.mockResolvedValue({ user: { id: "user-1" } });
     mockUserUpdate.mockResolvedValue({});
+    mockSendWelcomeEmailIfNeeded.mockResolvedValue(undefined);
   });
 
   it("returns error when legalAccepted is not strictly true", async () => {
@@ -42,6 +49,7 @@ describe("acceptLegalDocumentsAction", () => {
         "Tu dois accepter les CGU et la politique de confidentialité pour continuer.",
     });
     expect(mockUserUpdate).not.toHaveBeenCalled();
+    expect(mockSendWelcomeEmailIfNeeded).not.toHaveBeenCalled();
     expect(redirectMock).not.toHaveBeenCalled();
   });
 
@@ -56,6 +64,7 @@ describe("acceptLegalDocumentsAction", () => {
     expect(arg.data.privacyVersion).toBe(CURRENT_PRIVACY_VERSION);
     expect(arg.data.termsAcceptedAt).toBeInstanceOf(Date);
     expect(arg.data.privacyAcceptedAt).toBeInstanceOf(Date);
+    expect(mockSendWelcomeEmailIfNeeded).toHaveBeenCalledWith("user-1");
     expect(redirectMock).not.toHaveBeenCalled();
   });
 
@@ -64,6 +73,7 @@ describe("acceptLegalDocumentsAction", () => {
     await expect(acceptLegalDocumentsAction(true, "fr")).rejects.toThrow("redirect");
     expect(redirectMock).toHaveBeenCalledWith("/auth/signin");
     expect(mockUserUpdate).not.toHaveBeenCalled();
+    expect(mockSendWelcomeEmailIfNeeded).not.toHaveBeenCalled();
   });
 
   it("returns error when update fails", async () => {
@@ -76,5 +86,6 @@ describe("acceptLegalDocumentsAction", () => {
       error: "Impossible d'enregistrer ton acceptation. Réessaie.",
     });
     expect(redirectMock).not.toHaveBeenCalled();
+    expect(mockSendWelcomeEmailIfNeeded).not.toHaveBeenCalled();
   });
 });

@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { sendVerificationEmail } from "@/lib/email";
+import { sendWelcomeEmailIfNeeded } from "@/lib/sendWelcomeEmailIfNeeded";
 
 export async function verifyEmailAction(
   email: string,
@@ -67,6 +68,8 @@ export async function verifyEmailAction(
         where: { userId: user.id },
       }),
     ]);
+
+    await sendWelcomeEmailIfNeeded(user.id);
 
     return {
       success: true,

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { CURRENT_PRIVACY_VERSION, CURRENT_TERMS_VERSION } from "@/lib/legal-versions";
 import { t } from "@/lib/i18n";
+import { sendWelcomeEmailIfNeeded } from "@/lib/sendWelcomeEmailIfNeeded";
 
 export type AcceptLegalDocumentsResult =
   | { success: true }
@@ -56,6 +57,8 @@ export async function acceptLegalDocumentsAction(
           : "Could not save your acceptance. Please try again.",
     };
   }
+
+  await sendWelcomeEmailIfNeeded(session.user.id);
 
   return { success: true };
 }
