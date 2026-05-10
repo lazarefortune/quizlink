@@ -1183,6 +1183,42 @@ export const en = {
     },
   },
 
+  support: {
+    navLabel: "Support",
+    helpSection: "Help",
+    title: "Contact support",
+    description: "A bug, an idea, or a question? Send me a message.",
+    form: {
+      typeLabel: "Message type",
+      typePlaceholder: "Choose a type",
+      messageLabel: "Message",
+      messagePlaceholder: "Describe what’s going on...",
+      cancel: "Cancel",
+      send: "Send",
+    },
+    types: {
+      bug: "Bug",
+      suggestion: "Suggestion",
+      questionFeedback: "Question / feedback",
+    },
+    validation: {
+      typeRequired: "Please select a type",
+      messageTooShort: "Message must be at least 5 characters",
+      messageTooLong: "Message cannot exceed 2000 characters",
+    },
+    success: {
+      sent: "Message sent",
+    },
+    errors: {
+      sendFailed: "Something went wrong while sending",
+    },
+    account: {
+      sectionTitle: "Support",
+      teaser: "A bug, an idea, or a question?",
+      cta: "Contact support",
+    },
+  },
+
   cookieConsent: {
     banner: {
       title: "Help us improve ",

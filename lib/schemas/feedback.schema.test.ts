@@ -37,7 +37,7 @@ describe("feedback.schema", () => {
   describe("submitFeedbackSchema", () => {
     const validInput = {
       type: "BUG" as const,
-      message: "This is a test message with enough characters",
+      message: "This is a test message",
       page: "/test-page",
       userAgent: "Mozilla/5.0",
     };
@@ -59,19 +59,45 @@ describe("feedback.schema", () => {
       ).not.toThrow();
     });
 
-    it("should reject message shorter than 10 characters", () => {
+    it("should reject message shorter than 5 characters", () => {
       expect(() =>
-        submitFeedbackSchema.parse({ ...validInput, message: "short" })
-      ).toThrow();
-      expect(() =>
-        submitFeedbackSchema.parse({ ...validInput, message: "123456789" })
+        submitFeedbackSchema.parse({ ...validInput, message: "abcd" })
       ).toThrow();
     });
 
-    it("should accept message with exactly 10 characters", () => {
+    it("should accept message with exactly 5 characters", () => {
       expect(() =>
-        submitFeedbackSchema.parse({ ...validInput, message: "1234567890" })
+        submitFeedbackSchema.parse({ ...validInput, message: "12345" })
       ).not.toThrow();
+    });
+
+    it("should trim message before validating length", () => {
+      const result = submitFeedbackSchema.parse({
+        ...validInput,
+        message: "  hello  ",
+      });
+      expect(result.message).toBe("hello");
+    });
+
+    it("should reject page that does not start with /", () => {
+      expect(() =>
+        submitFeedbackSchema.parse({ ...validInput, page: "not-a-path" })
+      ).toThrow();
+    });
+
+    it("should reject page with control characters", () => {
+      expect(() =>
+        submitFeedbackSchema.parse({ ...validInput, page: "/te\u0000st" })
+      ).toThrow();
+    });
+
+    it("should reject userAgent with newlines", () => {
+      expect(() =>
+        submitFeedbackSchema.parse({
+          ...validInput,
+          userAgent: "Mozilla\nEvil",
+        })
+      ).toThrow();
     });
 
     it("should reject message longer than 2000 characters", () => {
@@ -97,7 +123,7 @@ describe("feedback.schema", () => {
     });
 
     it("should accept page and userAgent up to 500 characters", () => {
-      const longPage = "a".repeat(500);
+      const longPage = `/${"a".repeat(499)}`;
       const longUserAgent = "b".repeat(500);
       expect(() =>
         submitFeedbackSchema.parse({
@@ -122,13 +148,12 @@ describe("feedback.schema", () => {
       ).toThrow();
     });
 
-    it("should trim message whitespace", () => {
+    it("should trim message whitespace in output", () => {
       const result = submitFeedbackSchema.parse({
         ...validInput,
-        message: "  test message with spaces  ",
+        message: "  trimmed body here  ",
       });
-      // Note: Zod doesn't trim by default, but our server action does
-      expect(result.message).toBe("  test message with spaces  ");
+      expect(result.message).toBe("trimmed body here");
     });
   });
 });

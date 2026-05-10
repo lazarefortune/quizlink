@@ -1,5 +1,7 @@
 /* @vitest-environment jsdom */
 
+import type { ReactNode } from "react";
+
 import "@testing-library/jest-dom/vitest";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
@@ -32,6 +34,11 @@ vi.mock("@/lib/i18n/use-locale", () => ({
 
 vi.mock("@/lib/i18n", () => ({
   t: (_locale: string, key: string) => key,
+}));
+
+vi.mock("@/components/support/support-feedback-provider", () => ({
+  useSupportFeedback: () => ({ openSupportFeedback: vi.fn() }),
+  SupportFeedbackProvider: ({ children }: { children: ReactNode }) => children,
 }));
 
 describe("DashboardMobileNavSheet", () => {

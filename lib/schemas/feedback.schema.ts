@@ -8,10 +8,34 @@ export const submitFeedbackSchema = z.object({
   type: feedbackTypeSchema,
   message: z
     .string()
-    .min(10, "Le message doit contenir au moins 10 caractères")
-    .max(2000, "Le message ne peut pas dépasser 2000 caractères"),
-  page: z.string().max(500),
-  userAgent: z.string().max(500),
+    .transform((value) => value.trim())
+    .pipe(
+      z
+        .string()
+        .min(5, "Le message doit contenir au moins 5 caractères")
+        .max(2000, "Le message ne peut pas dépasser 2000 caractères"),
+    ),
+  page: z
+    .string()
+    .max(500)
+    .transform((value) => value.trim())
+    .pipe(
+      z
+        .string()
+        .min(1, "Chemin de page invalide")
+        .refine((pathValue) => pathValue.startsWith("/"), {
+          message: "Chemin de page invalide",
+        })
+        .refine((pathValue) => !/[\x00-\x1f]/.test(pathValue), {
+          message: "Chemin de page invalide",
+        }),
+    ),
+  userAgent: z
+    .string()
+    .max(500)
+    .refine((ua) => !/[\r\n]/.test(ua), {
+      message: "User-Agent invalide",
+    }),
 });
 
 export type SubmitFeedbackInput = z.infer<typeof submitFeedbackSchema>;

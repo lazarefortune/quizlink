@@ -6,36 +6,19 @@ import { submitFeedbackSchema } from "@/lib/schemas/feedback.schema";
 import type { SubmitFeedbackInput } from "@/lib/schemas/feedback.schema";
 
 const MAX_SUBMISSIONS_PER_HOUR = 5;
-const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const MAX_ANONYMOUS_SUBMISSIONS_PER_HOUR = 30;
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
 
 type SubmitFeedbackResponse =
   | { success: true }
   | { success: false; error: string };
 
-/**
- * Server Action: Submit feedback
- *
- * SECURITY RULES:
- * - Only authenticated users can submit feedback
- * - Rate limiting: max 5 submissions per hour
- * - Input validation with Zod
- * - userId attached server-side only
- * - No HTML injection (message stored as plain text)
- */
-export async function submitFeedbackAction(
-  input: SubmitFeedbackInput
+async function createFeedbackCore(
+  input: SubmitFeedbackInput,
 ): Promise<SubmitFeedbackResponse> {
   try {
-    // Step 1: Authenticate user (server-side only)
     const session = await auth();
-    if (!session?.user?.id) {
-      return {
-        success: false,
-        error: "errors.unauthorized",
-      };
-    }
-
-    const userId = session.user.id;
+    const userId = session?.user?.id ?? null;
 
     if (!prisma) {
       return {
@@ -44,7 +27,6 @@ export async function submitFeedbackAction(
       };
     }
 
-    // Step 2: Validate input with Zod
     const validationResult = submitFeedbackSchema.safeParse(input);
     if (!validationResult.success) {
       const firstError = validationResult.error.issues[0];
@@ -56,30 +38,47 @@ export async function submitFeedbackAction(
 
     const validatedInput = validationResult.data;
 
-    // Step 3: Rate limiting - check submissions in last hour
     const oneHourAgo = new Date(Date.now() - RATE_LIMIT_WINDOW_MS);
-    const recentSubmissions = await prisma.feedback.count({
-      where: {
-        userId,
-        createdAt: {
-          gte: oneHourAgo,
-        },
-      },
-    });
 
-    if (recentSubmissions >= MAX_SUBMISSIONS_PER_HOUR) {
-      return {
-        success: false,
-        error: "errors.rateLimitExceeded",
-      };
+    if (userId) {
+      const recentSubmissions = await prisma.feedback.count({
+        where: {
+          userId,
+          createdAt: {
+            gte: oneHourAgo,
+          },
+        },
+      });
+
+      if (recentSubmissions >= MAX_SUBMISSIONS_PER_HOUR) {
+        return {
+          success: false,
+          error: "errors.rateLimitExceeded",
+        };
+      }
+    } else {
+      const recentAnonymous = await prisma.feedback.count({
+        where: {
+          userId: null,
+          createdAt: {
+            gte: oneHourAgo,
+          },
+        },
+      });
+
+      if (recentAnonymous >= MAX_ANONYMOUS_SUBMISSIONS_PER_HOUR) {
+        return {
+          success: false,
+          error: "errors.rateLimitExceeded",
+        };
+      }
     }
 
-    // Step 4: Create feedback
     await prisma.feedback.create({
       data: {
         userId,
         type: validatedInput.type,
-        message: validatedInput.message.trim(),
+        message: validatedInput.message,
         page: validatedInput.page,
         userAgent: validatedInput.userAgent,
         status: "NEW",
@@ -88,10 +87,22 @@ export async function submitFeedbackAction(
 
     return { success: true };
   } catch (error) {
-    console.error("[submitFeedbackAction] Error:", error);
+    console.error("[createFeedbackAction] Error:", error);
     return {
       success: false,
       error: "errors.feedbackSubmissionFailed",
     };
   }
+}
+
+export async function createFeedbackAction(
+  input: SubmitFeedbackInput,
+): Promise<SubmitFeedbackResponse> {
+  return createFeedbackCore(input);
+}
+
+export async function submitFeedbackAction(
+  input: SubmitFeedbackInput,
+): Promise<SubmitFeedbackResponse> {
+  return createFeedbackCore(input);
 }

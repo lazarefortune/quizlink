@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+
+import { createFeedbackAction } from "@/app/feedback/actions";
 import {
   Dialog,
   DialogContent,
@@ -20,18 +22,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { submitFeedbackAction } from "@/app/feedback/actions";
 import { useToast } from "@/components/ui/toast";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import type { FeedbackType } from "@/lib/schemas/feedback.schema";
 
-type FeedbackModalProps = {
+type SupportFeedbackModalProps = {
   isOpen: boolean;
   onClose: () => void;
 };
 
-export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
+export function SupportFeedbackModal({ isOpen, onClose }: SupportFeedbackModalProps) {
   const [type, setType] = useState<FeedbackType | "">("");
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,7 +41,6 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
   const { showToast } = useToast();
   const { locale } = useLocale();
 
-  // Reset form when modal opens/closes
   useEffect(() => {
     if (!isOpen) {
       setType("");
@@ -53,17 +53,17 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
     setError(null);
 
     if (!type) {
-      setError(t(locale, "feedback.validation.typeRequired"));
+      setError(t(locale, "support.validation.typeRequired"));
       return;
     }
 
-    if (message.trim().length < 10) {
-      setError(t(locale, "feedback.validation.messageTooShort"));
+    if (message.trim().length < 5) {
+      setError(t(locale, "support.validation.messageTooShort"));
       return;
     }
 
     if (message.trim().length > 2000) {
-      setError(t(locale, "feedback.validation.messageTooLong"));
+      setError(t(locale, "support.validation.messageTooLong"));
       return;
     }
 
@@ -73,7 +73,7 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
       const userAgent = typeof window !== "undefined" ? window.navigator.userAgent : "";
       const page = pathname || "/";
 
-      const result = await submitFeedbackAction({
+      const result = await createFeedbackAction({
         type: type as FeedbackType,
         message: message.trim(),
         page,
@@ -82,17 +82,17 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
 
       if (!result.success) {
         const errorMessage = result.error.startsWith("errors.")
-          ? t(locale, result.error as string)
+          ? t(locale, result.error)
           : result.error;
         setError(errorMessage);
         return;
       }
 
-      showToast(t(locale, "feedback.success.message"), "success");
+      showToast(t(locale, "support.success.sent"), "success");
       onClose();
     } catch (err) {
-      console.error("[FeedbackModal] Error submitting feedback:", err);
-      setError(t(locale, "feedback.errors.submissionFailed"));
+      console.error("[SupportFeedbackModal] Error submitting feedback:", err);
+      setError(t(locale, "support.errors.sendFailed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -102,61 +102,68 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>{t(locale, "feedback.title")}</DialogTitle>
-          <DialogDescription>{t(locale, "feedback.description")}</DialogDescription>
+          <DialogTitle>{t(locale, "support.title")}</DialogTitle>
+          <DialogDescription>{t(locale, "support.description")}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="feedback-type">
-              {t(locale, "feedback.form.type")} <span className="text-destructive">*</span>
+            <Label htmlFor="support-feedback-type">
+              {t(locale, "support.form.typeLabel")}{" "}
+              <span className="text-destructive">*</span>
             </Label>
             <Select value={type} onValueChange={(value) => setType(value as FeedbackType)}>
-              <SelectTrigger id="feedback-type">
-                <SelectValue placeholder={t(locale, "feedback.form.typePlaceholder")} />
+              <SelectTrigger id="support-feedback-type">
+                <SelectValue placeholder={t(locale, "support.form.typePlaceholder")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="BUG">{t(locale, "feedback.types.bug")}</SelectItem>
-                <SelectItem value="SUGGESTION">{t(locale, "feedback.types.suggestion")}</SelectItem>
-                <SelectItem value="FEEDBACK">{t(locale, "feedback.types.feedback")}</SelectItem>
+                <SelectItem value="BUG">{t(locale, "support.types.bug")}</SelectItem>
+                <SelectItem value="SUGGESTION">
+                  {t(locale, "support.types.suggestion")}
+                </SelectItem>
+                <SelectItem value="FEEDBACK">
+                  {t(locale, "support.types.questionFeedback")}
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="feedback-message">
-              {t(locale, "feedback.form.message")} <span className="text-destructive">*</span>
+            <Label htmlFor="support-feedback-message">
+              {t(locale, "support.form.messageLabel")}{" "}
+              <span className="text-destructive">*</span>
             </Label>
             <Textarea
-              id="feedback-message"
+              id="support-feedback-message"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
+              placeholder={t(locale, "support.form.messagePlaceholder")}
               rows={6}
               maxLength={2000}
             />
-            <div className="text-xs text-muted-foreground text-right">
+            <div className="text-right text-xs text-muted-foreground">
               {message.length}/2000
             </div>
           </div>
 
-          {error && (
+          {error ? (
             <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
               {error}
             </div>
-          )}
+          ) : null}
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
-            {t(locale, "feedback.form.cancel")}
+            {t(locale, "support.form.cancel")}
           </Button>
           <Button
             variant="primary"
-            onClick={handleSubmit}
-            disabled={isSubmitting || !type || message.trim().length < 10}
+            onClick={() => void handleSubmit()}
+            disabled={isSubmitting || !type || message.trim().length < 5}
             isLoading={isSubmitting}
           >
-            {t(locale, "feedback.form.submit")}
+            {t(locale, "support.form.send")}
           </Button>
         </DialogFooter>
       </DialogContent>

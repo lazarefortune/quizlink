@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Coins, FileText, House, Plus } from "lucide-react";
+import { Coins, FileText, House, Plus, Headset } from "lucide-react";
 import { useSession } from "next-auth/react";
 
 import { useLocale } from "@/lib/i18n/use-locale";
@@ -10,6 +10,8 @@ import { cn } from "@/lib/utils";
 import { BrandQuizLinkText } from "@/components/BrandQuizLinkText";
 
 import { Button } from "@/components/ui/button";
+import { useSupportFeedback } from "@/components/support/support-feedback-provider";
+
 import { DashboardUserMenu } from "./dashboard-user-menu";
 import { NavItem } from "./nav-item";
 
@@ -17,6 +19,27 @@ type SidebarProps = {
   onNavClick?: () => void;
   className?: string;
 };
+
+function SidebarSupportTrigger({ onNavClick }: { onNavClick?: () => void }) {
+  const { locale } = useLocale();
+  const { openSupportFeedback } = useSupportFeedback();
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        openSupportFeedback();
+        onNavClick?.();
+      }}
+      className={cn(
+        "flex w-full items-center gap-3 rounded-xl border-2 border-transparent px-3 py-2.5 text-lg font-medium text-muted-foreground transition-all hover:bg-muted hover:text-foreground",
+      )}
+    >
+      <Headset className="h-5 w-5 shrink-0" />
+      {t(locale, "support.navLabel")}
+    </button>
+  );
+}
 
 export function Sidebar({ onNavClick, className }: SidebarProps) {
   const { locale } = useLocale();
@@ -61,6 +84,7 @@ export function Sidebar({ onNavClick, className }: SidebarProps) {
           icon={Plus}
           onClick={onNavClick}
         />
+        <SidebarSupportTrigger onNavClick={onNavClick} />
       </nav>
 
       <div className="shrink-0 px-3 pb-3">

@@ -7,6 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   FileText,
   House,
+  Headset,
   Menu,
   Plus,
   Shield,
@@ -27,6 +28,8 @@ import { BrandQuizLinkText } from "@/components/BrandQuizLinkText";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 
+import { useSupportFeedback } from "@/components/support/support-feedback-provider";
+
 import { DashboardMobileNavSheetLink } from "./dashboard-mobile-nav-sheet-link";
 
 export function DashboardMobileNavSheet() {
@@ -35,6 +38,7 @@ export function DashboardMobileNavSheet() {
   const { data: session } = useSession();
   const { locale } = useLocale();
   const router = useRouter();
+  const { openSupportFeedback } = useSupportFeedback();
 
   const handleSignOut = async () => {
     setOpen(false);
@@ -130,6 +134,25 @@ export function DashboardMobileNavSheet() {
 
             <div>
               <p className="mb-2 px-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                {t(locale, "support.helpSection")}
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  openSupportFeedback();
+                }}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-lg font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <Headset className="h-5 w-5 shrink-0" />
+                {t(locale, "support.navLabel")}
+              </button>
+            </div>
+
+            <Separator />
+
+            <div>
+              <p className="mb-2 px-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
                 {accountLabel}
               </p>
               <div className="flex flex-col gap-1">
@@ -137,7 +160,7 @@ export function DashboardMobileNavSheet() {
                   <SheetClose asChild>
                     <Link
                       href="/admin"
-                      className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-base font-bold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-lg font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                     >
                       <Shield className="h-5 w-5 shrink-0" />
                       {t(locale, "userMenu.admin")}
@@ -147,7 +170,7 @@ export function DashboardMobileNavSheet() {
                 <SheetClose asChild>
                   <Link
                     href="/account"
-                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-base font-bold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-lg font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                   >
                     <User className="h-5 w-5 shrink-0" />
                     {t(locale, "userMenu.account")}

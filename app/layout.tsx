@@ -7,7 +7,6 @@ import { ToastProvider } from "@/components/ui/toast";
 import { Providers } from "@/app/providers";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
-import { FeedbackButton } from "@/components/feedback-button";
 import "./globals.css";
 
 const capriola = Capriola({
@@ -78,7 +77,6 @@ export default function RootLayout({
                   <Header />
                   <main className="flex min-h-0 flex-1 flex-col">{children}</main>
                   <Footer />
-                  <FeedbackButton />
                 </div>
               </ToastProvider>
             </ThemeProvider>
