@@ -154,7 +154,7 @@ export function CoinsContent() {
       <div className="mx-auto max-w-4xl space-y-8 sm:space-y-10">
         {/* Hero: titre boutique */}
         <div>
-          <h1 className="h1 text-2xl font-black tracking-tight text-foreground sm:text-3xl md:text-4xl">
+          <h1 className="h1 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl md:text-4xl">
             {t(locale, "account.coins.title")}
           </h1>
           <p className="mt-1 text-base text-muted-foreground">
@@ -170,11 +170,11 @@ export function CoinsContent() {
                 <Coins className="h-7 w-7" />
               </div>
               <div>
-                <p className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
+                <p className="text-sm font-medium text-muted-foreground">
                   {t(locale, "account.coins.currentBalance")}
                 </p>
                 <div className="flex items-baseline gap-2 mt-0.5">
-                  <span className="text-4xl font-black tabular-nums text-foreground">
+                  <span className="text-4xl font-semibold tabular-nums text-foreground">
                     {isLoading ? "–" : balance}
                   </span>
                   <span className="text-lg font-semibold text-muted-foreground">
@@ -209,7 +209,7 @@ export function CoinsContent() {
 
         {/* Nos offres — extensible pour d'autres produits plus tard */}
         <section id="shop-offers" className="scroll-mt-8 space-y-6">
-          <h2 className="h2 text-xl font-black text-foreground sm:text-2xl">
+          <h2 className="h2 text-xl font-semibold text-foreground sm:text-2xl">
             {t(locale, "account.coins.ourOffers")}
           </h2>
 
@@ -255,7 +255,7 @@ export function CoinsContent() {
                     )}
                     <CardContent className="p-5 sm:p-6 space-y-4">
                       <div>
-                        <p className="font-fredoka font-black text-foreground text-lg uppercase">
+                        <p className="font-fredoka font-semibold text-foreground text-lg uppercase">
                           {pack.displayName}
                         </p>
                         <div className="flex items-center gap-1.5 mt-1">

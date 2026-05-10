@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { signOut, useSession } from "next-auth/react";
 import {
   LayoutDashboard,
   Users,
@@ -13,22 +12,12 @@ import {
   BarChart3,
   ArrowLeft,
   X,
-  User,
-  LogOut,
-  UserRound,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ThemeSegmentedControl } from "@/components/admin/theme-segmented-control";
+import { DashboardUserMenu } from "@/components/dashboard/dashboard-user-menu";
 
 const navItems = [
   { href: "/admin", label: "admin.nav.dashboard", icon: LayoutDashboard },
@@ -52,7 +41,6 @@ export function AdminSidebar({
 }: AdminSidebarProps) {
   const [pathname, setPathname] = useState<string>("");
   const { locale } = useLocale();
-  const { data: session } = useSession();
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -71,11 +59,6 @@ export function AdminSidebar({
   const isActive = (href: string) => {
     if (href === "/admin") return pathname === "/admin";
     return pathname?.startsWith(href);
-  };
-
-  const handleSignOut = async () => {
-    await signOut({ redirect: false });
-    window.location.href = "/";
   };
 
   const handleNavClick = () => {
@@ -104,7 +87,7 @@ export function AdminSidebar({
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
               <Shield className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span className="font-bold text-lg text-foreground">Admin</span>
+            <span className="font-medium text-lg text-foreground">Admin</span>
           </div>
           <Button
             variant="ghost"
@@ -128,7 +111,7 @@ export function AdminSidebar({
               setPathname("/admin");
               handleNavClick();
             }}
-            className="font-bold text-lg text-foreground"
+            className="font-medium text-lg text-foreground"
           >
             Admin
           </Link>
@@ -148,7 +131,7 @@ export function AdminSidebar({
                   handleNavClick();
                 }}
                 className={cn(
-                  "flex items-center gap-3 rounded-md px-4 py-2.5 text-base font-bold transition-colors",
+                  "flex items-center gap-3 rounded-md px-4 py-2.5 text-lg font-medium transition-colors",
                   active
                     ? "bg-primary text-white shadow-xs"
                     : "text-muted-foreground hover:bg-accent hover:text-accent-foreground dark:text-white",
@@ -170,7 +153,7 @@ export function AdminSidebar({
                 setPathname("/dashboard");
                 handleNavClick();
               }}
-              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-base font-bold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-lg font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               <ArrowLeft className="h-5 w-5 shrink-0" />
               <span>{t(locale, "admin.nav.backToDashboard")}</span>
@@ -178,39 +161,7 @@ export function AdminSidebar({
           </div>
 
           <div className="hidden border-t border-border/60 p-3 lg:block">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-10 w-full justify-start gap-2 border border-border px-3">
-                  <User className="h-5 w-5 shrink-0" />
-                  <span className="truncate text-base font-bold">{session?.user?.name ?? "Admin"}</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" side="top" className="w-60 rounded-2xl p-2">
-                <div
-                  className="flex items-center justify-between gap-3 rounded-lg px-2 py-1"
-                  onPointerDown={(event) => event.stopPropagation()}
-                >
-                  <span className="text-sm font-bold text-foreground">
-                    {locale === "fr" ? "Theme" : "Theme"}
-                  </span>
-                  <ThemeSegmentedControl locale={locale} />
-                </div>
-                <DropdownMenuSeparator className="my-1.5" />
-                <DropdownMenuItem asChild className="text-base">
-                  <Link href="/account" className="flex cursor-pointer items-center gap-2 text-base font-bold">
-                    <UserRound className="h-4 w-4" />
-                    {locale === "fr" ? "Mon profil" : "My profile"}
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={handleSignOut}
-                  className="flex cursor-pointer items-center gap-2 text-base font-bold text-red-500"
-                >
-                  <LogOut className="h-4 w-4" />
-                  {t(locale, "auth.signOut")}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <DashboardUserMenu hideAdminLink />
           </div>
         </div>
       </aside>

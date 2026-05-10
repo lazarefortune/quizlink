@@ -22,9 +22,14 @@ import { cn } from "@/lib/utils";
 
 type DashboardUserMenuProps = {
   className?: string;
+  /** When true, hides the “Admin” entry (e.g. sidebar is already on admin). */
+  hideAdminLink?: boolean;
 };
 
-export function DashboardUserMenu({ className }: DashboardUserMenuProps) {
+export function DashboardUserMenu({
+  className,
+  hideAdminLink = false,
+}: DashboardUserMenuProps) {
   const { data: session } = useSession();
   const { locale } = useLocale();
   const router = useRouter();
@@ -85,18 +90,18 @@ export function DashboardUserMenu({ className }: DashboardUserMenuProps) {
           <ThemeSegmentedControl locale={locale} />
         </div>
         <DropdownMenuSeparator />
-        {session?.user?.role === "ADMIN" && (
-            <DropdownMenuItem asChild>
+        {session?.user?.role === "ADMIN" && !hideAdminLink && (
+          <DropdownMenuItem asChild>
             <Link
-                href="/admin"
-                className="flex cursor-pointer items-center gap-2"
+              href="/admin"
+              className="flex cursor-pointer items-center gap-2"
             >
-                <Shield className="h-5 w-5" />
-                <span className="font-fredoka text-base font-medium">
+              <Shield className="h-5 w-5" />
+              <span className="font-fredoka text-base font-medium">
                 {t(locale, "userMenu.admin")}
-                </span>
+              </span>
             </Link>
-            </DropdownMenuItem>
+          </DropdownMenuItem>
         )}
         <DropdownMenuItem asChild>
           <Link
