@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   DndContext,
@@ -52,6 +52,7 @@ import type {
   QuizSettings,
 } from "@/types/quiz-builder";
 import {Textarea} from "@/components/ui/textarea";
+import { useBuilderNavigationGuard } from "@/components/dashboard/builder-navigation-guard-context";
 
 function computeQuizBuilderSnapshot(q: QuizBuilder): string {
   return JSON.stringify({
@@ -260,6 +261,26 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
   const [savedQuizId, setSavedQuizId] = useState<string | null>(null);
   const unsavedBaselineRef = useRef<string | null>(null);
   const { showToast } = useToast();
+  const {
+    setBuilderHasUnsavedChanges,
+    runNavigationBypass,
+    requestNavigate,
+  } = useBuilderNavigationGuard();
+
+  const syncDirtyToGuard = useCallback(() => {
+    if (unsavedBaselineRef.current === null) {
+      setBuilderHasUnsavedChanges(false);
+      return;
+    }
+    setBuilderHasUnsavedChanges(
+      computeQuizBuilderSnapshot(quiz) !== unsavedBaselineRef.current,
+    );
+  }, [quiz, setBuilderHasUnsavedChanges]);
+
+  useEffect(() => {
+    syncDirtyToGuard();
+    return () => setBuilderHasUnsavedChanges(false);
+  }, [syncDirtyToGuard, setBuilderHasUnsavedChanges]);
 
   // Check if quiz exists in database (ID starts with "cl" for Prisma cuid)
   const isQuizSaved = savedQuizId !== null || Boolean(quiz.id?.startsWith("cl"));
@@ -385,13 +406,17 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
               })
             ) {
               unsavedBaselineRef.current = computeQuizBuilderSnapshot(mergedQuiz);
-              router.push(buildQuizSuccessPath(result.quizId));
+              runNavigationBypass(() => {
+                setBuilderHasUnsavedChanges(false);
+                router.push(buildQuizSuccessPath(result.quizId));
+              });
               return;
             }
           }
         }
 
         unsavedBaselineRef.current = computeQuizBuilderSnapshot(mergedQuiz);
+        syncDirtyToGuard();
 
         const message = isQuizSaved
           ? t(locale, "builder.quizSaved")
@@ -696,7 +721,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
                     quizId={savedQuizId}
                     quizName={quiz.name}
                     onDeleted={() => {
-                      router.push("/dashboard");
+                      requestNavigate("/dashboard");
                     }}
                   />
                 )}

@@ -3,6 +3,7 @@
 import type { ElementType } from "react";
 import Link from "next/link";
 
+import { useBuilderNavigationGuard } from "@/components/dashboard/builder-navigation-guard-context";
 import { SheetClose } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
@@ -19,10 +20,15 @@ export function DashboardMobileNavSheetLink({
   label,
   isActive,
 }: DashboardMobileNavSheetLinkProps) {
+  const { interceptLinkClick } = useBuilderNavigationGuard();
+
   return (
     <SheetClose asChild>
       <Link
         href={href}
+        onClick={(event) => {
+          interceptLinkClick(event, href);
+        }}
         className={cn(
           "flex items-center gap-3 rounded-xl px-3 py-2.5 text-lg font-medium transition-all",
           isActive

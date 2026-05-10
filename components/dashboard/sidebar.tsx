@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { BrandQuizLinkText } from "@/components/BrandQuizLinkText";
 
 import { Button } from "@/components/ui/button";
+import { useBuilderNavigationGuard } from "@/components/dashboard/builder-navigation-guard-context";
 import { useSupportFeedback } from "@/components/support/support-feedback-provider";
 
 import { DashboardUserMenu } from "./dashboard-user-menu";
@@ -44,6 +45,7 @@ function SidebarSupportTrigger({ onNavClick }: { onNavClick?: () => void }) {
 export function Sidebar({ onNavClick, className }: SidebarProps) {
   const { locale } = useLocale();
   const { data: session } = useSession();
+  const { interceptLinkClick } = useBuilderNavigationGuard();
   const coinBalance = session?.user?.coinBalance ?? 0;
 
   return (
@@ -56,7 +58,12 @@ export function Sidebar({ onNavClick, className }: SidebarProps) {
       <div className="flex h-14 shrink-0 items-center border-b border-border/60 px-4">
         <Link
           href="/dashboard"
-          onClick={onNavClick}
+          onClick={(event) => {
+            if (interceptLinkClick(event, "/dashboard")) {
+              return;
+            }
+            onNavClick?.();
+          }}
           className="flex items-center gap-2.5"
         >
           <span className="font-black text-lg text-foreground">

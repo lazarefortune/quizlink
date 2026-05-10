@@ -41,6 +41,20 @@ vi.mock("@/components/support/support-feedback-provider", () => ({
   SupportFeedbackProvider: ({ children }: { children: ReactNode }) => children,
 }));
 
+vi.mock("@/components/dashboard/builder-navigation-guard-context", () => ({
+  useBuilderNavigationGuard: () => ({
+    setBuilderHasUnsavedChanges: vi.fn(),
+    interceptLinkClick: () => false,
+    requestNavigate: vi.fn(),
+    requestAction: (action: () => void | Promise<void>) => {
+      void Promise.resolve(action());
+    },
+    runNavigationBypass: (fn: () => void) => fn(),
+  }),
+  BuilderNavigationGuardProvider: ({ children }: { children: ReactNode }) =>
+    children,
+}));
+
 describe("DashboardMobileNavSheet", () => {
   it("renders menu trigger with accessible label", () => {
     render(<DashboardMobileNavSheet />);

@@ -19,6 +19,7 @@ import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { getDisplayTitle, getUserInitials } from "@/lib/userProfileDisplay";
 import { cn } from "@/lib/utils";
+import { useBuilderNavigationGuard } from "@/components/dashboard/builder-navigation-guard-context";
 
 type DashboardUserMenuProps = {
   className?: string;
@@ -33,16 +34,19 @@ export function DashboardUserMenu({
   const { data: session } = useSession();
   const { locale } = useLocale();
   const router = useRouter();
+  const { interceptLinkClick, requestAction } = useBuilderNavigationGuard();
 
   const username = session?.user?.name ?? "";
   const email = session?.user?.email ?? "";
   const initials = getUserInitials(username, email);
   const title = getDisplayTitle(username, email);
 
-  const handleSignOut = async () => {
-    await signOut({ redirect: false });
-    router.push("/");
-    router.refresh();
+  const handleSignOut = () => {
+    requestAction(async () => {
+      await signOut({ redirect: false });
+      router.push("/");
+      router.refresh();
+    });
   };
 
   return (
@@ -94,6 +98,7 @@ export function DashboardUserMenu({
           <DropdownMenuItem asChild>
             <Link
               href="/admin"
+              onClick={(event) => interceptLinkClick(event, "/admin")}
               className="flex cursor-pointer items-center gap-2"
             >
               <Shield className="h-5 w-5" />
@@ -106,6 +111,7 @@ export function DashboardUserMenu({
         <DropdownMenuItem asChild>
           <Link
             href="/account"
+            onClick={(event) => interceptLinkClick(event, "/account")}
             className="flex cursor-pointer items-center gap-2"
           >
             <User className="h-5 w-5" />

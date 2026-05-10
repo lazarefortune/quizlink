@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { type LucideIcon } from "lucide-react";
 
+import { useBuilderNavigationGuard } from "@/components/dashboard/builder-navigation-guard-context";
 import { cn } from "@/lib/utils";
 
 type NavItemProps = {
@@ -22,6 +23,7 @@ export function NavItem({
   className,
 }: NavItemProps) {
   const pathname = usePathname();
+  const { interceptLinkClick } = useBuilderNavigationGuard();
   const isActive =
     href === "/dashboard"
       ? pathname === "/dashboard"
@@ -30,7 +32,12 @@ export function NavItem({
   return (
     <Link
       href={href}
-      onClick={onClick}
+      onClick={(event) => {
+        if (interceptLinkClick(event, href)) {
+          return;
+        }
+        onClick?.();
+      }}
       className={cn(
         "flex items-center border-2 gap-3 rounded-xl px-3 py-2.5 text-lg font-medium transition-all",
         isActive

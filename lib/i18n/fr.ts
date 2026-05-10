@@ -444,6 +444,13 @@ export const fr = {
     previewQuiz: "Aperçu",
     previewComingSoon:
       "Aperçu bientôt disponible. Utilise « Sauvegarder », puis teste ton quiz depuis le tableau de bord.",
+    unsavedNavigation: {
+      title: "Modifications non enregistrées",
+      description:
+        "Tu as des modifications non enregistrées. Si tu quittes cette page, elles risquent d'être perdues.",
+      continueEditing: "Continuer l'édition",
+      leaveWithoutSaving: "Quitter sans sauvegarder",
+    },
     createQuiz: "Créer le Quiz",
     saveQuiz: "Sauvegarder",
     saveError: "Erreur lors de la sauvegarde du quiz",

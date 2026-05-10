@@ -29,6 +29,7 @@ import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 
 import { useSupportFeedback } from "@/components/support/support-feedback-provider";
+import { useBuilderNavigationGuard } from "@/components/dashboard/builder-navigation-guard-context";
 
 import { DashboardMobileNavSheetLink } from "./dashboard-mobile-nav-sheet-link";
 
@@ -39,12 +40,15 @@ export function DashboardMobileNavSheet() {
   const { locale } = useLocale();
   const router = useRouter();
   const { openSupportFeedback } = useSupportFeedback();
+  const { interceptLinkClick, requestAction } = useBuilderNavigationGuard();
 
-  const handleSignOut = async () => {
-    setOpen(false);
-    await signOut({ redirect: false });
-    router.push("/");
-    router.refresh();
+  const handleSignOut = () => {
+    requestAction(async () => {
+      setOpen(false);
+      await signOut({ redirect: false });
+      router.push("/");
+      router.refresh();
+    });
   };
 
   const primaryNav: Array<{
@@ -105,6 +109,7 @@ export function DashboardMobileNavSheet() {
           <SheetClose asChild>
             <Link
               href="/dashboard"
+              onClick={(event) => interceptLinkClick(event, "/dashboard")}
               className="flex h-14 shrink-0 items-center border-b border-border/60 px-4 transition-colors hover:bg-muted/40"
             >
               <span className="font-black text-lg text-foreground">
@@ -160,6 +165,7 @@ export function DashboardMobileNavSheet() {
                   <SheetClose asChild>
                     <Link
                       href="/admin"
+                      onClick={(event) => interceptLinkClick(event, "/admin")}
                       className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-lg font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                     >
                       <Shield className="h-5 w-5 shrink-0" />
@@ -170,6 +176,7 @@ export function DashboardMobileNavSheet() {
                 <SheetClose asChild>
                   <Link
                     href="/account"
+                    onClick={(event) => interceptLinkClick(event, "/account")}
                     className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-lg font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                   >
                     <User className="h-5 w-5 shrink-0" />

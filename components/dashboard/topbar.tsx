@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { Coins, ArrowUp } from "lucide-react";
 
+import { useBuilderNavigationGuard } from "@/components/dashboard/builder-navigation-guard-context";
 import { cn } from "@/lib/utils";
 import { BrandQuizLinkText } from "@/components/BrandQuizLinkText";
 
@@ -16,6 +17,7 @@ type TopbarProps = {
 
 export function Topbar({ className }: TopbarProps) {
   const { data: session } = useSession();
+  const { interceptLinkClick } = useBuilderNavigationGuard();
   const { isHeaderVisible, isScrolledDown } = useScrollBehavior();
 
   const scrollToTop = () => {
@@ -39,7 +41,11 @@ export function Topbar({ className }: TopbarProps) {
         role="banner"
       >
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
-          <Link href="/dashboard" className="flex min-w-0 items-center gap-2">
+          <Link
+            href="/dashboard"
+            onClick={(event) => interceptLinkClick(event, "/dashboard")}
+            className="flex min-w-0 items-center gap-2"
+          >
             <span className="truncate font-black text-xl text-foreground">
               <BrandQuizLinkText />
             </span>
@@ -50,6 +56,7 @@ export function Topbar({ className }: TopbarProps) {
           {session?.user && (
             <Link
               href="/account/coins"
+              onClick={(event) => interceptLinkClick(event, "/account/coins")}
               className="flex items-center gap-1.5 rounded-xl border-2 border-border bg-muted/40 px-2 py-1.5 font-bold text-foreground transition-colors hover:bg-muted/60 max-[380px]:gap-1 max-[380px]:px-1.5 max-[380px]:py-1 sm:px-2.5"
             >
               <Coins className="h-5 w-5 shrink-0 text-blue" />

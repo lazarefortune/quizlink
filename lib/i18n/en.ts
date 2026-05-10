@@ -444,6 +444,13 @@ export const en = {
     previewQuiz: "Preview",
     previewComingSoon:
       "Preview coming soon. Save your quiz, then try it from your dashboard.",
+    unsavedNavigation: {
+      title: "Unsaved changes",
+      description:
+        "You have unsaved changes. If you leave this page, you may lose them.",
+      continueEditing: "Keep editing",
+      leaveWithoutSaving: "Leave without saving",
+    },
     createQuiz: "Create Quiz",
     saveQuiz: "Save",
     saveError: "Error saving quiz",
