@@ -152,7 +152,7 @@ export function QuizActions({
   };
 
   const handleView = () => {
-    router.push(`/quiz/preview?quizId=${quizId}`);
+    router.push(`/dashboard/quiz/${quizId}/preview`);
   };
 
   return (

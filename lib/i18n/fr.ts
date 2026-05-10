@@ -442,6 +442,8 @@ export const fr = {
     noQuestions: "Aucune question pour le moment.",
     cancel: "Annuler",
     previewQuiz: "Aperçu",
+    previewComingSoon:
+      "Aperçu bientôt disponible. Utilise « Sauvegarder », puis teste ton quiz depuis le tableau de bord.",
     createQuiz: "Créer le Quiz",
     saveQuiz: "Sauvegarder",
     saveError: "Erreur lors de la sauvegarde du quiz",

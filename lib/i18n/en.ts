@@ -442,6 +442,8 @@ export const en = {
     noQuestions: "No questions yet.",
     cancel: "Cancel",
     previewQuiz: "Preview",
+    previewComingSoon:
+      "Preview coming soon. Save your quiz, then try it from your dashboard.",
     createQuiz: "Create Quiz",
     saveQuiz: "Save",
     saveError: "Error saving quiz",

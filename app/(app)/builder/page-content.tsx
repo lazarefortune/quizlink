@@ -41,7 +41,6 @@ import { useSession } from "next-auth/react";
 import { useToast } from "@/components/ui/toast";
 import { QuestionEditor } from "@/components/quiz-builder/question-editor";
 import { validateQuiz, type ValidationError } from "@/lib/quiz-validation";
-import { adaptQuizBuilderToPlayer } from "@/lib/quiz-adapter";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -53,6 +52,27 @@ import type {
   QuizSettings,
 } from "@/types/quiz-builder";
 import {Textarea} from "@/components/ui/textarea";
+
+function computeQuizBuilderSnapshot(q: QuizBuilder): string {
+  return JSON.stringify({
+    id: q.id,
+    name: q.name,
+    visibility: q.visibility,
+    settings: q.settings,
+    questions: q.questions.map((question) => ({
+      id: question.id,
+      type: question.type,
+      label: question.label,
+      explanation: question.explanation ?? "",
+      image: question.image ?? "",
+      options: question.options.map((o) => ({
+        id: o.id,
+        label: o.label,
+        isCorrect: o.isCorrect,
+      })),
+    })),
+  });
+}
 
 function createEmptyQuestion(): Question {
   return {
@@ -238,10 +258,18 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
   const [, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [savedQuizId, setSavedQuizId] = useState<string | null>(null);
+  const unsavedBaselineRef = useRef<string | null>(null);
   const { showToast } = useToast();
 
   // Check if quiz exists in database (ID starts with "cl" for Prisma cuid)
   const isQuizSaved = savedQuizId !== null || Boolean(quiz.id?.startsWith("cl"));
+
+  useEffect(() => {
+    const urlQuizId = initialQuizId || searchParams.get("quizId");
+    if (!urlQuizId && unsavedBaselineRef.current === null) {
+      unsavedBaselineRef.current = computeQuizBuilderSnapshot(quiz);
+    }
+  }, [initialQuizId, searchParams, quiz]);
 
   // Load quiz from URL if quizId is present
   useEffect(() => {
@@ -252,7 +280,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
       getQuizById(quizId)
         .then((result) => {
           if (result.success && result.quiz) {
-            setQuiz({
+            const loadedQuiz: QuizBuilder = {
               id: result.quiz.id,
               name: result.quiz.name,
               visibility: result.quiz.visibility,
@@ -271,8 +299,10 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
               })),
               createdBy: "USER",
               createdAt: result.quiz.createdAt,
-            });
+            };
+            setQuiz(loadedQuiz);
             setSavedQuizId(result.quiz.id);
+            unsavedBaselineRef.current = computeQuizBuilderSnapshot(loadedQuiz);
           } else {
             showToast(result.error || t(locale, "common.error"), "error");
           }
@@ -290,6 +320,25 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
     // and cancels the success redirect. URL sync after save is handled in handleSave when needed.
   }, [initialQuizId, searchParams, savedQuizId, router, locale, showToast]);
 
+  useEffect(() => {
+    if (unsavedBaselineRef.current === null) {
+      return;
+    }
+    const isDirty =
+      computeQuizBuilderSnapshot(quiz) !== unsavedBaselineRef.current;
+    if (!isDirty) {
+      return;
+    }
+
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [quiz]);
+
   const handleSave = async () => {
     const errors = validateQuiz(quiz);
     if (errors.length > 0) {
@@ -303,6 +352,9 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
       const result = await saveQuiz(quiz, savedQuizId || undefined);
 
       if (result.success) {
+        const mergedQuiz =
+          result.quizId !== undefined ? { ...quiz, id: result.quizId } : quiz;
+
         if (result.quizId) {
           setSavedQuizId(result.quizId);
           // Update quiz ID if it was a new quiz
@@ -332,11 +384,14 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
                 quizId: result.quizId,
               })
             ) {
+              unsavedBaselineRef.current = computeQuizBuilderSnapshot(mergedQuiz);
               router.push(buildQuizSuccessPath(result.quizId));
               return;
             }
           }
         }
+
+        unsavedBaselineRef.current = computeQuizBuilderSnapshot(mergedQuiz);
 
         const message = isQuizSaved
           ? t(locale, "builder.quizSaved")
@@ -445,25 +500,6 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
     }
 
     setActiveId(null);
-  };
-
-  const handlePreview = () => {
-    const errors = validateQuiz(quiz);
-    if (errors.length > 0) {
-      setValidationErrors(errors);
-      return;
-    }
-
-    if (typeof window !== "undefined") {
-      try {
-        const adaptedQuiz = adaptQuizBuilderToPlayer(quiz);
-        sessionStorage.setItem("currentQuiz", JSON.stringify(adaptedQuiz));
-        router.push("/quiz/preview");
-      } catch (error) {
-        console.error("Error adapting quiz for preview:", error);
-        showToast(t(locale, "builder.previewError"), "error");
-      }
-    }
   };
 
   const getQuestionErrors = (questionIndex: number): string[] => {
@@ -644,11 +680,13 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
                   )}
                 </Button>
                 <Button
+                  type="button"
                   variant="secondary"
-                  onClick={handlePreview}
-                  disabled={quiz.questions.length === 0}
+                  disabled
                   className="flex-1 sm:flex-initial text-base"
                   size="default"
+                  title={t(locale, "builder.previewComingSoon")}
+                  aria-label={t(locale, "builder.previewComingSoon")}
                 >
                   <Play className="h-3 w-3 sm:h-4 sm:w-4" />
                   {t(locale, "builder.previewQuiz")}
