@@ -167,32 +167,30 @@ export function QuizDetailContent({
   return (
     <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
       <div className="mx-auto max-w-5xl space-y-6">
+        <Link href="/dashboard/quizzes">
+            <Button variant="ghost" size="sm" className="-ml-2 text-muted-foreground">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                {t(locale, "dashboard.backToMyQuizzes")}
+            </Button>
+        </Link>
         <div className="rounded-xl border border-border bg-card p-4 sm:p-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="space-y-3">
-              <Link href="/dashboard/quizzes">
-                <Button variant="ghost" size="sm" className="-ml-2 text-muted-foreground">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  {t(locale, "dashboard.backToMyQuizzes")}
-                </Button>
-              </Link>
-              <div>
+          <div className="flex flex-col gap-4">
+            <div>
                 <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{quizName}</h1>
                 <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                  <span>
+                    <span>
                     {questions.length}{" "}
                     {questions.length === 1
-                      ? t(locale, "dashboard.question")
-                      : t(locale, "dashboard.questions")}
-                  </span>
-                  <span>
+                        ? t(locale, "dashboard.question")
+                        : t(locale, "dashboard.questions")}
+                    </span>
+                    <span>
                     {stats.totalResponses}{" "}
                     {stats.totalResponses <= 1
-                      ? t(locale, "dashboard.responseSingular")
-                      : t(locale, "dashboard.responsesPlural")}
-                  </span>
+                        ? t(locale, "dashboard.responseSingular")
+                        : t(locale, "dashboard.responsesPlural")}
+                    </span>
                 </div>
-              </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <Button

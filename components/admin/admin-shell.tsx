@@ -34,12 +34,12 @@ export function AdminShell({ children }: AdminShellProps) {
   };
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-card">
-      <div className="flex min-h-0 flex-1">
+    <div className="flex h-dvh min-h-0 flex-col overflow-hidden bg-card">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
         <AdminSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-background lg:rounded-l-3xl lg:border lg:border-border dark:lg:border-border">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background lg:rounded-l-3xl lg:border lg:border-border dark:lg:border-border">
             <header
               className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-border px-3 pt-[env(safe-area-inset-top,0px)] lg:hidden"
               role="banner"
@@ -93,7 +93,7 @@ export function AdminShell({ children }: AdminShellProps) {
               </div>
             </header>
 
-            <main className="min-h-0 flex-1">
+            <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain">
               <div className="mx-auto max-w-8xl px-4 pt-6 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] md:px-6 md:pt-8 md:pb-[calc(2rem+env(safe-area-inset-bottom,0px))]">
                 {children}
               </div>

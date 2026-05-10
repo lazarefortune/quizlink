@@ -17,8 +17,10 @@ export function useScrollBehavior(): ScrollBehaviorResult {
   const lastScrollY = useRef(0);
 
   useEffect(() => {
-    const handleScroll = () => {
-      const currentY = window.scrollY;
+    const getScrollRoot = (): HTMLElement | null =>
+      document.getElementById("dashboard-main-scroll");
+
+    const handleScroll = (currentY: number) => {
       const delta = currentY - lastScrollY.current;
 
       if (delta > DELTA_THRESHOLD && currentY > HIDE_TRIGGER_PX) {
@@ -31,8 +33,33 @@ export function useScrollBehavior(): ScrollBehaviorResult {
       lastScrollY.current = currentY;
     };
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    let detach: (() => void) | undefined;
+
+    const attach = (): void => {
+      const root = getScrollRoot();
+      const onScroll = () => {
+        const y = root ? root.scrollTop : window.scrollY;
+        handleScroll(y);
+      };
+
+      if (root) {
+        root.addEventListener("scroll", onScroll, { passive: true });
+        onScroll();
+        detach = () => root.removeEventListener("scroll", onScroll);
+        return;
+      }
+
+      window.addEventListener("scroll", onScroll, { passive: true });
+      onScroll();
+      detach = () => window.removeEventListener("scroll", onScroll);
+    };
+
+    const timer = window.setTimeout(attach, 0);
+
+    return () => {
+      window.clearTimeout(timer);
+      detach?.();
+    };
   }, []);
 
   return { isHeaderVisible, isScrolledDown };

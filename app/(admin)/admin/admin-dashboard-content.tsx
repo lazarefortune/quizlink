@@ -1,6 +1,7 @@
 "use client";
 import { motion } from "framer-motion";
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
@@ -28,10 +29,11 @@ type StatCardProps = {
   value: string;
   label: string;
   icon: ReactNode;
+  href?: string;
 };
 
-function StatCard({ value, label, icon }: StatCardProps) {
-  return (
+function StatCard({ value, label, icon, href }: StatCardProps) {
+  const card = (
     <Card className="group relative h-full overflow-hidden border border-slate-300 bg-white shadow-none transition-all duration-300 hover:bg-slate-100/50 dark:border-border dark:bg-card dark:hover:bg-secondary">
       <CardContent className="relative flex h-full flex-col p-5">
         <span className="text-base font-semibold text-slate-600 dark:text-slate-400">
@@ -46,6 +48,19 @@ function StatCard({ value, label, icon }: StatCardProps) {
       </CardContent>
     </Card>
   );
+
+  if (href) {
+    return (
+      <Link
+        href={href}
+        className="block h-full cursor-pointer rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      >
+        {card}
+      </Link>
+    );
+  }
+
+  return card;
 }
 
 export function AdminDashboardContent({
@@ -93,6 +108,7 @@ export function AdminDashboardContent({
               value={metrics.totalUsersCurrent.toLocaleString(locale === "fr" ? "fr-FR" : "en-US")}
               label={t(locale, "admin.dashboard.usersList")}
               icon={<Users className="h-4 w-4" />}
+              href="/admin/users"
             />
           </motion.div>
           <motion.div

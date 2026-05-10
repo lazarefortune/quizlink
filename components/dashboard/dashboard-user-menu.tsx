@@ -60,7 +60,7 @@ export function DashboardUserMenu({ className }: DashboardUserMenuProps) {
             <p className="truncate text-sm font-black leading-tight text-foreground">
               {title}
             </p>
-            <p className="mt-0.5 truncate text-xs leading-snug text-muted-foreground">
+            <p className="mt-0.5 truncate lowercase text-xs leading-snug font-normal text-muted-foreground">
               {email || "—"}
             </p>
           </div>
@@ -79,43 +79,43 @@ export function DashboardUserMenu({ className }: DashboardUserMenuProps) {
           className="px-2 py-2"
           onPointerDown={(event) => event.stopPropagation()}
         >
-          <p className="mb-2 text-sm font-bold text-muted-foreground">
+          <p className="mb-2 text-base font-medium text-muted-foreground">
             {locale === "fr" ? "Thème" : "Theme"}
           </p>
           <ThemeSegmentedControl locale={locale} />
         </div>
         <DropdownMenuSeparator />
+        {session?.user?.role === "ADMIN" && (
+            <DropdownMenuItem asChild>
+            <Link
+                href="/admin"
+                className="flex cursor-pointer items-center gap-2"
+            >
+                <Shield className="h-5 w-5" />
+                <span className="font-fredoka text-base font-medium">
+                {t(locale, "userMenu.admin")}
+                </span>
+            </Link>
+            </DropdownMenuItem>
+        )}
         <DropdownMenuItem asChild>
           <Link
             href="/account"
             className="flex cursor-pointer items-center gap-2"
           >
             <User className="h-5 w-5" />
-            <span className="font-fredoka text-base font-bold">
+            <span className="font-fredoka text-base font-medium">
               {t(locale, "userMenu.account")}
             </span>
           </Link>
         </DropdownMenuItem>
-        {session?.user?.role === "ADMIN" && (
-          <DropdownMenuItem asChild>
-            <Link
-              href="/admin"
-              className="flex cursor-pointer items-center gap-2"
-            >
-              <Shield className="h-5 w-5" />
-              <span className="font-fredoka text-base font-bold">
-                {t(locale, "userMenu.admin")}
-              </span>
-            </Link>
-          </DropdownMenuItem>
-        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={handleSignOut}
           className="flex cursor-pointer items-center gap-2 text-destructive focus:text-destructive"
         >
           <LogOut className="h-5 w-5" />
-          <span className="font-fredoka text-base font-bold">
+          <span className="font-fredoka text-base font-medium">
             {t(locale, "auth.signOut")}
           </span>
         </DropdownMenuItem>

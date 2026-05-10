@@ -430,7 +430,7 @@ export default function DashboardQuizzesPage() {
                         href={`/dashboard/quiz/${quiz.id}/preview`}
                         className="block flex-1 mb-4"
                       >
-                        <h3 className="text-lg font-bold leading-snug line-clamp-2 wrap-break-word text-foreground transition-colors hover:text-blue">
+                        <h3 className="text-lg font-medium leading-snug line-clamp-2 wrap-break-word text-zinc-800 dark:text-zinc-200 transition-colors hover:text-blue">
                           {quiz.name}
                         </h3>
                       </Link>
@@ -511,40 +511,7 @@ export default function DashboardQuizzesPage() {
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <Button
-                            variant={copiedQuizId === quiz.id ? "secondary" : "outline"}
-                            size="sm"
-                            className="w-full gap-2"
-                            onClick={() => handleCopyLink(quiz.id)}
-                            disabled={copyLoadingQuizId !== null}
-                          >
-                            <Copy className="h-4 w-4" />
-                            {copyLoadingQuizId === quiz.id ? (
-                              t(locale, "common.loading")
-                            ) : copiedQuizId === quiz.id ? (
-                              t(locale, "dashboard.linkCopied")
-                            ) : (
-                              <>
-                                <span className="sm:hidden">
-                                  {locale === "fr" ? "Lien" : "Link"}
-                                </span>
-                                <span className="hidden sm:inline">
-                                  {t(locale, "dashboard.copyLink")}
-                                </span>
-                              </>
-                            )}
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="w-full gap-2"
-                            onClick={() => handleOpenQuizDetails(quiz.id)}
-                          >
-                            <BarChart3 className="h-4 w-4" />
-                            {t(locale, "dashboard.results")}
-                          </Button>
-                        </div>
+
                       </div>
                     </CardContent>
                   </Card>

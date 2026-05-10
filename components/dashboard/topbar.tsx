@@ -19,6 +19,11 @@ export function Topbar({ className }: TopbarProps) {
   const { isHeaderVisible, isScrolledDown } = useScrollBehavior();
 
   const scrollToTop = () => {
+    const root = document.getElementById("dashboard-main-scroll");
+    if (root) {
+      root.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 

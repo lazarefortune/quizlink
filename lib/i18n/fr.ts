@@ -638,6 +638,15 @@ export const fr = {
 
   // Dashboard
   dashboard: {
+    create: {
+      title: "Créer un quiz",
+      subtitle: "Choisis comment tu veux créer ton quiz.",
+      createWithAiTitle: "Créer avec l'IA",
+      createWithAiSubtitle: "Colle un texte ou donne un sujet, génère les questions.",
+      createManuallyTitle: "Créer manuellement",
+      createManuallySubtitle: "Ajoute tes questions une par une.",
+      continue: "Continuer",
+    },
     sidebar: {
       overview: "Accueil",
       quizzes: "Quiz",

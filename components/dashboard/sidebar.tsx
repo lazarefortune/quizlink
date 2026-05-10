@@ -51,7 +51,7 @@ export function Sidebar({ onNavClick, className }: SidebarProps) {
         />
         <NavItem
           href="/dashboard/quizzes"
-          label={t(locale, "dashboard.sidebar.quizzes")}
+          label={t(locale, "dashboard.welcome.myQuizzes")}
           icon={FileText}
           onClick={onNavClick}
         />
