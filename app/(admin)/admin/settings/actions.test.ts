@@ -3,6 +3,7 @@ import { ZodError } from "zod";
 
 const mockAuth = vi.fn();
 const mockUpdateSupportNotificationSettings = vi.fn();
+const mockUpdateUserSignupNotificationSettings = vi.fn();
 const mockRevalidatePath = vi.fn();
 
 vi.mock("@/lib/auth", () => ({
@@ -14,11 +15,19 @@ vi.mock("@/lib/settings/support-notification-settings", () => ({
     mockUpdateSupportNotificationSettings(...args),
 }));
 
+vi.mock("@/lib/settings/user-signup-notification-settings", () => ({
+  updateUserSignupNotificationSettings: (...args: unknown[]) =>
+    mockUpdateUserSignupNotificationSettings(...args),
+}));
+
 vi.mock("next/cache", () => ({
   revalidatePath: (...args: unknown[]) => mockRevalidatePath(...args),
 }));
 
-import { updateSupportNotificationSettingsAction } from "./actions";
+import {
+  updateSupportNotificationSettingsAction,
+  updateUserSignupNotificationSettingsAction,
+} from "./actions";
 
 const validPayload = {
   enabled: true,
@@ -87,6 +96,80 @@ describe("updateSupportNotificationSettingsAction", () => {
     mockUpdateSupportNotificationSettings.mockRejectedValue(new Error("db down"));
 
     const result = await updateSupportNotificationSettingsAction(validPayload);
+
+    expect(result).toEqual({ success: false, error: "Failed to save settings" });
+    expect(mockRevalidatePath).not.toHaveBeenCalled();
+  });
+});
+
+const validSignupPayload = {
+  enabled: true,
+  emails: ["a@b.co"],
+  notifyOnEmailSignup: true,
+  notifyOnGoogleSignup: false,
+};
+
+describe("updateUserSignupNotificationSettingsAction", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockAuth.mockResolvedValue({
+      user: { id: "admin-1", role: "ADMIN" },
+    });
+    mockUpdateUserSignupNotificationSettings.mockResolvedValue(validSignupPayload);
+  });
+
+  it("returns unauthorized when there is no session user id", async () => {
+    mockAuth.mockResolvedValue({ user: null });
+
+    const result = await updateUserSignupNotificationSettingsAction(validSignupPayload);
+
+    expect(result).toEqual({ success: false, error: "Unauthorized" });
+    expect(mockUpdateUserSignupNotificationSettings).not.toHaveBeenCalled();
+    expect(mockRevalidatePath).not.toHaveBeenCalled();
+  });
+
+  it("returns unauthorized when role is not ADMIN", async () => {
+    mockAuth.mockResolvedValue({
+      user: { id: "user-1", role: "USER" },
+    });
+
+    const result = await updateUserSignupNotificationSettingsAction(validSignupPayload);
+
+    expect(result).toEqual({ success: false, error: "Unauthorized" });
+    expect(mockUpdateUserSignupNotificationSettings).not.toHaveBeenCalled();
+  });
+
+  it("persists settings and revalidates when admin is valid", async () => {
+    const result = await updateUserSignupNotificationSettingsAction(validSignupPayload);
+
+    expect(result).toEqual({ success: true });
+    expect(mockUpdateUserSignupNotificationSettings).toHaveBeenCalledWith(
+      validSignupPayload,
+    );
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/admin/settings");
+  });
+
+  it("returns zod message when update throws ZodError", async () => {
+    mockUpdateUserSignupNotificationSettings.mockImplementation(() => {
+      throw new ZodError([
+        {
+          code: "custom",
+          message: "Email invalide",
+          path: ["emails", 0],
+        },
+      ]);
+    });
+
+    const result = await updateUserSignupNotificationSettingsAction(validSignupPayload);
+
+    expect(result).toEqual({ success: false, error: "Email invalide" });
+    expect(mockRevalidatePath).not.toHaveBeenCalled();
+  });
+
+  it("returns generic error when update throws unexpectedly", async () => {
+    mockUpdateUserSignupNotificationSettings.mockRejectedValue(new Error("db down"));
+
+    const result = await updateUserSignupNotificationSettingsAction(validSignupPayload);
 
     expect(result).toEqual({ success: false, error: "Failed to save settings" });
     expect(mockRevalidatePath).not.toHaveBeenCalled();
