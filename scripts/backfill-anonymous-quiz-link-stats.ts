@@ -14,6 +14,10 @@ type RawAnonymousQuizAttemptStatsRow = {
   lastCompletedAt: Date | null;
 };
 
+type ExistingAnonymousStatsRow = {
+  quizLinkId: string;
+};
+
 export type AnonymousQuizLinkBackfillStats = {
   quizLinkId: string;
   openCount: number;
@@ -26,6 +30,12 @@ export type AnonymousQuizLinkBackfillStats = {
   lastOpenedAt: Date | null;
   lastStartedAt: Date | null;
   lastCompletedAt: Date | null;
+};
+
+export type BackfillPlan = {
+  toCreate: AnonymousQuizLinkBackfillStats[];
+  toOverwrite: AnonymousQuizLinkBackfillStats[];
+  skippedExisting: AnonymousQuizLinkBackfillStats[];
 };
 
 export function mapRawRowToBackfillStats(
@@ -51,10 +61,15 @@ export function mapRawRowToBackfillStats(
   };
 }
 
-function parseOptions(argv: string[]): { dryRun: boolean; confirm: boolean } {
+function parseOptions(argv: string[]): {
+  dryRun: boolean;
+  confirm: boolean;
+  overwrite: boolean;
+} {
   return {
     dryRun: argv.includes("--dry-run"),
     confirm: argv.includes("--confirm"),
+    overwrite: argv.includes("--overwrite"),
   };
 }
 
@@ -89,6 +104,14 @@ async function countTotalAnonymousAttempts(): Promise<number> {
       participantId: null,
     },
   });
+}
+
+async function fetchExistingQuizLinkAnonymousStatsIds(): Promise<Set<string>> {
+  const rows = await prisma.$queryRaw<ExistingAnonymousStatsRow[]>`
+    SELECT quiz_link_id AS quizLinkId
+    FROM quiz_link_anonymous_stats
+  `;
+  return new Set(rows.map((row) => row.quizLinkId));
 }
 
 type QuizLinkTopTenContext = {
@@ -185,7 +208,15 @@ async function printTopQuizLinks(statsByQuizLink: AnonymousQuizLinkBackfillStats
   });
 }
 
-async function upsertStats(statsByQuizLink: AnonymousQuizLinkBackfillStats[]): Promise<void> {
+async function createStats(statsByQuizLink: AnonymousQuizLinkBackfillStats[]): Promise<void> {
+  for (const stats of statsByQuizLink) {
+    await prisma.quizLinkAnonymousStats.create({
+      data: stats,
+    });
+  }
+}
+
+async function overwriteStats(statsByQuizLink: AnonymousQuizLinkBackfillStats[]): Promise<void> {
   for (const stats of statsByQuizLink) {
     await prisma.quizLinkAnonymousStats.upsert({
       where: {
@@ -197,36 +228,76 @@ async function upsertStats(statsByQuizLink: AnonymousQuizLinkBackfillStats[]): P
   }
 }
 
+export function buildBackfillPlan(
+  statsByQuizLink: AnonymousQuizLinkBackfillStats[],
+  existingQuizLinkIds: Set<string>,
+  overwrite: boolean,
+): BackfillPlan {
+  const toCreate: AnonymousQuizLinkBackfillStats[] = [];
+  const toOverwrite: AnonymousQuizLinkBackfillStats[] = [];
+  const skippedExisting: AnonymousQuizLinkBackfillStats[] = [];
+
+  for (const stats of statsByQuizLink) {
+    if (existingQuizLinkIds.has(stats.quizLinkId)) {
+      if (overwrite) {
+        toOverwrite.push(stats);
+      } else {
+        skippedExisting.push(stats);
+      }
+    } else {
+      toCreate.push(stats);
+    }
+  }
+
+  return { toCreate, toOverwrite, skippedExisting };
+}
+
 async function runBackfill(): Promise<void> {
-  const { dryRun, confirm } = parseOptions(process.argv.slice(2));
+  const { dryRun, confirm, overwrite } = parseOptions(process.argv.slice(2));
 
   if (!dryRun && !confirm) {
     console.error("Refus d'ecriture: ajoutez --confirm pour executer les upserts, ou --dry-run pour simuler.");
     process.exit(1);
   }
 
-  const [totalAnonymousAttempts, statsByQuizLink] = await Promise.all([
+  const [totalAnonymousAttempts, statsByQuizLink, existingQuizLinkIds] = await Promise.all([
     countTotalAnonymousAttempts(),
     fetchAnonymousAttemptStats(),
+    fetchExistingQuizLinkAnonymousStatsIds(),
   ]);
+  const plan = buildBackfillPlan(statsByQuizLink, existingQuizLinkIds, overwrite);
 
   const totalCompleted = statsByQuizLink.reduce((sum, stats) => sum + stats.completedCount, 0);
   const totalScoreCount = statsByQuizLink.reduce((sum, stats) => sum + stats.scoreCount, 0);
 
   console.log("=== Backfill quiz_link_anonymous_stats ===");
   console.log(`Mode: ${dryRun ? "DRY RUN (aucune ecriture)" : "CONFIRM (ecriture active)"}`);
+  console.log(`Overwrite: ${overwrite ? "ON (les lignes existantes seront ecrasees)" : "OFF (les lignes existantes seront ignorees)"}`);
   console.log(`Tentatives anonymes traitees: ${totalAnonymousAttempts}`);
   console.log(`QuizLink concernes: ${statsByQuizLink.length}`);
   console.log(`Total completed: ${totalCompleted}`);
   console.log(`Total scoreCount: ${totalScoreCount}`);
+  console.log(`Lignes a creer: ${plan.toCreate.length}`);
+  console.log(`Lignes existantes ignorees: ${plan.skippedExisting.length}`);
+  console.log(`Lignes a ecraser: ${plan.toOverwrite.length}`);
   await printTopQuizLinks(statsByQuizLink);
 
   if (dryRun) {
     return;
   }
 
-  await upsertStats(statsByQuizLink);
-  console.log(`Upserts effectues: ${statsByQuizLink.length}`);
+  if (plan.toCreate.length > 0) {
+    await createStats(plan.toCreate);
+  }
+  if (plan.toOverwrite.length > 0) {
+    await overwriteStats(plan.toOverwrite);
+  }
+
+  console.log(`Lignes creees: ${plan.toCreate.length}`);
+  console.log(`Lignes existantes ignorees: ${plan.skippedExisting.length}`);
+  if (overwrite) {
+    console.log(`Lignes ecrasees: ${plan.toOverwrite.length}`);
+  }
 }
 
 const isDirectExecution =

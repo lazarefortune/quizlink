@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { mapRawRowToBackfillStats } from "./backfill-anonymous-quiz-link-stats";
+import {
+  buildBackfillPlan,
+  mapRawRowToBackfillStats,
+  type AnonymousQuizLinkBackfillStats,
+} from "./backfill-anonymous-quiz-link-stats";
 
 describe("mapRawRowToBackfillStats", () => {
   it("maps computed aggregates and mirrors open metrics from started metrics", () => {
@@ -62,5 +66,43 @@ describe("mapRawRowToBackfillStats", () => {
       lastStartedAt,
       lastCompletedAt: null,
     });
+  });
+});
+
+describe("buildBackfillPlan", () => {
+  const sampleStats = (quizLinkId: string): AnonymousQuizLinkBackfillStats => ({
+    quizLinkId,
+    openCount: 1,
+    startedCount: 1,
+    completedCount: 1,
+    scoreSum: 80,
+    scoreCount: 1,
+    bestScore: 80,
+    lowestScore: 80,
+    lastOpenedAt: null,
+    lastStartedAt: null,
+    lastCompletedAt: null,
+  });
+
+  it("creates only missing lines when overwrite is disabled", () => {
+    const stats = [sampleStats("a"), sampleStats("b"), sampleStats("c")];
+    const existing = new Set<string>(["b"]);
+
+    const plan = buildBackfillPlan(stats, existing, false);
+
+    expect(plan.toCreate.map((s) => s.quizLinkId)).toEqual(["a", "c"]);
+    expect(plan.skippedExisting.map((s) => s.quizLinkId)).toEqual(["b"]);
+    expect(plan.toOverwrite).toEqual([]);
+  });
+
+  it("overwrites existing lines when overwrite is enabled", () => {
+    const stats = [sampleStats("a"), sampleStats("b"), sampleStats("c")];
+    const existing = new Set<string>(["b", "c"]);
+
+    const plan = buildBackfillPlan(stats, existing, true);
+
+    expect(plan.toCreate.map((s) => s.quizLinkId)).toEqual(["a"]);
+    expect(plan.toOverwrite.map((s) => s.quizLinkId)).toEqual(["b", "c"]);
+    expect(plan.skippedExisting).toEqual([]);
   });
 });
