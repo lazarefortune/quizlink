@@ -1,3 +1,5 @@
+import type { BuilderTimeLimitUi } from "@/lib/time-limit-seconds";
+import { parseTimeLimitSeconds } from "@/lib/time-limit-seconds";
 import type { QuizBuilder } from "@/types/quiz-builder";
 
 export type ValidationError = {
@@ -76,4 +78,17 @@ export function validateQuiz(quiz: QuizBuilder): ValidationError[] {
   });
 
   return errors;
+}
+
+export function validateBuilderTimeLimit(ui: BuilderTimeLimitUi): ValidationError | null {
+  if (!ui.enabled) {
+    return null;
+  }
+  if (parseTimeLimitSeconds(ui.inputValue) === null) {
+    return {
+      field: "settings.timeLimitPerQuestion",
+      translationKey: "builder.validation.timeLimitInvalid",
+    };
+  }
+  return null;
 }

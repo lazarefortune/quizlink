@@ -486,6 +486,8 @@ export const en = {
       exactlyOneCorrectAnswer: "Question {number}: MULTIPLE_CHOICE must have exactly one correct answer",
       exactlyTwoOptions: "Question {number}: TRUE_FALSE questions must have exactly 2 options",
       optionLabelRequired: "Question {questionNumber}, Option {optionNumber}: Label is required",
+      timeLimitInvalid:
+        "Enter a whole number of seconds between 1 and 3600, or turn the time limit off.",
     },
       answerOptionPlaceholder: "Enter option {number}",
     deleteConfirmTitle: "Delete question",

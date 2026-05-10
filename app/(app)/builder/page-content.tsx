@@ -40,7 +40,19 @@ import { buildCommonEventProps } from "@/lib/analytics/props";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/components/ui/toast";
 import { QuestionEditor } from "@/components/quiz-builder/question-editor";
-import { validateQuiz, type ValidationError } from "@/lib/quiz-validation";
+import {
+  validateQuiz,
+  validateBuilderTimeLimit,
+  type ValidationError,
+} from "@/lib/quiz-validation";
+import {
+  buildQuizSettingsWithResolvedTimeLimit,
+  deriveTimeLimitUiFromSettings,
+  parseTimeLimitSeconds,
+  resolvePersistedTimeLimit,
+  TIME_LIMIT_SECONDS_MAX,
+  type BuilderTimeLimitUi,
+} from "@/lib/time-limit-seconds";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -54,12 +66,16 @@ import type {
 import {Textarea} from "@/components/ui/textarea";
 import { useBuilderNavigationGuard } from "@/components/dashboard/builder-navigation-guard-context";
 
-function computeQuizBuilderSnapshot(q: QuizBuilder): string {
+function computeQuizBuilderSnapshot(q: QuizBuilder, timeLimitUi: BuilderTimeLimitUi): string {
   return JSON.stringify({
     id: q.id,
     name: q.name,
     visibility: q.visibility,
-    settings: q.settings,
+    settings: {
+      ...q.settings,
+      timeLimitPerQuestion: resolvePersistedTimeLimit(q.settings, timeLimitUi),
+    },
+    timeLimitUi,
     questions: q.questions.map((question) => ({
       id: question.id,
       type: question.type,
@@ -73,6 +89,42 @@ function computeQuizBuilderSnapshot(q: QuizBuilder): string {
       })),
     })),
   });
+}
+
+function loadInitialQuiz(): QuizBuilder {
+  if (typeof window !== "undefined") {
+    const savedQuiz = sessionStorage.getItem("quizBuilder");
+    if (savedQuiz) {
+      try {
+        const parsed = JSON.parse(savedQuiz) as QuizBuilder;
+        sessionStorage.removeItem("quizBuilder");
+        return parsed;
+      } catch {
+        // Fall through to default
+      }
+    }
+  }
+  return {
+    id: `quiz-${Date.now()}`,
+    name: "",
+    visibility: "PRIVATE",
+    settings: {
+      showAnswerImmediately: true,
+      randomizeQuestions: false,
+      timeLimitPerQuestion: null,
+    },
+    questions: [],
+    createdBy: "USER",
+    createdAt: new Date().toISOString(),
+  };
+}
+
+let cachedInitialQuiz: QuizBuilder | null = null;
+function getInitialQuiz(): QuizBuilder {
+  if (cachedInitialQuiz === null) {
+    cachedInitialQuiz = loadInitialQuiz();
+  }
+  return cachedInitialQuiz;
 }
 
 function createEmptyQuestion(): Question {
@@ -225,33 +277,10 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
   const searchParams = useSearchParams();
   const { locale } = useLocale();
   useSession();
-  const [quiz, setQuiz] = useState<QuizBuilder>(() => {
-    if (typeof window !== "undefined") {
-      const savedQuiz = sessionStorage.getItem("quizBuilder");
-      if (savedQuiz) {
-        try {
-          const parsed = JSON.parse(savedQuiz);
-          sessionStorage.removeItem("quizBuilder");
-          return parsed;
-        } catch {
-          // Fall through to default
-        }
-      }
-    }
-    return {
-      id: `quiz-${Date.now()}`,
-      name: "",
-      visibility: "PRIVATE",
-      settings: {
-        showAnswerImmediately: true,
-        randomizeQuestions: false,
-        timeLimitPerQuestion: null,
-      },
-      questions: [],
-      createdBy: "USER",
-      createdAt: new Date().toISOString(),
-    };
-  });
+  const [quiz, setQuiz] = useState<QuizBuilder>(() => getInitialQuiz());
+  const [timeLimitUi, setTimeLimitUi] = useState<BuilderTimeLimitUi>(() =>
+    deriveTimeLimitUiFromSettings(getInitialQuiz().settings),
+  );
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [newlyAddedQuestionId, setNewlyAddedQuestionId] = useState<string | null>(null);
@@ -273,9 +302,9 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
       return;
     }
     setBuilderHasUnsavedChanges(
-      computeQuizBuilderSnapshot(quiz) !== unsavedBaselineRef.current,
+      computeQuizBuilderSnapshot(quiz, timeLimitUi) !== unsavedBaselineRef.current,
     );
-  }, [quiz, setBuilderHasUnsavedChanges]);
+  }, [quiz, timeLimitUi, setBuilderHasUnsavedChanges]);
 
   useEffect(() => {
     syncDirtyToGuard();
@@ -288,9 +317,9 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
   useEffect(() => {
     const urlQuizId = initialQuizId || searchParams.get("quizId");
     if (!urlQuizId && unsavedBaselineRef.current === null) {
-      unsavedBaselineRef.current = computeQuizBuilderSnapshot(quiz);
+      unsavedBaselineRef.current = computeQuizBuilderSnapshot(quiz, timeLimitUi);
     }
-  }, [initialQuizId, searchParams, quiz]);
+  }, [initialQuizId, searchParams, quiz, timeLimitUi]);
 
   // Load quiz from URL if quizId is present
   useEffect(() => {
@@ -323,7 +352,12 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
             };
             setQuiz(loadedQuiz);
             setSavedQuizId(result.quiz.id);
-            unsavedBaselineRef.current = computeQuizBuilderSnapshot(loadedQuiz);
+            const loadedTimeLimitUi = deriveTimeLimitUiFromSettings(loadedQuiz.settings);
+            setTimeLimitUi(loadedTimeLimitUi);
+            unsavedBaselineRef.current = computeQuizBuilderSnapshot(
+              loadedQuiz,
+              loadedTimeLimitUi,
+            );
           } else {
             showToast(result.error || t(locale, "common.error"), "error");
           }
@@ -346,7 +380,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
       return;
     }
     const isDirty =
-      computeQuizBuilderSnapshot(quiz) !== unsavedBaselineRef.current;
+      computeQuizBuilderSnapshot(quiz, timeLimitUi) !== unsavedBaselineRef.current;
     if (!isDirty) {
       return;
     }
@@ -358,29 +392,37 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
 
     window.addEventListener("beforeunload", onBeforeUnload);
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
-  }, [quiz]);
+  }, [quiz, timeLimitUi]);
 
   const handleSave = async () => {
+    const timeLimitError = validateBuilderTimeLimit(timeLimitUi);
     const errors = validateQuiz(quiz);
-    if (errors.length > 0) {
-      setValidationErrors(errors);
+    const mergedErrors = timeLimitError ? [...errors, timeLimitError] : errors;
+    if (mergedErrors.length > 0) {
+      setValidationErrors(mergedErrors);
       return;
     }
+
+    const quizToSave: QuizBuilder = {
+      ...quiz,
+      settings: buildQuizSettingsWithResolvedTimeLimit(quiz.settings, timeLimitUi),
+    };
 
     setIsSaving(true);
     try {
       const isExistingQuiz = isQuizSaved;
-      const result = await saveQuiz(quiz, savedQuizId || undefined);
+      const result = await saveQuiz(quizToSave, savedQuizId || undefined);
 
       if (result.success) {
-        const mergedQuiz =
-          result.quizId !== undefined ? { ...quiz, id: result.quizId } : quiz;
+        const mergedQuiz: QuizBuilder =
+          result.quizId !== undefined ? { ...quizToSave, id: result.quizId } : quizToSave;
+        const normalizedTimeLimitUi = deriveTimeLimitUiFromSettings(mergedQuiz.settings);
 
         if (result.quizId) {
           setSavedQuizId(result.quizId);
           // Update quiz ID if it was a new quiz
           if (!isQuizSaved && result.quizId) {
-            const settings = quiz.settings ?? {
+            const settings = mergedQuiz.settings ?? {
               showAnswerImmediately: false,
               randomizeQuestions: false,
               timeLimitPerQuestion: null,
@@ -392,20 +434,24 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
               }),
               quiz_id: result.quizId,
               source: "builder",
-              visibility: quiz.visibility,
-              question_count: quiz.questions.length,
+              visibility: mergedQuiz.visibility,
+              question_count: mergedQuiz.questions.length,
               has_time_limit: settings.timeLimitPerQuestion != null && settings.timeLimitPerQuestion > 0,
               show_answer_immediately: settings.showAnswerImmediately,
               randomized: settings.randomizeQuestions,
             });
-            setQuiz({ ...quiz, id: result.quizId });
+            setQuiz({ ...quizToSave, id: result.quizId });
+            setTimeLimitUi(normalizedTimeLimitUi);
             if (
               shouldRedirectToQuizSuccess({
                 isExistingQuiz,
                 quizId: result.quizId,
               })
             ) {
-              unsavedBaselineRef.current = computeQuizBuilderSnapshot(mergedQuiz);
+              unsavedBaselineRef.current = computeQuizBuilderSnapshot(
+                mergedQuiz,
+                normalizedTimeLimitUi,
+              );
               runNavigationBypass(() => {
                 setBuilderHasUnsavedChanges(false);
                 router.push(buildQuizSuccessPath(result.quizId));
@@ -415,7 +461,12 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
           }
         }
 
-        unsavedBaselineRef.current = computeQuizBuilderSnapshot(mergedQuiz);
+        setQuiz(mergedQuiz);
+        setTimeLimitUi(normalizedTimeLimitUi);
+        unsavedBaselineRef.current = computeQuizBuilderSnapshot(
+          mergedQuiz,
+          normalizedTimeLimitUi,
+        );
         syncDirtyToGuard();
 
         const message = isQuizSaved
@@ -539,6 +590,14 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
     return t(locale, nameError.translationKey, nameError.params || {});
   };
 
+  const getTimeLimitError = (): string | null => {
+    const timeLimitError = validationErrors.find(
+      (error) => error.field === "settings.timeLimitPerQuestion",
+    );
+    if (!timeLimitError) return null;
+    return t(locale, timeLimitError.translationKey, timeLimitError.params || {});
+  };
+
   const activeQuestion = activeId
     ? quiz.questions.find((q) => q.id === activeId)
     : null;
@@ -625,16 +684,22 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
 
               <div className="flex items-start gap-2">
                 <Switch
-                  checked={quiz.settings.timeLimitPerQuestion !== null}
-                  onCheckedChange={(checked: boolean) =>
+                  checked={timeLimitUi.enabled}
+                  onCheckedChange={(checked: boolean) => {
+                    setTimeLimitUi(
+                      checked ? { enabled: true, inputValue: "30" } : { enabled: false, inputValue: "" },
+                    );
                     setQuiz({
                       ...quiz,
                       settings: {
                         ...quiz.settings,
                         timeLimitPerQuestion: checked ? 30 : null,
                       },
-                    })
-                  }
+                    });
+                    setValidationErrors((prev) =>
+                      prev.filter((err) => err.field !== "settings.timeLimitPerQuestion"),
+                    );
+                  }}
                   className="mt-0.5 shrink-0"
                 />
                 <div className="flex items-start flex-1 min-w-0 gap-1">
@@ -645,25 +710,41 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
                 </div>
               </div>
 
-              {quiz.settings.timeLimitPerQuestion !== null && (
-                <div className="pl-0 sm:pl-4">
+              {timeLimitUi.enabled && (
+                <div className="pl-0 sm:pl-4 space-y-1">
                   <Input
                     type="number"
-                    min="1"
-                    value={quiz.settings.timeLimitPerQuestion || ""}
-                    onChange={(e) =>
-                      setQuiz({
-                        ...quiz,
+                    min={1}
+                    max={TIME_LIMIT_SECONDS_MAX}
+                    value={timeLimitUi.inputValue}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      setTimeLimitUi((prev) => ({ ...prev, inputValue: raw }));
+                      const parsed = parseTimeLimitSeconds(raw);
+                      setQuiz((prev) => ({
+                        ...prev,
                         settings: {
-                          ...quiz.settings,
-                          timeLimitPerQuestion: e.target.value
-                            ? parseInt(e.target.value, 10)
-                            : null,
+                          ...prev.settings,
+                          timeLimitPerQuestion:
+                            parsed !== null ? parsed : prev.settings.timeLimitPerQuestion,
                         },
-                      })
-                    }
-                    className="w-full text-sm"
+                      }));
+                      setValidationErrors((prev) =>
+                        prev.filter((err) => err.field !== "settings.timeLimitPerQuestion"),
+                      );
+                    }}
+                    className={cn(
+                      "w-full text-sm",
+                      getTimeLimitError() ? "border-destructive focus-visible:border-destructive" : "",
+                    )}
+                    aria-invalid={getTimeLimitError() !== null}
                   />
+                  {getTimeLimitError() && (
+                    <p className="text-xs text-destructive flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3 shrink-0" />
+                      {getTimeLimitError()}
+                    </p>
+                  )}
                 </div>
               )}
             </div>

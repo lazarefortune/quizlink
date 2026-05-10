@@ -486,6 +486,8 @@ export const fr = {
       exactlyOneCorrectAnswer: "Question {number}: Exactement une réponse correcte est requise pour les questions à choix unique",
       exactlyTwoOptions: "Question {number}: Les questions Vrai/Faux doivent avoir exactement deux options",
       optionLabelRequired: "Question {questionNumber}, Option {optionNumber}: Le libellé de l'option est requis",
+      timeLimitInvalid:
+        "Indique un nombre entier de secondes entre 1 et 3600, ou désactive la limite.",
     },
       answerOptionPlaceholder: "Saisissez l'option {number}",
     deleteConfirmTitle: "Supprimer la question",
