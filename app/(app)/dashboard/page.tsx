@@ -263,7 +263,7 @@ export default function DashboardPage() {
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue/10">
                         <Sparkles className="h-5 w-5 text-blue" />
                       </div>
-                      <p className="font-bold text-foreground">
+                      <p className="font-medium text-foreground">
                         {t(locale, "dashboard.home.ctaCreateWithAi")}
                       </p>
                     </CardContent>
@@ -276,7 +276,7 @@ export default function DashboardPage() {
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
                         <Plus className="h-5 w-5 text-primary" />
                       </div>
-                      <p className="font-bold text-foreground">
+                      <p className="font-medium text-foreground">
                         {t(locale, "dashboard.home.ctaCreateManually")}
                       </p>
                     </CardContent>
@@ -289,7 +289,7 @@ export default function DashboardPage() {
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue/10">
                         <FileText className="h-5 w-5 text-blue" />
                       </div>
-                      <p className="font-bold text-foreground">
+                      <p className="font-medium text-foreground">
                         {t(locale, "dashboard.home.ctaSeeMyQuizzes")}
                       </p>
                     </CardContent>
@@ -303,25 +303,25 @@ export default function DashboardPage() {
               animate={fadeIn.animate}
               transition={fadeIn.transition(0.2)}
             >
-              <Card className="border border-border/70">
+              <Card className="border border-border/70 lg:hidden">
                 <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
-                      <Coins className="h-4 w-4 text-muted-foreground" />
+                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted">
+                      <Coins className="h-6 w-6 text-muted-foreground" />
                     </div>
                     <div>
-                      <p className="text-base font-semibold text-foreground">
+                      <p className="text-lg font-semibold text-foreground">
                         {displayStats.coinBalance}{" "}
                         {t(locale, "account.coins.coins")}
                       </p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-base text-muted-foreground">
                         {t(locale, "dashboard.home.coinsDescription")}
                       </p>
                     </div>
                   </div>
                   <Link
                     href="/account/coins"
-                    className="text-sm font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                    className="text-base font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
                   >
                     {t(locale, "dashboard.home.manageCoins")}
                   </Link>
@@ -339,12 +339,12 @@ export default function DashboardPage() {
             transition={fadeIn.transition(0.3)}
           >
             <div className="mb-4 flex gap-2 flex-row items-center justify-between">
-              <h2 className="text-xl font-black text-foreground">
+              <h2 className="text-xl font-semibold text-foreground">
                 {t(locale, "dashboard.home.recentQuizzesTitle")}
               </h2>
               <Link
                 href="/dashboard/quizzes"
-                className="text-base uppercase font-semibold text-blue hover:underline"
+                className="text-base font-semibold text-blue hover:underline"
               >
                 {t(locale, "dashboard.home.seeAll")}
               </Link>
@@ -366,7 +366,7 @@ export default function DashboardPage() {
                         href={`/dashboard/quiz/${quiz.id}/preview`}
                         className="mb-4 block flex-1"
                       >
-                        <h3 className="line-clamp-2 text-lg font-bold leading-snug text-foreground transition-colors hover:text-blue">
+                        <h3 className="line-clamp-2 text-lg font-medium leading-snug text-foreground transition-colors hover:text-blue">
                           {quiz.name}
                         </h3>
                       </Link>
@@ -399,7 +399,7 @@ export default function DashboardPage() {
                             : t(locale, "publicQuizzes.play")}
                         </Button>
 
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-1 gap-2">
                           <Button
                             variant={
                               copiedQuizId === quiz.id ? "secondary" : "outline"
@@ -428,10 +428,15 @@ export default function DashboardPage() {
                             )}
                           </Button>
 
-                          <Button variant="outline" size="sm" asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full"
+                            asChild
+                          >
                             <Link
                               href={`/dashboard/quiz/${quiz.id}`}
-                              className="gap-2"
+                              className="flex w-full items-center justify-center gap-2"
                             >
                               <BarChart3 className="h-4 w-4" />
                               {t(locale, "dashboard.results")}
