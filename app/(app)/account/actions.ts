@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import { sendEmailChangeCode } from "@/lib/email";
 import { revalidatePath } from "next/cache";
 import { recordUserLifecycleEvent, USER_LIFECYCLE_EVENT_TYPES } from "@/lib/userLifecycleEvents";
+import { z } from "zod";
 
 function generateVerificationCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -35,6 +36,60 @@ type DeleteAccountResponse = {
   success: boolean;
   error?: string;
 };
+
+type UpdateNotificationPreferencesResponse = {
+  success: boolean;
+  error?: string;
+};
+
+const notificationPreferencesSchema = z.object({
+  notifyQuizResponses: z.boolean(),
+  notifyProductUpdates: z.boolean(),
+  notifyMarketing: z.boolean(),
+});
+
+/**
+ * Update email notification preferences (optional categories only).
+ * Transactional emails (security, verification, purchases) are not controlled here.
+ */
+export async function updateNotificationPreferencesAction(
+  input: unknown
+): Promise<UpdateNotificationPreferencesResponse> {
+  try {
+    if (!prisma) {
+      return { success: false, error: "Database not initialized" };
+    }
+
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const parsed = notificationPreferencesSchema.safeParse(input);
+    if (!parsed.success) {
+      return { success: false, error: "Invalid notification preferences" };
+    }
+
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: {
+        notifyQuizResponses: parsed.data.notifyQuizResponses,
+        notifyProductUpdates: parsed.data.notifyProductUpdates,
+        notifyMarketing: parsed.data.notifyMarketing,
+      },
+    });
+
+    revalidatePath("/account");
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating notification preferences:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Failed to update notification preferences",
+    };
+  }
+}
 
 /**
  * Update user profile (name and preferred language)

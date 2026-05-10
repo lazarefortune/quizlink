@@ -22,6 +22,9 @@ export default async function AccountPage() {
       createdAt: true,
       googleId: true,
       passwordHash: true,
+      notifyQuizResponses: true,
+      notifyProductUpdates: true,
+      notifyMarketing: true,
     },
   });
 

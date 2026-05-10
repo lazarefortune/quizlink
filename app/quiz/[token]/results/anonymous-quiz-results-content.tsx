@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
 import { CheckCircle2, XCircle } from "lucide-react";
@@ -17,10 +18,35 @@ import {
   loadAnonymousQuizResultFromSession,
   type AnonymousQuizResultSession,
 } from "@/lib/anonymousQuizResultSession";
+import type { Locale } from "@/lib/i18n";
 
 type AnonymousQuizResultsContentProps = {
   token: string;
 };
+
+function AnonymousQuizLegalFooter({ locale }: { locale: Locale }) {
+  return (
+    <p className="mt-8 text-center text-xs text-muted-foreground">
+      <Link
+        href="/legal/terms"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="font-medium text-primary underline-offset-2 hover:underline"
+      >
+        {t(locale, "auth.signUp.legalTermsLink")}
+      </Link>
+      {t(locale, "quiz.anonymousResultsLegalSeparator")}
+      <Link
+        href="/legal/privacy"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="font-medium text-primary underline-offset-2 hover:underline"
+      >
+        {t(locale, "auth.signUp.legalPrivacyLink")}
+      </Link>
+    </p>
+  );
+}
 
 function formatAnswerDuration(seconds: number): string {
   const mins = Math.floor(seconds / 60);
@@ -80,6 +106,7 @@ export function AnonymousQuizResultsContent({
               </Button>
             </CardFooter>
           </Card>
+          <AnonymousQuizLegalFooter locale={locale} />
         </div>
       </div>
     );
@@ -231,6 +258,7 @@ export function AnonymousQuizResultsContent({
             </ul>
           </section>
         )}
+        <AnonymousQuizLegalFooter locale={locale} />
       </div>
     </div>
   );

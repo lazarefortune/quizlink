@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signOut, signIn, useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -42,6 +43,7 @@ import {
   deleteAccount,
   deleteAccountGoogle,
   unlinkGoogleAccount,
+  updateNotificationPreferencesAction,
 } from "./actions";
 import {
   Eye,
@@ -54,6 +56,8 @@ import {
   Coins,
   Trash2,
   Cookie,
+  FileText,
+  Bell,
 } from "lucide-react";
 import { GoogleIcon } from "@/components/ui/google-icon";
 import { format } from "date-fns";
@@ -71,6 +75,9 @@ type UserData = {
   createdAt: Date;
   hasGoogleAccount: boolean;
   hasPassword: boolean;
+  notifyQuizResponses: boolean;
+  notifyProductUpdates: boolean;
+  notifyMarketing: boolean;
 };
 
 type AccountContentProps = {
@@ -150,6 +157,43 @@ function SettingsRow({
   );
 }
 
+function NotificationSwitchRow({
+  label,
+  description,
+  checked,
+  disabled,
+  onCheckedChange,
+  id,
+}: {
+  label: string;
+  description?: string;
+  checked: boolean;
+  disabled?: boolean;
+  onCheckedChange: (next: boolean) => void;
+  id: string;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-4 px-4 py-3">
+      <div className="min-w-0 flex-1">
+        <label htmlFor={id} className="text-base font-medium text-foreground cursor-pointer">
+          {label}
+        </label>
+        {description ? (
+          <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>
+        ) : null}
+      </div>
+      <Switch
+        id={id}
+        checked={checked}
+        disabled={disabled}
+        onCheckedChange={onCheckedChange}
+        className="mt-0.5 shrink-0"
+        aria-label={label}
+      />
+    </div>
+  );
+}
+
 export function AccountContent({ user: initialUser }: AccountContentProps) {
   const { openConsentPanel } = useCookieConsent();
   const router = useRouter();
@@ -198,6 +242,25 @@ export function AccountContent({ user: initialUser }: AccountContentProps) {
   const [showUnlinkGoogleDialog, setShowUnlinkGoogleDialog] = useState(false);
   const [isUnlinkingGoogle, setIsUnlinkingGoogle] = useState(false);
   const [isLinkingGoogle, setIsLinkingGoogle] = useState(false);
+
+  const [notifyQuizResponses, setNotifyQuizResponses] = useState(
+    initialUser.notifyQuizResponses,
+  );
+  const [notifyProductUpdates, setNotifyProductUpdates] = useState(
+    initialUser.notifyProductUpdates,
+  );
+  const [notifyMarketing, setNotifyMarketing] = useState(initialUser.notifyMarketing);
+  const [notificationPrefsSaving, setNotificationPrefsSaving] = useState(false);
+
+  useEffect(() => {
+    setNotifyQuizResponses(initialUser.notifyQuizResponses);
+    setNotifyProductUpdates(initialUser.notifyProductUpdates);
+    setNotifyMarketing(initialUser.notifyMarketing);
+  }, [
+    initialUser.notifyQuizResponses,
+    initialUser.notifyProductUpdates,
+    initialUser.notifyMarketing,
+  ]);
 
   const memberSince = format(new Date(initialUser.createdAt), "MMMM yyyy", {
     locale: locale === "fr" ? frLocale : enUS,
@@ -431,6 +494,33 @@ export function AccountContent({ user: initialUser }: AccountContentProps) {
     }
   };
 
+  const persistNotificationPreferences = async (next: {
+    notifyQuizResponses: boolean;
+    notifyProductUpdates: boolean;
+    notifyMarketing: boolean;
+  }) => {
+    setNotificationPrefsSaving(true);
+    try {
+      const result = await updateNotificationPreferencesAction(next);
+      if (result.success) {
+        setNotifyQuizResponses(next.notifyQuizResponses);
+        setNotifyProductUpdates(next.notifyProductUpdates);
+        setNotifyMarketing(next.notifyMarketing);
+        toast.showToast(t(locale, "account.notifications.updateSuccess"), "success");
+        router.refresh();
+      } else {
+        toast.showToast(
+          result.error || t(locale, "account.notifications.updateError"),
+          "error",
+        );
+      }
+    } catch {
+      toast.showToast(t(locale, "account.notifications.updateError"), "error");
+    } finally {
+      setNotificationPrefsSaving(false);
+    }
+  };
+
   return (
     <div className="p-4 sm:p-5 md:p-6 lg:p-8 max-w-xl mx-auto">
       <div className="space-y-6 sm:space-y-8">
@@ -495,6 +585,105 @@ export function AccountContent({ user: initialUser }: AccountContentProps) {
                   icon={Coins}
                   label={t(locale, "account.coins.title")}
                   href="/account/coins"
+                />
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Notifications */}
+          <div className="space-y-2">
+            <h2 className="text-lg h2 font-semibold text-muted-foreground px-1 uppercase">
+              {t(locale, "account.notifications.sectionTitle")}
+            </h2>
+            <Card className="border-2">
+              <CardContent className="p-1.5 space-y-0.5">
+                <div className="flex items-start gap-3 px-4 py-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted">
+                    <Bell className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-base font-medium text-foreground">
+                      {t(locale, "account.notifications.transactionalTitle")}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground leading-snug">
+                      {t(locale, "account.notifications.transactionalDescription")}
+                    </p>
+                  </div>
+                </div>
+                <NotificationSwitchRow
+                  id="notify-quiz-responses"
+                  label={t(locale, "account.notifications.quizResponses")}
+                  checked={notifyQuizResponses}
+                  disabled={notificationPrefsSaving}
+                  onCheckedChange={(next) => {
+                    void persistNotificationPreferences({
+                      notifyQuizResponses: next,
+                      notifyProductUpdates,
+                      notifyMarketing,
+                    });
+                  }}
+                />
+                <NotificationSwitchRow
+                  id="notify-product-updates"
+                  label={t(locale, "account.notifications.productUpdates")}
+                  checked={notifyProductUpdates}
+                  disabled={notificationPrefsSaving}
+                  onCheckedChange={(next) => {
+                    void persistNotificationPreferences({
+                      notifyQuizResponses,
+                      notifyProductUpdates: next,
+                      notifyMarketing,
+                    });
+                  }}
+                />
+                <NotificationSwitchRow
+                  id="notify-marketing"
+                  label={t(locale, "account.notifications.marketing")}
+                  checked={notifyMarketing}
+                  disabled={notificationPrefsSaving}
+                  onCheckedChange={(next) => {
+                    void persistNotificationPreferences({
+                      notifyQuizResponses,
+                      notifyProductUpdates,
+                      notifyMarketing: next,
+                    });
+                  }}
+                />
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Légal */}
+          <div className="space-y-2">
+            <h2 className="text-lg h2 font-semibold text-muted-foreground px-1 uppercase">
+              {t(locale, "account.legalSectionTitle")}
+            </h2>
+            <Card className="border-2">
+              <CardContent className="p-1.5 space-y-0.5">
+                <SettingsRow
+                  icon={FileText}
+                  label={t(locale, "footer.legal.legalNotice")}
+                  href="/account/legal"
+                />
+                <SettingsRow
+                  icon={FileText}
+                  label={t(locale, "footer.legal.terms")}
+                  href="/account/legal/terms"
+                />
+                <SettingsRow
+                  icon={FileText}
+                  label={t(locale, "account.salesTermsRow")}
+                  href="/account/legal/sales"
+                />
+                <SettingsRow
+                  icon={FileText}
+                  label={t(locale, "footer.legal.privacy")}
+                  href="/account/legal/privacy"
+                />
+                <SettingsRow
+                  icon={FileText}
+                  label={t(locale, "footer.legal.cookies")}
+                  href="/account/legal/cookies"
                 />
               </CardContent>
             </Card>
@@ -1015,6 +1204,7 @@ export function AccountContent({ user: initialUser }: AccountContentProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
     </div>
   );
 }

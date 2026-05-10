@@ -211,6 +211,12 @@ export const fr = {
 
   // Account settings
   account: {
+    legalSectionTitle: "Légal",
+    legalBackToAccount: "Retour au compte",
+    legalIndexTitle: "Informations légales",
+    legalIndexDescription:
+      "Retrouve ici les documents qui encadrent l'utilisation de QuizLink.",
+    salesTermsRow: "Conditions générales de vente (CGV)",
     title: "Paramètres du compte",
     description: "Gère tes infos et les paramètres de ton compte",
     nameRequired: "Le nom est obligatoire",
@@ -247,6 +253,17 @@ export const fr = {
       verificationCode: "Code de vérification",
       codeHint: "Entrez le code à 6 chiffres envoyé à la nouvelle adresse email",
       verify: "Vérifier",
+    },
+    notifications: {
+      sectionTitle: "Notifications",
+      transactionalTitle: "Emails importants liés au compte",
+      transactionalDescription:
+        "Toujours actifs : sécurité, vérification email, mot de passe, achats et informations importantes.",
+      quizResponses: "Réponses à mes quiz",
+      productUpdates: "Nouveautés QuizLink",
+      marketing: "Emails marketing",
+      updateSuccess: "Préférences de notification enregistrées",
+      updateError: "Impossible d'enregistrer les préférences. Réessaie.",
     },
     security: {
       title: "Sécurité",
@@ -357,6 +374,10 @@ export const fr = {
     participantEmail: "Email (optionnel)",
     participantEmailPlaceholder: "ton@email.com",
     startQuiz: "Commencer le quiz",
+    anonymousIntroLegalPrefix: "En commençant ce quiz, tu acceptes les ",
+    anonymousIntroLegalMid: " et reconnais avoir pris connaissance de la ",
+    anonymousIntroLegalEnd: ".",
+    anonymousResultsLegalSeparator: " · ",
     restart: "Recommencer",
     anonymousResultDetailNote:
       "Ton score est affiché ici, mais le détail de tes réponses n'est pas enregistré.",
@@ -1227,6 +1248,7 @@ export const fr = {
       legalNotice: "Mentions légales",
       privacy: "Confidentialité",
       terms: "Conditions d'utilisation",
+      sales: "CGV",
       cookies: "Politique cookies",
     },
     contact: {

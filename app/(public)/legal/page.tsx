@@ -1,15 +1,18 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Mail, Globe } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
-import { BrandQuizLinkText } from "@/components/BrandQuizLinkText";
+import { LegalDocumentsNavCard } from "@/components/legal/document-bodies/legal-documents-nav-card";
+import {
+  LegalMentionsCardSections,
+  LegalMentionsHeading,
+} from "@/components/legal/document-bodies/legal-mentions-sections";
+import { LegalInfoPageFooter } from "@/components/legal/legal-info-page-footer";
 
 export default function LegalPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-4xl px-4 py-12 sm:py-16">
-        {/* Header */}
         <div className="mb-8">
           <Link href="/">
             <Button variant="ghost" className="mb-6">
@@ -17,206 +20,19 @@ export default function LegalPage() {
               Retour à l&apos;accueil
             </Button>
           </Link>
-          <h1 className="text-4xl font-bold mb-2">Informations légales</h1>
-          <p className="text-muted-foreground mb-6">
+          <h1 className="mb-2 text-4xl font-bold">Informations légales</h1>
+          <p className="mb-6 text-muted-foreground">
             Retrouve ici les documents qui encadrent l&apos;utilisation de QuizLink.
           </p>
 
-          <Card className="mb-10">
-            <CardHeader>
-              <CardTitle>Documents</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <a
-                    href="#mentions-legales"
-                    className="text-primary font-medium hover:underline"
-                  >
-                    Mentions légales
-                  </a>
-                  <span className="text-muted-foreground"> — éditeur, hébergement, propriété intellectuelle</span>
-                </li>
-                <li>
-                  <Link href="/legal/terms" className="text-primary font-medium hover:underline">
-                    Conditions générales d&apos;utilisation
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/legal/privacy" className="text-primary font-medium hover:underline">
-                    Politique de confidentialité
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/legal/cookies" className="text-primary font-medium hover:underline">
-                    Politique cookies
-                  </Link>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
+          <LegalDocumentsNavCard basePath="/legal" />
 
-          <h2 id="mentions-legales" className="text-2xl font-bold scroll-mt-24 mb-2">
-            Mentions légales
-          </h2>
-          <p className="text-muted-foreground mb-8">
-            Dernière mise à jour : {new Date().toLocaleDateString("fr-FR", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
-          </p>
+          <LegalMentionsHeading />
         </div>
 
-        <div className="space-y-6">
-          {/* Éditeur du site */}
-          <Card>
-            <CardHeader>
-              <CardTitle>1. Éditeur du site</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-muted-foreground">
-                Le site{" "}
-                <strong className="text-foreground">
-                  <BrandQuizLinkText />
-                </strong>{" "}
-                est édité par :
-              </p>
-              <div className="bg-muted/50 rounded-lg p-4 space-y-2 text-sm">
-                <p>
-                  <strong className="text-foreground">Lazare Fortune</strong>
-                </p>
-                <p className="text-muted-foreground">
-                  11 avenue Auguste Rodin
-                  <br />
-                  94350 Villiers-sur-Marne, France
-                </p>
-                <p className="text-muted-foreground">
-                  <strong className="text-foreground">SIRET</strong>: 992 822 510 00010
-                </p>
-                <p className="text-muted-foreground">
-                  <strong className="text-foreground">Code APE</strong>: 6201Z — Programmation informatique
-                </p>
-                <p className="text-muted-foreground">
-                  <strong className="text-foreground">TVA</strong>: non applicable – article 293 B du CGI
-                </p>
-                <div className="pt-2 flex flex-col sm:flex-row gap-2">
-                  <a
-                    href="mailto:lazarefortune@gmail.com"
-                    className="flex items-center gap-2 text-primary hover:underline"
-                  >
-                    <Mail className="h-4 w-4" />
-                    lazarefortune@gmail.com
-                  </a>
-                  <a
-                    href="https://lazarefortune.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-primary hover:underline"
-                  >
-                    <Globe className="h-4 w-4" />
-                    lazarefortune.com
-                  </a>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <LegalMentionsCardSections />
 
-          {/* Hébergeur */}
-          <Card>
-            <CardHeader>
-              <CardTitle>2. Hébergeur du site</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-muted-foreground">
-                Le site est hébergé sur un serveur VPS fourni par :
-              </p>
-              <div className="bg-muted/50 rounded-lg p-4 space-y-2 text-sm">
-                <p>
-                  <strong className="text-foreground">Hostinger International Ltd.</strong>
-                </p>
-                <p className="text-muted-foreground">
-                  61 Lordou Vironos Street
-                  <br />
-                  6023 Larnaca, Chypre
-                </p>
-                <p className="text-muted-foreground">
-                  Site web :{" "}
-                  <a
-                    href="https://www.hostinger.fr"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline"
-                  >
-                    www.hostinger.fr
-                  </a>
-                </p>
-                <p className="text-muted-foreground">
-                  Téléphone : +33 1 76 54 41 25
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Propriété intellectuelle */}
-          <Card>
-            <CardHeader>
-              <CardTitle>3. Propriété intellectuelle</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                L&apos;ensemble des contenus (textes, images, logos, code) présents sur le site sont la propriété exclusive de Lazare Fortune, sauf mention contraire. Toute reproduction ou diffusion sans autorisation est interdite.
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Données personnelles */}
-          <Card>
-            <CardHeader>
-              <CardTitle>4. Données personnelles</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-muted-foreground">
-                Les informations personnelles collectées via ce site sont utilisées uniquement pour les finalités déclarées (création de compte, gestion des quiz, statistiques). Conformément au RGPD, tu disposes d&apos;un droit d&apos;accès, de rectification et de suppression de tes données.
-              </p>
-              <p className="text-muted-foreground">
-                Pour exercer ce droit, tu peux nous contacter à l&apos;adresse suivante :{" "}
-                <a
-                  href="mailto:lazarefortune@gmail.com"
-                  className="text-primary hover:underline"
-                >
-                  lazarefortune@gmail.com
-                </a>
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Contact */}
-          <Card>
-            <CardHeader>
-              <CardTitle>5. Contact</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Pour toute question concernant les mentions légales du site, tu peux contacter Lazare Fortune à l&apos;adresse suivante :{" "}
-                <a
-                  href="mailto:lazarefortune@gmail.com"
-                  className="text-primary hover:underline"
-                >
-                  lazarefortune@gmail.com
-                </a>
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Footer note */}
-        <div className="mt-12 pt-8 border-t text-center text-sm text-muted-foreground">
-          <p>
-            © {new Date().getFullYear()}{" "}
-            <BrandQuizLinkText className="inline" />. Tous droits réservés.
-          </p>
-        </div>
+        <LegalInfoPageFooter />
       </div>
     </div>
   );

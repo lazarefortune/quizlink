@@ -211,6 +211,12 @@ export const en = {
 
   // Account settings
   account: {
+    legalSectionTitle: "Legal",
+    legalBackToAccount: "Back to account",
+    legalIndexTitle: "Legal information",
+    legalIndexDescription:
+      "Find the documents that govern your use of QuizLink here.",
+    salesTermsRow: "Terms of sale",
     title: "Account Settings",
     description: "Manage your personal information and account settings",
     nameRequired: "Name is required",
@@ -247,6 +253,17 @@ export const en = {
       verificationCode: "Verification code",
       codeHint: "Enter the 6-digit code sent to the new email address",
       verify: "Verify",
+    },
+    notifications: {
+      sectionTitle: "Notifications",
+      transactionalTitle: "Important account emails",
+      transactionalDescription:
+        "Always on: security, email verification, password, purchases, and other important notices.",
+      quizResponses: "Quiz response notifications",
+      productUpdates: "QuizLink product news",
+      marketing: "Marketing emails",
+      updateSuccess: "Notification preferences saved",
+      updateError: "Could not save preferences. Please try again.",
     },
     security: {
       title: "Security",
@@ -357,6 +374,10 @@ export const en = {
     participantEmail: "Email (optional)",
     participantEmailPlaceholder: "your@email.com",
     startQuiz: "Start quiz",
+    anonymousIntroLegalPrefix: "By starting this quiz, you accept the ",
+    anonymousIntroLegalMid: " and acknowledge that you have read the ",
+    anonymousIntroLegalEnd: ".",
+    anonymousResultsLegalSeparator: " · ",
     restart: "Restart",
     anonymousResultDetailNote:
       "Your score is shown here, but the detail of your answers is not stored.",
@@ -1222,6 +1243,7 @@ export const en = {
       legalNotice: "Legal notice",
       privacy: "Privacy",
       terms: "Terms of service",
+      sales: "Terms of sale",
       cookies: "Cookie policy",
     },
     contact: {

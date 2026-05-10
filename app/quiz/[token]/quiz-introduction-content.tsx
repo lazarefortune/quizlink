@@ -258,6 +258,29 @@ export function QuizIntroductionContent({
                     ? t(locale, "quiz.restart")
                     : t(locale, "quiz.startQuiz")}
               </Button>
+              {isPublicLink ? (
+                <p className="text-center text-xs leading-relaxed text-muted-foreground mt-4">
+                  {t(locale, "quiz.anonymousIntroLegalPrefix")}
+                  <Link
+                    href="/legal/terms"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-primary underline-offset-2 hover:underline"
+                  >
+                    {t(locale, "auth.signUp.legalTermsLink")}
+                  </Link>
+                  {t(locale, "quiz.anonymousIntroLegalMid")}
+                  <Link
+                    href="/legal/privacy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-primary underline-offset-2 hover:underline"
+                  >
+                    {t(locale, "auth.signUp.legalPrivacyLink")}
+                  </Link>
+                  {t(locale, "quiz.anonymousIntroLegalEnd")}
+                </p>
+              ) : null}
             </motion.div>
           )}
         </div>

@@ -4,3 +4,6 @@
  */
 export const CURRENT_TERMS_VERSION = "1.0";
 export const CURRENT_PRIVACY_VERSION = "1.0";
+
+/** CGV / terms of sale — display version on /legal/sales only (not stored on User). */
+export const CURRENT_SALES_VERSION = "1.0";
