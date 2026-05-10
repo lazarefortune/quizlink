@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  aggregatesFromQuizLinkStatusCounts,
   formatStatusBreakdownLine,
   parseCleanupAnonymousAttemptsArgs,
   rollupAnonymousAttemptsPerQuizLink,
+  validateAnonymousStatsBeforeCleanup,
   type AnonymousAttemptLite,
+  type QuizLinkStatusCountRow,
 } from "./cleanup-anonymous-attempts";
 
 describe("parseCleanupAnonymousAttemptsArgs", () => {
@@ -13,6 +16,7 @@ describe("parseCleanupAnonymousAttemptsArgs", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.message).toContain("--dry-run");
+      expect(result.message).toContain("--confirm-delete");
     }
   });
 
@@ -26,9 +30,122 @@ describe("parseCleanupAnonymousAttemptsArgs", () => {
     expect(result).toEqual({ ok: true, mode: "confirm" });
   });
 
-  it("prefers dry-run when both flags are present", () => {
+  it("accepts --confirm-delete", () => {
+    const result = parseCleanupAnonymousAttemptsArgs(["--confirm-delete"]);
+    expect(result).toEqual({ ok: true, mode: "confirm-delete" });
+  });
+
+  it("prefers dry-run when combined with --confirm", () => {
     const result = parseCleanupAnonymousAttemptsArgs(["--confirm", "--dry-run"]);
     expect(result).toEqual({ ok: true, mode: "dry-run" });
+  });
+
+  it("prefers dry-run when combined with --confirm-delete", () => {
+    const result = parseCleanupAnonymousAttemptsArgs([
+      "--confirm-delete",
+      "--dry-run",
+    ]);
+    expect(result).toEqual({ ok: true, mode: "dry-run" });
+  });
+
+  it("refuses --confirm together with --confirm-delete without dry-run", () => {
+    const result = parseCleanupAnonymousAttemptsArgs([
+      "--confirm",
+      "--confirm-delete",
+    ]);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.message).toContain("Ne combinez pas");
+    }
+  });
+});
+
+describe("aggregatesFromQuizLinkStatusCounts", () => {
+  it("builds per-link totals and completed counts", () => {
+    const rows: QuizLinkStatusCountRow[] = [
+      { quizLinkId: "L1", status: "COMPLETED", count: 2 },
+      { quizLinkId: "L1", status: "IN_PROGRESS", count: 1 },
+      { quizLinkId: "L2", status: "ABANDONED", count: 3 },
+    ];
+
+    const map = aggregatesFromQuizLinkStatusCounts(rows);
+
+    expect(map.get("L1")).toEqual({
+      anonymousAttempts: 3,
+      completedAttempts: 2,
+    });
+    expect(map.get("L2")).toEqual({
+      anonymousAttempts: 3,
+      completedAttempts: 0,
+    });
+  });
+});
+
+describe("validateAnonymousStatsBeforeCleanup", () => {
+  it("passes when every link has stats and counts are coherent", () => {
+    const aggregates = new Map([
+      ["a", { anonymousAttempts: 5, completedAttempts: 2 }],
+      ["b", { anonymousAttempts: 1, completedAttempts: 1 }],
+    ]);
+    const stats = new Map([
+      ["a", { startedCount: 5, completedCount: 2 }],
+      ["b", { startedCount: 10, completedCount: 3 }],
+    ]);
+
+    expect(validateAnonymousStatsBeforeCleanup(aggregates, stats)).toEqual({
+      ok: true,
+    });
+  });
+
+  it("fails when stats row is missing", () => {
+    const aggregates = new Map([
+      ["x", { anonymousAttempts: 1, completedAttempts: 0 }],
+    ]);
+    const stats = new Map<string, { startedCount: number; completedCount: number }>();
+
+    const result = validateAnonymousStatsBeforeCleanup(aggregates, stats);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.failures).toHaveLength(1);
+      expect(result.failures[0].quizLinkId).toBe("x");
+      expect(result.failures[0].reason).toContain("absente");
+    }
+  });
+
+  it("fails when startedCount is too low", () => {
+    const aggregates = new Map([
+      ["x", { anonymousAttempts: 4, completedAttempts: 1 }],
+    ]);
+    const stats = new Map([
+      ["x", { startedCount: 3, completedCount: 2 }],
+    ]);
+
+    const result = validateAnonymousStatsBeforeCleanup(aggregates, stats);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.failures[0].reason).toContain("startedCount");
+    }
+  });
+
+  it("fails when completedCount is too low", () => {
+    const aggregates = new Map([
+      ["x", { anonymousAttempts: 2, completedAttempts: 3 }],
+    ]);
+    const stats = new Map([
+      ["x", { startedCount: 10, completedCount: 2 }],
+    ]);
+
+    const result = validateAnonymousStatsBeforeCleanup(aggregates, stats);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.failures[0].reason).toContain("completedCount");
+    }
+  });
+
+  it("accepts empty aggregates", () => {
+    expect(
+      validateAnonymousStatsBeforeCleanup(new Map(), new Map()),
+    ).toEqual({ ok: true });
   });
 });
 

@@ -1,10 +1,11 @@
 /**
- * Audit (and future cleanup) of legacy anonymous QuizAttempt / QuizAnswer rows
- * (participantId = null). No deletion in this version unless extended later.
+ * Audit et suppression contrôlée des anciennes QuizAttempt / QuizAnswer anonymes
+ * (participantId = null), après backfill vers quiz_link_anonymous_stats.
  *
- * Usage:
- *   pnpm tsx scripts/cleanup-anonymous-attempts.ts --dry-run
- *   pnpm tsx scripts/cleanup-anonymous-attempts.ts --confirm   # audit only for now
+ * Usage :
+ *   npx tsx scripts/cleanup-anonymous-attempts.ts --dry-run
+ *   npx tsx scripts/cleanup-anonymous-attempts.ts --confirm
+ *   npx tsx scripts/cleanup-anonymous-attempts.ts --confirm-delete
  */
 
 import { pathToFileURL } from "node:url";
@@ -13,7 +14,7 @@ import { prisma } from "../lib/prisma";
 
 const ANONYMOUS_ATTEMPT_FILTER = { participantId: null } as const;
 
-export type CleanupAnonymousAttemptsMode = "dry-run" | "confirm";
+export type CleanupAnonymousAttemptsMode = "dry-run" | "confirm" | "confirm-delete";
 
 export type ParseCleanupArgsResult =
   | { ok: true; mode: CleanupAnonymousAttemptsMode }
@@ -24,24 +25,119 @@ export function parseCleanupAnonymousAttemptsArgs(
 ): ParseCleanupArgsResult {
   const hasDryRun = argv.includes("--dry-run");
   const hasConfirm = argv.includes("--confirm");
+  const hasConfirmDelete = argv.includes("--confirm-delete");
 
-  if (!hasDryRun && !hasConfirm) {
+  if (!hasDryRun && !hasConfirm && !hasConfirmDelete) {
     return {
       ok: false,
       message:
-        "Indiquez --dry-run (audit sans suppression) ou --confirm (audit ; suppression réelle non activée pour l’instant).",
+        "Indiquez --dry-run (audit), --confirm (audit + rappel), ou --confirm-delete (suppression après contrôles).",
     };
   }
 
-  if (hasDryRun && hasConfirm) {
-    return { ok: true, mode: "dry-run" };
+  if (hasConfirm && hasConfirmDelete && !hasDryRun) {
+    return {
+      ok: false,
+      message:
+        "Ne combinez pas --confirm et --confirm-delete. Utilisez --dry-run pour auditer, ou uniquement --confirm-delete pour supprimer.",
+    };
   }
 
   if (hasDryRun) {
     return { ok: true, mode: "dry-run" };
   }
 
+  if (hasConfirmDelete) {
+    return { ok: true, mode: "confirm-delete" };
+  }
+
   return { ok: true, mode: "confirm" };
+}
+
+export type QuizLinkAnonymousAggregate = {
+  anonymousAttempts: number;
+  completedAttempts: number;
+};
+
+export type AnonymousStatsSnapshot = {
+  startedCount: number;
+  completedCount: number;
+};
+
+export type BackfillValidationFailure = {
+  quizLinkId: string;
+  reason: string;
+};
+
+/** Ligne agrégée (ex. issue d’un groupBy Prisma quizLinkId + status). */
+export type QuizLinkStatusCountRow = {
+  quizLinkId: string;
+  status: string;
+  count: number;
+};
+
+export function aggregatesFromQuizLinkStatusCounts(
+  rows: QuizLinkStatusCountRow[],
+): Map<string, QuizLinkAnonymousAggregate> {
+  const map = new Map<string, QuizLinkAnonymousAggregate>();
+
+  for (const row of rows) {
+    const current = map.get(row.quizLinkId) ?? {
+      anonymousAttempts: 0,
+      completedAttempts: 0,
+    };
+
+    current.anonymousAttempts += row.count;
+    if (row.status === "COMPLETED") {
+      current.completedAttempts += row.count;
+    }
+
+    map.set(row.quizLinkId, current);
+  }
+
+  return map;
+}
+
+export function validateAnonymousStatsBeforeCleanup(
+  aggregates: Map<string, QuizLinkAnonymousAggregate>,
+  statsByQuizLinkId: Map<string, AnonymousStatsSnapshot | null | undefined>,
+): { ok: true } | { ok: false; failures: BackfillValidationFailure[] } {
+  const failures: BackfillValidationFailure[] = [];
+
+  for (const [quizLinkId, agg] of aggregates) {
+    const stats = statsByQuizLinkId.get(quizLinkId);
+
+    if (stats == null) {
+      failures.push({
+        quizLinkId,
+        reason:
+          "ligne quiz_link_anonymous_stats absente (backfill requis avant suppression)",
+      });
+      continue;
+    }
+
+    if (stats.startedCount < agg.anonymousAttempts) {
+      failures.push({
+        quizLinkId,
+        reason: `startedCount (${stats.startedCount}) < tentatives anonymes (${agg.anonymousAttempts})`,
+      });
+      continue;
+    }
+
+    if (stats.completedCount < agg.completedAttempts) {
+      failures.push({
+        quizLinkId,
+        reason: `completedCount (${stats.completedCount}) < tentatives COMPLETED (${agg.completedAttempts})`,
+      });
+      continue;
+    }
+  }
+
+  if (failures.length > 0) {
+    return { ok: false, failures };
+  }
+
+  return { ok: true };
 }
 
 export type AnonymousAttemptLite = {
@@ -116,6 +212,24 @@ function resolveQuizOwnerEmail(quiz: {
     return quiz.createdByAdmin.email;
   }
   return "—";
+}
+
+async function fetchAnonymousAggregatesByQuizLink(): Promise<
+  Map<string, QuizLinkAnonymousAggregate>
+> {
+  const rows = await prisma.quizAttempt.groupBy({
+    by: ["quizLinkId", "status"],
+    where: ANONYMOUS_ATTEMPT_FILTER,
+    _count: { _all: true },
+  });
+
+  const normalized: QuizLinkStatusCountRow[] = rows.map((row) => ({
+    quizLinkId: row.quizLinkId,
+    status: row.status,
+    count: row._count._all,
+  }));
+
+  return aggregatesFromQuizLinkStatusCounts(normalized);
 }
 
 async function runAudit(): Promise<void> {
@@ -300,6 +414,87 @@ async function runAudit(): Promise<void> {
   console.log("");
 }
 
+type ConfirmDeleteOutcome = "noop" | "validation-failed" | "deleted";
+
+async function runConfirmDelete(): Promise<ConfirmDeleteOutcome> {
+  const totalAttempts = await prisma.quizAttempt.count({
+    where: ANONYMOUS_ATTEMPT_FILTER,
+  });
+
+  if (totalAttempts === 0) {
+    console.log("Aucune QuizAttempt anonyme : rien à supprimer.");
+    return "noop";
+  }
+
+  const aggregates = await fetchAnonymousAggregatesByQuizLink();
+  const quizLinkIds = [...aggregates.keys()];
+
+  const statsRows = await prisma.quizLinkAnonymousStats.findMany({
+    where: { quizLinkId: { in: quizLinkIds } },
+    select: {
+      quizLinkId: true,
+      startedCount: true,
+      completedCount: true,
+    },
+  });
+
+  const statsByQuizLinkId = new Map<
+    string,
+    AnonymousStatsSnapshot | null | undefined
+  >();
+  for (const id of quizLinkIds) {
+    statsByQuizLinkId.set(id, undefined);
+  }
+  for (const row of statsRows) {
+    statsByQuizLinkId.set(row.quizLinkId, {
+      startedCount: row.startedCount,
+      completedCount: row.completedCount,
+    });
+  }
+
+  const validation = validateAnonymousStatsBeforeCleanup(
+    aggregates,
+    statsByQuizLinkId,
+  );
+
+  if (!validation.ok) {
+    console.error("");
+    console.error(
+      "Refus de suppression : incohérence ou stats anonymes manquantes pour au moins un quizLink.",
+    );
+    console.error("");
+    for (const f of validation.failures) {
+      console.error(`  - ${f.quizLinkId}: ${f.reason}`);
+    }
+    console.error("");
+    process.exitCode = 1;
+    return "validation-failed";
+  }
+
+  const linkedAnswersBefore = await prisma.quizAnswer.count({
+    where: { attempt: ANONYMOUS_ATTEMPT_FILTER },
+  });
+
+  const deleteResult = await prisma.quizAttempt.deleteMany({
+    where: ANONYMOUS_ATTEMPT_FILTER,
+  });
+
+  console.log("");
+  console.log("=== Suppression — QuizAttempt anonymes uniquement ===");
+  console.log("");
+  console.log(
+    `QuizAnswer liées (comptées avant suppression, cascade attendue) : ${linkedAnswersBefore}`,
+  );
+  console.log(`QuizAttempt supprimées : ${deleteResult.count}`);
+  console.log("");
+  console.log(
+    "Les QuizAnswer ont été retirées par cascade si le schéma Prisma le prévoit (onDelete: Cascade).",
+  );
+  console.log("");
+
+  return "deleted";
+}
+
 async function main(): Promise<void> {
   const parsed = parseCleanupAnonymousAttemptsArgs(process.argv.slice(2));
 
@@ -310,17 +505,34 @@ async function main(): Promise<void> {
   }
 
   try {
+    if (parsed.mode === "confirm-delete") {
+      const outcome = await runConfirmDelete();
+      if (outcome === "validation-failed") {
+        return;
+      }
+      if (outcome === "noop") {
+        console.log(
+          "Mode --confirm-delete : aucune suppression nécessaire (déjà vide).",
+        );
+        return;
+      }
+      console.log(
+        "Mode --confirm-delete : suppression terminée (uniquement participantId = null).",
+      );
+      return;
+    }
+
     await runAudit();
 
     if (parsed.mode === "confirm") {
       console.log(
-        "Mode --confirm : aucune suppression exécutée (activation ultérieure).",
+        "Mode --confirm : audit uniquement, aucune suppression. Pour supprimer réellement, utilisez --confirm-delete.",
       );
     } else {
       console.log("Mode --dry-run : aucune écriture en base.");
     }
   } catch (error) {
-    console.error("Erreur lors de l’audit :", error);
+    console.error("Erreur :", error);
     process.exitCode = 1;
   } finally {
     await prisma.$disconnect();
