@@ -84,13 +84,13 @@ export default function QuizPreviewPage() {
               <h3 className="text-sm font-semibold mb-2">Question Types</h3>
               <div className="flex flex-wrap gap-2">
                 {quiz.questions.some((q) => q.type === "MCQ") && (
-                  <Badge>Multiple Choice</Badge>
+                  <Badge>One correct answer</Badge>
                 )}
                 {quiz.questions.some((q) => q.type === "TRUE_FALSE") && (
-                  <Badge>True/False</Badge>
+                  <Badge>True or false</Badge>
                 )}
                 {quiz.questions.some((q) => q.type === "CHECKBOX") && (
-                  <Badge>Checkbox</Badge>
+                  <Badge>Multiple correct answers</Badge>
                 )}
               </div>
             </div>

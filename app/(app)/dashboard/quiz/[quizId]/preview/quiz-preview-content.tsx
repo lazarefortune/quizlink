@@ -13,7 +13,7 @@ import { track } from "@/lib/analytics/track";
 import { PARTICIPANT_INVITED } from "@/lib/analytics/events";
 import { buildCommonEventProps } from "@/lib/analytics/props";
 import { useLocale } from "@/lib/i18n/use-locale";
-import { t } from "@/lib/i18n";
+import { t, type Locale } from "@/lib/i18n";
 import { useToast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,10 +34,10 @@ type QuizPreviewContentProps = {
   questions: QuizContentQuestion[];
 };
 
-function questionTypeLabel(type: string, locale: string): string {
-  if (type === "MULTIPLE_CHOICE") return locale === "fr" ? "QCM" : "Single choice";
-  if (type === "CHECKBOX") return locale === "fr" ? "Choix multiples" : "Multiple choice";
-  if (type === "TRUE_FALSE") return locale === "fr" ? "Vrai ou Faux" : "True / False";
+function questionTypeLabel(type: string, locale: Locale): string {
+  if (type === "MULTIPLE_CHOICE") return t(locale, "builder.questionTypeMultipleChoice");
+  if (type === "CHECKBOX") return t(locale, "builder.questionTypeCheckbox");
+  if (type === "TRUE_FALSE") return t(locale, "builder.questionTypeTrueFalse");
   return type;
 }
 
