@@ -4,8 +4,8 @@ import { LegalConsentModal } from "@/components/legal/legal-consent-modal";
 import { BuilderNavigationGuardProvider } from "@/components/dashboard/builder-navigation-guard-context";
 import { SupportFeedbackProvider } from "@/components/support/support-feedback-provider";
 
+import { DashboardMobileScrollLayout } from "./dashboard-mobile-scroll-layout";
 import { Sidebar } from "./sidebar";
-import { Topbar } from "./topbar";
 
 type DashboardShellProps = {
   children: React.ReactNode;
@@ -25,18 +25,8 @@ export function DashboardShell({
           <Sidebar className="min-h-0 flex-1" />
         </div>
 
-        {/* Mobile header */}
-        <Topbar />
-
-        {/* Panel: rounded shell stays fixed; only inner area scrolls */}
-        <main className="flex min-h-0 flex-1 flex-col overflow-hidden bg-background pt-16 sm:pt-14 lg:pt-0 lg:rounded-l-3xl lg:border lg:border-border dark:lg:border-border">
-          <div
-            id="dashboard-main-scroll"
-            className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain"
-          >
-            {children}
-          </div>
-        </main>
+        {/* Mobile header + scroll region (padding tracks hide-on-scroll header) */}
+        <DashboardMobileScrollLayout>{children}</DashboardMobileScrollLayout>
 
         <LegalConsentModal needsLegalConsent={needsLegalConsent} />
       </div>

@@ -9,16 +9,20 @@ import { cn } from "@/lib/utils";
 import { BrandQuizLinkText } from "@/components/BrandQuizLinkText";
 
 import { DashboardMobileNavSheet } from "./dashboard-mobile-nav-sheet";
-import { useScrollBehavior } from "./useScrollBehavior";
 
 type TopbarProps = {
   className?: string;
+  isHeaderVisible: boolean;
+  isScrolledDown: boolean;
 };
 
-export function Topbar({ className }: TopbarProps) {
+export function Topbar({
+  className,
+  isHeaderVisible,
+  isScrolledDown,
+}: TopbarProps) {
   const { data: session } = useSession();
   const { interceptLinkClick } = useBuilderNavigationGuard();
-  const { isHeaderVisible, isScrolledDown } = useScrollBehavior();
 
   const scrollToTop = () => {
     const root = document.getElementById("dashboard-main-scroll");
