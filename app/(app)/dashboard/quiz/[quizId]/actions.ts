@@ -19,7 +19,6 @@ type GetQuizStatsResponse =
         enrolledParticipantsCount: number;
         totalParticipants: number;
         totalAttempts: number;
-        anonymousAttemptsCount: number;
         completedAttempts: number;
         averageScore: number;
         completionRate: number;
@@ -458,7 +457,6 @@ export async function getQuizStats(
         enrolledParticipantsCount,
         totalParticipants,
         totalAttempts,
-        anonymousAttemptsCount: anonymousCompletedCount,
         completedAttempts: identifiedCompletedCount,
         averageScore,
         completionRate,

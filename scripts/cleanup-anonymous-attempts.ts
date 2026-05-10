@@ -1,6 +1,7 @@
 /**
- * Audit et suppression contrôlée des anciennes QuizAttempt / QuizAnswer anonymes
- * (participantId = null), après backfill vers quiz_link_anonymous_stats.
+ * Script de maintenance (post-migration) : audit ou suppression des anciennes lignes
+ * QuizAttempt / QuizAnswer avec participantId = null, après portage des agrégats vers
+ * quiz_link_anonymous_stats. Le jeu anonyme courant n’utilise plus ces tables.
  *
  * Usage :
  *   npx tsx scripts/cleanup-anonymous-attempts.ts --dry-run
@@ -119,7 +120,7 @@ export function validateAnonymousStatsBeforeCleanup(
     if (stats.startedCount < agg.anonymousAttempts) {
       failures.push({
         quizLinkId,
-        reason: `startedCount (${stats.startedCount}) < tentatives anonymes (${agg.anonymousAttempts})`,
+        reason: `startedCount (${stats.startedCount}) < QuizAttempt anonymes (${agg.anonymousAttempts})`,
       });
       continue;
     }
@@ -318,7 +319,7 @@ async function runAudit(): Promise<void> {
   const linkById = new Map(linkRecords.map((link) => [link.id, link]));
 
   console.log("");
-  console.log("=== Audit — tentatives anonymes (participantId = null) ===");
+  console.log("=== Audit — QuizAttempt anonymes restantes (participantId = null) ===");
   console.log("");
   console.log(`Total QuizAttempt anonymes : ${totalAttempts}`);
   console.log(`Total QuizAnswer liées     : ${totalAnswers}`);
@@ -347,7 +348,7 @@ async function runAudit(): Promise<void> {
   console.log(`  - ${totalAttempts} lignes quiz_attempts`);
   console.log(`  - ${totalAnswers} lignes quiz_answers`);
   console.log("");
-  console.log("Top 10 quizLink par nombre de tentatives anonymes :");
+  console.log("Top 10 quizLink par nombre de QuizAttempt anonymes :");
   console.log("");
 
   const col = (value: string, width: number): string =>
@@ -398,7 +399,7 @@ async function runAudit(): Promise<void> {
   }
 
   if (topLinks.length === 0) {
-    console.log("  (aucune tentative anonyme)");
+    console.log("  (aucune QuizAttempt anonyme)");
   }
 
   console.log("");

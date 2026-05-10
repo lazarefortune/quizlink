@@ -44,7 +44,6 @@ type Stats = {
     lastScore: number | null;
     lastAttemptDate: Date | null;
   }>;
-  anonymousAttemptsCount: number;
   attempts: Array<{
     id: string;
     participantName: string;

@@ -59,7 +59,6 @@ type QuizDetailContentProps = {
       lastScore: number | null;
       lastAttemptDate: Date | null;
     }>;
-    anonymousAttemptsCount: number;
     totalResponses: number;
     anonymousCompletedCount: number;
     identifiedCompletedCount: number;

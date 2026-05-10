@@ -127,13 +127,13 @@ export async function getParticipants(): Promise<GetParticipantsResponse> {
     }) : [];
 
     // Get all participants that have attempts on user's quizzes
-    // Only get attempts with participants (exclude anonymous attempts)
+    // Identified attempts only (public-link plays are not stored as QuizAttempt rows)
     const attempts = quizIds.length > 0 ? await prisma.quizAttempt.findMany({
       where: {
         quizLink: {
           quizId: { in: quizIds },
         },
-        participantId: { not: null }, // Exclude anonymous attempts
+        participantId: { not: null },
       },
       include: {
         participant: true,
@@ -202,10 +202,8 @@ export async function getParticipants(): Promise<GetParticipantsResponse> {
     }
 
     // Count all attempts for each participant (avoid double counting)
-    // Only count attempts with participants (exclude anonymous attempts)
     const attemptsByParticipant = new Map<string, number>();
     for (const attempt of attempts) {
-      // Skip anonymous attempts (participant is null)
       if (!attempt.participant) {
         continue;
       }

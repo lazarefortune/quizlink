@@ -61,7 +61,6 @@ type Stats = {
   enrolledParticipantsCount: number;
   totalParticipants: number;
   totalAttempts: number;
-  anonymousAttemptsCount: number;
   completedAttempts: number;
   averageScore: number;
   completionRate: number;

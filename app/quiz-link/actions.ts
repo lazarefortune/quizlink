@@ -298,18 +298,13 @@ export async function getQuizLinkByToken(
       return { success: false, error: "Quiz link has expired" };
     }
 
-    // Check if there's a completed attempt
-    // For personalized links, check only for that participant
-    // For public links, we can't check without participantId, so we'll check on client side
+    // Completed-attempt flag for single-play links: personalized links use QuizAttempt;
+    // public links rely on client state (aggregated stats only, no per-play QuizAttempt).
     let hasCompletedAttempt = false;
-    if (!quizLink.allowMultipleAttempts) {
-      if (quizLink.participantId) {
-        // For personalized links, check if this participant has completed
-        hasCompletedAttempt = quizLink.attempts.some(
-          (a) => a.participantId === quizLink.participantId
-        );
-      }
-      // Public / anonymous: single-attempt is enforced client-side (localStorage); do not use legacy anonymous DB attempts.
+    if (!quizLink.allowMultipleAttempts && quizLink.participantId) {
+      hasCompletedAttempt = quizLink.attempts.some(
+        (a) => a.participantId === quizLink.participantId,
+      );
     }
 
     return {
@@ -425,8 +420,8 @@ export async function createParticipant(
 }
 
 /**
- * Start a quiz attempt (public access)
- * participantId is optional - null for anonymous participants (public links)
+ * Start a quiz attempt (identified participant links).
+ * `participantId` must be set for the live play flow; a null branch remains for edge callers.
  */
 export async function startQuizAttempt(
   quizLinkId: string,
@@ -437,8 +432,6 @@ export async function startQuizAttempt(
       return { success: false, error: "Database not initialized" };
     }
 
-    // Verify quiz link exists
-    // Fetch all attempts to check for anonymous and personalized attempts
     const quizLink = await prisma.quizLink.findUnique({
       where: { id: quizLinkId },
       include: {
@@ -489,13 +482,11 @@ export async function startQuizAttempt(
         // Don't automatically abandon in-progress attempts
       }
     } else {
-      // For anonymous participants (public links), allow creating new attempts even if there's one in progress
-      // Don't automatically abandon in-progress attempts
-
-      // For single-attempt anonymous quizzes, check if any anonymous attempt is completed
+      // Legacy: public-link QuizAttempt rows (participantId null) may still exist in old DBs.
       if (!quizLink.allowMultipleAttempts) {
         const existingCompleted = quizLink.attempts.find(
-          (a: { participantId: string | null; status: string }) => a.participantId === null && a.status === "COMPLETED"
+          (a: { participantId: string | null; status: string }) =>
+            a.participantId === null && a.status === "COMPLETED",
         );
         if (existingCompleted) {
           return {

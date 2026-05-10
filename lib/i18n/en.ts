@@ -757,7 +757,6 @@ export const en = {
     attemptedCountSubtitle: "have attempted",
     totalParticipants: "Participants who attempted",
     totalAttempts: "Identified responses",
-    anonymousAttempts: "Anonymous responses",
     noIdentifiedResultsYet: "No identified responses yet.",
     responseSingular: "response",
     responsesPlural: "responses",

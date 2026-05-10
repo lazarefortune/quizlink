@@ -1,3 +1,8 @@
+/**
+ * Script de maintenance / historique : reconstruit quiz_link_anonymous_stats à partir
+ * d’anciennes lignes QuizAttempt (participantId null). À utiliser lors d’une migration
+ * ou d’une réparation ponctuelle ; le runtime anonyme actuel alimente déjà les agrégats.
+ */
 import { pathToFileURL } from "node:url";
 
 import { prisma } from "../lib/prisma";
@@ -273,7 +278,9 @@ async function runBackfill(): Promise<void> {
   console.log("=== Backfill quiz_link_anonymous_stats ===");
   console.log(`Mode: ${dryRun ? "DRY RUN (aucune ecriture)" : "CONFIRM (ecriture active)"}`);
   console.log(`Overwrite: ${overwrite ? "ON (les lignes existantes seront ecrasees)" : "OFF (les lignes existantes seront ignorees)"}`);
-  console.log(`Tentatives anonymes traitees: ${totalAnonymousAttempts}`);
+  console.log(
+    `Lignes QuizAttempt anonymes (source backfill): ${totalAnonymousAttempts}`,
+  );
   console.log(`QuizLink concernes: ${statsByQuizLink.length}`);
   console.log(`Total completed: ${totalCompleted}`);
   console.log(`Total scoreCount: ${totalScoreCount}`);

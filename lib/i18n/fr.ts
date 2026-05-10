@@ -758,7 +758,6 @@ export const fr = {
     attemptedCountSubtitle: "ont répondu",
     totalParticipants: "Participants ayant répondu",
     totalAttempts: "Réponses identifiées",
-    anonymousAttempts: "Réponses anonymes",
     noIdentifiedResultsYet: "Aucune réponse identifiée pour le moment.",
     responseSingular: "réponse",
     responsesPlural: "réponses",
