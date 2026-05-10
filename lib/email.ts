@@ -221,6 +221,90 @@ export async function sendSupportFeedbackNotificationEmail({
   return { success: true };
 }
 
+const SIGNUP_PROVIDER_LABELS_FR: Record<"email" | "google", string> = {
+  email: "Email",
+  google: "Google",
+};
+
+export type UserSignupNotificationProvider = keyof typeof SIGNUP_PROVIDER_LABELS_FR;
+
+export async function sendUserSignupNotificationEmail({
+  recipients,
+  userId,
+  userName,
+  userEmail,
+  provider,
+  coinBalance,
+  createdAt,
+  adminUrl,
+}: {
+  recipients: string[];
+  userId: string;
+  userName: string;
+  userEmail: string;
+  provider: UserSignupNotificationProvider;
+  coinBalance: number;
+  createdAt: Date;
+  adminUrl: string;
+}): Promise<{ success: boolean; error?: string }> {
+  if (recipients.length === 0) {
+    return { success: true };
+  }
+
+  const subject = "[QuizLink] Nouvel utilisateur inscrit";
+  const providerLabel = SIGNUP_PROVIDER_LABELS_FR[provider];
+
+  const dateLine = createdAt.toLocaleString("fr-FR", {
+    dateStyle: "long",
+    timeStyle: "short",
+  });
+
+  const safeName = escapeHtmlForEmail(userName);
+  const safeEmail = escapeHtmlForEmail(userEmail);
+  const safeProvider = escapeHtmlForEmail(providerLabel);
+  const safeAdminUrl = escapeHtmlForEmail(adminUrl);
+  const safeUserId = escapeHtmlForEmail(userId);
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      </head>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <!-- ref:user-${safeUserId} -->
+        <h1 style="color: #2563eb;">Nouvel utilisateur sur QuizLink</h1>
+        <p><strong>Nom :</strong> ${safeName}</p>
+        <p><strong>Email :</strong> ${safeEmail}</p>
+        <p><strong>Méthode :</strong> ${safeProvider}</p>
+        <p><strong>Coins :</strong> ${coinBalance}</p>
+        <p><strong>Date :</strong> ${escapeHtmlForEmail(dateLine)}</p>
+        <p style="margin-top: 24px;"><strong>Lien admin :</strong><br>
+          <a href="${adminUrl.replace(/"/g, "")}" style="color: #2563eb; word-break: break-all;">${safeAdminUrl}</a>
+        </p>
+      </body>
+    </html>
+  `;
+
+  let allOk = true;
+  let lastError: string | undefined;
+
+  for (const to of recipients) {
+    const result = await sendEmail({ to, subject, html });
+    if (!result.success) {
+      allOk = false;
+      lastError = result.error;
+      console.error("[sendUserSignupNotificationEmail] Failed for recipient:", to);
+    }
+  }
+
+  if (!allOk) {
+    return { success: false, error: lastError ?? "Failed to send email" };
+  }
+  return { success: true };
+}
+
 export async function sendEmail({
   to,
   subject,

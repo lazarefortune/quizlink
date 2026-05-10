@@ -13,6 +13,7 @@ import {
   USER_AUTH_PROVIDERS,
 } from "@/lib/userAuthEvents";
 import { recordUserLifecycleEvent, USER_LIFECYCLE_EVENT_TYPES } from "@/lib/userLifecycleEvents";
+import { sendUserSignupNotificationIfNeeded } from "@/lib/sendUserSignupNotificationIfNeeded";
 
 const CREDENTIALS_FAILURE_REASON = "CREDENTIALS_REJECTED";
 
@@ -128,6 +129,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth((req: NextRequest | 
             await recordUserLifecycleEvent(prisma, createdUser.id, USER_LIFECYCLE_EVENT_TYPES.SIGNUP);
 
             await initializeUserCoins(createdUser.id);
+
+            await sendUserSignupNotificationIfNeeded(createdUser.id, "google");
           } else if (!existingUser.googleId && profile?.sub) {
             await prisma.user.update({
               where: { email: user.email },

@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { sendVerificationEmail } from "@/lib/email";
 import { sendWelcomeEmailIfNeeded } from "@/lib/sendWelcomeEmailIfNeeded";
+import { sendUserSignupNotificationIfNeeded } from "@/lib/sendUserSignupNotificationIfNeeded";
 
 export async function verifyEmailAction(
   email: string,
@@ -70,6 +71,7 @@ export async function verifyEmailAction(
     ]);
 
     await sendWelcomeEmailIfNeeded(user.id);
+    await sendUserSignupNotificationIfNeeded(user.id, "email");
 
     return {
       success: true,

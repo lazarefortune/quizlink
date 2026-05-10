@@ -579,15 +579,15 @@ export function AccountContent({ user: initialUser }: AccountContentProps) {
                   onClick={() => setShowLanguageDialog(true)}
                 />
                 <SettingsRow
+                  icon={Coins}
+                  label={t(locale, "account.coins.title")}
+                  href="/account/coins"
+                />
+                <SettingsRow
                   icon={Cookie}
                   label={t(locale, "cookieConsent.account.rowTitle")}
                   value={t(locale, "cookieConsent.account.rowHint")}
                   onClick={() => openConsentPanel()}
-                />
-                <SettingsRow
-                  icon={Coins}
-                  label={t(locale, "account.coins.title")}
-                  href="/account/coins"
                 />
               </CardContent>
             </Card>

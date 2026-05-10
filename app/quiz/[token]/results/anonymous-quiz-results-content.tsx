@@ -13,6 +13,7 @@ import { Alert } from "@/components/ui/alert";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { formatScoreWithPercent } from "@/lib/formatScore";
+import { formatAnswerDuration } from "@/lib/formatAnswerDuration";
 import {
   clearAnonymousQuizResultFromSession,
   loadAnonymousQuizResultFromSession,
@@ -46,12 +47,6 @@ function AnonymousQuizLegalFooter({ locale }: { locale: Locale }) {
       </Link>
     </p>
   );
-}
-
-function formatAnswerDuration(seconds: number): string {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}m ${secs}s`;
 }
 
 export function AnonymousQuizResultsContent({

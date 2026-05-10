@@ -81,7 +81,6 @@ export function AnonymousQuizPlayContent({
   const [isTimeUp, setIsTimeUp] = useState(false);
   const [showQuitConfirm, setShowQuitConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
   const [isQuizFinished, setIsQuizFinished] = useState(false);
   const [isFinishing, setIsFinishing] = useState(false);
   const [finishingStage, setFinishingStage] = useState<"scoring" | "preparing">("scoring");
@@ -90,7 +89,23 @@ export function AnonymousQuizPlayContent({
   const handleFinishRef = useRef<() => Promise<void>>(async () => {});
   const answersRef = useRef<AnswerState[]>([]);
   const quizContainerRef = useRef<HTMLDivElement | null>(null);
+  const questionStartedAtRef = useRef<number>(Date.now());
+  const timeSpentByQuestionIdRef = useRef<Record<string, number>>({});
   const prefersReducedMotion = useReducedMotion();
+
+  // Records the elapsed time for a given question into the ref and resets the
+  // start marker so subsequent calls only add new deltas (idempotent).
+  const recordTimeForQuestionId = useCallback((questionId: string) => {
+    const now = Date.now();
+    const elapsedSec = Math.max(
+      0,
+      Math.floor((now - questionStartedAtRef.current) / 1000),
+    );
+    questionStartedAtRef.current = now;
+    if (elapsedSec <= 0) return;
+    timeSpentByQuestionIdRef.current[questionId] =
+      (timeSpentByQuestionIdRef.current[questionId] ?? 0) + elapsedSec;
+  }, []);
 
   const settings = initialSettings;
   const timeLimit = settings.timeLimitPerQuestion ?? 0;
@@ -117,11 +132,13 @@ export function AnonymousQuizPlayContent({
     setAnswers(initialAnswers);
     setCurrentQuestionIndex(0);
     sessionStartedAtRef.current = Date.now();
+    timeSpentByQuestionIdRef.current = {};
+    questionStartedAtRef.current = Date.now();
   }, [initialQuestions, settings.randomizeQuestions]);
 
   useEffect(() => {
     if (questions.length === 0) return;
-    setQuestionStartTime(Date.now());
+    questionStartedAtRef.current = Date.now();
     quizContainerRef.current?.scrollIntoView({
       behavior: prefersReducedMotion ? "auto" : "smooth",
       block: "start",
@@ -158,6 +175,10 @@ export function AnonymousQuizPlayContent({
         setIsTimeUp(true);
         clearInterval(interval);
         setTimeout(() => {
+          const expiredQuestion = questions[currentQuestionIndex];
+          if (expiredQuestion) {
+            recordTimeForQuestionId(expiredQuestion.id);
+          }
           if (currentQuestionIndex < questions.length - 1) {
             setCurrentQuestionIndex((i) => i + 1);
           } else {
@@ -176,6 +197,8 @@ export function AnonymousQuizPlayContent({
     settings.timeLimitPerQuestion,
     questions.length,
     isCurrentAnswerVerified,
+    questions,
+    recordTimeForQuestionId,
   ]);
 
   useEffect(() => {
@@ -205,7 +228,8 @@ export function AnonymousQuizPlayContent({
         return;
       }
 
-      const timeSpent = Math.floor((Date.now() - questionStartTime) / 1000);
+      recordTimeForQuestionId(questionId);
+      const timeSpent = timeSpentByQuestionIdRef.current[questionId] ?? 0;
 
       const result = await validateAnonymousQuestionAnswer(
         token,
@@ -239,7 +263,7 @@ export function AnonymousQuizPlayContent({
       });
       setIsSubmitting(false);
     },
-    [token, questionStartTime, locale]
+    [token, locale, recordTimeForQuestionId]
   );
 
   const handleAnswerSelect = (optionId: string) => {
@@ -287,6 +311,8 @@ export function AnonymousQuizPlayContent({
     const currentQuestion = questions[currentQuestionIndex];
     const currentAnswer = answers.find((a) => a.questionId === currentQuestion.id);
 
+    recordTimeForQuestionId(currentQuestion.id);
+
     if (settings.showAnswerImmediately) {
       if (
         currentAnswer &&
@@ -313,6 +339,11 @@ export function AnonymousQuizPlayContent({
       setIsFinishing(true);
       setFinishingStage("scoring");
       answersRef.current = answers;
+
+      const lastQuestion = questions[currentQuestionIndex];
+      if (lastQuestion) {
+        recordTimeForQuestionId(lastQuestion.id);
+      }
 
       if (settings.showAnswerImmediately) {
         const currentQuestion = questions[currentQuestionIndex];
@@ -353,10 +384,10 @@ export function AnonymousQuizPlayContent({
       }
 
       const mergedDetails: (AnonymousQuizDetailRow & { timeSpent?: number })[] = result.details.map((row) => {
-        const fromAnswers = answersRef.current.find((a) => a.questionId === row.questionId);
+        const trackedTime = timeSpentByQuestionIdRef.current[row.questionId];
         return {
           ...row,
-          timeSpent: fromAnswers?.timeSpent,
+          timeSpent: trackedTime && trackedTime > 0 ? trackedTime : undefined,
         };
       });
 
@@ -401,12 +432,17 @@ export function AnonymousQuizPlayContent({
     locale,
     submitAnswerForQuestion,
     settings.showAnswerImmediately,
+    recordTimeForQuestionId,
   ]);
 
   handleFinishRef.current = handleFinish;
 
   const handlePrevious = () => {
     if (currentQuestionIndex > 0) {
+      const currentQuestion = questions[currentQuestionIndex];
+      if (currentQuestion) {
+        recordTimeForQuestionId(currentQuestion.id);
+      }
       setQuestionDirection(-1);
       setCurrentQuestionIndex(currentQuestionIndex - 1);
     }
