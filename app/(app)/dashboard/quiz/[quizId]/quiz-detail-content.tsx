@@ -25,6 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Alert } from "@/components/ui/alert";
 
 async function writeToClipboard(text: string): Promise<void> {
   try {
@@ -59,6 +60,15 @@ type QuizDetailContentProps = {
       lastAttemptDate: Date | null;
     }>;
     anonymousAttemptsCount: number;
+    totalResponses: number;
+    anonymousCompletedCount: number;
+    identifiedCompletedCount: number;
+    globalScoreAverage: number;
+    globalScoredCount: number;
+    totalOpenCount: number;
+    totalStarted: number;
+    globalBestScore: number | null;
+    globalLowestScore: number | null;
     attempts: Array<{
       id: string;
       participantName: string;
@@ -86,36 +96,6 @@ export function QuizDetailContent({
   const [copyLoading, setCopyLoading] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
-  const getDisplayStatus = (status: string, startedAt: Date | null): string => {
-    if (status !== "IN_PROGRESS" || !startedAt) return status;
-    const elapsed = Date.now() - new Date(startedAt).getTime();
-    return elapsed >= FOUR_HOURS_MS ? "ABANDONED" : status;
-  };
-
-  const attemptsWithDisplayStatus = stats.attempts.map((attempt) => ({
-    ...attempt,
-    displayStatus: getDisplayStatus(attempt.status, attempt.startedAt),
-  }));
-  const totalResults = attemptsWithDisplayStatus.length;
-  const completedResults = attemptsWithDisplayStatus.filter(
-    (attempt) => attempt.displayStatus === "COMPLETED",
-  ).length;
-  const abandonedResults = attemptsWithDisplayStatus.filter(
-    (attempt) => attempt.displayStatus === "ABANDONED",
-  ).length;
-  const bestScore = stats.attempts
-    .filter((attempt) => attempt.score != null)
-    .reduce<number | null>((max, attempt) => {
-      if (attempt.score == null) return max;
-      if (max == null) return attempt.score;
-      return attempt.score > max ? attempt.score : max;
-    }, null);
-
-  const baseUrl =
-    typeof window !== "undefined"
-      ? window.location.origin
-      : process.env.NEXT_PUBLIC_APP_URL ?? "";
 
   const handlePlay = async () => {
     setPlayLoading(true);
@@ -206,10 +186,10 @@ export function QuizDetailContent({
                       : t(locale, "dashboard.questions")}
                   </span>
                   <span>
-                    {totalResults}{" "}
-                    {totalResults <= 1
-                      ? t(locale, "dashboard.resultSingular")
-                      : t(locale, "dashboard.resultsPlural")}
+                    {stats.totalResponses}{" "}
+                    {stats.totalResponses <= 1
+                      ? t(locale, "dashboard.responseSingular")
+                      : t(locale, "dashboard.responsesPlural")}
                   </span>
                 </div>
               </div>
@@ -256,31 +236,70 @@ export function QuizDetailContent({
           </div>
         </div>
 
+        <Alert variant="info" className="border-border">
+          <p>{t(locale, "dashboard.anonymousResponsesStatsNote")}</p>
+        </Alert>
+
         <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-xl border border-border bg-card p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {t(locale, "dashboard.resultsLabel")}
+              {t(locale, "dashboard.responsesCardTitle")}
             </p>
-            <p className="mt-2 text-2xl font-bold tabular-nums">{totalResults}</p>
+            <p className="mt-2 text-2xl font-bold tabular-nums">{stats.totalResponses}</p>
           </div>
           <div className="rounded-xl border border-border bg-card p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {t(locale, "dashboard.resultsCompleted")}
+              {t(locale, "dashboard.responsesAnonymousCard")}
             </p>
-            <p className="mt-2 text-2xl font-bold tabular-nums">{completedResults}</p>
+            <p className="mt-2 text-2xl font-bold tabular-nums">
+              {stats.anonymousCompletedCount}
+            </p>
           </div>
           <div className="rounded-xl border border-border bg-card p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {t(locale, "dashboard.resultsAbandoned")}
+              {t(locale, "dashboard.responsesIdentifiedCard")}
             </p>
-            <p className="mt-2 text-2xl font-bold tabular-nums">{abandonedResults}</p>
+            <p className="mt-2 text-2xl font-bold tabular-nums">
+              {stats.identifiedCompletedCount}
+            </p>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              {t(locale, "dashboard.averageScoreGlobal")}
+            </p>
+            <p className="mt-2 text-2xl font-bold tabular-nums">
+              {stats.globalScoredCount > 0 ? `${stats.globalScoreAverage.toFixed(1)}%` : "-"}
+            </p>
+          </div>
+        </section>
+
+        <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-xl border border-border bg-card p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              {t(locale, "dashboard.opensLabel")}
+            </p>
+            <p className="mt-2 text-2xl font-bold tabular-nums">{stats.totalOpenCount}</p>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              {t(locale, "dashboard.startedLabel")}
+            </p>
+            <p className="mt-2 text-2xl font-bold tabular-nums">{stats.totalStarted}</p>
           </div>
           <div className="rounded-xl border border-border bg-card p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               {t(locale, "dashboard.bestScoreLabel")}
             </p>
             <p className="mt-2 text-2xl font-bold tabular-nums">
-              {bestScore != null ? `${bestScore.toFixed(1)}%` : "-"}
+              {stats.globalBestScore != null ? `${stats.globalBestScore.toFixed(1)}%` : "-"}
+            </p>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              {t(locale, "dashboard.worstScoreLabel")}
+            </p>
+            <p className="mt-2 text-2xl font-bold tabular-nums">
+              {stats.globalLowestScore != null ? `${stats.globalLowestScore.toFixed(1)}%` : "-"}
             </p>
           </div>
         </section>

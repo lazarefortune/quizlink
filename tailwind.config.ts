@@ -65,7 +65,7 @@ export default {
       fontFamily: {
         sans: ["var(--font-fredoka)", "ui-sans-serif", "system-ui", "sans-serif"],
         fredoka: ["var(--font-fredoka)", "ui-sans-serif", "system-ui", "sans-serif"],
-        rubik: ["var(--font-rubik)", "ui-sans-serif", "system-ui", "sans-serif"],
+        rubik: ["var(--font-fredoka)", "ui-sans-serif", "system-ui", "sans-serif"],
         "sn-pro": ["SN Pro", "ui-sans-serif", "system-ui", "sans-serif"],
         "sofia-sans": ["var(--font-sofia-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
       },

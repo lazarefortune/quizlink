@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { creatorCountedAttemptWhere } from "@/lib/creator-quiz-attempt-filter";
 
 export type DashboardStats = {
   quizzesCount: number;
@@ -27,6 +28,7 @@ export async function getDashboardStats(
       prisma.participant.count({ where: { createdByUserId: ownerUserId } }),
       prisma.quizAttempt.count({
         where: {
+          ...creatorCountedAttemptWhere,
           quizLink: {
             quiz: { ownerId: ownerUserId },
           },

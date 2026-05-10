@@ -11,6 +11,7 @@ export const EVENTS = {
   quiz_created: "quiz_created",
   participant_invited: "participant_invited",
   attempt_completed: "attempt_completed",
+  anonymous_quiz_completed: "anonymous_quiz_completed",
   pricing_viewed: "pricing_viewed",
   checkout_started: "checkout_started",
   checkout_completed: "checkout_completed",
@@ -52,6 +53,12 @@ export type EventPropsMap = {
     question_count: number;
     duration_sec?: number;
     is_first_attempt_for_participant?: boolean;
+  };
+  anonymous_quiz_completed: {
+    quiz_id: string;
+    score_pct: number;
+    question_count: number;
+    duration_sec?: number;
   };
   pricing_viewed: { page: "pricing" };
   checkout_started: { pack_id: string; price?: number; currency?: string };

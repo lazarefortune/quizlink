@@ -156,6 +156,10 @@ export default function DashboardQuizzesPage() {
   const [isDeletingQuiz, setIsDeletingQuiz] = useState(false);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const getResponseLabel = (count: number) =>
+    count <= 1
+      ? t(locale, "dashboard.responseSingular")
+      : t(locale, "dashboard.responsesPlural");
 
   const loadQuizzes = useCallback(async (p: number, search: string) => {
     setIsLoading(true);
@@ -442,7 +446,7 @@ export default function DashboardQuizzesPage() {
                         <span className="inline-flex items-center gap-1.5">
                           <Users className="h-3.5 w-3.5" />
                           {quiz.attemptCount}{" "}
-                          {t(locale, "dashboard.attempts")}
+                          {getResponseLabel(quiz.attemptCount)}
                         </span>
                       </div>
 

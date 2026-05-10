@@ -50,7 +50,11 @@ export async function generateQuizParticipantReportAction(
     const link = await prisma.quizLink.findFirst({
       where: { quizId, participantId },
       include: {
-        _count: { select: { attempts: true } },
+        _count: {
+          select: {
+            attempts: { where: { participantId } },
+          },
+        },
       },
     });
     if (!link || link._count.attempts === 0) {

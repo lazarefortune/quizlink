@@ -40,7 +40,7 @@ type GetQuizLinkByTokenResponse =
             options: Array<{
               id: string;
               label: string;
-              isCorrect: boolean;
+              isCorrect?: boolean;
             }>;
           }>;
         };
@@ -308,12 +308,8 @@ export async function getQuizLinkByToken(
         hasCompletedAttempt = quizLink.attempts.some(
           (a) => a.participantId === quizLink.participantId
         );
-      } else {
-        // For public links (anonymous), check if any anonymous attempt is completed (attempts are already filtered by status COMPLETED)
-        hasCompletedAttempt = quizLink.attempts.some(
-          (a) => a.participantId === null
-        );
       }
+      // Public / anonymous: single-attempt is enforced client-side (localStorage); do not use legacy anonymous DB attempts.
     }
 
     return {
@@ -347,11 +343,18 @@ export async function getQuizLinkByToken(
             label: q.label,
             image: q.image,
             order: q.order,
-            options: q.options.map((opt: { id: string; label: string; isCorrect: boolean }) => ({
-              id: opt.id,
-              label: opt.label,
-              isCorrect: opt.isCorrect,
-            })),
+            options: q.options.map((opt: { id: string; label: string; isCorrect: boolean }) =>
+              quizLink.participantId
+                ? {
+                    id: opt.id,
+                    label: opt.label,
+                    isCorrect: opt.isCorrect,
+                  }
+                : {
+                    id: opt.id,
+                    label: opt.label,
+                  }
+            ),
           })),
         },
       },

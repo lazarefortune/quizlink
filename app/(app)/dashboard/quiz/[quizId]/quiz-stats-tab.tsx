@@ -166,14 +166,12 @@ export function QuizStatsTab({
       <section>
         <h3 className="flex items-center gap-2 border-b border-border pb-3 text-base font-semibold">
           <ListChecks className="h-4 w-4 text-muted-foreground" />
-          {t(locale, "dashboard.resultsLabel")}
+          {t(locale, "dashboard.detailedResponsesTitle")}
         </h3>
         {stats.attempts.length === 0 ? (
           <div className="py-8 text-center space-y-4">
             <p className="text-sm text-muted-foreground">
-              {locale === "fr"
-                ? "Aucun résultat pour le moment."
-                : "No results yet."}
+              {t(locale, "dashboard.noIdentifiedResultsYet")}
             </p>
             {onCopyLink && (
               <Button
@@ -209,11 +207,6 @@ export function QuizStatsTab({
                       <TableCell className="font-medium text-sm">
                         <span className="flex items-center gap-2">
                           {attempt.participantName}
-                          {attempt.isAnonymous && (
-                            <Badge variant="secondary" className="text-xs">
-                              {t(locale, "dashboard.anonymous")}
-                            </Badge>
-                          )}
                         </span>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
@@ -252,11 +245,6 @@ export function QuizStatsTab({
                   <div className="flex justify-between items-start">
                     <span className="font-medium text-sm">
                       {attempt.participantName}
-                      {attempt.isAnonymous && (
-                        <Badge variant="secondary" className="ml-2 text-xs">
-                          {t(locale, "dashboard.anonymous")}
-                        </Badge>
-                      )}
                     </span>
                     {getStatusBadge(
                       getDisplayStatus(attempt.status, attempt.startedAt),

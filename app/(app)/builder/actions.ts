@@ -6,6 +6,7 @@ import type { QuizBuilder } from "@/types/quiz-builder";
 import { getUserQuizCreationVisibility } from "./user-quiz-visibility";
 import { revalidatePath } from "next/cache";
 import type { Prisma } from "@prisma/client";
+import { creatorCountedAttemptWhere } from "@/lib/creator-quiz-attempt-filter";
 
 export async function saveQuiz(quiz: QuizBuilder, quizId?: string) {
   try {
@@ -199,6 +200,7 @@ export async function getUserQuizzes() {
       },
       include: {
         attempts: {
+          where: { ...creatorCountedAttemptWhere },
           select: {
             id: true,
             startedAt: true,
@@ -356,18 +358,56 @@ export async function getUserQuizzesPaginated(
     ]);
 
     const quizIds = quizzes.map((q) => q.id);
-    const linksWithCounts = await prisma.quizLink.findMany({
-      where: { quizId: { in: quizIds } },
-      select: {
-        quizId: true,
-        _count: { select: { attempts: true } },
-      },
-    });
+    const [linksWithCounts, anonymousStatsRows] = await Promise.all([
+      prisma.quizLink.findMany({
+        where: { quizId: { in: quizIds } },
+        select: {
+          quizId: true,
+          _count: {
+            select: {
+              attempts: {
+                where: {
+                  ...creatorCountedAttemptWhere,
+                  status: "COMPLETED",
+                },
+              },
+            },
+          },
+        },
+      }),
+      prisma.quizLinkAnonymousStats.findMany({
+        where: {
+          quizLink: {
+            quizId: { in: quizIds },
+          },
+        },
+        select: {
+          completedCount: true,
+          quizLink: {
+            select: {
+              quizId: true,
+            },
+          },
+        },
+      }),
+    ]);
 
-    const attemptCountByQuizId = new Map<string, number>();
+    const anonymousResponseCountByQuizId = new Map<string, number>();
+    for (const row of anonymousStatsRows) {
+      const quizId = row.quizLink.quizId;
+      const current = anonymousResponseCountByQuizId.get(quizId) ?? 0;
+      anonymousResponseCountByQuizId.set(quizId, current + row.completedCount);
+    }
+
+    const responseCountByQuizId = new Map<string, number>();
     for (const link of linksWithCounts) {
-      const current = attemptCountByQuizId.get(link.quizId) ?? 0;
-      attemptCountByQuizId.set(link.quizId, current + link._count.attempts);
+      const current = responseCountByQuizId.get(link.quizId) ?? 0;
+      responseCountByQuizId.set(link.quizId, current + link._count.attempts);
+    }
+
+    for (const [quizId, anonymousResponses] of anonymousResponseCountByQuizId.entries()) {
+      const current = responseCountByQuizId.get(quizId) ?? 0;
+      responseCountByQuizId.set(quizId, current + anonymousResponses);
     }
 
     return {
@@ -377,7 +417,7 @@ export async function getUserQuizzesPaginated(
         name: q.name,
         visibility: q.visibility as "PRIVATE" | "PUBLIC",
         questionCount: q._count.questions,
-        attemptCount: attemptCountByQuizId.get(q.id) ?? 0,
+        attemptCount: responseCountByQuizId.get(q.id) ?? 0,
         createdAt:
           q.createdAt instanceof Date
             ? q.createdAt.toISOString()

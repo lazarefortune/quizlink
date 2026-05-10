@@ -200,11 +200,31 @@ model QuizLink {
   expiresAt             DateTime?     @map("expires_at")
   revokedAt             DateTime?     @map("revoked_at")
   attempts              QuizAttempt[]
+  anonymousStats        QuizLinkAnonymousStats?
 
   @@index([quizId])
   @@index([token])
   @@index([participantId])
   @@map("quiz_links")
+}
+
+model QuizLinkAnonymousStats {
+  quizLinkId       String    @id @map("quiz_link_id")
+  quizLink         QuizLink  @relation(fields: [quizLinkId], references: [id], onDelete: Cascade)
+  openCount        Int       @default(0) @map("open_count")
+  startedCount     Int       @default(0) @map("started_count")
+  completedCount   Int       @default(0) @map("completed_count")
+  scoreSum         Float     @default(0) @map("score_sum")
+  scoreCount       Int       @default(0) @map("score_count")
+  bestScore        Float?    @map("best_score")
+  lowestScore      Float?    @map("lowest_score")
+  lastOpenedAt     DateTime? @map("last_opened_at")
+  lastStartedAt    DateTime? @map("last_started_at")
+  lastCompletedAt  DateTime? @map("last_completed_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  @@map("quiz_link_anonymous_stats")
 }
 
 model QuizAttempt {

@@ -236,10 +236,10 @@ body {
   font-weight: 400;
 }
 
-/* Rubik uniquement pour le texte de lecture (paragraphes, descriptions) */
+/* Fredoka partout, y compris le texte de lecture */
 p,
 .text-body {
-  font-family: var(--font-rubik), system-ui, sans-serif;
+  font-family: var(--font-fredoka), system-ui, sans-serif;
 }
 
 /* Fond des side panels auth (vert plus foncé que primary) */

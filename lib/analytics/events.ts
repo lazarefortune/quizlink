@@ -11,6 +11,7 @@ export const EMAIL_VERIFIED = "email_verified";
 export const QUIZ_CREATED = "quiz_created";
 export const PARTICIPANT_INVITED = "participant_invited";
 export const ATTEMPT_COMPLETED = "attempt_completed";
+export const ANONYMOUS_QUIZ_COMPLETED = "anonymous_quiz_completed";
 export const PRICING_VIEWED = "pricing_viewed";
 export const CHECKOUT_STARTED = "checkout_started";
 export const CHECKOUT_COMPLETED = "checkout_completed";

@@ -6,6 +6,7 @@ import type { QuizBuilder } from "@/types/quiz-builder";
 import { revalidatePath } from "next/cache";
 import { deductCoins } from "@/lib/coins";
 import type { Prisma } from "@prisma/client";
+import { creatorCountedAttemptWhere } from "@/lib/creator-quiz-attempt-filter";
 
 // Get dashboard statistics for the current user
 export async function getDashboardStats() {
@@ -34,6 +35,7 @@ export async function getDashboardStats() {
         // Attempt stats across all user's quizzes
         prisma.quizAttempt.aggregate({
           where: {
+            ...creatorCountedAttemptWhere,
             quizLink: { quiz: { ownerId: userId } },
           },
           _count: { id: true },
@@ -53,22 +55,60 @@ export async function getDashboardStats() {
                 questions: true,
                 links: {
                   where: {
-                    attempts: { some: {} },
+                    attempts: { some: { ...creatorCountedAttemptWhere } },
                   },
                 },
               },
             },
             links: {
               select: {
-                _count: { select: { attempts: true } },
+                _count: {
+                  select: {
+                    attempts: {
+                      where: {
+                        ...creatorCountedAttemptWhere,
+                        status: "COMPLETED",
+                      },
+                    },
+                  },
+                },
+                id: true,
               },
             },
           },
         }),
       ]);
 
+    const recentQuizIds = recentQuizzes.map((quiz) => quiz.id);
+    const anonymousStatsRows =
+      recentQuizIds.length > 0
+        ? await prisma.quizLinkAnonymousStats.findMany({
+            where: {
+              quizLink: {
+                quizId: { in: recentQuizIds },
+              },
+            },
+            select: {
+              completedCount: true,
+              quizLink: {
+                select: {
+                  quizId: true,
+                },
+              },
+            },
+          })
+        : [];
+
+    const anonymousResponseCountByQuizId = new Map<string, number>();
+    for (const row of anonymousStatsRows) {
+      const quizId = row.quizLink.quizId;
+      const current = anonymousResponseCountByQuizId.get(quizId) ?? 0;
+      anonymousResponseCountByQuizId.set(quizId, current + row.completedCount);
+    }
+
     const completedAttempts = await prisma.quizAttempt.count({
       where: {
+        ...creatorCountedAttemptWhere,
         quizLink: { quiz: { ownerId: userId } },
         status: "COMPLETED",
       },
@@ -96,7 +136,9 @@ export async function getDashboardStats() {
           name: q.name,
           updatedAt: q.updatedAt.toISOString(),
           questionCount: q._count.questions,
-          attemptCount: q.links.reduce((sum, l) => sum + l._count.attempts, 0),
+          attemptCount:
+            q.links.reduce((sum, l) => sum + l._count.attempts, 0) +
+            (anonymousResponseCountByQuizId.get(q.id) ?? 0),
         })),
       },
     };

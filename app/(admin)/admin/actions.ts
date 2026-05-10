@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { creatorCountedAttemptWhere } from "@/lib/creator-quiz-attempt-filter";
 
 type SearchUsersResponse =
   | { success: true; users: Array<{ id: string; email: string; name: string; role: string; coinBalance: number; createdAt: Date; verifiedAt: Date | null; lastLoginAt: Date | null; hasGoogleAccount: boolean; _count: { quizzes: number } }> }
@@ -390,7 +391,11 @@ export async function getAdminUserWithQuizzes(
             expiresAt: true,
             revokedAt: true,
             participant: { select: { name: true } },
-            _count: { select: { attempts: true } },
+            _count: {
+              select: {
+                attempts: { where: { ...creatorCountedAttemptWhere } },
+              },
+            },
           },
           orderBy: { createdAt: "desc" },
         },
@@ -423,7 +428,11 @@ export async function getAdminUserWithQuizzes(
             token: true,
             expiresAt: true,
             quiz: { select: { name: true } },
-            _count: { select: { attempts: true } },
+            _count: {
+              select: {
+                attempts: { where: { ...creatorCountedAttemptWhere } },
+              },
+            },
           },
         },
         _count: { select: { links: true, attempts: true } },

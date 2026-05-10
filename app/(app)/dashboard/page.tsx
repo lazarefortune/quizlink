@@ -69,6 +69,10 @@ export default function DashboardPage() {
   const [playLoadingQuizId, setPlayLoadingQuizId] = useState<string | null>(null);
   const [copyLoadingQuizId, setCopyLoadingQuizId] = useState<string | null>(null);
   const [copiedQuizId, setCopiedQuizId] = useState<string | null>(null);
+  const getResponseLabel = (count: number) =>
+    count <= 1
+      ? t(locale, "dashboard.responseSingular")
+      : t(locale, "dashboard.responsesPlural");
 
   const welcomeGreetingKey = useSyncExternalStore(
     noopSubscribe,
@@ -340,7 +344,7 @@ export default function DashboardPage() {
               </h2>
               <Link
                 href="/dashboard/quizzes"
-                className="text-sm font-semibold text-blue hover:underline"
+                className="text-base uppercase font-semibold text-blue hover:underline"
               >
                 {t(locale, "dashboard.home.seeAll")}
               </Link>
@@ -377,7 +381,7 @@ export default function DashboardPage() {
                         </span>
                         <span className="inline-flex items-center gap-1.5">
                           <Users className="h-3.5 w-3.5" />
-                          {quiz.attemptCount} {t(locale, "dashboard.attempts")}
+                          {quiz.attemptCount} {getResponseLabel(quiz.attemptCount)}
                         </span>
                       </div>
 

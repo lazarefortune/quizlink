@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { motion, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert } from "@/components/ui/alert";
@@ -17,6 +18,10 @@ import {
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { startQuizAttempt } from "@/app/quiz-link/actions";
+import {
+  recordAnonymousLinkOpen,
+  recordAnonymousQuizStart,
+} from "@/app/quiz-link/anonymous-quiz-stats-actions";
 
 type QuizLink = {
   id: string;
@@ -46,7 +51,7 @@ type QuizLink = {
       options: Array<{
         id: string;
         label: string;
-        isCorrect: boolean;
+        isCorrect?: boolean;
       }>;
     }>;
   };
@@ -63,8 +68,18 @@ export function QuizIntroductionContent({
 }: QuizIntroductionContentProps) {
   const router = useRouter();
   const { locale } = useLocale();
+  const prefersReducedMotion = useReducedMotion();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const isPublicLink = quizLink.participantId === null;
+
+  useEffect(() => {
+    if (!isPublicLink) {
+      return;
+    }
+    void recordAnonymousLinkOpen(token);
+  }, [isPublicLink, token]);
 
   const settings = quizLink.quiz.settings as {
     showAnswerImmediately?: boolean;
@@ -74,22 +89,28 @@ export function QuizIntroductionContent({
 
   const portalToken = quizLink.participant?.publicToken ?? null;
   const isCompleted =
-    !quizLink.allowMultipleAttempts && quizLink.hasCompletedAttempt;
+    !isPublicLink && !quizLink.allowMultipleAttempts && quizLink.hasCompletedAttempt;
 
   const handleStart = async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      let participantId: string | null = null;
-
-      if (quizLink.participantId) {
-        participantId = quizLink.participantId;
+      if (isPublicLink) {
+        const statsResult = await recordAnonymousQuizStart(token);
+        if (!statsResult.success) {
+          setError(statsResult.error);
+          setIsLoading(false);
+          return;
+        }
+        router.push(`/quiz/${token}/play`);
+        setIsLoading(false);
+        return;
       }
 
       const attemptResult = await startQuizAttempt(
         quizLink.id,
-        participantId,
+        quizLink.participantId,
       );
 
       if (!attemptResult.success) {
@@ -126,7 +147,12 @@ export function QuizIntroductionContent({
           </Link>
         )}
         <div className="space-y-8">
-          <div className="flex flex-col gap-4">
+          <motion.div
+            initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: prefersReducedMotion ? 0 : 0.24 }}
+            className="flex flex-col gap-4"
+          >
             {/* Greeting */}
             {quizLink.participant && (
               <p className="text-muted-foreground text-lg h1">
@@ -141,7 +167,7 @@ export function QuizIntroductionContent({
             )}
 
             {!quizLink.participant && (
-              <p className="text-muted-foreground text-lg h1">
+              <p className="text-muted-foreground font-normal text-lg">
                 {t(locale, "quiz.introductionDescription")}
               </p>
             )}
@@ -150,10 +176,15 @@ export function QuizIntroductionContent({
             <h1 className="text-3xl h1 sm:text-4xl font-bold tracking-tight">
               {quizLink.quiz.name}
             </h1>
-          </div>
+          </motion.div>
 
           {/* Info pills */}
-          <div className="flex flex-wrap gap-3">
+          <motion.div
+            initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: prefersReducedMotion ? 0 : 0.24, delay: prefersReducedMotion ? 0 : 0.05 }}
+            className="flex flex-wrap gap-3"
+          >
             <Badge variant="secondary" className="text-sm px-3 py-1.5 gap-1.5">
               <FileQuestion className="h-4 w-4" />
               {quizLink.quiz.questions.length} {t(locale, "quiz.questions")}
@@ -167,10 +198,15 @@ export function QuizIntroductionContent({
                 {settings.timeLimitPerQuestion}s {t(locale, "quiz.perQuestion")}
               </Badge>
             )}
-          </div>
+          </motion.div>
 
           {/* Attempt info */}
-          <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/50 p-4">
+          <motion.div
+            initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: prefersReducedMotion ? 0 : 0.24, delay: prefersReducedMotion ? 0 : 0.1 }}
+            className="flex items-start gap-3 rounded-lg border border-border bg-muted/50 p-4"
+          >
             {quizLink.allowMultipleAttempts ? (
               <div className="flex items-center gap-2">
                 <RefreshCw className="h-5 w-5 shrink-0 mt-0.5 mr-1" />
@@ -186,7 +222,7 @@ export function QuizIntroductionContent({
                 </p>
               </div>
             )}
-          </div>
+          </motion.div>
 
           {/* Error */}
           {error && (
@@ -204,19 +240,25 @@ export function QuizIntroductionContent({
               </p>
             </div>
           ) : (
-            <Button
-              onClick={handleStart}
-              disabled={isLoading}
-              variant="blue"
-              size="lg"
-              className="w-full text-base"
+            <motion.div
+              initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.24, delay: prefersReducedMotion ? 0 : 0.14 }}
             >
-              {isLoading
-                ? t(locale, "common.loading")
-                : quizLink.hasCompletedAttempt
-                  ? t(locale, "quiz.restart")
-                  : t(locale, "quiz.startQuiz")}
-            </Button>
+              <Button
+                onClick={handleStart}
+                disabled={isLoading}
+                variant="blue"
+                size="lg"
+                className="w-full text-base"
+              >
+                {isLoading
+                  ? t(locale, "common.loading")
+                  : isCompleted
+                    ? t(locale, "quiz.restart")
+                    : t(locale, "quiz.startQuiz")}
+              </Button>
+            </motion.div>
           )}
         </div>
       </div>

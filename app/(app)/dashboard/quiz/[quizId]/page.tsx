@@ -5,6 +5,9 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 
+/** Anonymous stats update via server actions; avoid serving a stale RSC snapshot. */
+export const dynamic = "force-dynamic";
+
 type PageProps = {
   params: Promise<{ quizId: string }>;
 };

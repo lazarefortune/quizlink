@@ -353,20 +353,6 @@ export function QuizStatsContent({
             </CardContent>
           </Card>
 
-          {stats.anonymousAttemptsCount > 0 && (
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  {t(locale, "dashboard.anonymousAttempts")}
-                </CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.anonymousAttemptsCount}</div>
-              </CardContent>
-            </Card>
-          )}
-
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -527,7 +513,7 @@ export function QuizStatsContent({
                   <Target className="h-7 w-7 text-muted-foreground" />
                 </div>
                 <p className="text-muted-foreground">
-                  {t(locale, "dashboard.noAttemptsYet")}
+                  {t(locale, "dashboard.noIdentifiedResultsYet")}
                 </p>
               </CardContent>
             </Card>
@@ -553,11 +539,6 @@ export function QuizStatsContent({
                             <TableCell className="font-medium">
                               <span className="flex items-center gap-2">
                                 {attempt.participantName}
-                                {attempt.isAnonymous && (
-                                  <Badge variant="secondary" className="text-xs">
-                                    {t(locale, "dashboard.anonymous")}
-                                  </Badge>
-                                )}
                               </span>
                             </TableCell>
                             <TableCell className="whitespace-nowrap text-sm">
@@ -599,11 +580,6 @@ export function QuizStatsContent({
                       <div className="flex items-center justify-between">
                         <span className="flex items-center gap-2 font-medium">
                           {attempt.participantName}
-                          {attempt.isAnonymous && (
-                            <Badge variant="secondary" className="text-xs">
-                              {t(locale, "dashboard.anonymous")}
-                            </Badge>
-                          )}
                         </span>
                         {getStatusBadge(
                           getDisplayStatus(attempt.status, attempt.startedAt),
