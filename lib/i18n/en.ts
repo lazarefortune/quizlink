@@ -1026,6 +1026,9 @@ export const en = {
       anonymous: "Anonymous",
       private: "Private",
       public: "Public",
+      responsesStat: "Responses",
+      responseSingular: "response",
+      responsePlural: "responses",
     },
     searchError: "Error searching",
     coins: {

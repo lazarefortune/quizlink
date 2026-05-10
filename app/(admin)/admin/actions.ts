@@ -3,7 +3,15 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-import { creatorCountedAttemptWhere } from "@/lib/creator-quiz-attempt-filter";
+import {
+  computeAdminLinkResponseCounts,
+  sumAdminQuizResponseCounts,
+} from "@/lib/admin-quiz-response-counts";
+
+const identifiedCompletedAttemptWhere = {
+  participantId: { not: null },
+  status: "COMPLETED",
+} as const;
 
 type SearchUsersResponse =
   | { success: true; users: Array<{ id: string; email: string; name: string; role: string; coinBalance: number; createdAt: Date; verifiedAt: Date | null; lastLoginAt: Date | null; hasGoogleAccount: boolean; _count: { quizzes: number } }> }
@@ -275,7 +283,9 @@ export type AdminQuizLink = {
   allowMultipleAttempts: boolean;
   expiresAt: Date | null;
   revokedAt: Date | null;
-  attemptsCount: number;
+  anonymousResponsesCount: number;
+  identifiedResponsesCount: number;
+  totalResponsesCount: number;
 };
 
 export type AdminQuizQuestion = {
@@ -295,7 +305,9 @@ export type AdminQuizDetail = {
   createdAt: Date;
   questionsCount: number;
   linksCount: number;
-  attemptsCount: number;
+  anonymousResponsesCount: number;
+  identifiedResponsesCount: number;
+  totalResponsesCount: number;
   links: AdminQuizLink[];
   questions: AdminQuizQuestion[];
 };
@@ -306,12 +318,16 @@ export type AdminParticipant = {
   email: string | null;
   createdAt: Date;
   linksCount: number;
-  attemptsCount: number;
+  anonymousResponsesCount: number;
+  identifiedResponsesCount: number;
+  totalResponsesCount: number;
   links: Array<{
     id: string;
     token: string;
     quizName: string;
-    attemptsCount: number;
+    anonymousResponsesCount: number;
+    identifiedResponsesCount: number;
+    totalResponsesCount: number;
     expiresAt: Date | null;
   }>;
 };
@@ -390,10 +406,12 @@ export async function getAdminUserWithQuizzes(
             allowMultipleAttempts: true,
             expiresAt: true,
             revokedAt: true,
+            participantId: true,
             participant: { select: { name: true } },
+            anonymousStats: { select: { completedCount: true } },
             _count: {
               select: {
-                attempts: { where: { ...creatorCountedAttemptWhere } },
+                attempts: { where: { ...identifiedCompletedAttemptWhere } },
               },
             },
           },
@@ -402,16 +420,6 @@ export async function getAdminUserWithQuizzes(
         _count: { select: { questions: true, links: true } },
       },
     });
-
-    // Build a map of quizId → total attempts (from included link._count.attempts)
-    const quizAttemptMap = new Map<string, number>();
-    for (const quiz of quizzes) {
-      let total = 0;
-      for (const link of quiz.links) {
-        total += link._count.attempts;
-      }
-      quizAttemptMap.set(quiz.id, total);
-    }
 
     // Fetch participants created by this user
     const participants = await prisma.participant.findMany({
@@ -427,63 +435,89 @@ export async function getAdminUserWithQuizzes(
             id: true,
             token: true,
             expiresAt: true,
+            participantId: true,
             quiz: { select: { name: true } },
+            anonymousStats: { select: { completedCount: true } },
             _count: {
               select: {
-                attempts: { where: { ...creatorCountedAttemptWhere } },
+                attempts: { where: { ...identifiedCompletedAttemptWhere } },
               },
             },
           },
         },
-        _count: { select: { links: true, attempts: true } },
+        _count: { select: { links: true } },
       },
     });
 
     return {
       success: true,
       user,
-      quizzes: quizzes.map((q) => ({
-        id: q.id,
-        name: q.name,
-        visibility: q.visibility,
-        isAnonymous: q.isAnonymous,
-        expiresAt: q.expiresAt,
-        createdAt: q.createdAt,
-        questionsCount: q._count.questions,
-        linksCount: q._count.links,
-        attemptsCount: quizAttemptMap.get(q.id) ?? 0,
-        links: q.links.map((l) => ({
-          id: l.id,
-          token: l.token,
-          participantName: l.participant?.name ?? null,
-          allowMultipleAttempts: l.allowMultipleAttempts,
-          expiresAt: l.expiresAt,
-          revokedAt: l.revokedAt,
-          attemptsCount: l._count.attempts,
-        })),
-        questions: q.questions.map((qu) => ({
-          id: qu.id,
-          label: qu.label,
-          type: qu.type,
-          order: qu.order,
-          optionsCount: qu._count.options,
-        })),
-      })),
-      participants: participants.map((p) => ({
-        id: p.id,
-        name: p.name,
-        email: p.email,
-        createdAt: p.createdAt,
-        linksCount: p._count.links,
-        attemptsCount: p._count.attempts,
-        links: p.links.map((l) => ({
-          id: l.id,
-          token: l.token,
-          quizName: l.quiz.name,
-          attemptsCount: l._count.attempts,
-          expiresAt: l.expiresAt,
-        })),
-      })),
+      quizzes: quizzes.map((q) => {
+        const linkMetrics = q.links.map((l) =>
+          computeAdminLinkResponseCounts({
+            participantId: l.participantId,
+            anonymousCompletedCount: l.anonymousStats?.completedCount ?? 0,
+            identifiedCompletedCount: l._count.attempts,
+          })
+        );
+        const quizTotals = sumAdminQuizResponseCounts(linkMetrics);
+        return {
+          id: q.id,
+          name: q.name,
+          visibility: q.visibility,
+          isAnonymous: q.isAnonymous,
+          expiresAt: q.expiresAt,
+          createdAt: q.createdAt,
+          questionsCount: q._count.questions,
+          linksCount: q._count.links,
+          anonymousResponsesCount: quizTotals.anonymousResponsesCount,
+          identifiedResponsesCount: quizTotals.identifiedResponsesCount,
+          totalResponsesCount: quizTotals.totalResponsesCount,
+          links: q.links.map((l, index) => ({
+            id: l.id,
+            token: l.token,
+            participantName: l.participant?.name ?? null,
+            allowMultipleAttempts: l.allowMultipleAttempts,
+            expiresAt: l.expiresAt,
+            revokedAt: l.revokedAt,
+            ...linkMetrics[index],
+          })),
+          questions: q.questions.map((qu) => ({
+            id: qu.id,
+            label: qu.label,
+            type: qu.type,
+            order: qu.order,
+            optionsCount: qu._count.options,
+          })),
+        };
+      }),
+      participants: participants.map((p) => {
+        const linkMetrics = p.links.map((l) =>
+          computeAdminLinkResponseCounts({
+            participantId: l.participantId,
+            anonymousCompletedCount: l.anonymousStats?.completedCount ?? 0,
+            identifiedCompletedCount: l._count.attempts,
+          })
+        );
+        const participantTotals = sumAdminQuizResponseCounts(linkMetrics);
+        return {
+          id: p.id,
+          name: p.name,
+          email: p.email,
+          createdAt: p.createdAt,
+          linksCount: p._count.links,
+          anonymousResponsesCount: participantTotals.anonymousResponsesCount,
+          identifiedResponsesCount: participantTotals.identifiedResponsesCount,
+          totalResponsesCount: participantTotals.totalResponsesCount,
+          links: p.links.map((l, index) => ({
+            id: l.id,
+            token: l.token,
+            quizName: l.quiz.name,
+            expiresAt: l.expiresAt,
+            ...linkMetrics[index],
+          })),
+        };
+      }),
     };
   } catch (error) {
     console.error("Error fetching admin user details:", error);

@@ -20,7 +20,7 @@ import {
   Copy,
 } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
-import { t } from "@/lib/i18n";
+import { t, type Locale } from "@/lib/i18n";
 import { useToast } from "@/components/ui/toast";
 import { format } from "date-fns";
 import { fr, enUS } from "date-fns/locale";
@@ -53,7 +53,7 @@ export function AdminUserQuizzesContent({
   const { showToast } = useToast();
   const dateLocale = locale === "fr" ? fr : enUS;
 
-  const totalAttempts = quizzes.reduce((s, q) => s + q.attemptsCount, 0);
+  const totalResponses = quizzes.reduce((s, q) => s + q.totalResponsesCount, 0);
   const baseUrl =
     typeof window !== "undefined" ? window.location.origin : "";
 
@@ -111,8 +111,8 @@ export function AdminUserQuizzesContent({
               />
               <StatMini
                 icon={<Target className="h-4 w-4" />}
-                label={locale === "fr" ? "Tentatives" : "Attempts"}
-                value={totalAttempts}
+                label={t(locale, "admin.userQuizzes.responsesStat")}
+                value={totalResponses}
               />
               <StatMini
                 icon={<Coins className="h-4 w-4 text-primary" />}
@@ -213,7 +213,7 @@ function QuizExpandable({
   onCopy,
 }: {
   quiz: AdminQuizDetail;
-  locale: string;
+  locale: Locale;
   dateLocale: typeof fr;
   baseUrl: string;
   onCopy: (text: string) => void;
@@ -248,7 +248,7 @@ function QuizExpandable({
               </span>
               <span className="flex items-center gap-1">
                 <Target className="h-3 w-3" />
-                {quiz.attemptsCount}
+                {quiz.totalResponsesCount}
               </span>
               <span>
                 {format(new Date(quiz.createdAt), "dd MMM yyyy", {
@@ -353,14 +353,14 @@ function QuizExpandable({
                               </span>
                             )}
                             <span>
-                              {link.attemptsCount}{" "}
+                              {link.totalResponsesCount}{" "}
                               {locale === "fr"
-                                ? link.attemptsCount <= 1
-                                  ? "tentative"
-                                  : "tentatives"
-                                : link.attemptsCount === 1
-                                  ? "attempt"
-                                  : "attempts"}
+                                ? link.totalResponsesCount <= 1
+                                  ? t(locale, "admin.userQuizzes.responseSingular")
+                                  : t(locale, "admin.userQuizzes.responsePlural")
+                                : link.totalResponsesCount === 1
+                                  ? t(locale, "admin.userQuizzes.responseSingular")
+                                  : t(locale, "admin.userQuizzes.responsePlural")}
                             </span>
                             {link.revokedAt && (
                               <Badge
@@ -441,7 +441,7 @@ function ParticipantExpandable({
   onCopy,
 }: {
   participant: AdminParticipant;
-  locale: string;
+  locale: Locale;
   dateLocale: typeof fr;
   baseUrl: string;
   onCopy: (text: string) => void;
@@ -474,7 +474,7 @@ function ParticipantExpandable({
             </span>
             <span className="flex items-center gap-1">
               <Target className="h-3 w-3" />
-              {participant.attemptsCount}
+              {participant.totalResponsesCount}
             </span>
           </div>
         </button>
@@ -519,14 +519,14 @@ function ParticipantExpandable({
                       </div>
                       <div className="text-xs text-muted-foreground">
                         <span>
-                          {link.attemptsCount}{" "}
+                          {link.totalResponsesCount}{" "}
                           {locale === "fr"
-                            ? link.attemptsCount <= 1
-                              ? "tentative"
-                              : "tentatives"
-                            : link.attemptsCount === 1
-                              ? "attempt"
-                              : "attempts"}
+                            ? link.totalResponsesCount <= 1
+                              ? t(locale, "admin.userQuizzes.responseSingular")
+                              : t(locale, "admin.userQuizzes.responsePlural")
+                            : link.totalResponsesCount === 1
+                              ? t(locale, "admin.userQuizzes.responseSingular")
+                              : t(locale, "admin.userQuizzes.responsePlural")}
                         </span>
                       </div>
                     </div>

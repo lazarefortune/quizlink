@@ -1030,6 +1030,9 @@ export const fr = {
       anonymous: "Anonyme",
       private: "Privé",
       public: "Public",
+      responsesStat: "Réponses",
+      responseSingular: "réponse",
+      responsePlural: "réponses",
     },
     searchError: "Erreur lors de la recherche",
     coins: {
