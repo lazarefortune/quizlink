@@ -29,7 +29,7 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
-    onOverlayClick?: () => void;
+    onOverlayClick?: React.MouseEventHandler<HTMLDivElement>;
     /** No X button (e.g. GDPR consent that must be resolved via actions). */
     hideCloseButton?: boolean;
     /** Higher z-index, blocks Escape and outside dismiss (must use buttons to leave). */
@@ -52,7 +52,12 @@ const DialogContent = React.forwardRef<
   ) => (
     <DialogPortal>
       <DialogOverlay
-        onClick={onOverlayClick}
+        onClick={(event) => {
+          if (blocking) {
+            event.preventDefault();
+          }
+          onOverlayClick?.(event);
+        }}
         className={cn(blocking ? "z-[199]" : undefined)}
       />
       <div

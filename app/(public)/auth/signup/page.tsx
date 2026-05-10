@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import {
@@ -29,6 +30,7 @@ export default function SignUpPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [legalAccepted, setLegalAccepted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -48,10 +50,15 @@ export default function SignUpPage() {
       return;
     }
 
+    if (!legalAccepted) {
+      setError(t(locale, "auth.signUp.legalRequiredError"));
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const result = await signUpAction(name.trim(), email, password, locale);
+      const result = await signUpAction(name.trim(), email, password, legalAccepted, locale);
       if (result.success) {
         track(SIGNUP_COMPLETED, {
           ...buildCommonEventProps({ preferredLanguage: locale }),
@@ -227,6 +234,42 @@ export default function SignUpPage() {
                       </span>
                     </div>
                   )}
+                </div>
+
+                <div className="flex gap-3 rounded-lg border border-border/60 bg-secondary/30 p-3">
+                  <Checkbox
+                    id="signup-legal"
+                    checked={legalAccepted}
+                    onCheckedChange={setLegalAccepted}
+                    aria-required="true"
+                    className="mt-0.5 shrink-0"
+                  />
+                  <Label
+                    htmlFor="signup-legal"
+                    className="cursor-pointer text-sm font-normal leading-snug text-foreground"
+                  >
+                    {t(locale, "auth.signUp.legalIntro")}
+                    <Link
+                      href="/legal/terms"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-semibold text-primary underline-offset-2 hover:underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {t(locale, "auth.signUp.legalTermsLink")}
+                    </Link>
+                    {t(locale, "auth.signUp.legalMid")}
+                    <Link
+                      href="/legal/privacy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-semibold text-primary underline-offset-2 hover:underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {t(locale, "auth.signUp.legalPrivacyLink")}
+                    </Link>
+                    {t(locale, "auth.signUp.legalEnd")}
+                  </Label>
                 </div>
 
                 <Button

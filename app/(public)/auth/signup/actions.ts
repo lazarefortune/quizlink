@@ -5,6 +5,8 @@ import bcrypt from "bcryptjs";
 import { sendVerificationEmail } from "@/lib/email";
 import { initializeUserCoins } from "@/lib/coins";
 import { recordUserLifecycleEvent, USER_LIFECYCLE_EVENT_TYPES } from "@/lib/userLifecycleEvents";
+import { CURRENT_PRIVACY_VERSION, CURRENT_TERMS_VERSION } from "@/lib/legal-versions";
+import { t } from "@/lib/i18n";
 
 function generateVerificationCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -14,6 +16,7 @@ export async function signUpAction(
   name: string,
   email: string,
   password: string,
+  legalAccepted: boolean,
   locale: "fr" | "en" = "fr"
 ) {
   try {
@@ -21,6 +24,13 @@ export async function signUpAction(
       return {
         success: false,
         error: "Database not initialized. Please run 'pnpm prisma:generate' first.",
+      };
+    }
+
+    if (legalAccepted !== true) {
+      return {
+        success: false,
+        error: t(locale, "auth.signUp.legalRequiredError"),
       };
     }
 
@@ -61,6 +71,8 @@ export async function signUpAction(
     const expiresAt = new Date();
     expiresAt.setMinutes(expiresAt.getMinutes() + 15); // 15 minutes
 
+    const acceptedAt = new Date();
+
     // Create user and verification token in a transaction
     const user = await prisma.user.create({
       data: {
@@ -68,6 +80,10 @@ export async function signUpAction(
         email,
         passwordHash,
         preferredLanguage: locale,
+        termsAcceptedAt: acceptedAt,
+        termsVersion: CURRENT_TERMS_VERSION,
+        privacyAcceptedAt: acceptedAt,
+        privacyVersion: CURRENT_PRIVACY_VERSION,
         // emailVerifiedAt is optional and defaults to null, so we don't need to set it explicitly
         emailVerificationTokens: {
           create: {

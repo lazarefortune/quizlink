@@ -1,13 +1,19 @@
 "use client";
 
+import { LegalConsentModal } from "@/components/legal/legal-consent-modal";
+
 import { Sidebar } from "./sidebar";
 import { Topbar } from "./topbar";
 
 type DashboardShellProps = {
   children: React.ReactNode;
+  needsLegalConsent?: boolean;
 };
 
-export function DashboardShell({ children }: DashboardShellProps) {
+export function DashboardShell({
+  children,
+  needsLegalConsent = false,
+}: DashboardShellProps) {
   return (
     <div className="flex h-dvh min-h-0 flex-col overflow-hidden bg-card lg:pl-72 2xl:pl-80">
       {/* Sidebar: fixed to viewport on desktop, hidden on mobile (inside Sheet) */}
@@ -27,6 +33,8 @@ export function DashboardShell({ children }: DashboardShellProps) {
           {children}
         </div>
       </main>
+
+      <LegalConsentModal needsLegalConsent={needsLegalConsent} />
     </div>
   );
 }

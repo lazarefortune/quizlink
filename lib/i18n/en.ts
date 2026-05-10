@@ -119,6 +119,13 @@ export const en = {
       button: "Create my account",
       link: "Sign up",
       error: "Failed to create account",
+      legalRequiredError:
+        "You must accept the Terms of Service and Privacy Policy to create an account.",
+      legalIntro: "I accept the ",
+      legalTermsLink: "Terms of Service",
+      legalMid: " and the ",
+      legalPrivacyLink: "Privacy Policy",
+      legalEnd: ".",
     },
     name: "Name",
     namePlaceholder: "Your name",
@@ -633,6 +640,19 @@ export const en = {
         title: "Human participant tracking",
         description: "Identify and track each participant, create personalized links, and build real relationships with your learners.",
       },
+    },
+  },
+
+  // Legal onboarding (app area)
+  onboarding: {
+    legal: {
+      title: "Before you continue",
+      descriptionIntro: "To use QuizLink, you must accept the ",
+      descriptionMid: " and the ",
+      descriptionEnd: ".",
+      continue: "Continue",
+      requiredError:
+        "You must accept the Terms of Service and Privacy Policy to continue.",
     },
   },
 

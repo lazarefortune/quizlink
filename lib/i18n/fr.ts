@@ -119,6 +119,13 @@ export const fr = {
       button: "Créer mon compte",
       link: "Inscris-toi",
       error: "Échec de la création du compte",
+      legalRequiredError:
+        "Tu dois accepter les CGU et la politique de confidentialité pour créer un compte.",
+      legalIntro: "J'accepte les ",
+      legalTermsLink: "CGU",
+      legalMid: " et la ",
+      legalPrivacyLink: "politique de confidentialité",
+      legalEnd: ".",
     },
     name: "Nom",
     namePlaceholder: "Ton nom",
@@ -633,6 +640,19 @@ export const fr = {
         title: "Suivi humain des participants",
         description: "Identifie et suis chaque participant, crée des liens personnalisés et établis une vraie relation avec tes apprenants.",
       },
+    },
+  },
+
+  // Legal onboarding (espace app)
+  onboarding: {
+    legal: {
+      title: "Avant de continuer",
+      descriptionIntro: "Pour utiliser QuizLink, tu dois accepter les ",
+      descriptionMid: " et la ",
+      descriptionEnd: ".",
+      continue: "Continuer",
+      requiredError:
+        "Tu dois accepter les CGU et la politique de confidentialité pour continuer.",
     },
   },
 
