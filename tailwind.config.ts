@@ -88,6 +88,15 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        /** Radix Collapsible (`--radix-collapsible-content-height`) — builder mobile options */
+        "collapsible-down": {
+          from: { height: "0" },
+          to: { height: "var(--radix-collapsible-content-height)" },
+        },
+        "collapsible-up": {
+          from: { height: "var(--radix-collapsible-content-height)" },
+          to: { height: "0" },
+        },
         wiggle: {
           "0%, 100%": { transform: "rotate(0deg)" },
           "25%": { transform: "rotate(-3deg)" },
@@ -107,6 +116,8 @@ export default {
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "collapsible-down": "collapsible-down 0.32s cubic-bezier(0.22, 1, 0.36, 1)",
+        "collapsible-up": "collapsible-up 0.26s cubic-bezier(0.22, 1, 0.36, 1)",
         wiggle: "wiggle 1s ease-in-out infinite",
         float: "float 3s ease-in-out infinite",
         "bounce-in": "bounce-in 0.6s ease-out",

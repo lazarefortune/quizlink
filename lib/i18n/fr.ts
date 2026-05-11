@@ -422,6 +422,7 @@ export const fr = {
     title: "Créateur de Quiz",
     subtitle: "Crée et personnalise ton quiz manuellement",
     optionsTitle: "Options du quiz",
+    optionsMobileHint: "Nom du quiz et réglages (touche pour ouvrir)",
     validationErrors: "Erreurs de Validation",
     quizMetadata: "Métadonnées du Quiz",
     quizMetadataDescription: "Infos de base sur ton quiz",

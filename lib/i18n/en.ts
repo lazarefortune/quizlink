@@ -422,6 +422,7 @@ export const en = {
     title: "Quiz Builder",
     subtitle: "Create and customize your quiz manually",
     optionsTitle: "Quiz options",
+    optionsMobileHint: "Quiz name and settings (tap to open)",
     validationErrors: "Validation Errors",
     quizMetadata: "Quiz Metadata",
     quizMetadataDescription: "Basic information about your quiz",

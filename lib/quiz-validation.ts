@@ -8,6 +8,13 @@ export type ValidationError = {
   params?: Record<string, string | number>;
 };
 
+/** Errors shown in the quiz options panel (name + settings / time limit). */
+export function hasQuizOptionsPanelErrors(errors: ValidationError[]): boolean {
+  return errors.some(
+    (error) => error.field === "name" || error.field.startsWith("settings."),
+  );
+}
+
 export function validateQuiz(quiz: QuizBuilder): ValidationError[] {
   const errors: ValidationError[] = [];
 

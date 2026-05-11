@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { validateBuilderTimeLimit, validateQuiz } from "./quiz-validation";
+import {
+  hasQuizOptionsPanelErrors,
+  validateBuilderTimeLimit,
+  validateQuiz,
+  type ValidationError,
+} from "./quiz-validation";
 import type { QuizBuilder } from "@/types/quiz-builder";
 
 const minimalValidQuiz: QuizBuilder = {
@@ -55,5 +60,42 @@ describe("validateBuilderTimeLimit", () => {
 describe("validateQuiz", () => {
   it("passes for minimal valid quiz", () => {
     expect(validateQuiz(minimalValidQuiz)).toHaveLength(0);
+  });
+});
+
+describe("hasQuizOptionsPanelErrors", () => {
+  it("is false for empty errors", () => {
+    expect(hasQuizOptionsPanelErrors([])).toBe(false);
+  });
+
+  it("is true when name field has an error", () => {
+    const errors: ValidationError[] = [
+      {
+        field: "name",
+        translationKey: "builder.validation.quizNameRequired",
+      },
+    ];
+    expect(hasQuizOptionsPanelErrors(errors)).toBe(true);
+  });
+
+  it("is true when a settings field has an error", () => {
+    const errors: ValidationError[] = [
+      {
+        field: "settings.timeLimitPerQuestion",
+        translationKey: "builder.validation.timeLimitInvalid",
+      },
+    ];
+    expect(hasQuizOptionsPanelErrors(errors)).toBe(true);
+  });
+
+  it("is false when only question-level errors exist", () => {
+    const errors: ValidationError[] = [
+      {
+        field: "questions[0].label",
+        translationKey: "builder.validation.questionLabelRequired",
+        params: { number: 1 },
+      },
+    ];
+    expect(hasQuizOptionsPanelErrors(errors)).toBe(false);
   });
 });
