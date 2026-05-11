@@ -36,6 +36,7 @@ import {
   Underline,
   Strikethrough,
   Pen,
+  Loader2,
 } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
@@ -72,6 +73,7 @@ export function QuestionEditor({
   const [imagePreview, setImagePreview] = useState<string | null>(
     question.image || null
   );
+  const [isImageLoading, setIsImageLoading] = useState(false);
   const [activeFormats, setActiveFormats] = useState({
     bold: false,
     italic: false,
@@ -81,6 +83,7 @@ export function QuestionEditor({
     insertOrderedList: false,
   });
   const editorRef = useRef<HTMLDivElement>(null);
+  const imageFileInputRef = useRef<HTMLInputElement>(null);
 
   const updateFormatState = useCallback(() => {
     const sel = document.getSelection();
@@ -111,6 +114,12 @@ export function QuestionEditor({
       editorRef.current.textContent = question.label;
     }
   }, [question.label]);
+
+  useEffect(() => {
+    const src = question.image?.trim() ?? "";
+    setImagePreview(src.length > 0 ? question.image ?? null : null);
+    setIsImageLoading(false);
+  }, [question.id, question.image]);
 
   useEffect(() => {
     const handleSelectionChange = () => {
@@ -162,21 +171,33 @@ export function QuestionEditor({
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const imageUrl = reader.result as string;
-        setImagePreview(imageUrl);
-        onChange({
-          ...question,
-          image: imageUrl,
-        });
-      };
-      reader.readAsDataURL(file);
+    e.target.value = "";
+    if (!file) {
+      return;
     }
+
+    setIsImageLoading(true);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setIsImageLoading(false);
+      if (reader.error) {
+        return;
+      }
+      const imageUrl = reader.result as string;
+      setImagePreview(imageUrl);
+      onChange({
+        ...question,
+        image: imageUrl,
+      });
+    };
+    reader.onerror = () => {
+      setIsImageLoading(false);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleRemoveImage = () => {
+    setIsImageLoading(false);
     setImagePreview(null);
     onChange({
       ...question,
@@ -230,7 +251,7 @@ export function QuestionEditor({
 
   return (
     <>
-    <Card className="border-2 border-border shadow-sm bg-card">
+    <Card className="w-full max-w-none border-2 border-border bg-card shadow-sm">
       <CardContent className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
         {errors.length > 0 && (
           <Alert variant="error" title={t(locale, "builder.validationErrors")}>
@@ -249,7 +270,7 @@ export function QuestionEditor({
           {/* Question Type */}
           <div className="space-y-1.5 sm:space-y-2">
             <Select value={question.type} onValueChange={handleTypeChange}>
-              <SelectTrigger className="text-sm max-w-xs">
+              <SelectTrigger className="w-full max-w-full text-sm sm:max-w-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -409,39 +430,98 @@ export function QuestionEditor({
                 )}
               </div>
             </div>
-            {/* Image Placeholder */}
-            <div className="w-full sm:w-32 md:w-40 shrink-0">
+            {/* Image: actions on overlay so they stay visible (incl. mobile; previous layout hid the button under `fill`) */}
+            <div className="w-full shrink-0 space-y-2 sm:w-32 md:w-40">
+              <input
+                ref={imageFileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="hidden"
+                tabIndex={-1}
+              />
               {imagePreview ? (
-                <div className="space-y-2 relative w-full h-24 sm:h-32 md:h-40">
+                <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md border border-border sm:aspect-auto sm:h-32 md:h-40">
                   <Image
                     src={imagePreview}
-                    alt="Question preview"
+                    alt=""
                     fill
-                    className="object-cover rounded-md border border-border"
+                    className={cn(
+                      "object-cover transition-opacity duration-200",
+                      isImageLoading && "opacity-40",
+                    )}
                     unoptimized
                   />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleRemoveImage}
-                    className="w-full text-xs"
+                  {isImageLoading ? (
+                    <div
+                      className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-background/75 px-3 backdrop-blur-sm motion-reduce:backdrop-blur-none"
+                      aria-live="polite"
+                      aria-busy="true"
+                    >
+                      <Loader2
+                        className="h-8 w-8 text-primary motion-safe:animate-spin"
+                        aria-hidden
+                      />
+                      <span className="text-center text-xs font-medium text-muted-foreground">
+                        {t(locale, "builder.imageLoading")}
+                      </span>
+                    </div>
+                  ) : null}
+                  <div
+                    className={cn(
+                      "absolute inset-x-0 bottom-0 flex gap-2 border-t border-white/10 bg-black/60 p-2 backdrop-blur-sm supports-[backdrop-filter]:bg-black/45",
+                      isImageLoading && "pointer-events-none opacity-0",
+                    )}
                   >
-                    {t(locale, "builder.removeImage")}
-                  </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="h-11 min-h-[44px] flex-1 touch-manipulation text-xs sm:h-9 sm:min-h-0"
+                      onClick={() => imageFileInputRef.current?.click()}
+                      disabled={isImageLoading}
+                    >
+                      {t(locale, "builder.replaceImage")}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="h-11 w-11 min-h-[44px] min-w-[44px] shrink-0 touch-manipulation sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0"
+                      onClick={handleRemoveImage}
+                      disabled={isImageLoading}
+                      aria-label={t(locale, "builder.removeImage")}
+                    >
+                      <Trash2 className="mx-auto h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ) : isImageLoading ? (
+                <div
+                  className="flex h-24 w-full flex-col items-center justify-center gap-3 rounded-md border-2 border-dashed border-border bg-muted/30 motion-safe:animate-pulse sm:h-32 md:h-40"
+                  aria-live="polite"
+                  aria-busy="true"
+                >
+                  <Loader2
+                    className="h-8 w-8 text-primary motion-safe:animate-spin"
+                    aria-hidden
+                  />
+                  <span className="px-2 text-center text-xs font-medium text-muted-foreground">
+                    {t(locale, "builder.imageLoading")}
+                  </span>
                 </div>
               ) : (
-                <label className="flex flex-col items-center justify-center h-24 sm:h-32 md:h-40 border-2 border-dashed border-border rounded-md cursor-pointer hover:bg-muted/50 transition-colors">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="hidden"
-                  />
-                  <ImageIcon className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground mb-1 sm:mb-2" />
-                  <span className="text-xs text-muted-foreground text-center px-2">
-                    {locale === "fr" ? "Image" : "Image"}
+                <button
+                  type="button"
+                  onClick={() => imageFileInputRef.current?.click()}
+                  disabled={isImageLoading}
+                  className="flex h-24 w-full touch-manipulation flex-col items-center justify-center rounded-md border-2 border-dashed border-border transition-colors hover:bg-muted/50 disabled:pointer-events-none disabled:opacity-60 sm:h-32 md:h-40"
+                >
+                  <ImageIcon className="mb-1 h-6 w-6 text-muted-foreground sm:mb-2 sm:h-8 sm:w-8" />
+                  <span className="px-2 text-center text-xs text-muted-foreground">
+                    {t(locale, "builder.questionImage")}
                   </span>
-                </label>
+                </button>
               )}
             </div>
           </div>

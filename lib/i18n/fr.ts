@@ -422,7 +422,10 @@ export const fr = {
     title: "Créateur de Quiz",
     subtitle: "Crée et personnalise ton quiz manuellement",
     optionsTitle: "Options du quiz",
-    optionsMobileHint: "Nom du quiz et réglages (touche pour ouvrir)",
+    optionsMobileHintClosed:
+      "Titre, réponses, ordre et minuteur — appuie pour ouvrir",
+    optionsMobileHintOpen:
+      "Masquer les options pour mieux voir les questions",
     validationErrors: "Erreurs de Validation",
     quizMetadata: "Métadonnées du Quiz",
     quizMetadataDescription: "Infos de base sur ton quiz",
@@ -486,7 +489,9 @@ export const fr = {
     explanationLabel: "Indication / Explication",
     explanationPlaceholder: "Texte affiché si le participant rate la question (optionnel)",
     questionImage: "Image de la Question (Optionnel)",
-    removeImage: "Supprimer l'Image",
+    replaceImage: "Remplacer",
+    removeImage: "Supprimer l'image",
+    imageLoading: "Chargement de l'image…",
     answerOptions: "Options de Réponse",
     addOption: "Ajouter une Option",
     optionPlaceholder: "Option {number}",

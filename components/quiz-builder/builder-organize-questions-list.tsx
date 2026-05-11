@@ -94,13 +94,15 @@ function SortableOrganizeRow({
     listeners,
     setNodeRef,
     transform,
-    transition,
     isDragging,
-  } = useSortable({ id: question.id });
+  } = useSortable({
+    id: question.id,
+    animateLayoutChanges: () => false,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition: undefined,
   };
 
   const preview = buildQuestionLabelPreview(question.label || "", PREVIEW_MAX_LEN);
@@ -114,9 +116,9 @@ function SortableOrganizeRow({
       style={style}
       className={cn(
         "flex gap-2 rounded-xl border border-border/50 bg-card/90 py-2 pl-2 pr-1.5 shadow-sm sm:gap-3 sm:py-2.5 sm:pl-3 sm:pr-2",
-        "transition-[box-shadow,border-color,background-color,transform] duration-200",
+        "transition-[box-shadow,border-color,background-color] duration-150",
         "hover:border-border hover:bg-muted/25 hover:shadow-md",
-        isDragging && "z-10 scale-[1.01] shadow-lg ring-2 ring-blue/30 ring-offset-2 ring-offset-background",
+        isDragging && "z-10 shadow-lg ring-2 ring-blue/30 ring-offset-2 ring-offset-background",
       )}
     >
       <div className="flex shrink-0 flex-col items-center gap-0.5 sm:flex-row sm:items-center sm:gap-1">

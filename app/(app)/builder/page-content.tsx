@@ -3,32 +3,13 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-  DragOverlay,
-  DragStartEvent,
-} from "@dnd-kit/core";
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-  useSortable,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, AlertCircle, GripVertical, ChevronUp, ChevronDown, Play, Save } from "lucide-react";
+import { Plus, AlertCircle, ChevronDown, Play, Save } from "lucide-react";
 import { QuizMenu } from "@/components/quiz-menu";
 import { getQuizById } from "@/app/(app)/dashboard/actions";
 import { saveQuiz } from "@/app/(app)/builder/actions";
@@ -70,6 +51,7 @@ import { BuilderOrganizeQuestionsList } from "@/components/quiz-builder/builder-
 import { BuilderQuizOptionsFields } from "@/components/quiz-builder/builder-quiz-options-fields";
 import { BuilderBackToTopButton } from "@/components/quiz-builder/builder-back-to-top-button";
 import { useBuilderNavigationGuard } from "@/components/dashboard/builder-navigation-guard-context";
+import { resolveMobileQuizOptionsOpenAfterQuestionCountChange } from "@/lib/builder-mobile-quiz-options";
 
 type BuilderViewMode = "edit" | "organize";
 
@@ -155,14 +137,12 @@ function createEmptyQuestion(): Question {
   };
 }
 
-type SortableQuestionItemProps = {
+type BuilderEditQuestionItemProps = {
   question: Question;
   index: number;
   totalQuestions: number;
   onChange: (updatedQuestion: Question) => void;
   onDelete: () => void;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
   errors: string[];
   isNewlyAdded?: boolean;
   isRemoving?: boolean;
@@ -170,35 +150,20 @@ type SortableQuestionItemProps = {
   onRemoveAnimationEnd?: () => void;
 };
 
-function SortableQuestionItem({
+/** Edit tab: full-width editor only — reordering lives in the Organiser tab. */
+function BuilderEditQuestionItem({
   question,
   index,
   totalQuestions,
   onChange,
   onDelete,
-  onMoveUp,
-  onMoveDown,
   errors,
   isNewlyAdded = false,
   isRemoving = false,
   onAnimationEnd,
   onRemoveAnimationEnd,
-}: SortableQuestionItemProps) {
+}: BuilderEditQuestionItemProps) {
   const itemRef = useRef<HTMLDivElement>(null);
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: question.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
 
   useEffect(() => {
     if (isNewlyAdded && itemRef.current) {
@@ -209,13 +174,9 @@ function SortableQuestionItem({
   return (
     <div
       id={`builder-question-${question.id}`}
-      ref={(node) => {
-        setNodeRef(node);
-        (itemRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
-      }}
-      style={style}
+      ref={itemRef}
       className={cn(
-        "relative group rounded-lg p-2",
+        "relative group w-full min-w-0 rounded-lg p-2",
         index % 2 === 0 ? "bg-background" : "bg-muted/30",
         isNewlyAdded && "animate-question-appear",
         isRemoving && "animate-question-remove pointer-events-none",
@@ -228,9 +189,8 @@ function SortableQuestionItem({
             : undefined
       }
     >
-
       <motion.div
-        className="flex items-start gap-2"
+        className="flex w-full min-w-0 flex-col"
         initial={isNewlyAdded ? false : { opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{
@@ -238,43 +198,15 @@ function SortableQuestionItem({
           ease: [0.22, 1, 0.36, 1],
         }}
       >
-        <div className="flex flex-col items-center gap-1 pt-6 shrink-0">
-          <div
-            {...attributes}
-            {...listeners}
-            className="cursor-grab active:cursor-grabbing p-1 hover:bg-muted rounded"
-          >
-            <GripVertical className="h-4 w-4 text-muted-foreground" />
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={onMoveUp}
-            disabled={index === 0}
-          >
-            <ChevronUp className="h-3 w-3" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={onMoveDown}
-            disabled={index === totalQuestions - 1}
-          >
-            <ChevronDown className="h-3 w-3" />
-          </Button>
-        </div>
-
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 w-full">
           <QuestionEditor
             question={question}
             index={index}
             totalQuestions={totalQuestions}
             onChange={onChange}
             onDelete={onDelete}
-            onMoveUp={onMoveUp}
-            onMoveDown={onMoveDown}
+            onMoveUp={() => {}}
+            onMoveDown={() => {}}
             errors={errors}
           />
         </div>
@@ -298,10 +230,13 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
     deriveTimeLimitUiFromSettings(getInitialQuiz().settings),
   );
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
-  const [mobileQuizOptionsOpen, setMobileQuizOptionsOpen] = useState(
-    () => urlQuizId == null || urlQuizId === "",
-  );
-  const [activeId, setActiveId] = useState<string | null>(null);
+  const [mobileQuizOptionsOpen, setMobileQuizOptionsOpen] = useState(() => {
+    if (urlQuizId) {
+      return false;
+    }
+    return getInitialQuiz().questions.length === 0;
+  });
+  const previousQuestionCountRef = useRef(quiz.questions.length);
   const [newlyAddedQuestionId, setNewlyAddedQuestionId] = useState<string | null>(null);
   const [removingQuestionId, setRemovingQuestionId] = useState<string | null>(null);
   const [, setIsLoading] = useState(false);
@@ -338,6 +273,26 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
       setMobileQuizOptionsOpen(true);
     }
   }, [validationErrors]);
+
+  useEffect(() => {
+    const prev = previousQuestionCountRef.current;
+    const nextCount = quiz.questions.length;
+    const resolved = resolveMobileQuizOptionsOpenAfterQuestionCountChange(
+      prev,
+      nextCount,
+    );
+    if (resolved !== null) {
+      const shouldSkipAutoClose =
+        resolved === false &&
+        prev === 0 &&
+        nextCount > 0 &&
+        hasQuizOptionsPanelErrors(validationErrors);
+      if (!shouldSkipAutoClose) {
+        setMobileQuizOptionsOpen(resolved);
+      }
+    }
+    previousQuestionCountRef.current = nextCount;
+  }, [quiz.questions.length, validationErrors]);
 
   // Check if quiz exists in database (ID starts with "cl" for Prisma cuid)
   const isQuizSaved = savedQuizId !== null || Boolean(quiz.id?.startsWith("cl"));
@@ -536,13 +491,6 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
     }
   };
 
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
   const handleAddQuestion = (insertIndex?: number) => {
     const newQuestion = createEmptyQuestion();
     setNewlyAddedQuestionId(newQuestion.id);
@@ -615,26 +563,6 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
     });
   };
 
-  const handleDragStart = (event: DragStartEvent) => {
-    setActiveId(event.active.id as string);
-  };
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    if (over && active.id !== over.id) {
-      const oldIndex = quiz.questions.findIndex((q) => q.id === active.id);
-      const newIndex = quiz.questions.findIndex((q) => q.id === over.id);
-
-      setQuiz({
-        ...quiz,
-        questions: arrayMove(quiz.questions, oldIndex, newIndex),
-      });
-    }
-
-    setActiveId(null);
-  };
-
   const getQuestionErrors = (questionIndex: number): string[] => {
     return validationErrors
       .filter((error) => error.field.startsWith(`questions[${questionIndex}]`))
@@ -654,10 +582,6 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
     if (!timeLimitError) return null;
     return t(locale, timeLimitError.translationKey, timeLimitError.params || {});
   };
-
-  const activeQuestion = activeId
-    ? quiz.questions.find((q) => q.id === activeId)
-    : null;
 
   const prefersReducedMotion = useReducedMotion();
 
@@ -697,7 +621,14 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
             >
               <div className="min-w-0">
                 <p className="text-base font-semibold leading-tight">{t(locale, "builder.optionsTitle")}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">{t(locale, "builder.optionsMobileHint")}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {t(
+                    locale,
+                    mobileQuizOptionsOpen
+                      ? "builder.optionsMobileHintOpen"
+                      : "builder.optionsMobileHintClosed",
+                  )}
+                </p>
               </div>
               <ChevronDown
                 className={cn(
@@ -745,7 +676,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
           ref={builderMainScrollRef}
           className="relative flex min-h-0 flex-1 scroll-pt-4 overflow-y-auto bg-muted/10 min-w-0"
         >
-          <div className="p-3 sm:p-4 md:p-6">
+          <div className="w-full min-w-0 max-w-none px-3 pt-3 pb-10 sm:px-4 sm:pt-4 sm:pb-12 md:px-6 md:pt-6 md:pb-16">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
               <div className="flex items-center gap-3">
                 <h1 className="text-lg sm:text-xl md:text-2xl font-bold h1">{t(locale, "builder.title")}</h1>
@@ -817,7 +748,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
               <Tabs
                 value={builderViewMode}
                 onValueChange={(value) => setBuilderViewMode(value as BuilderViewMode)}
-                className="w-full"
+                className="w-full min-w-0"
               >
                 <TabsList className="mb-4 grid h-auto w-full grid-cols-2 sm:inline-flex sm:w-auto">
                   <TabsTrigger value="edit" className="text-base">
@@ -827,89 +758,59 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
                     {t(locale, "builder.viewModeOrganize")}
                   </TabsTrigger>
                 </TabsList>
-                <TabsContent value="edit" className="mt-0 outline-none">
-                  <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragStart={handleDragStart}
-                    onDragEnd={handleDragEnd}
-                  >
-                    <SortableContext
-                      items={quiz.questions.map((q) => q.id)}
-                      strategy={verticalListSortingStrategy}
-                    >
-                      <div>
-                        {quiz.questions.map((question, index) => (
-                          <div key={question.id}>
-                            {index > 0 && (
-                              <div className="relative h-4 -my-2 group/insert z-20 flex items-center justify-center">
-                                <div className="flex items-center justify-center gap-2 opacity-0 group-hover/insert:opacity-100 transition-opacity pointer-events-none">
-                                  <div className="h-0.5 w-24 bg-blue/60 rounded-full shadow-sm" />
-                                  <Button
-                                    variant="blue"
-                                    size="icon"
-                                    className="h-7 w-7 rounded-full pointer-events-auto shadow-lg z-30 shrink-0"
-                                    onClick={() => handleAddQuestion(index)}
-                                  >
-                                    <Plus className="h-4 w-4" />
-                                  </Button>
-                                  <div className="h-0.5 w-24 bg-blue/60 rounded-full shadow-sm" />
-                                </div>
-                              </div>
-                            )}
-                            <div className="relative z-10">
-                              <SortableQuestionItem
-                                question={question}
-                                index={index}
-                                totalQuestions={quiz.questions.length}
-                                onChange={(updatedQuestion) =>
-                                  handleQuestionChange(index, updatedQuestion)
-                                }
-                                onDelete={() => handleDeleteQuestion(index)}
-                                onMoveUp={() => handleMoveQuestion(index, "up")}
-                                onMoveDown={() => handleMoveQuestion(index, "down")}
-                                errors={getQuestionErrors(index)}
-                                isNewlyAdded={newlyAddedQuestionId === question.id}
-                                isRemoving={removingQuestionId === question.id}
-                                onAnimationEnd={() => setNewlyAddedQuestionId(null)}
-                                onRemoveAnimationEnd={() => commitDeleteQuestion(question.id)}
-                              />
+                <TabsContent value="edit" className="mt-0 w-full min-w-0 outline-none">
+                  <div className="w-full min-w-0">
+                    {quiz.questions.map((question, index) => (
+                      <div key={question.id}>
+                        {index > 0 && (
+                          <div className="relative z-20 -my-2 flex h-4 items-center justify-center group/insert">
+                            <div className="pointer-events-none flex items-center justify-center gap-2 opacity-0 transition-opacity group-hover/insert:opacity-100">
+                              <div className="h-0.5 w-24 rounded-full bg-blue/60 shadow-sm" />
+                              <Button
+                                variant="blue"
+                                size="icon"
+                                className="z-30 h-7 w-7 shrink-0 rounded-full shadow-lg pointer-events-auto"
+                                onClick={() => handleAddQuestion(index)}
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                              <div className="h-0.5 w-24 rounded-full bg-blue/60 shadow-sm" />
                             </div>
                           </div>
-                        ))}
-                        <div className="relative h-4 mt-4 group/insert z-20 flex items-center justify-center">
-                          <div className="flex items-center justify-center gap-2 opacity-0 group-hover/insert:opacity-100 transition-opacity pointer-events-none">
-                            <div className="h-0.5 w-24 bg-blue/60 rounded-full shadow-sm" />
-                            <Button
-                              variant="blue"
-                              size="icon"
-                              className="h-7 w-7 rounded-full pointer-events-auto shadow-lg z-30 shrink-0"
-                              onClick={() => handleAddQuestion(quiz.questions.length)}
-                            >
-                              <Plus className="h-4 w-4" />
-                            </Button>
-                            <div className="h-0.5 w-24 bg-blue/60 rounded-full shadow-sm" />
-                          </div>
-                        </div>
-                      </div>
-                    </SortableContext>
-                    <DragOverlay>
-                      {activeQuestion ? (
-                        <div className="opacity-50">
-                          <QuestionEditor
-                            question={activeQuestion}
-                            index={0}
-                            totalQuestions={1}
-                            onChange={() => {}}
-                            onDelete={() => {}}
-                            onMoveUp={() => {}}
-                            onMoveDown={() => {}}
-                            errors={[]}
+                        )}
+                        <div className="relative z-10">
+                          <BuilderEditQuestionItem
+                            question={question}
+                            index={index}
+                            totalQuestions={quiz.questions.length}
+                            onChange={(updatedQuestion) =>
+                              handleQuestionChange(index, updatedQuestion)
+                            }
+                            onDelete={() => handleDeleteQuestion(index)}
+                            errors={getQuestionErrors(index)}
+                            isNewlyAdded={newlyAddedQuestionId === question.id}
+                            isRemoving={removingQuestionId === question.id}
+                            onAnimationEnd={() => setNewlyAddedQuestionId(null)}
+                            onRemoveAnimationEnd={() => commitDeleteQuestion(question.id)}
                           />
                         </div>
-                      ) : null}
-                    </DragOverlay>
-                  </DndContext>
+                      </div>
+                    ))}
+                    <div className="relative z-20 mt-4 flex h-4 items-center justify-center group/insert">
+                      <div className="pointer-events-none flex items-center justify-center gap-2 opacity-0 transition-opacity group-hover/insert:opacity-100">
+                        <div className="h-0.5 w-24 rounded-full bg-blue/60 shadow-sm" />
+                        <Button
+                          variant="blue"
+                          size="icon"
+                          className="z-30 h-7 w-7 shrink-0 rounded-full shadow-lg pointer-events-auto"
+                          onClick={() => handleAddQuestion(quiz.questions.length)}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                        <div className="h-0.5 w-24 rounded-full bg-blue/60 shadow-sm" />
+                      </div>
+                    </div>
+                  </div>
                 </TabsContent>
                 <TabsContent value="organize" className="mt-0 outline-none">
                   <BuilderOrganizeQuestionsList
@@ -931,8 +832,8 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
             )}
 
             {quiz.questions.length > 0 && (
-              <div className="flex justify-center pt-4">
-                <Button variant="blue" onClick={() => handleAddQuestion()} size="default" className="text-base">
+              <div className="mt-4 flex justify-center">
+                <Button variant="blue" onClick={() => handleAddQuestion()} size="default" className="text-base mb-10">
                   <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
                   {t(locale, "builder.addQuestion")}
                 </Button>
