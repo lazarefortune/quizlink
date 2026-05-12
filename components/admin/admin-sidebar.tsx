@@ -80,7 +80,7 @@ export function AdminSidebar({
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex h-dvh w-64 min-h-0 shrink-0 flex-col overflow-hidden bg-card transition-transform duration-300 ease-in-out lg:static lg:z-auto lg:h-full lg:max-h-none lg:translate-x-0 lg:self-stretch",
+          "fixed inset-y-0 left-0 z-50 flex h-dvh w-72 min-h-0 shrink-0 flex-col overflow-hidden bg-card transition-transform duration-300 ease-in-out lg:static lg:z-auto lg:h-full lg:max-h-none lg:translate-x-0 lg:self-stretch 2xl:w-80",
           isOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >

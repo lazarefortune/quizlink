@@ -29,6 +29,7 @@ import { Alert } from "@/components/ui/alert";
 import { CoinsRequiredOverlay } from "@/components/coins-required-overlay";
 import type { Question } from "@/types/quiz-builder";
 import { buildQuizSuccessPath } from "@/lib/quiz-success";
+import { isSaveQuizPayloadTooLargeError } from "@/lib/builder/isSaveQuizPayloadTooLargeError";
 
 type GenerationOptions = {
   questionType: string;
@@ -175,11 +176,15 @@ export function GeneratePage() {
           window.location.href = "/builder";
         }
       } catch (err) {
-        setError(
-          err instanceof Error
-            ? err.message
-            : t(locale, "errors.generationFailed")
-        );
+        if (isSaveQuizPayloadTooLargeError(err)) {
+          setError(t(locale, "builder.saveErrorPayloadTooLarge"));
+        } else {
+          setError(
+            err instanceof Error
+              ? err.message
+              : t(locale, "errors.generationFailed")
+          );
+        }
       } finally {
         setIsLoading(false);
       }
@@ -296,11 +301,15 @@ export function GeneratePage() {
         window.location.href = "/builder";
       }
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t(locale, "errors.generationFailed")
-      );
+      if (isSaveQuizPayloadTooLargeError(err)) {
+        setError(t(locale, "builder.saveErrorPayloadTooLarge"));
+      } else {
+        setError(
+          err instanceof Error
+            ? err.message
+            : t(locale, "errors.generationFailed")
+        );
+      }
     } finally {
       setIsLoading(false);
     }

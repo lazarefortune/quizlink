@@ -470,6 +470,12 @@ export const fr = {
     createQuiz: "Créer le Quiz",
     saveQuiz: "Sauvegarder",
     saveError: "Erreur lors de la sauvegarde du quiz",
+    saveErrorPayloadTooLarge:
+      "Le quiz est trop lourd pour être enregistré. Réduis la taille des images ou supprime quelques images, puis réessaie.",
+    savePayloadHeavyConfirm:
+      "Ton quiz est très lourd, surtout à cause des images. L'enregistrement peut échouer.\n\nSouhaites-tu continuer quand même ?",
+    questionImageTooLarge:
+      "Cette image est trop lourde (max. 2 Mo). Choisis une image plus légère ou compresse-la.",
     quizSaved: "Quiz sauvegardé avec succès",
     quizCreated: "Quiz créé avec succès",
     linkCreated: "Lien créé",

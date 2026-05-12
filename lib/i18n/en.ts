@@ -469,6 +469,12 @@ export const en = {
     createQuiz: "Create Quiz",
     saveQuiz: "Save",
     saveError: "Error saving quiz",
+    saveErrorPayloadTooLarge:
+      "This quiz is too large to save. Reduce image sizes or remove some images, then try again.",
+    savePayloadHeavyConfirm:
+      "Your quiz is very large, mostly because of images. Saving may fail.\n\nDo you want to continue anyway?",
+    questionImageTooLarge:
+      "This image is too large (max 2 MB). Choose a smaller image or compress it.",
     quizSaved: "Quiz saved successfully",
     quizCreated: "Quiz created successfully",
     linkCreated: "Link created",

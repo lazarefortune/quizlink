@@ -45,7 +45,7 @@ export function AdminMobileTopbar() {
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-64 p-0">
+          <SheetContent side="left" className="w-72 p-0 2xl:w-80">
             <SheetTitle className="sr-only">Admin navigation</SheetTitle>
             <AdminSidebar onNavClick={() => setIsSheetOpen(false)} />
           </SheetContent>

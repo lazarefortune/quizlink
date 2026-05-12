@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import { getPosthogProxyBasePath } from "./lib/analytics/posthog-proxy-path";
+import { QUIZ_SAVE_SERVER_ACTION_BODY_SIZE_LIMIT } from "./lib/builder/quizPayloadLimits";
 
 const posthogProxyBase = getPosthogProxyBasePath();
 
@@ -14,7 +15,8 @@ const nextConfig: NextConfig = {
   // Allow raw body for Stripe webhooks
   experimental: {
     serverActions: {
-      bodySizeLimit: "2mb",
+      /** Quiz builder sends full `QuizBuilder` including optional base64 question images. */
+      bodySizeLimit: QUIZ_SAVE_SERVER_ACTION_BODY_SIZE_LIMIT,
     },
   },
   async rewrites() {

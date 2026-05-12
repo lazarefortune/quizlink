@@ -40,6 +40,8 @@ import {
 } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
+import { useToast } from "@/components/ui/toast";
+import { isQuestionImageFileOverMaxSize } from "@/lib/builder/quizPayloadLimits";
 import type { Question, QuestionType, QuestionOption } from "@/types/quiz-builder";
 import { cn } from "@/lib/utils";
 import { Label } from "../ui/label";
@@ -69,6 +71,7 @@ export function QuestionEditor({
   errors = [],
 }: QuestionEditorProps) {
   const { locale } = useLocale();
+  const { showToast } = useToast();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(
     question.image || null
@@ -173,6 +176,11 @@ export function QuestionEditor({
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) {
+      return;
+    }
+
+    if (isQuestionImageFileOverMaxSize(file)) {
+      showToast(t(locale, "builder.questionImageTooLarge"), "error", 6500);
       return;
     }
 

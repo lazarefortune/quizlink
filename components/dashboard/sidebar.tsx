@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Coins, FileText, House, Plus, Headset } from "lucide-react";
+import { Coins, House, Plus, Headset, Library } from "lucide-react";
 import { useSession } from "next-auth/react";
 
 import { useLocale } from "@/lib/i18n/use-locale";
@@ -82,7 +82,7 @@ export function Sidebar({ onNavClick, className }: SidebarProps) {
         <NavItem
           href="/dashboard/quizzes"
           label={t(locale, "dashboard.welcome.myQuizzes")}
-          icon={FileText}
+          icon={Library}
           onClick={onNavClick}
         />
         <NavItem

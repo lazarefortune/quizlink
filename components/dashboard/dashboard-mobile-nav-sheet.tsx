@@ -5,7 +5,7 @@ import type { ElementType } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  FileText,
+  Library,
   House,
   Headset,
   Menu,
@@ -65,7 +65,7 @@ export function DashboardMobileNavSheet() {
     },
     {
       href: "/dashboard/quizzes",
-      icon: FileText,
+      icon: Library,
       label: t(locale, "dashboard.welcome.myQuizzes"),
       isActive: Boolean(pathname?.startsWith("/dashboard/quizzes")),
     },

@@ -52,6 +52,11 @@ import { BuilderQuizOptionsFields } from "@/components/quiz-builder/builder-quiz
 import { BuilderBackToTopButton } from "@/components/quiz-builder/builder-back-to-top-button";
 import { useBuilderNavigationGuard } from "@/components/dashboard/builder-navigation-guard-context";
 import { resolveMobileQuizOptionsOpenAfterQuestionCountChange } from "@/lib/builder-mobile-quiz-options";
+import { estimateQuizPayloadSize } from "@/lib/builder/estimateQuizPayloadSize";
+import { isSaveQuizPayloadTooLargeError } from "@/lib/builder/isSaveQuizPayloadTooLargeError";
+import {
+  QUIZ_SAVE_PAYLOAD_WARN_BYTES,
+} from "@/lib/builder/quizPayloadLimits";
 
 type BuilderViewMode = "edit" | "organize";
 
@@ -414,6 +419,14 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
       settings: buildQuizSettingsWithResolvedTimeLimit(quiz.settings, timeLimitUi),
     };
 
+    const estimatedBytes = estimateQuizPayloadSize(quizToSave);
+    if (estimatedBytes >= QUIZ_SAVE_PAYLOAD_WARN_BYTES) {
+      const shouldContinue = window.confirm(t(locale, "builder.savePayloadHeavyConfirm"));
+      if (!shouldContinue) {
+        return;
+      }
+    }
+
     setIsSaving(true);
     try {
       const isExistingQuiz = isQuizSaved;
@@ -485,7 +498,11 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
       }
     } catch (error) {
       console.error("Error saving quiz:", error);
-      showToast(t(locale, "builder.saveError"), "error");
+      if (isSaveQuizPayloadTooLargeError(error)) {
+        showToast(t(locale, "builder.saveErrorPayloadTooLarge"), "error");
+      } else {
+        showToast(t(locale, "builder.saveError"), "error");
+      }
     } finally {
       setIsSaving(false);
     }
