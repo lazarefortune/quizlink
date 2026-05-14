@@ -16,6 +16,7 @@ export type Question = {
 export type QuizSettings = {
   showAnswerImmediately: boolean;
   randomizeQuestions: boolean;
+  randomizeOptions: boolean;
   timeLimitPerQuestion: number | null;
 };
 

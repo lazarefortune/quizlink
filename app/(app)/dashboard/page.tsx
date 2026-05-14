@@ -15,23 +15,37 @@ import {
   BarChart3,
   MessageSquare,
   Users,
+  Edit,
+  Eye,
 } from "lucide-react";
 
-import { useLocale } from "@/lib/i18n/use-locale";
-import { t } from "@/lib/i18n";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { getDashboardStats } from "@/app/(app)/dashboard/actions";
 import { createOrGetQuizLink } from "@/app/quiz-link/actions";
-import { useToast } from "@/components/ui/toast";
-import { track } from "@/lib/analytics/track";
-import { PARTICIPANT_INVITED } from "@/lib/analytics/events";
-import { buildCommonEventProps } from "@/lib/analytics/props";
 import { BuilderLocalDraftCard } from "@/components/builder/BuilderLocalDraftCard";
+import {
+  CreateManualServerDraftButton,
+  CreateManualServerDraftSurfaceButton,
+} from "@/components/dashboard/create-manual-server-draft-button";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { useToast } from "@/components/ui/toast";
+import { QuizStatusBadge } from "@/components/quiz/quiz-status-badge";
+import { PARTICIPANT_INVITED } from "@/lib/analytics/events";
+import { track } from "@/lib/analytics/track";
+import { buildCommonEventProps } from "@/lib/analytics/props";
 import {
   resolveDashboardWelcomeGreetingKey,
   type DashboardWelcomeGreetingKey,
 } from "@/lib/dashboardWelcomeGreeting";
+import { t } from "@/lib/i18n";
+import { useLocale } from "@/lib/i18n/use-locale";
+import { resolveQuizActionError } from "@/lib/quiz/resolveQuizActionError";
+import {
+  canQuizBePlayed,
+  canQuizBeShared,
+  canQuizShowResponseInsights,
+} from "@/lib/quiz/quizStatusPolicy";
+import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
 
 const noopSubscribe = (): (() => void) => () => {};
 
@@ -55,9 +69,12 @@ type DashboardStats = {
   recentQuizzes: Array<{
     id: string;
     name: string;
+    status: QuizLifecycleStatus;
+    publishedAt: string | null;
     questionCount: number;
     attemptCount: number;
   }>;
+  serverDraftQuizIds: string[];
 };
 
 export default function DashboardPage() {
@@ -97,10 +114,11 @@ export default function DashboardPage() {
       .finally(() => setIsLoading(false));
   }, []);
 
-  const displayStats: DashboardStats | null = stats ?? {
+  const displayStats: DashboardStats = stats ?? {
     coinBalance: 0,
     quizCount: 0,
     recentQuizzes: [],
+    serverDraftQuizIds: [],
   };
 
   const showOnboarding = !isLoading && stats !== null && stats.quizCount === 0;
@@ -113,8 +131,12 @@ export default function DashboardPage() {
 
   const getShareUrl = async (quizId: string): Promise<string | null> => {
     const result = await createOrGetQuizLink(quizId, true);
-    if (!result.success || !baseUrl) {
-      showToast(result.success ? t(locale, "dashboard.shareError") : result.error, "error");
+    if (!result.success) {
+      showToast(resolveQuizActionError(locale, result.error), "error");
+      return null;
+    }
+    if (!baseUrl) {
+      showToast(t(locale, "dashboard.shareError"), "error");
       return null;
     }
 
@@ -165,7 +187,11 @@ export default function DashboardPage() {
       if (result.success) {
         router.push(`/quiz/${result.quizLink.token}`);
       } else {
-        showToast(result.error || t(locale, "dashboard.shareError"), "error");
+        showToast(
+          resolveQuizActionError(locale, result.error) ||
+            t(locale, "dashboard.shareError"),
+          "error",
+        );
       }
     } catch (error) {
       console.error("Error getting quiz link:", error);
@@ -204,7 +230,10 @@ export default function DashboardPage() {
             animate={fadeIn.animate}
             transition={fadeIn.transition(0.05)}
           >
-            <BuilderLocalDraftCard userId={session.user.id} />
+            <BuilderLocalDraftCard
+              userId={session.user.id}
+              serverDraftQuizIds={displayStats.serverDraftQuizIds}
+            />
           </motion.div>
         ) : null}
 
@@ -247,12 +276,13 @@ export default function DashboardPage() {
                         {t(locale, "dashboard.home.ctaCreateWithAi")}
                       </Link>
                     </Button>
-                    <Button variant="outline" asChild className="w-full sm:w-auto">
-                      <Link href="/builder" className="gap-2">
-                        <Plus className="h-4 w-4" />
-                        {t(locale, "dashboard.home.ctaCreateManually")}
-                      </Link>
-                    </Button>
+                    <CreateManualServerDraftButton
+                      variant="outline"
+                      className="w-full sm:w-auto gap-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      {t(locale, "dashboard.home.ctaCreateManually")}
+                    </CreateManualServerDraftButton>
                   </div>
                 </CardContent>
               </Card>
@@ -281,7 +311,7 @@ export default function DashboardPage() {
                   </Card>
                 </Link>
 
-                <Link href="/builder" className="block">
+                <CreateManualServerDraftSurfaceButton>
                   <Card className="group border-2 transition-all hover:border-primary/30">
                     <CardContent className="flex items-center gap-4 p-4">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
@@ -292,7 +322,7 @@ export default function DashboardPage() {
                       </p>
                     </CardContent>
                   </Card>
-                </Link>
+                </CreateManualServerDraftSurfaceButton>
 
                 <Link href="/dashboard/quizzes" className="block">
                   <Card className="group border-2 transition-all hover:border-blue/30">
@@ -362,7 +392,14 @@ export default function DashboardPage() {
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 sm:gap-5">
-              {stats.recentQuizzes.map((quiz, index) => (
+              {stats.recentQuizzes.map((quiz, index) => {
+                const isDraft = quiz.status === "DRAFT";
+                const isArchived = quiz.status === "ARCHIVED";
+                const titleHref = isDraft
+                  ? `/builder/${quiz.id}`
+                  : `/dashboard/quiz/${quiz.id}/preview`;
+
+                return (
                 <motion.div
                   key={quiz.id}
                   initial={fadeIn.initial}
@@ -374,12 +411,15 @@ export default function DashboardPage() {
                   >
                     <CardContent className="flex flex-1 flex-col p-5">
                       <Link
-                        href={`/dashboard/quiz/${quiz.id}/preview`}
+                        href={titleHref}
                         className="mb-4 block flex-1"
                       >
-                        <h3 className="line-clamp-2 text-lg font-medium leading-snug text-foreground transition-colors hover:text-blue">
-                          {quiz.name}
-                        </h3>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="line-clamp-2 flex-1 min-w-0 text-lg font-medium leading-snug text-foreground transition-colors hover:text-blue">
+                            {quiz.name}
+                          </h3>
+                          <QuizStatusBadge status={quiz.status} locale={locale} />
+                        </div>
                       </Link>
 
                       <div className="mb-4 flex items-center gap-4 text-sm text-muted-foreground">
@@ -390,27 +430,64 @@ export default function DashboardPage() {
                             ? t(locale, "dashboard.question")
                             : t(locale, "dashboard.questions")}
                         </span>
-                        <span className="inline-flex items-center gap-1.5">
-                          <Users className="h-3.5 w-3.5" />
-                          {quiz.attemptCount} {getResponseLabel(quiz.attemptCount)}
-                        </span>
+                        {canQuizShowResponseInsights(quiz.status) ? (
+                          <span className="inline-flex items-center gap-1.5">
+                            <Users className="h-3.5 w-3.5" />
+                            {quiz.attemptCount} {getResponseLabel(quiz.attemptCount)}
+                          </span>
+                        ) : null}
                       </div>
 
-                      <div className="mt-auto space-y-5 border-t border-border/60 pt-3">
-                        <Button
-                          variant="blue"
-                          size="sm"
-                          className="w-full gap-2"
-                          onClick={() => handlePlay(quiz.id)}
-                          disabled={playLoadingQuizId !== null}
-                        >
-                          <Play className="h-4 w-4" />
-                          {playLoadingQuizId === quiz.id
-                            ? t(locale, "common.loading")
-                            : t(locale, "publicQuizzes.play")}
-                        </Button>
+                      <div className="mt-auto space-y-3 border-t border-border/60 pt-3">
+                        {canQuizBePlayed(quiz.status) ? (
+                          <Button
+                            variant="blue"
+                            size="sm"
+                            className="w-full gap-2"
+                            onClick={() => handlePlay(quiz.id)}
+                            disabled={playLoadingQuizId !== null}
+                          >
+                            <Play className="h-4 w-4" />
+                            {playLoadingQuizId === quiz.id
+                              ? t(locale, "common.loading")
+                              : t(locale, "dashboard.playQuiz")}
+                          </Button>
+                        ) : null}
 
-                        <div className="grid grid-cols-1 gap-2">
+                        {isDraft ? (
+                          <>
+                            <Button
+                              variant="outlineBlue"
+                              size="sm"
+                              className="w-full gap-2"
+                              asChild
+                            >
+                              <Link href={`/builder/${quiz.id}`}>
+                                <Edit className="h-4 w-4" />
+                                {t(locale, "dashboard.continueInBuilder")}
+                              </Link>
+                            </Button>
+                            <p className="text-xs text-muted-foreground">
+                              {t(locale, "dashboard.draftFinishToShareHint")}
+                            </p>
+                          </>
+                        ) : null}
+
+                        {isArchived ? (
+                          <Button
+                            variant="blue"
+                            size="sm"
+                            className="w-full gap-2"
+                            asChild
+                          >
+                            <Link href={`/dashboard/quiz/${quiz.id}/preview`}>
+                              <Eye className="h-4 w-4" />
+                              {t(locale, "dashboard.viewArchivedQuiz")}
+                            </Link>
+                          </Button>
+                        ) : null}
+
+                        {canQuizBeShared(quiz.status) ? (
                           <Button
                             variant={
                               copiedQuizId === quiz.id ? "secondary" : "outline"
@@ -438,7 +515,9 @@ export default function DashboardPage() {
                               </>
                             )}
                           </Button>
+                        ) : null}
 
+                        {canQuizShowResponseInsights(quiz.status) ? (
                           <Button
                             variant="outline"
                             size="sm"
@@ -450,15 +529,16 @@ export default function DashboardPage() {
                               className="flex w-full items-center justify-center gap-2"
                             >
                               <BarChart3 className="h-4 w-4" />
-                              {t(locale, "dashboard.results")}
+                              {t(locale, "dashboard.viewResponses")}
                             </Link>
                           </Button>
-                        </div>
+                        ) : null}
                       </div>
                     </CardContent>
                   </Card>
                 </motion.div>
-              ))}
+                );
+              })}
             </div>
           </motion.div>
         )}

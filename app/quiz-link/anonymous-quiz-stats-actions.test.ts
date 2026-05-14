@@ -38,6 +38,7 @@ const eligibleAnonymousLinkRow = {
   participantId: null as string | null,
   revokedAt: null as Date | null,
   expiresAt: null as Date | null,
+  quiz: { status: "ACTIVE" as const },
 };
 
 describe("anonymous-quiz-stats-actions", () => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, useLayoutEffect } from "react";
+import { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -9,14 +9,21 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, ChevronDown, Play, Save } from "lucide-react";
+import { Plus, ChevronDown, Save, CheckCircle2 } from "lucide-react";
 import { QuizMenu } from "@/components/quiz-menu";
+import { QuizStatusBadge } from "@/components/quiz/quiz-status-badge";
 import { getQuizById } from "@/app/(app)/dashboard/actions";
-import { saveQuiz } from "@/app/(app)/builder/actions";
+import {
+  getActiveQuizSaveStatsWarning,
+  saveQuiz,
+  finalizeDraftQuizAction,
+  saveModifiedQuizAsDraftCopyAction,
+} from "@/app/(app)/builder/actions";
 import { track } from "@/lib/analytics/track";
 import { QUIZ_CREATED } from "@/lib/analytics/events";
 import { buildCommonEventProps } from "@/lib/analytics/props";
 import { useSession } from "next-auth/react";
+import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -25,6 +32,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/toast";
 import { QuestionEditor } from "@/components/quiz-builder/question-editor";
 import {
@@ -46,7 +61,6 @@ import type {
   QuizBuilder,
   Question,
   QuestionType,
-  QuizSettings,
 } from "@/types/quiz-builder";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -56,14 +70,19 @@ import {
 } from "@/components/ui/collapsible";
 import { BuilderOrganizeQuestionsList } from "@/components/quiz-builder/builder-organize-questions-list";
 import { BuilderQuizOptionsFields } from "@/components/quiz-builder/builder-quiz-options-fields";
+import { BuilderSaveStatus } from "@/components/quiz-builder/builder-save-status";
 import { BuilderBackToTopButton } from "@/components/quiz-builder/builder-back-to-top-button";
+import { FullscreenBlockingOverlay } from "@/components/ui/fullscreen-blocking-overlay";
 import { useBuilderNavigationGuard } from "@/components/dashboard/builder-navigation-guard-context";
 import { resolveMobileQuizOptionsOpenAfterQuestionCountChange } from "@/lib/builder-mobile-quiz-options";
+import { DEFAULT_MANUAL_QUIZ_BUILDER_SETTINGS } from "@/lib/builder/defaultManualQuizSettings";
+import { resolveFinalizeDraftQuizError } from "@/lib/builder/finalizeDraftQuizErrors";
 import { estimateQuizPayloadSize } from "@/lib/builder/estimateQuizPayloadSize";
 import { isSaveQuizPayloadTooLargeError } from "@/lib/builder/isSaveQuizPayloadTooLargeError";
 import {
   QUIZ_SAVE_PAYLOAD_WARN_BYTES,
 } from "@/lib/builder/quizPayloadLimits";
+import { BUILDER_SESSION_TRANSFER_QUIZ_KEY } from "@/lib/builder/builderClientStorageKeys";
 import {
   buildBuilderDraftKey,
   clearBuilderDraftAndIndexEntry,
@@ -74,17 +93,24 @@ import {
   shouldOfferBuilderLocalDraftRestore,
   type BuilderLocalDraftPayload,
 } from "@/lib/builder/builderLocalDraft";
+import { buildPlayableContentMultisetKey } from "@/lib/builder/quizContentChangeDetection";
 import { computeQuizBuilderSnapshot } from "@/lib/builder/quizBuilderSnapshot";
+import { mergeQuizSettingsFromStored } from "@/lib/quiz/mergeQuizSettingsFromStored";
+import {
+  evaluateServerAutosaveGate,
+  SERVER_AUTOSAVE_DEBOUNCE_MS,
+} from "@/lib/builder/serverAutosaveGate";
+import type { BuilderServerSaveUiPhase } from "@/lib/builder/builderSaveStatusDisplay";
 
 type BuilderViewMode = "edit" | "organize";
 
 function loadInitialQuiz(): QuizBuilder {
   if (typeof window !== "undefined") {
-    const savedQuiz = sessionStorage.getItem("quizBuilder");
+    const savedQuiz = sessionStorage.getItem(BUILDER_SESSION_TRANSFER_QUIZ_KEY);
     if (savedQuiz) {
       try {
         const parsed = JSON.parse(savedQuiz) as QuizBuilder;
-        sessionStorage.removeItem("quizBuilder");
+        sessionStorage.removeItem(BUILDER_SESSION_TRANSFER_QUIZ_KEY);
         return parsed;
       } catch {
         // Fall through to default
@@ -95,11 +121,7 @@ function loadInitialQuiz(): QuizBuilder {
     id: `quiz-${Date.now()}`,
     name: "",
     visibility: "PRIVATE",
-    settings: {
-      showAnswerImmediately: true,
-      randomizeQuestions: false,
-      timeLimitPerQuestion: null,
-    },
+    settings: { ...DEFAULT_MANUAL_QUIZ_BUILDER_SETTINGS },
     questions: [],
     createdBy: "USER",
     createdAt: new Date().toISOString(),
@@ -244,11 +266,21 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
   const [removingQuestionId, setRemovingQuestionId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isFinalizingDraft, setIsFinalizingDraft] = useState(false);
+  const [baselineSnapshotForUi, setBaselineSnapshotForUi] = useState<string | null>(null);
+  const [serverSaveUiPhase, setServerSaveUiPhase] = useState<BuilderServerSaveUiPhase>("idle");
+  const [lastServerAutosaveSuccessAt, setLastServerAutosaveSuccessAt] = useState<number | null>(
+    null,
+  );
   const [savedQuizId, setSavedQuizId] = useState<string | null>(null);
+  const [serverQuizStatus, setServerQuizStatus] = useState<QuizLifecycleStatus | null>(null);
+  const serverQuizStatusRef = useRef<QuizLifecycleStatus | null>(null);
   const quizIdForImageUpload = savedQuizId ?? urlQuizId ?? null;
+  const displayedEditorialStatus = urlQuizId ? serverQuizStatus : null;
   const [builderViewMode, setBuilderViewMode] = useState<BuilderViewMode>("edit");
   const [scrollToQuestionId, setScrollToQuestionId] = useState<string | null>(null);
   const unsavedBaselineRef = useRef<string | null>(null);
+  const baselinePlayableMultisetKeyRef = useRef<string | null>(null);
   const quizRef = useRef(quiz);
   const timeLimitUiRef = useRef(timeLimitUi);
   const userIdRef = useRef<string | undefined>(undefined);
@@ -257,11 +289,22 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
   const hasCapturedHydratedBaselineForDraftRef = useRef(false);
   const previousUrlQuizIdForDraftModalRef = useRef<string | null | undefined>(undefined);
   const localDraftStorageToastShownRef = useRef(false);
+  const serverAutosaveDebounceTimerRef = useRef<number | null>(null);
+  const autosaveInFlightRef = useRef(false);
+  const serverAutosaveWaitPromiseRef = useRef<Promise<void> | null>(null);
+  const autosaveErrorSnapshotRef = useRef<string | null>(null);
+  const isSavingRef = useRef(false);
+  const isFinalizingDraftRef = useRef(false);
   const [localDraftModalOpen, setLocalDraftModalOpen] = useState(false);
   const [localDraftPayload, setLocalDraftPayload] = useState<BuilderLocalDraftPayload | null>(
     null,
   );
+  const [activeSaveStatsModalOpen, setActiveSaveStatsModalOpen] = useState(false);
+  const [isStatsModalDraftCopyBusy, setIsStatsModalDraftCopyBusy] = useState(false);
+  const pendingConfirmedStatsResetRef = useRef(false);
   const builderMainScrollRef = useRef<HTMLElement | null>(null);
+  const finalizeNavigationStartedRef = useRef(false);
+  const prefersReducedMotion = useReducedMotion();
   const { showToast } = useToast();
   const {
     setBuilderHasUnsavedChanges,
@@ -275,7 +318,29 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
     userIdRef.current = userId;
     urlQuizIdRef.current = urlQuizId;
     savedQuizIdRef.current = savedQuizId;
-  }, [quiz, timeLimitUi, userId, urlQuizId, savedQuizId]);
+    serverQuizStatusRef.current = serverQuizStatus;
+  }, [quiz, timeLimitUi, userId, urlQuizId, savedQuizId, serverQuizStatus]);
+
+  useLayoutEffect(() => {
+    isSavingRef.current = isSaving;
+  }, [isSaving]);
+
+  useLayoutEffect(() => {
+    isFinalizingDraftRef.current = isFinalizingDraft;
+  }, [isFinalizingDraft]);
+
+  const assignBaselineSnapshot = useCallback((snapshot: string, quizForPlayable: QuizBuilder) => {
+    unsavedBaselineRef.current = snapshot;
+    setBaselineSnapshotForUi(snapshot);
+    baselinePlayableMultisetKeyRef.current = buildPlayableContentMultisetKey(quizForPlayable);
+  }, []);
+
+  const clearServerAutosaveDebounceTimer = useCallback(() => {
+    if (serverAutosaveDebounceTimerRef.current !== null) {
+      window.clearTimeout(serverAutosaveDebounceTimerRef.current);
+      serverAutosaveDebounceTimerRef.current = null;
+    }
+  }, []);
 
   const clearCurrentLocalBuilderDraft = useCallback(() => {
     if (!userId) {
@@ -422,9 +487,9 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
   useEffect(() => {
     const urlQuizId = initialQuizId || searchParams.get("quizId");
     if (!urlQuizId && unsavedBaselineRef.current === null) {
-      unsavedBaselineRef.current = computeQuizBuilderSnapshot(quiz, timeLimitUi);
+      assignBaselineSnapshot(computeQuizBuilderSnapshot(quiz, timeLimitUi), quiz);
     }
-  }, [initialQuizId, searchParams, quiz, timeLimitUi]);
+  }, [initialQuizId, searchParams, quiz, timeLimitUi, assignBaselineSnapshot]);
 
   // Load quiz from URL if quizId is present
   useEffect(() => {
@@ -439,7 +504,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
               id: result.quiz.id,
               name: result.quiz.name,
               visibility: result.quiz.visibility,
-              settings: result.quiz.settings as QuizSettings,
+              settings: mergeQuizSettingsFromStored(result.quiz.settings),
               questions: result.quiz.questions.map((q: { id: string; type: string; label: string; image?: string; imageKey?: string; explanation?: string; options: { id: string; label: string; isCorrect: boolean }[] }) => ({
                 id: q.id,
                 type: q.type as QuestionType,
@@ -458,18 +523,21 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
             };
             setQuiz(loadedQuiz);
             setSavedQuizId(result.quiz.id);
+            setServerQuizStatus(result.quiz.status);
             const loadedTimeLimitUi = deriveTimeLimitUiFromSettings(loadedQuiz.settings);
             setTimeLimitUi(loadedTimeLimitUi);
-            unsavedBaselineRef.current = computeQuizBuilderSnapshot(
+            assignBaselineSnapshot(
+              computeQuizBuilderSnapshot(loadedQuiz, loadedTimeLimitUi),
               loadedQuiz,
-              loadedTimeLimitUi,
             );
           } else {
+            setServerQuizStatus(null);
             showToast(result.error || t(locale, "common.error"), "error");
           }
         })
         .catch((error) => {
           console.error("Error loading quiz:", error);
+          setServerQuizStatus(null);
           showToast(t(locale, "common.error"), "error");
         })
         .finally(() => {
@@ -479,7 +547,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
     // Do not router.replace to `/builder/${savedQuizId}` here when `savedQuizId` was just
     // set after creating a quiz: it races with `router.push` to `/dashboard/quiz/.../success`
     // and cancels the success redirect. URL sync after save is handled in handleSave when needed.
-  }, [initialQuizId, searchParams, savedQuizId, router, locale, showToast]);
+  }, [initialQuizId, searchParams, savedQuizId, router, locale, showToast, assignBaselineSnapshot]);
 
   useEffect(() => {
     if (unsavedBaselineRef.current === null) {
@@ -574,6 +642,203 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
   }, [userId, locale, showToast]);
 
   useEffect(() => {
+    if (!savedQuizId || isLoading || isSaving || isFinalizingDraft) {
+      clearServerAutosaveDebounceTimer();
+      return;
+    }
+
+    const baseline = unsavedBaselineRef.current;
+    if (baseline === null) {
+      clearServerAutosaveDebounceTimer();
+      return;
+    }
+
+    const snapshotNow = computeQuizBuilderSnapshot(quiz, timeLimitUi);
+    if (snapshotNow === baseline) {
+      clearServerAutosaveDebounceTimer();
+      return;
+    }
+
+    const mergedForEstimate: QuizBuilder = {
+      ...quiz,
+      settings: buildQuizSettingsWithResolvedTimeLimit(quiz.settings, timeLimitUi),
+    };
+    const estimatedBytes = estimateQuizPayloadSize(mergedForEstimate);
+    const gate = evaluateServerAutosaveGate({
+      savedQuizId,
+      quizLifecycleStatus: serverQuizStatus,
+      baselineSnapshot: baseline,
+      currentSnapshot: snapshotNow,
+      quizForValidation: quiz,
+      timeLimitUi,
+      estimatedPayloadBytes: estimatedBytes,
+      autosavePayloadMaxBytes: QUIZ_SAVE_PAYLOAD_WARN_BYTES,
+    });
+    if (!gate.proceed) {
+      clearServerAutosaveDebounceTimer();
+      return;
+    }
+
+    clearServerAutosaveDebounceTimer();
+    serverAutosaveDebounceTimerRef.current = window.setTimeout(() => {
+      serverAutosaveDebounceTimerRef.current = null;
+
+      const run = async (): Promise<void> => {
+        const snapshotBefore = computeQuizBuilderSnapshot(
+          quizRef.current,
+          timeLimitUiRef.current,
+        );
+        const baselineAtFire = unsavedBaselineRef.current;
+        if (baselineAtFire === null || snapshotBefore === baselineAtFire) {
+          return;
+        }
+        if (isSavingRef.current || autosaveInFlightRef.current || isFinalizingDraftRef.current) {
+          return;
+        }
+
+        const qLatest = quizRef.current;
+        const uiLatest = timeLimitUiRef.current;
+        const sid = savedQuizIdRef.current;
+        if (!sid) {
+          return;
+        }
+
+        const mergedQuiz: QuizBuilder = {
+          ...qLatest,
+          settings: buildQuizSettingsWithResolvedTimeLimit(qLatest.settings, uiLatest),
+        };
+        const estimated = estimateQuizPayloadSize(mergedQuiz);
+        const gateAtFire = evaluateServerAutosaveGate({
+          savedQuizId: sid,
+          quizLifecycleStatus: serverQuizStatusRef.current,
+          baselineSnapshot: baselineAtFire,
+          currentSnapshot: snapshotBefore,
+          quizForValidation: qLatest,
+          timeLimitUi: uiLatest,
+          estimatedPayloadBytes: estimated,
+          autosavePayloadMaxBytes: QUIZ_SAVE_PAYLOAD_WARN_BYTES,
+        });
+        if (!gateAtFire.proceed) {
+          return;
+        }
+
+        autosaveInFlightRef.current = true;
+        setServerSaveUiPhase("autosaving");
+        try {
+          const result = await saveQuiz(mergedQuiz, sid);
+          if (!result.success) {
+            autosaveErrorSnapshotRef.current = computeQuizBuilderSnapshot(
+              quizRef.current,
+              timeLimitUiRef.current,
+            );
+            setServerSaveUiPhase("autosaveError");
+            return;
+          }
+
+          const mergedQuizResult: QuizBuilder =
+            result.quizId !== undefined ? { ...mergedQuiz, id: result.quizId } : mergedQuiz;
+          const normalizedTimeLimitUi = deriveTimeLimitUiFromSettings(mergedQuizResult.settings);
+          const snapshotAfterEdit = computeQuizBuilderSnapshot(
+            quizRef.current,
+            timeLimitUiRef.current,
+          );
+          if (snapshotAfterEdit !== snapshotBefore) {
+            setServerSaveUiPhase("idle");
+            return;
+          }
+
+          assignBaselineSnapshot(
+            computeQuizBuilderSnapshot(mergedQuizResult, normalizedTimeLimitUi),
+            mergedQuizResult,
+          );
+          setQuiz(mergedQuizResult);
+          setTimeLimitUi(normalizedTimeLimitUi);
+          syncDirtyToGuard();
+
+          const uid = userIdRef.current;
+          if (uid) {
+            const scopes = new Set<string>();
+            if (result.quizId) {
+              scopes.add(result.quizId);
+            }
+            if (savedQuizIdRef.current) {
+              scopes.add(savedQuizIdRef.current);
+            }
+            if (urlQuizIdRef.current) {
+              scopes.add(urlQuizIdRef.current);
+            }
+            for (const scopeRaw of scopes) {
+              const scope = scopeRaw === "new" ? "new" : scopeRaw;
+              clearBuilderDraftAndIndexEntry(uid, scope);
+            }
+          }
+
+          setLastServerAutosaveSuccessAt(Date.now());
+          setServerSaveUiPhase("autosaveSaved");
+        } catch (error) {
+          console.error("Error autosaving quiz:", error);
+          autosaveErrorSnapshotRef.current = computeQuizBuilderSnapshot(
+            quizRef.current,
+            timeLimitUiRef.current,
+          );
+          setServerSaveUiPhase("autosaveError");
+        } finally {
+          autosaveInFlightRef.current = false;
+        }
+      };
+
+      const promise = run();
+      serverAutosaveWaitPromiseRef.current = promise.finally(() => {
+        if (serverAutosaveWaitPromiseRef.current === promise) {
+          serverAutosaveWaitPromiseRef.current = null;
+        }
+      });
+      void promise;
+    }, SERVER_AUTOSAVE_DEBOUNCE_MS);
+
+    return () => {
+      clearServerAutosaveDebounceTimer();
+    };
+  }, [
+    quiz,
+    timeLimitUi,
+    savedQuizId,
+    isLoading,
+    isSaving,
+    isFinalizingDraft,
+    baselineSnapshotForUi,
+    clearServerAutosaveDebounceTimer,
+    syncDirtyToGuard,
+    assignBaselineSnapshot,
+    serverQuizStatus,
+  ]);
+
+  useEffect(() => {
+    if (serverSaveUiPhase !== "autosaveSaved") {
+      return;
+    }
+    const id = window.setTimeout(() => {
+      setServerSaveUiPhase("idle");
+    }, 3000);
+    return () => window.clearTimeout(id);
+  }, [serverSaveUiPhase]);
+
+  useEffect(() => {
+    if (serverSaveUiPhase !== "autosaveError") {
+      return;
+    }
+    const errSnap = autosaveErrorSnapshotRef.current;
+    if (errSnap === null) {
+      return;
+    }
+    const now = computeQuizBuilderSnapshot(quiz, timeLimitUi);
+    if (now !== errSnap) {
+      setServerSaveUiPhase("idle");
+      autosaveErrorSnapshotRef.current = null;
+    }
+  }, [quiz, timeLimitUi, serverSaveUiPhase]);
+
+  useEffect(() => {
     if (builderViewMode !== "edit" || scrollToQuestionId === null) {
       return;
     }
@@ -595,6 +860,38 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
       cancelled = true;
     };
   }, [builderViewMode, scrollToQuestionId]);
+
+  const isDirtyVersusBaseline = useMemo(
+    () =>
+      baselineSnapshotForUi !== null &&
+      computeQuizBuilderSnapshot(quiz, timeLimitUi) !== baselineSnapshotForUi,
+    [quiz, timeLimitUi, baselineSnapshotForUi],
+  );
+
+  const gateProceedsForServerAutosave = useMemo(() => {
+    if (!savedQuizId || baselineSnapshotForUi === null) {
+      return false;
+    }
+    const snapshotNow = computeQuizBuilderSnapshot(quiz, timeLimitUi);
+    if (snapshotNow === baselineSnapshotForUi) {
+      return false;
+    }
+    const mergedForEstimate: QuizBuilder = {
+      ...quiz,
+      settings: buildQuizSettingsWithResolvedTimeLimit(quiz.settings, timeLimitUi),
+    };
+    const estimatedBytes = estimateQuizPayloadSize(mergedForEstimate);
+    return evaluateServerAutosaveGate({
+      savedQuizId,
+      quizLifecycleStatus: serverQuizStatus,
+      baselineSnapshot: baselineSnapshotForUi,
+      currentSnapshot: snapshotNow,
+      quizForValidation: quiz,
+      timeLimitUi,
+      estimatedPayloadBytes: estimatedBytes,
+      autosavePayloadMaxBytes: QUIZ_SAVE_PAYLOAD_WARN_BYTES,
+    }).proceed;
+  }, [savedQuizId, baselineSnapshotForUi, quiz, timeLimitUi, serverQuizStatus]);
 
   const handleSave = async () => {
     const timeLimitError = validateBuilderTimeLimit(timeLimitUi);
@@ -619,10 +916,48 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
     }
 
     const draftHint = `\n${t(locale, "builder.saveErrorDraftKept")}`;
+    clearServerAutosaveDebounceTimer();
+    const pendingAutosave = serverAutosaveWaitPromiseRef.current;
+    if (pendingAutosave) {
+      try {
+        await pendingAutosave;
+      } catch {
+        // Autosave errors are surfaced via the inline status, not here.
+      }
+    }
+
+    if (
+      serverQuizStatus === "ACTIVE" &&
+      savedQuizId &&
+      isDirtyVersusBaseline &&
+      !pendingConfirmedStatsResetRef.current
+    ) {
+      const warning = await getActiveQuizSaveStatsWarning(savedQuizId);
+      if (warning.success && warning.needsWarning) {
+        const baselinePlayableKey = baselinePlayableMultisetKeyRef.current;
+        const nextPlayableKey = buildPlayableContentMultisetKey(quizToSave);
+        if (baselinePlayableKey !== null && nextPlayableKey === baselinePlayableKey) {
+          // Metadata/settings-only change: save without modal or stats reset.
+        } else {
+          setActiveSaveStatsModalOpen(true);
+          return;
+        }
+      }
+    }
+
+    const resetRecordedResponses = pendingConfirmedStatsResetRef.current;
+    pendingConfirmedStatsResetRef.current = false;
+
     setIsSaving(true);
     try {
       const isExistingQuiz = isQuizSaved;
-      const result = await saveQuiz(quizToSave, savedQuizId || undefined);
+      const result = await saveQuiz(
+        quizToSave,
+        savedQuizId || undefined,
+        resetRecordedResponses
+          ? { resetRecordedResponsesBeforeUpdate: true }
+          : undefined,
+      );
 
       if (result.success) {
         const clearLocalDraftsAfterServerSuccess = (quizIdForKeys: string | undefined) => {
@@ -657,6 +992,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
             const settings = mergedQuiz.settings ?? {
               showAnswerImmediately: false,
               randomizeQuestions: false,
+              randomizeOptions: false,
               timeLimitPerQuestion: null,
             };
             track(QUIZ_CREATED, {
@@ -670,7 +1006,8 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
               question_count: mergedQuiz.questions.length,
               has_time_limit: settings.timeLimitPerQuestion != null && settings.timeLimitPerQuestion > 0,
               show_answer_immediately: settings.showAnswerImmediately,
-              randomized: settings.randomizeQuestions,
+              randomized:
+                settings.randomizeQuestions || settings.randomizeOptions,
             });
             setQuiz({ ...quizToSave, id: result.quizId });
             setTimeLimitUi(normalizedTimeLimitUi);
@@ -680,11 +1017,14 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
                 quizId: result.quizId,
               })
             ) {
-              unsavedBaselineRef.current = computeQuizBuilderSnapshot(
+              assignBaselineSnapshot(
+                computeQuizBuilderSnapshot(mergedQuiz, normalizedTimeLimitUi),
                 mergedQuiz,
-                normalizedTimeLimitUi,
               );
               clearLocalDraftsAfterServerSuccess(result.quizId);
+              setLastServerAutosaveSuccessAt(Date.now());
+              setServerSaveUiPhase("idle");
+              autosaveErrorSnapshotRef.current = null;
               runNavigationBypass(() => {
                 setBuilderHasUnsavedChanges(false);
                 router.push(buildQuizSuccessPath(result.quizId));
@@ -696,9 +1036,9 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
 
         setQuiz(mergedQuiz);
         setTimeLimitUi(normalizedTimeLimitUi);
-        unsavedBaselineRef.current = computeQuizBuilderSnapshot(
+        assignBaselineSnapshot(
+          computeQuizBuilderSnapshot(mergedQuiz, normalizedTimeLimitUi),
           mergedQuiz,
-          normalizedTimeLimitUi,
         );
         syncDirtyToGuard();
 
@@ -707,6 +1047,9 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
           : t(locale, "builder.quizCreated");
 
         clearLocalDraftsAfterServerSuccess(result.quizId ?? mergedQuiz.id);
+        setLastServerAutosaveSuccessAt(Date.now());
+        setServerSaveUiPhase("idle");
+        autosaveErrorSnapshotRef.current = null;
         showToast(message, "success");
       } else {
         showToast(`${result.error || t(locale, "builder.saveError")}${draftHint}`, "error");
@@ -720,6 +1063,193 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
       }
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleActiveSaveStatsModalCancel = () => {
+    setActiveSaveStatsModalOpen(false);
+  };
+
+  const handleActiveSaveStatsModalSaveAsDraftCopy = async () => {
+    if (!savedQuizId || !userId) {
+      return;
+    }
+
+    const timeLimitError = validateBuilderTimeLimit(timeLimitUi);
+    const errors = validateQuiz(quiz);
+    const mergedErrors = timeLimitError ? [...errors, timeLimitError] : errors;
+    if (mergedErrors.length > 0) {
+      setValidationErrors(mergedErrors);
+      showToast(t(locale, "builder.saveError"), "error");
+      return;
+    }
+
+    const quizToSave: QuizBuilder = {
+      ...quiz,
+      settings: buildQuizSettingsWithResolvedTimeLimit(quiz.settings, timeLimitUi),
+    };
+
+    const estimatedBytes = estimateQuizPayloadSize(quizToSave);
+    if (estimatedBytes >= QUIZ_SAVE_PAYLOAD_WARN_BYTES) {
+      const shouldContinue = window.confirm(t(locale, "builder.savePayloadHeavyConfirm"));
+      if (!shouldContinue) {
+        return;
+      }
+    }
+
+    clearServerAutosaveDebounceTimer();
+    const pendingAutosave = serverAutosaveWaitPromiseRef.current;
+    if (pendingAutosave) {
+      try {
+        await pendingAutosave;
+      } catch {
+        // Autosave errors are surfaced via the inline status, not here.
+      }
+    }
+
+    setIsStatsModalDraftCopyBusy(true);
+    try {
+      const copyResult = await saveModifiedQuizAsDraftCopyAction(
+        savedQuizId,
+        quizToSave,
+        locale,
+      );
+      if (copyResult.success) {
+        clearBuilderDraftAndIndexEntry(userId, savedQuizId);
+        if (urlQuizId && urlQuizId !== savedQuizId) {
+          clearBuilderDraftAndIndexEntry(userId, urlQuizId);
+        }
+
+        setActiveSaveStatsModalOpen(false);
+        showToast(t(locale, "builder.activeSaveStatsModal.draftCopySuccessToast"), "success");
+        runNavigationBypass(() => {
+          setBuilderHasUnsavedChanges(false);
+          router.push(`/builder/${copyResult.quizId}`);
+        });
+        return;
+      }
+
+      const draftHint = `\n${t(locale, "builder.saveErrorDraftKept")}`;
+      showToast(`${copyResult.error || t(locale, "builder.saveError")}${draftHint}`, "error");
+    } catch (error) {
+      console.error("saveModifiedQuizAsDraftCopyAction from builder:", error);
+      showToast(
+        `${t(locale, "builder.saveError")}\n${t(locale, "builder.saveErrorDraftKept")}`,
+        "error",
+      );
+    } finally {
+      setIsStatsModalDraftCopyBusy(false);
+    }
+  };
+
+  const handleActiveSaveStatsModalConfirmReset = () => {
+    pendingConfirmedStatsResetRef.current = true;
+    setActiveSaveStatsModalOpen(false);
+    void handleSave();
+  };
+
+  const handleFinalizeDraft = async () => {
+    if (!savedQuizId) {
+      return;
+    }
+
+    if (quiz.questions.length === 0) {
+      showToast(t(locale, "builder.finalizeAddQuestionFirst"), "error");
+      return;
+    }
+
+    const timeLimitError = validateBuilderTimeLimit(timeLimitUi);
+    const errors = validateQuiz(quiz);
+    const mergedErrors = timeLimitError ? [...errors, timeLimitError] : errors;
+    if (mergedErrors.length > 0) {
+      setValidationErrors(mergedErrors);
+      return;
+    }
+
+    const quizToSave: QuizBuilder = {
+      ...quiz,
+      settings: buildQuizSettingsWithResolvedTimeLimit(quiz.settings, timeLimitUi),
+    };
+
+    const estimatedBytes = estimateQuizPayloadSize(quizToSave);
+    if (estimatedBytes >= QUIZ_SAVE_PAYLOAD_WARN_BYTES) {
+      const shouldContinue = window.confirm(t(locale, "builder.savePayloadHeavyConfirm"));
+      if (!shouldContinue) {
+        return;
+      }
+    }
+
+    clearServerAutosaveDebounceTimer();
+    const pendingAutosave = serverAutosaveWaitPromiseRef.current;
+    if (pendingAutosave) {
+      try {
+        await pendingAutosave;
+      } catch {
+        // Autosave errors are surfaced via the inline status, not here.
+      }
+    }
+
+    finalizeNavigationStartedRef.current = false;
+    setIsFinalizingDraft(true);
+    try {
+      const saveResult = await saveQuiz(quizToSave, savedQuizId);
+      if (!saveResult.success) {
+        showToast(
+          `${t(locale, "builder.saveError")}\n${t(locale, "builder.saveErrorDraftKept")}`,
+          "error",
+        );
+        return;
+      }
+
+      const finalizeResult = await finalizeDraftQuizAction(savedQuizId);
+      if (!finalizeResult.success) {
+        showToast(resolveFinalizeDraftQuizError(locale, finalizeResult.error), "error");
+        return;
+      }
+
+      if (userId) {
+        const scopes = new Set<string>();
+        scopes.add("new");
+        scopes.add(savedQuizId);
+        if (urlQuizId) {
+          scopes.add(urlQuizId);
+        }
+        for (const scopeRaw of scopes) {
+          const scope = scopeRaw === "new" ? "new" : scopeRaw;
+          clearBuilderDraftAndIndexEntry(userId, scope);
+        }
+      }
+
+      const mergedQuiz: QuizBuilder =
+        saveResult.quizId !== undefined ? { ...quizToSave, id: saveResult.quizId } : quizToSave;
+      const normalizedTimeLimitUi = deriveTimeLimitUiFromSettings(mergedQuiz.settings);
+      setQuiz(mergedQuiz);
+      setTimeLimitUi(normalizedTimeLimitUi);
+      setServerQuizStatus("ACTIVE");
+      assignBaselineSnapshot(
+        computeQuizBuilderSnapshot(mergedQuiz, normalizedTimeLimitUi),
+        mergedQuiz,
+      );
+      syncDirtyToGuard();
+      showToast(t(locale, "builder.finalizeSuccessToast"), "success");
+      setLastServerAutosaveSuccessAt(Date.now());
+      setServerSaveUiPhase("idle");
+      autosaveErrorSnapshotRef.current = null;
+
+      const finalizeRevealMs = prefersReducedMotion ? 0 : 900;
+      if (finalizeRevealMs > 0) {
+        await new Promise((resolve) => setTimeout(resolve, finalizeRevealMs));
+      }
+
+      finalizeNavigationStartedRef.current = true;
+      runNavigationBypass(() => {
+        setBuilderHasUnsavedChanges(false);
+        router.push(buildQuizSuccessPath(savedQuizId));
+      });
+    } finally {
+      if (!finalizeNavigationStartedRef.current) {
+        setIsFinalizingDraft(false);
+      }
     }
   };
 
@@ -815,8 +1345,6 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
     return t(locale, timeLimitError.translationKey, timeLimitError.params || {});
   };
 
-  const prefersReducedMotion = useReducedMotion();
-
   const localDraftFormattedSavedAt =
     localDraftPayload !== null
       ? new Intl.DateTimeFormat(locale === "fr" ? "fr-FR" : "en-US", {
@@ -864,6 +1392,53 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <Dialog
+        open={activeSaveStatsModalOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setActiveSaveStatsModalOpen(false);
+          }
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t(locale, "builder.activeSaveStatsModal.title")}</DialogTitle>
+            <DialogDescription>
+              {t(locale, "builder.activeSaveStatsModal.description")}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-full sm:w-auto"
+              onClick={handleActiveSaveStatsModalCancel}
+            >
+              {t(locale, "builder.activeSaveStatsModal.cancel")}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full sm:w-auto"
+              onClick={() => void handleActiveSaveStatsModalSaveAsDraftCopy()}
+              disabled={isStatsModalDraftCopyBusy || isSaving}
+            >
+              {isStatsModalDraftCopyBusy
+                ? t(locale, "common.loading")
+                : t(locale, "builder.activeSaveStatsModal.saveAsDraftCopy")}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              className="w-full sm:w-auto"
+              onClick={handleActiveSaveStatsModalConfirmReset}
+              disabled={isSaving}
+            >
+              {t(locale, "builder.activeSaveStatsModal.confirmReset")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <div className="flex min-h-0 flex-1 flex-col bg-background w-full">
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row lg:items-stretch">
         {/* Desktop: options sidebar */}
@@ -956,57 +1531,117 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
         >
           <div className="w-full min-w-0 max-w-none px-3 pt-3 pb-10 sm:px-4 sm:pt-4 sm:pb-12 md:px-6 md:pt-6 md:pb-16">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                 <h1 className="text-lg sm:text-xl md:text-2xl font-bold h1">{t(locale, "builder.title")}</h1>
+                {displayedEditorialStatus !== null ? (
+                  <QuizStatusBadge status={displayedEditorialStatus} locale={locale} />
+                ) : null}
                 {quiz.questions.length > 0 && (
                   <Badge variant="secondary" className="text-xs sm:text-sm">
                     {quiz.questions.length} {quiz.questions.length === 1 ? t(locale, "dashboard.question") : t(locale, "dashboard.questions")}
                   </Badge>
                 )}
               </div>
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <Button
-                  variant="blue"
-                  onClick={handleSave}
-                  disabled={quiz.questions.length === 0 || isSaving}
-                  className="flex-1 sm:flex-initial text-base relative"
-                  size="default"
-                >
-                  <Save className="h-3 w-3 sm:h-4 sm:w-4" />
-                  {isSaving
-                    ? t(locale, "common.loading")
-                    : isQuizSaved
-                    ? t(locale, "builder.saveQuiz")
-                    : t(locale, "builder.createQuiz")}
-                  {validationErrors.length > 0 && (
-                    <Badge
-                      className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs bg-destructive text-destructive-foreground border-destructive"
+              <div className="flex w-full flex-col items-stretch gap-1 sm:w-auto sm:items-end">
+                <div className="flex w-full items-center gap-2 sm:w-auto">
+                  {serverQuizStatus === "ARCHIVED" ? null : serverQuizStatus === "DRAFT" &&
+                    savedQuizId ? (
+                    <>
+                      <Button
+                        variant="outline"
+                        onClick={handleSave}
+                        disabled={
+                          quiz.questions.length === 0 || isSaving || isFinalizingDraft
+                        }
+                        className="flex-1 sm:flex-initial text-base relative"
+                        size="default"
+                      >
+                        <Save className="h-3 w-3 sm:h-4 sm:w-4" />
+                        {isSaving
+                          ? t(locale, "common.loading")
+                          : t(locale, "builder.saveNow")}
+                        {validationErrors.length > 0 && (
+                          <Badge
+                            className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs bg-destructive text-destructive-foreground border-destructive"
+                          >
+                            {validationErrors.length}
+                          </Badge>
+                        )}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="blue"
+                        onClick={handleFinalizeDraft}
+                        disabled={isSaving || isFinalizingDraft}
+                        className="flex-1 sm:flex-initial text-base gap-1.5"
+                        size="default"
+                      >
+                        <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                        {isFinalizingDraft
+                          ? t(locale, "builder.finalizingQuiz")
+                          : t(locale, "builder.finalizeQuiz")}
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      variant="blue"
+                      onClick={handleSave}
+                      disabled={
+                        quiz.questions.length === 0 ||
+                        isSaving ||
+                        isFinalizingDraft ||
+                        (serverQuizStatus === "ACTIVE" && !isDirtyVersusBaseline)
+                      }
+                      className="flex-1 sm:flex-initial text-base relative"
+                      size="default"
                     >
-                      {validationErrors.length}
-                    </Badge>
+                      <Save className="h-3 w-3 sm:h-4 sm:w-4" />
+                      {(() => {
+                        if (isSaving) {
+                          return t(locale, "common.loading");
+                        }
+                        if (!isQuizSaved) {
+                          return t(locale, "builder.createQuiz");
+                        }
+                        if (serverQuizStatus === "ACTIVE") {
+                          return t(locale, "builder.saveChanges");
+                        }
+                        return t(locale, "builder.saveQuiz");
+                      })()}
+                      {validationErrors.length > 0 && (
+                        <Badge
+                          className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs bg-destructive text-destructive-foreground border-destructive"
+                        >
+                          {validationErrors.length}
+                        </Badge>
+                      )}
+                    </Button>
                   )}
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  disabled
-                  className="flex-1 sm:flex-initial text-base"
-                  size="default"
-                  title={t(locale, "builder.previewComingSoon")}
-                  aria-label={t(locale, "builder.previewComingSoon")}
-                >
-                  <Play className="h-3 w-3 sm:h-4 sm:w-4" />
-                  {t(locale, "builder.previewQuiz")}
-                </Button>
-                {isQuizSaved && savedQuizId && (
-                  <QuizMenu
-                    quizId={savedQuizId}
-                    quizName={quiz.name}
-                    onDeleted={() => {
-                      requestNavigate("/dashboard");
-                    }}
-                  />
-                )}
+                  {isQuizSaved && savedQuizId && (
+                    <QuizMenu
+                      quizId={savedQuizId}
+                      quizName={quiz.name}
+                      quizStatus={serverQuizStatus ?? "DRAFT"}
+                      onDeleted={() => {
+                        requestNavigate("/dashboard");
+                      }}
+                    />
+                  )}
+                </div>
+                <BuilderSaveStatus
+                  locale={locale}
+                  phase={serverSaveUiPhase}
+                  savedQuizId={savedQuizId}
+                  quizLifecycleStatus={serverQuizStatus}
+                  isDirtyVersusBaseline={isDirtyVersusBaseline}
+                  quizQuestionCount={quiz.questions.length}
+                  gateProceedsForServerAutosave={gateProceedsForServerAutosave}
+                  isManualSaving={isSaving || isFinalizingDraft}
+                  lastServerAutosaveSuccessAt={
+                    isDirtyVersusBaseline ? null : lastServerAutosaveSuccessAt
+                  }
+                  isLoading={isLoading}
+                />
               </div>
             </div>
 
@@ -1129,6 +1764,19 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
         ) : null}
       </div>
     </div>
+      <FullscreenBlockingOverlay
+        open={isSaving || isFinalizingDraft}
+        title={
+          isFinalizingDraft
+            ? t(locale, "builder.blockingFinalizeTitle")
+            : t(locale, "builder.blockingSaveTitle")
+        }
+        description={
+          isFinalizingDraft
+            ? t(locale, "builder.blockingFinalizeDescription")
+            : t(locale, "builder.blockingSaveDescription")
+        }
+      />
     </>
   );
 }

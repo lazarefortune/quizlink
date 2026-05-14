@@ -1,17 +1,19 @@
 /**
- * Script de maintenance (post-migration) : audit ou suppression des anciennes lignes
- * QuizAttempt / QuizAnswer avec participantId = null, après portage des agrégats vers
- * quiz_link_anonymous_stats. Le jeu anonyme courant n’utilise plus ces tables.
+ * [MAINTENANCE — réutilisable] Audit ou suppression des anciennes lignes `QuizAttempt` /
+ * `QuizAnswer` avec `participantId` null, après portage des agrégats vers
+ * `quiz_link_anonymous_stats`.
+ *
+ * Emplacement : `scripts/maintenance/`.
  *
  * Usage :
- *   npx tsx scripts/cleanup-anonymous-attempts.ts --dry-run
- *   npx tsx scripts/cleanup-anonymous-attempts.ts --confirm
- *   npx tsx scripts/cleanup-anonymous-attempts.ts --confirm-delete
+ *   npx tsx scripts/maintenance/cleanup-anonymous-attempts.ts --dry-run
+ *   npx tsx scripts/maintenance/cleanup-anonymous-attempts.ts --confirm
+ *   npx tsx scripts/maintenance/cleanup-anonymous-attempts.ts --confirm-delete
  */
 
 import { pathToFileURL } from "node:url";
 
-import { prisma } from "../lib/prisma";
+import { prisma } from "../../lib/prisma";
 
 const ANONYMOUS_ATTEMPT_FILTER = { participantId: null } as const;
 

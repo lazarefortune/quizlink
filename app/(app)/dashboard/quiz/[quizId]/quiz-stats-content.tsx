@@ -37,6 +37,8 @@ import {
 } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
+import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
+import { QuizStatusBadge } from "@/components/quiz/quiz-status-badge";
 import { formatScoreFraction } from "@/lib/formatScore";
 import { ParticipantAvatar } from "@/components/participant-avatar";
 import { getAttemptDetails } from "./actions";
@@ -53,6 +55,7 @@ import {
 type QuizSettings = {
   showAnswerImmediately?: boolean;
   randomizeQuestions?: boolean;
+  randomizeOptions?: boolean;
   timeLimitPerQuestion?: number | null;
 };
 
@@ -67,6 +70,7 @@ type Stats = {
   totalQuestions: number;
   quizDetails: {
     visibility: string;
+    status: QuizLifecycleStatus;
     settings: QuizSettings;
     createdAt: Date;
   };
@@ -247,6 +251,14 @@ export function QuizStatsContent({
           <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div>
               <p className="text-sm font-medium text-muted-foreground">
+                {t(locale, "dashboard.quizEditorialStatus")}
+              </p>
+              <div className="mt-1">
+                <QuizStatusBadge status={stats.quizDetails.status} locale={locale} />
+              </div>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">
                 {t(locale, "dashboard.visibility")}
               </p>
               <div className="mt-1 flex items-center gap-2">
@@ -284,6 +296,18 @@ export function QuizStatsContent({
               </p>
               <p className="mt-1">
                 {stats.quizDetails.settings.randomizeQuestions
+                  ? t(locale, "common.yes")
+                  : t(locale, "common.no")}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">
+                {t(locale, "builder.randomizeOptions")}
+              </p>
+              <p className="mt-1">
+                {(typeof stats.quizDetails.settings.randomizeOptions === "boolean"
+                  ? stats.quizDetails.settings.randomizeOptions
+                  : stats.quizDetails.settings.randomizeQuestions)
                   ? t(locale, "common.yes")
                   : t(locale, "common.no")}
               </p>

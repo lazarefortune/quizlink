@@ -1,9 +1,16 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
 import crypto from "crypto";
 import type { Prisma } from "@prisma/client";
+
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import {
+  playBlockedErrorCodeForQuizStatus,
+  QUIZ_ACTION_ERROR_CODE,
+} from "@/lib/quiz/quizActionErrorCodes";
+import { canQuizBePlayed, canQuizBeShared } from "@/lib/quiz/quizStatusPolicy";
+import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
 
 type CreateQuizLinkResponse =
   | { success: true; quizLink: { id: string; token: string }; isFirstInviteForQuiz: boolean }
@@ -87,7 +94,7 @@ export async function createOrGetQuizLink(
     // Verify quiz exists and get details
     const quiz = await prisma.quiz.findUnique({
       where: { id: quizId },
-      select: { ownerId: true, visibility: true },
+      select: { ownerId: true, visibility: true, status: true },
     });
 
     if (!quiz) {
@@ -101,6 +108,10 @@ export async function createOrGetQuizLink(
 
     if (quiz.ownerId !== session.user.id) {
       return { success: false, error: "Unauthorized" };
+    }
+
+    if (!canQuizBeShared(quiz.status as QuizLifecycleStatus)) {
+      return { success: false, error: QUIZ_ACTION_ERROR_CODE.SHARE_REQUIRES_ACTIVE };
     }
 
     // General share link (not tied to a participant); works for PRIVATE and PUBLIC.
@@ -184,7 +195,7 @@ export async function getOrCreatePublicQuizLink(
 
     const quiz = await prisma.quiz.findUnique({
       where: { id: quizId },
-      select: { id: true, visibility: true },
+      select: { id: true, visibility: true, status: true },
     });
 
     if (!quiz) {
@@ -193,6 +204,14 @@ export async function getOrCreatePublicQuizLink(
 
     if (quiz.visibility !== "PUBLIC") {
       return { success: false, error: "This quiz is not public" };
+    }
+
+    if (!canQuizBePlayed(quiz.status as QuizLifecycleStatus)) {
+      const blocked = playBlockedErrorCodeForQuizStatus(quiz.status as QuizLifecycleStatus);
+      return {
+        success: false,
+        error: blocked ?? QUIZ_ACTION_ERROR_CODE.PLAY_DRAFT,
+      };
     }
 
     const existingLink = await prisma.quizLink.findFirst({
@@ -296,6 +315,13 @@ export async function getQuizLinkByToken(
     // Check link expiration
     if (quizLink.expiresAt && quizLink.expiresAt < new Date()) {
       return { success: false, error: "Quiz link has expired" };
+    }
+
+    const playBlocked = playBlockedErrorCodeForQuizStatus(
+      quizLink.quiz.status as QuizLifecycleStatus,
+    );
+    if (playBlocked) {
+      return { success: false, error: playBlocked };
     }
 
     // Completed-attempt flag for single-play links: personalized links use QuizAttempt;
@@ -436,6 +462,7 @@ export async function startQuizAttempt(
     const quizLink = await prisma.quizLink.findUnique({
       where: { id: quizLinkId },
       include: {
+        quiz: { select: { status: true } },
         attempts: {
           where: {
             status: { in: ["IN_PROGRESS", "COMPLETED"] },
@@ -451,6 +478,13 @@ export async function startQuizAttempt(
     // Check expiration
     if (quizLink.expiresAt && quizLink.expiresAt < new Date()) {
       return { success: false, error: "Quiz link has expired" };
+    }
+
+    const attemptBlocked = playBlockedErrorCodeForQuizStatus(
+      quizLink.quiz.status as QuizLifecycleStatus,
+    );
+    if (attemptBlocked) {
+      return { success: false, error: attemptBlocked };
     }
 
     // For personalized links, verify participant exists

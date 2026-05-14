@@ -191,7 +191,7 @@ export function BuilderNavigationGuardProvider({ children }: { children: ReactNo
           <DialogFooter className="flex-col-reverse gap-2 border-t border-border/80 bg-muted/30 px-6 py-4 sm:flex-col-reverse sm:gap-2 sm:space-x-0">
             <Button
               type="button"
-              variant="blue"
+              variant="outlineBlue"
               className="h-11 w-full font-semibold"
               onClick={handleStayEditing}
             >

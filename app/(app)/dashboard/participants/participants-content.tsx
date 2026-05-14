@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -30,6 +30,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
 import { Plus, Edit, Trash2, Eye, Users } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
@@ -666,7 +667,10 @@ export function ParticipantsContent() {
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isSubmitting}
-              className="bg-destructive text-destructive-foreground shadow-[var(--shadow-gaming-highlight),var(--shadow-gaming-depth-destructive)] hover:bg-destructive/85 hover:shadow-[var(--shadow-gaming-highlight),var(--shadow-gaming-depth-destructive)] active:bg-destructive/90 active:shadow-none active:translate-y-[4px]"
+              className={cn(
+                buttonVariants({ variant: "destructive" }),
+                "shadow-[var(--shadow-gaming-highlight),var(--shadow-gaming-depth-destructive)] hover:bg-destructive/85 hover:shadow-[var(--shadow-gaming-highlight),var(--shadow-gaming-depth-destructive)] active:bg-destructive/90 active:shadow-none active:translate-y-[4px]",
+              )}
             >
               {isSubmitting
                 ? t(locale, "common.loading")

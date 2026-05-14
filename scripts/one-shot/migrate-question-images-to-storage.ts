@@ -1,22 +1,32 @@
 /**
- * Migration one-shot : déplace les images de questions encore en data URL base64
- * (Question.image) vers le stockage local (imageKey + fichier), puis vide Question.image.
+ * [ONE-SHOT — migration] Anciennes images questions en data URL (`Question.image`) vers
+ * stockage fichier (`Question.imageKey` + disque), puis `Question.image` à null.
  *
- * Usage:
- *   npx tsx scripts/migrate-question-images-to-storage.ts --dry-run
- *   npx tsx scripts/migrate-question-images-to-storage.ts --confirm
+ * Objectif : sortir le base64 de la base et aligner sur le flux upload actuel.
+ *
+ * Exécution prod : déjà réalisée une fois après déploiement `image_key` (date non versionnée
+ * dans ce dépôt — ajoutez une date ici si vous tenez un runbook).
+ *
+ * Sécurité : exécuter d’abord `--dry-run`, contrôler compteurs et top 10 sur une base
+ * représentative (staging ou copie). Ne pas lancer `--confirm` sans validation humaine.
+ *
+ * Emplacement : `scripts/one-shot/`.
+ *
+ * Usage :
+ *   npx tsx scripts/one-shot/migrate-question-images-to-storage.ts --dry-run
+ *   npx tsx scripts/one-shot/migrate-question-images-to-storage.ts --confirm
  */
 import { pathToFileURL } from "node:url";
 
 import {
   detectQuestionImageFormatFromMagicBytes,
   storageExtensionForDetectedFormat,
-} from "../lib/builder/validateQuestionImageMagicBytes";
-import { prisma } from "../lib/prisma";
+} from "../../lib/builder/validateQuestionImageMagicBytes";
+import { prisma } from "../../lib/prisma";
 import {
   buildQuestionImageStorageKey,
   saveQuestionImageBuffer,
-} from "../lib/storage/question-image-storage";
+} from "../../lib/storage/question-image-storage";
 import {
   computeLegacyQuestionImageDryRunMetrics,
   decodeImageBufferFromParsed,

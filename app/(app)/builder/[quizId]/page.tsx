@@ -21,7 +21,7 @@ export default function BuilderQuizPage() {
   }
 
   if (!quizId) {
-    router.push("/builder");
+    router.replace("/dashboard/create");
     return null;
   }
 

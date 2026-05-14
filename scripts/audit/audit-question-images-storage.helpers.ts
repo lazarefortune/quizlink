@@ -1,3 +1,7 @@
+/**
+ * Helpers purs pour `audit-question-images-storage.ts` (`scripts/audit/`).
+ * Tests colocalises : `audit-question-images-storage.helpers.test.ts`.
+ */
 import path from "path";
 
 /**

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Eye,
@@ -14,8 +14,11 @@ import {
 } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
+import { resolveQuizActionError } from "@/lib/quiz/resolveQuizActionError";
 import { deleteQuiz, duplicateQuiz } from "@/app/(app)/dashboard/actions";
 import { createOrGetQuizLink } from "@/app/quiz-link/actions";
+import { canQuizBeShared } from "@/lib/quiz/quizStatusPolicy";
+import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
 import { track } from "@/lib/analytics/track";
 import { PARTICIPANT_INVITED } from "@/lib/analytics/events";
 import { buildCommonEventProps } from "@/lib/analytics/props";
@@ -40,6 +43,7 @@ import {
 type QuizActionsProps = {
   quizId: string;
   quizName: string;
+  quizStatus?: QuizLifecycleStatus;
   onDeleted?: () => void;
   onDuplicated?: (newQuizId: string) => void;
 };
@@ -47,6 +51,7 @@ type QuizActionsProps = {
 export function QuizActions({
   quizId,
   quizName,
+  quizStatus = "ACTIVE",
   onDeleted,
   onDuplicated,
 }: QuizActionsProps) {
@@ -116,7 +121,10 @@ export function QuizActions({
         });
         setShareLink(`${baseUrl}/quiz/${result.quizLink.token}`);
       } else {
-        alert(result.error || t(locale, "dashboard.shareError"));
+        alert(
+          resolveQuizActionError(locale, result.error) ||
+            t(locale, "dashboard.shareError"),
+        );
         setShowShareDialog(false);
       }
     } catch (error) {
@@ -155,57 +163,132 @@ export function QuizActions({
     router.push(`/dashboard/quiz/${quizId}/preview`);
   };
 
+  const isDraft = quizStatus === "DRAFT";
+  const isArchived = quizStatus === "ARCHIVED";
+
   return (
     <>
       <div className="flex flex-wrap gap-2">
-        <Button
-          variant="primary"
-          size="sm"
-          onClick={handleView}
-          className="flex-1 min-w-[100px]"
-        >
-          <Eye className="h-3 w-3 mr-1" />
-          {t(locale, "dashboard.view")}
-        </Button>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={handleEdit}
-          className="flex-1 min-w-[100px]"
-        >
-          <Edit className="h-3 w-3 mr-1" />
-          {t(locale, "dashboard.edit")}
-        </Button>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={handleShareClick}
-          className="flex-1 min-w-[100px]"
-        >
-          <Share2 className="h-3 w-3 mr-1" />
-          {t(locale, "dashboard.share")}
-        </Button>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={handleDuplicate}
-          disabled={isDuplicating}
-          className="flex-1 min-w-[100px]"
-        >
-          <Copy className="h-3 w-3 mr-1" />
-          {isDuplicating
-            ? t(locale, "common.loading")
-            : t(locale, "dashboard.duplicate")}
-        </Button>
-        <Button
-          variant="destructive"
-          size="sm"
-          onClick={() => setShowDeleteDialog(true)}
-          className="flex-1 min-w-[100px]"
-        >
-          <Trash2 className="h-3 w-3 mr-1" />
-          {t(locale, "dashboard.delete")}
-        </Button>
+        {isDraft ? (
+          <>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleEdit}
+              className="flex-1 min-w-[100px]"
+            >
+              <Edit className="h-3 w-3 mr-1" />
+              {t(locale, "dashboard.continueInBuilder")}
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => void handleDuplicate()}
+              disabled={isDuplicating}
+              className="flex-1 min-w-[100px]"
+            >
+              <Copy className="h-3 w-3 mr-1" />
+              {isDuplicating
+                ? t(locale, "common.loading")
+                : t(locale, "dashboard.duplicate")}
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setShowDeleteDialog(true)}
+              className="flex-1 min-w-[100px]"
+            >
+              <Trash2 className="h-3 w-3 mr-1" />
+              {t(locale, "dashboard.delete")}
+            </Button>
+          </>
+        ) : isArchived ? (
+          <>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleView}
+              className="flex-1 min-w-[100px]"
+            >
+              <Eye className="h-3 w-3 mr-1" />
+              {t(locale, "dashboard.viewArchivedQuiz")}
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => void handleDuplicate()}
+              disabled={isDuplicating}
+              className="flex-1 min-w-[100px]"
+            >
+              <Copy className="h-3 w-3 mr-1" />
+              {isDuplicating
+                ? t(locale, "common.loading")
+                : t(locale, "dashboard.duplicate")}
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setShowDeleteDialog(true)}
+              className="flex-1 min-w-[100px]"
+            >
+              <Trash2 className="h-3 w-3 mr-1" />
+              {t(locale, "dashboard.delete")}
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleView}
+              className="flex-1 min-w-[100px]"
+            >
+              <Eye className="h-3 w-3 mr-1" />
+              {t(locale, "dashboard.view")}
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleEdit}
+              className="flex-1 min-w-[100px]"
+            >
+              <Edit className="h-3 w-3 mr-1" />
+              {t(locale, "dashboard.edit")}
+            </Button>
+            {canQuizBeShared(quizStatus) ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleShareClick}
+                className="flex-1 min-w-[100px]"
+              >
+                <Share2 className="h-3 w-3 mr-1" />
+                {t(locale, "dashboard.share")}
+              </Button>
+            ) : null}
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleDuplicate}
+              disabled={isDuplicating}
+              className="flex-1 min-w-[100px]"
+            >
+              <Copy className="h-3 w-3 mr-1" />
+              {isDuplicating
+                ? t(locale, "common.loading")
+                : t(locale, "dashboard.duplicate")}
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setShowDeleteDialog(true)}
+              className="flex-1 min-w-[100px]"
+            >
+              <Trash2 className="h-3 w-3 mr-1" />
+              {t(locale, "dashboard.delete")}
+            </Button>
+          </>
+        )}
       </div>
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
@@ -227,7 +310,7 @@ export function QuizActions({
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className={buttonVariants({ variant: "destructive" })}
             >
               {isDeleting
                 ? t(locale, "common.loading")

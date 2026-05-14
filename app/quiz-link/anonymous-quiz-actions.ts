@@ -1,8 +1,11 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
 import { isSelectionCorrect } from "@/lib/anonymous-quiz-scoring";
+import { prisma } from "@/lib/prisma";
 import { getQuestionImageSrc } from "@/lib/question-image-src";
+import { resolveEffectiveShuffleSettings } from "@/lib/quiz/shuffleSettings";
+import { playBlockedErrorCodeForQuizStatus } from "@/lib/quiz/quizActionErrorCodes";
+import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
 
 export type AnonymousQuizOptionPublic = {
   id: string;
@@ -29,6 +32,7 @@ export type GetAnonymousQuizPlayDataResult =
         settings: {
           showAnswerImmediately?: boolean;
           randomizeQuestions?: boolean;
+          randomizeOptions?: boolean;
           timeLimitPerQuestion?: number | null;
         };
         allowMultipleAttempts: boolean;
@@ -79,14 +83,29 @@ export async function getAnonymousQuizPlayData(
       return { success: false, error: "Quiz link has expired" };
     }
 
+    const playBlocked = playBlockedErrorCodeForQuizStatus(
+      quizLink.quiz.status as QuizLifecycleStatus,
+    );
+    if (playBlocked) {
+      return { success: false, error: playBlocked };
+    }
+
     if (quizLink.participantId !== null) {
       return { success: false, error: "This link requires a participant session" };
     }
 
     const rawSettings = (quizLink.quiz.settings ?? {}) as Record<string, unknown>;
+    const shuffle = resolveEffectiveShuffleSettings({
+      randomizeQuestions: Boolean(rawSettings.randomizeQuestions),
+      randomizeOptions:
+        typeof rawSettings.randomizeOptions === "boolean"
+          ? rawSettings.randomizeOptions
+          : undefined,
+    });
     const settings = {
       showAnswerImmediately: Boolean(rawSettings.showAnswerImmediately),
-      randomizeQuestions: Boolean(rawSettings.randomizeQuestions),
+      randomizeQuestions: shuffle.randomizeQuestions,
+      randomizeOptions: shuffle.randomizeOptions,
       timeLimitPerQuestion:
         typeof rawSettings.timeLimitPerQuestion === "number"
           ? rawSettings.timeLimitPerQuestion
@@ -176,6 +195,13 @@ export async function validateAnonymousQuestionAnswer(
 
     if (quizLink.expiresAt && quizLink.expiresAt < new Date()) {
       return { success: false, error: "Quiz link has expired" };
+    }
+
+    const validateBlocked = playBlockedErrorCodeForQuizStatus(
+      quizLink.quiz.status as QuizLifecycleStatus,
+    );
+    if (validateBlocked) {
+      return { success: false, error: validateBlocked };
     }
 
     if (quizLink.participantId !== null) {
@@ -285,6 +311,13 @@ export async function validateAnonymousQuizAnswers(
 
     if (quizLink.expiresAt && quizLink.expiresAt < new Date()) {
       return { success: false, error: "Quiz link has expired" };
+    }
+
+    const batchBlocked = playBlockedErrorCodeForQuizStatus(
+      quizLink.quiz.status as QuizLifecycleStatus,
+    );
+    if (batchBlocked) {
+      return { success: false, error: batchBlocked };
     }
 
     if (quizLink.participantId !== null) {

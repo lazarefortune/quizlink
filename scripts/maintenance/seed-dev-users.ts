@@ -1,13 +1,15 @@
 /**
- * Seed realistic dev users and auth/lifecycle events for admin dashboards.
- * Usage: pnpm run seed:dev-users
+ * [MAINTENANCE — réutilisable / dev] Crée des utilisateurs de démo et des événements auth /
+ * lifecycle pour les tableaux de bord admin.
+ *
+ * Emplacement : `scripts/maintenance/`. Exécuter : `pnpm run seed:dev-users`.
  */
 
 import bcrypt from "bcryptjs";
 
-import { prisma } from "../lib/prisma";
-import { USER_AUTH_EVENT_TYPES, USER_AUTH_PROVIDERS } from "../lib/userAuthEvents";
-import { USER_LIFECYCLE_EVENT_TYPES } from "../lib/userLifecycleEvents";
+import { prisma } from "../../lib/prisma";
+import { USER_AUTH_EVENT_TYPES, USER_AUTH_PROVIDERS } from "../../lib/userAuthEvents";
+import { USER_LIFECYCLE_EVENT_TYPES } from "../../lib/userLifecycleEvents";
 
 async function seedDevUsers(): Promise<void> {
   if (!prisma) {

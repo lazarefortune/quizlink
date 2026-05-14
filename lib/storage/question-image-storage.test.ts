@@ -4,6 +4,7 @@ import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   buildQuestionImageStorageKey,
+  copyQuestionImageStorageObject,
   deleteQuestionImage,
   getQuestionImageContentTypeFromKey,
   getQuestionImageLocalBaseDir,
@@ -142,5 +143,39 @@ describe("local storage IO", () => {
     const storageKey =
       "cluser12345678901234567890/clquiz12345678901234567890/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.png";
     await expect(deleteQuestionImage(storageKey)).resolves.toBeUndefined();
+  });
+
+  it("copyQuestionImageStorageObject writes a new key with same bytes and extension", async () => {
+    const sourceKey =
+      "cluser12345678901234567890/clquiz12345678901234567890/cccccccccccccccccccccccccccccccc.png";
+    const payload = Buffer.from("png-bytes");
+    await saveQuestionImageBuffer({ storageKey: sourceKey, buffer: payload });
+
+    const newKey = await copyQuestionImageStorageObject({
+      sourceKey,
+      targetUserId: "cluser12345678901234567890",
+      targetQuizId: "clquiz999999999999999999999999",
+    });
+
+    expect(newKey).not.toBe(sourceKey);
+    expect(newKey.endsWith(".png")).toBe(true);
+    expect(newKey).toContain("/clquiz999999999999999999999999/");
+    const readBack = await readQuestionImageBuffer(newKey);
+    expect(readBack.equals(payload)).toBe(true);
+    const sourceStill = await readQuestionImageBuffer(sourceKey);
+    expect(sourceStill.equals(payload)).toBe(true);
+
+    await deleteQuestionImage(newKey);
+    await deleteQuestionImage(sourceKey);
+  });
+
+  it("copyQuestionImageStorageObject rejects an unsafe source key", async () => {
+    await expect(
+      copyQuestionImageStorageObject({
+        sourceKey: "not/a/valid/key.png",
+        targetUserId: "cluser12345678901234567890",
+        targetQuizId: "clquiz12345678901234567890",
+      }),
+    ).rejects.toThrow(/Invalid question image storage key/);
   });
 });

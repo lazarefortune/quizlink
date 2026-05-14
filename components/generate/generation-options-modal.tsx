@@ -33,6 +33,7 @@ type GenerationOptions = {
   language: string;
   showAnswerImmediately: boolean;
   randomizeQuestions: boolean;
+  randomizeOptions: boolean;
   timeLimitPerQuestion: number | null;
 };
 
@@ -243,6 +244,26 @@ export function GenerationOptionsModal({
                   setLocalOptions({
                     ...localOptions,
                     randomizeQuestions: checked,
+                  })
+                }
+              />
+            </div>
+
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 min-w-0">
+                <Label className="text-sm font-medium truncate">
+                  {t(locale, "options.randomizeOptions")}
+                </Label>
+                <InfoTooltip
+                  content={t(locale, "options.randomizeOptionsDescription")}
+                />
+              </div>
+              <Switch
+                checked={localOptions.randomizeOptions}
+                onCheckedChange={(checked) =>
+                  setLocalOptions({
+                    ...localOptions,
+                    randomizeOptions: checked,
                   })
                 }
               />

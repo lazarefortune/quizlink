@@ -178,6 +178,37 @@ export async function readQuestionImageBuffer(storageKey: string): Promise<Buffe
 }
 
 /**
+ * Copies a stored question image to a new object key for another quiz/user.
+ * Does not delete the source object.
+ */
+export async function copyQuestionImageStorageObject(params: {
+  sourceKey: string;
+  targetUserId: string;
+  targetQuizId: string;
+}): Promise<string> {
+  if (getQuestionImageStorageMode() !== "local") {
+    throw new Error(
+      "Question image copy is only implemented for local storage (QUESTION_IMAGE_STORAGE=local).",
+    );
+  }
+  if (!isSafeQuestionImageStorageKey(params.sourceKey)) {
+    throw new Error("Invalid question image storage key.");
+  }
+  const buffer = await readQuestionImageBuffer(params.sourceKey);
+  const extensionFromKey = path.extname(params.sourceKey);
+  if (!extensionFromKey) {
+    throw new Error("Question image storage key must include a file extension.");
+  }
+  const newKey = buildQuestionImageStorageKey({
+    userId: params.targetUserId,
+    quizId: params.targetQuizId,
+    extension: extensionFromKey,
+  });
+  await saveQuestionImageBuffer({ storageKey: newKey, buffer });
+  return newKey;
+}
+
+/**
  * Deletes the object if it exists. Ignores missing files.
  */
 export async function deleteQuestionImage(storageKey: string): Promise<void> {

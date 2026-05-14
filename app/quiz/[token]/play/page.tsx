@@ -1,9 +1,15 @@
 import { Suspense } from "react";
-import { QuizPlayContent } from "./quiz-play-content";
-import { AnonymousQuizPlayContent } from "./anonymous-quiz-play-content";
-import { getQuizLinkByToken } from "@/app/quiz-link/actions";
+
 import { getAnonymousQuizPlayData } from "@/app/quiz-link/anonymous-quiz-actions";
+import { getQuizLinkByToken } from "@/app/quiz-link/actions";
+import { getRequestLocale } from "@/lib/i18n/request-locale";
 import { prisma } from "@/lib/prisma";
+import { playBlockedErrorCodeForQuizStatus } from "@/lib/quiz/quizActionErrorCodes";
+import { resolveQuizActionError } from "@/lib/quiz/resolveQuizActionError";
+import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
+
+import { AnonymousQuizPlayContent } from "./anonymous-quiz-play-content";
+import { QuizPlayContent } from "./quiz-play-content";
 
 type PageProps = {
   params: Promise<{ token: string }>;
@@ -13,6 +19,7 @@ type PageProps = {
 export default async function QuizPlayPage({ params, searchParams }: PageProps) {
   const { token } = await params;
   const { attemptId, participantId, mode } = await searchParams;
+  const requestLocale = await getRequestLocale();
 
   // If participantId is provided, create an attempt automatically
   if (participantId && !attemptId) {
@@ -52,7 +59,9 @@ export default async function QuizPlayPage({ params, searchParams }: PageProps) 
         <div className="min-h-screen bg-background flex items-center justify-center p-4">
           <div className="max-w-md w-full text-center">
             <h1 className="text-2xl font-bold mb-4">Erreur</h1>
-            <p className="text-muted-foreground">{attemptResult.error}</p>
+            <p className="text-muted-foreground">
+              {resolveQuizActionError(requestLocale, attemptResult.error)}
+            </p>
           </div>
         </div>
       );
@@ -72,7 +81,9 @@ export default async function QuizPlayPage({ params, searchParams }: PageProps) 
         <div className="min-h-screen bg-background flex items-center justify-center p-4">
           <div className="max-w-md w-full text-center">
             <h1 className="text-2xl font-bold mb-4">Quiz non trouvé</h1>
-            <p className="text-muted-foreground">{quizLinkResult.error}</p>
+            <p className="text-muted-foreground">
+              {resolveQuizActionError(requestLocale, quizLinkResult.error)}
+            </p>
           </div>
         </div>
       );
@@ -88,7 +99,9 @@ export default async function QuizPlayPage({ params, searchParams }: PageProps) 
           <div className="min-h-screen bg-background flex items-center justify-center p-4">
             <div className="max-w-md w-full text-center">
               <h1 className="text-2xl font-bold mb-4">Accès impossible</h1>
-              <p className="text-muted-foreground">{anonymousData.error}</p>
+              <p className="text-muted-foreground">
+                {resolveQuizActionError(requestLocale, anonymousData.error)}
+              </p>
             </div>
           </div>
         );
@@ -164,6 +177,22 @@ export default async function QuizPlayPage({ params, searchParams }: PageProps) 
           <h1 className="text-2xl font-bold mb-4">Accès non autorisé</h1>
           <p className="text-muted-foreground">
             Cette tentative n&apos;appartient pas à ce quiz.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const resumeBlocked = playBlockedErrorCodeForQuizStatus(
+    attempt.quizLink.quiz.status as QuizLifecycleStatus,
+  );
+  if (resumeBlocked) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="max-w-md w-full text-center">
+          <h1 className="text-2xl font-bold mb-4">Accès impossible</h1>
+          <p className="text-muted-foreground">
+            {resolveQuizActionError(requestLocale, resumeBlocked)}
           </p>
         </div>
       </div>

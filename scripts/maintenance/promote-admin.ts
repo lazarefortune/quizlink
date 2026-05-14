@@ -1,9 +1,12 @@
 /**
- * Script to promote a user to ADMIN role
- * Usage: pnpm tsx scripts/promote-admin.ts <email>
+ * [MAINTENANCE — réutilisable] Promotion d’un utilisateur au rôle `ADMIN`.
+ *
+ * Emplacement : `scripts/maintenance/`.
+ *
+ * Usage : `pnpm tsx scripts/maintenance/promote-admin.ts <email>`
  */
 
-import { prisma } from "../lib/prisma";
+import { prisma } from "../../lib/prisma";
 
 async function promoteToAdmin(email: string) {
   try {
@@ -54,7 +57,7 @@ const email = process.argv[2];
 
 if (!email) {
   console.error("❌ Please provide an email address");
-  console.log("Usage: pnpm tsx scripts/promote-admin.ts <email>");
+  console.log("Usage: pnpm tsx scripts/maintenance/promote-admin.ts <email>");
   process.exit(1);
 }
 

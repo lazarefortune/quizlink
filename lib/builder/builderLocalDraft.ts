@@ -1,7 +1,11 @@
 import type { BuilderTimeLimitUi } from "@/lib/time-limit-seconds";
+import { parseTimeLimitSeconds, splitTotalSecondsToParts } from "@/lib/time-limit-seconds";
 import type { QuizBuilder } from "@/types/quiz-builder";
 
 import { computeQuizBuilderSnapshot } from "./quizBuilderSnapshot";
+
+/** Local recovery drafts older than this are pruned from the index and not offered in the UI. */
+export const BUILDER_LOCAL_DRAFT_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -43,6 +47,76 @@ export function buildBuilderDraftKey(
 ): string {
   const scope = quizIdOrNew === "new" ? "new" : quizIdOrNew;
   return `quizsnap:builder-draft:v${BUILDER_LOCAL_DRAFT_FORMAT_VERSION}:${userId}:${scope}`;
+}
+
+/**
+ * Parses a draft storage key built by {@link buildBuilderDraftKey}.
+ */
+export function parseBuilderDraftStorageKey(key: string): {
+  userId: string;
+  scope: BuilderLocalDraftQuizScope;
+} | null {
+  const prefix = `quizsnap:builder-draft:v${BUILDER_LOCAL_DRAFT_FORMAT_VERSION}:`;
+  if (!key.startsWith(prefix)) {
+    return null;
+  }
+  const tail = key.slice(prefix.length);
+  const lastColon = tail.lastIndexOf(":");
+  if (lastColon <= 0 || lastColon >= tail.length - 1) {
+    return null;
+  }
+  const userId = tail.slice(0, lastColon);
+  const scopePart = tail.slice(lastColon + 1);
+  if (!userId || !scopePart) {
+    return null;
+  }
+  const scope: BuilderLocalDraftQuizScope = scopePart === "new" ? "new" : scopePart;
+  return { userId, scope };
+}
+
+function parseIsoTimestampMs(value: string): number | null {
+  const ms = Date.parse(value);
+  return Number.isFinite(ms) ? ms : null;
+}
+
+/** Latest activity time for an index row (saved vs updated), or null if unusable. */
+export function getBuilderDraftIndexEntryActivityTimestampMs(
+  entry: BuilderDraftIndexEntry,
+): number | null {
+  const saved = parseIsoTimestampMs(entry.savedAt);
+  const updated = parseIsoTimestampMs(entry.updatedAt);
+  if (saved === null && updated === null) {
+    return null;
+  }
+  if (saved === null) {
+    return updated;
+  }
+  if (updated === null) {
+    return saved;
+  }
+  return Math.max(saved, updated);
+}
+
+export function isBuilderDraftIndexEntryExpired(
+  entry: BuilderDraftIndexEntry,
+  nowMs: number = Date.now(),
+): boolean {
+  const activity = getBuilderDraftIndexEntryActivityTimestampMs(entry);
+  if (activity === null) {
+    return true;
+  }
+  return nowMs - activity > BUILDER_LOCAL_DRAFT_MAX_AGE_MS;
+}
+
+export function isBuilderLocalDraftPayloadExpired(
+  payload: BuilderLocalDraftPayload,
+  nowMs: number = Date.now(),
+): boolean {
+  const saved = parseIsoTimestampMs(payload.savedAt);
+  if (saved === null) {
+    return true;
+  }
+  return nowMs - saved > BUILDER_LOCAL_DRAFT_MAX_AGE_MS;
 }
 
 export function buildBuilderDraftIndexKey(userId: string): string {
@@ -173,6 +247,21 @@ function readBuilderDraftIndexFile(userId: string): BuilderDraftIndexFile | null
   }
 }
 
+function pruneExpiredDraftIndexEntries(
+  entries: BuilderDraftIndexEntry[],
+  nowMs: number,
+): BuilderDraftIndexEntry[] {
+  const kept: BuilderDraftIndexEntry[] = [];
+  for (const e of entries) {
+    if (isBuilderDraftIndexEntryExpired(e, nowMs)) {
+      clearBuilderDraft(e.draftKey);
+      continue;
+    }
+    kept.push(e);
+  }
+  return kept;
+}
+
 export function loadBuilderDraftIndex(userId: string): BuilderDraftIndexEntry[] {
   if (typeof window === "undefined") {
     return [];
@@ -181,15 +270,15 @@ export function loadBuilderDraftIndex(userId: string): BuilderDraftIndexEntry[] 
   const rawEntries = file?.entries ?? [];
   const exists = (draftKey: string): boolean => hasBuilderDraft(draftKey);
   const normalized = normalizeAndPruneBuilderDraftIndexEntries(rawEntries, exists);
-  const prevJson = JSON.stringify(rawEntries);
-  const nextJson = JSON.stringify(normalized);
-  if (prevJson !== nextJson) {
+  const nowMs = Date.now();
+  const pruned = pruneExpiredDraftIndexEntries(normalized, nowMs);
+  if (JSON.stringify(rawEntries) !== JSON.stringify(pruned)) {
     persistBuilderDraftIndexFile(userId, {
       formatVersion: BUILDER_DRAFT_INDEX_FORMAT_VERSION,
-      entries: normalized,
+      entries: pruned,
     });
   }
-  return normalized;
+  return pruned;
 }
 
 export function updateBuilderDraftIndex(userId: string, entry: BuilderDraftIndexEntry): void {
@@ -203,9 +292,10 @@ export function updateBuilderDraftIndex(userId: string, entry: BuilderDraftIndex
     merged.push(entry);
     const exists = (draftKey: string): boolean => hasBuilderDraft(draftKey);
     const normalized = normalizeAndPruneBuilderDraftIndexEntries(merged, exists);
+    const pruned = pruneExpiredDraftIndexEntries(normalized, Date.now());
     persistBuilderDraftIndexFile(userId, {
       formatVersion: BUILDER_DRAFT_INDEX_FORMAT_VERSION,
-      entries: normalized,
+      entries: pruned,
     });
   } catch (error) {
     if (process.env.NODE_ENV !== "production") {
@@ -225,9 +315,10 @@ export function removeBuilderDraftIndexEntry(userId: string, scope: string): voi
     const filtered = rawEntries.filter((e) => e.scope !== scope);
     const exists = (draftKey: string): boolean => hasBuilderDraft(draftKey);
     const normalized = normalizeAndPruneBuilderDraftIndexEntries(filtered, exists);
+    const pruned = pruneExpiredDraftIndexEntries(normalized, Date.now());
     persistBuilderDraftIndexFile(userId, {
       formatVersion: BUILDER_DRAFT_INDEX_FORMAT_VERSION,
-      entries: normalized,
+      entries: pruned,
     });
   } catch (error) {
     if (process.env.NODE_ENV !== "production") {
@@ -317,14 +408,27 @@ function isQuizBuilder(value: unknown): value is QuizBuilder {
   return true;
 }
 
-function isBuilderTimeLimitUi(value: unknown): value is BuilderTimeLimitUi {
-  if (!isRecord(value)) {
-    return false;
+function normalizeBuilderTimeLimitUiFromUnknown(value: unknown): BuilderTimeLimitUi | null {
+  if (!isRecord(value) || typeof value.enabled !== "boolean") {
+    return null;
   }
-  if (typeof value.enabled !== "boolean" || typeof value.inputValue !== "string") {
-    return false;
+  if (typeof value.minutes === "number" && typeof value.seconds === "number") {
+    return {
+      enabled: value.enabled,
+      minutes: Math.trunc(value.minutes),
+      seconds: Math.trunc(value.seconds),
+    };
   }
-  return true;
+  if (typeof value.inputValue === "string") {
+    if (!value.enabled) {
+      return { enabled: false, minutes: 0, seconds: 0 };
+    }
+    const parsed = parseTimeLimitSeconds(value.inputValue);
+    const total = parsed ?? 30;
+    const { minutes, seconds } = splitTotalSecondsToParts(total);
+    return { enabled: true, minutes, seconds };
+  }
+  return null;
 }
 
 export function parseBuilderLocalDraftJson(
@@ -341,7 +445,8 @@ export function parseBuilderLocalDraftJson(
     if (typeof parsed.savedAt !== "string" || typeof parsed.sourceRoute !== "string") {
       return null;
     }
-    if (!isQuizBuilder(parsed.quiz) || !isBuilderTimeLimitUi(parsed.timeLimitUi)) {
+    const timeLimitUi = normalizeBuilderTimeLimitUiFromUnknown(parsed.timeLimitUi);
+    if (!isQuizBuilder(parsed.quiz) || timeLimitUi === null) {
       return null;
     }
     return {
@@ -349,7 +454,7 @@ export function parseBuilderLocalDraftJson(
       savedAt: parsed.savedAt,
       sourceRoute: parsed.sourceRoute,
       quiz: parsed.quiz,
-      timeLimitUi: parsed.timeLimitUi,
+      timeLimitUi,
     };
   } catch {
     return null;
@@ -421,7 +526,20 @@ export function loadBuilderDraft(key: string): BuilderLocalDraftPayload | null {
     if (raw === null || raw === "") {
       return null;
     }
-    return parseBuilderLocalDraftJson(raw);
+    const payload = parseBuilderLocalDraftJson(raw);
+    if (!payload) {
+      return null;
+    }
+    if (isBuilderLocalDraftPayloadExpired(payload)) {
+      const parsed = parseBuilderDraftStorageKey(key);
+      if (parsed) {
+        clearBuilderDraftAndIndexEntry(parsed.userId, parsed.scope);
+      } else {
+        clearBuilderDraft(key);
+      }
+      return null;
+    }
+    return payload;
   } catch {
     return null;
   }

@@ -6,9 +6,11 @@ import { Check, Copy, ExternalLink, Pencil } from "lucide-react";
 
 import { createOrGetQuizLink } from "@/app/quiz-link/actions";
 import { Button } from "@/components/ui/button";
+import { FullscreenBlockingOverlay } from "@/components/ui/fullscreen-blocking-overlay";
 import { Input } from "@/components/ui/input";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
+import { resolveQuizActionError } from "@/lib/quiz/resolveQuizActionError";
 
 type QuizCreationSuccessContentProps = {
   quizId: string;
@@ -46,7 +48,10 @@ export function QuizCreationSuccessContent({
         if (!isMounted) return;
 
         if (!result.success) {
-          setLinkError(result.error || t(locale, "dashboard.unableToCreateShareLink"));
+          setLinkError(
+            resolveQuizActionError(locale, result.error) ||
+              t(locale, "dashboard.unableToCreateShareLink"),
+          );
           setShareLink("");
           return;
         }
@@ -88,7 +93,12 @@ export function QuizCreationSuccessContent({
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-background p-4 sm:p-8">
+    <div className="relative min-h-[calc(100vh-4rem)] bg-background p-4 sm:p-8">
+      <FullscreenBlockingOverlay
+        open={isLoadingLink}
+        title={t(locale, "dashboard.blockingPrepareLinkTitle")}
+        description={t(locale, "dashboard.blockingPrepareLinkDescription")}
+      />
       <div className="mx-auto max-w-2xl rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-8">
         <h1 className="text-2xl font-black sm:text-3xl">
           {t(locale, "dashboard.quizReadyTitle")}
@@ -131,14 +141,14 @@ export function QuizCreationSuccessContent({
           ) : null}
         </div>
 
-        <div className="mt-6 grid gap-2 sm:grid-cols-2">
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
           <Button
             variant="blue"
             onClick={handleTestQuiz}
             disabled={!shareLink || isLoadingLink}
           >
             <ExternalLink className="h-4 w-4" />
-            {t(locale, "dashboard.testQuiz")}
+            {t(locale, "dashboard.playQuiz")}
           </Button>
           <Button
             variant="secondary"

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { CreateManualServerDraftButton } from "@/components/dashboard/create-manual-server-draft-button";
 import {
   Tabs,
   TabsContent,
@@ -37,6 +38,7 @@ type GenerationOptions = {
   language: string;
   showAnswerImmediately: boolean;
   randomizeQuestions: boolean;
+  randomizeOptions: boolean;
   timeLimitPerQuestion: number | null;
 };
 
@@ -56,6 +58,7 @@ export function GeneratePage() {
     language: "fr",
     showAnswerImmediately: false,
     randomizeQuestions: false,
+    randomizeOptions: false,
     timeLimitPerQuestion: null,
   });
 
@@ -123,6 +126,7 @@ export function GeneratePage() {
           settings: {
             showAnswerImmediately: options.showAnswerImmediately,
             randomizeQuestions: options.randomizeQuestions,
+            randomizeOptions: options.randomizeOptions,
             timeLimitPerQuestion: options.timeLimitPerQuestion,
           },
         });
@@ -173,7 +177,7 @@ export function GeneratePage() {
         if (saveResult.quizId) {
           window.location.href = buildQuizSuccessPath(saveResult.quizId);
         } else {
-          window.location.href = "/builder";
+          router.push("/dashboard/create");
         }
       } catch (err) {
         if (isSaveQuizPayloadTooLargeError(err)) {
@@ -247,6 +251,7 @@ export function GeneratePage() {
         settings: {
           showAnswerImmediately: options.showAnswerImmediately,
           randomizeQuestions: options.randomizeQuestions,
+          randomizeOptions: options.randomizeOptions,
           timeLimitPerQuestion: options.timeLimitPerQuestion,
         },
       });
@@ -298,7 +303,7 @@ export function GeneratePage() {
       if (saveResult.quizId) {
         window.location.href = buildQuizSuccessPath(saveResult.quizId);
       } else {
-        window.location.href = "/builder";
+        router.push("/dashboard/create");
       }
     } catch (err) {
       if (isSaveQuizPayloadTooLargeError(err)) {
@@ -407,12 +412,12 @@ export function GeneratePage() {
                 <p className="text-base text-muted-foreground text-center">
                   {t(locale, "generate.noContent")}
                 </p>
-                <Link
-                  href="/builder"
-                  className="text-base text-primary hover:underline transition-colors"
+                <CreateManualServerDraftButton
+                  variant="link"
+                  className="h-auto min-h-0 p-0 text-base font-normal text-primary underline-offset-4"
                 >
                   {t(locale, "generate.noContentDescription")}
-                </Link>
+                </CreateManualServerDraftButton>
               </div>
             </div>
             <div className="absolute inset-0 flex items-center justify-center z-[91]">
@@ -547,12 +552,12 @@ export function GeneratePage() {
               )}
               <p className="text-base text-muted-foreground text-center">
                 {t(locale, "generate.noContent")}{" "}
-                <Link
-                  href="/builder"
-                  className="text-base text-primary hover:underline transition-colors"
+                <CreateManualServerDraftButton
+                  variant="link"
+                  className="h-auto min-h-0 inline p-0 text-base font-normal text-primary underline-offset-4"
                 >
                   {t(locale, "generate.noContentDescription")}
-                </Link>
+                </CreateManualServerDraftButton>
               </p>
             </div>
           </>

@@ -139,6 +139,7 @@ function QuizPlayPageContent() {
             settings: {
               showAnswerImmediately: false,
               randomizeQuestions: false,
+              randomizeOptions: false,
               timeLimitPerQuestion: null,
             },
             questions: [],

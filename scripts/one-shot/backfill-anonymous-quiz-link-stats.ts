@@ -1,11 +1,23 @@
 /**
- * Script de maintenance / historique : reconstruit quiz_link_anonymous_stats à partir
- * d’anciennes lignes QuizAttempt (participantId null). À utiliser lors d’une migration
- * ou d’une réparation ponctuelle ; le runtime anonyme actuel alimente déjà les agrégats.
+ * [ONE-SHOT — backfill] Reconstruit `quiz_link_anonymous_stats` à partir d’anciennes lignes
+ * `QuizAttempt` (`participantId` null). Le runtime anonyme actuel alimente déjà les agrégats ;
+ * ce script sert migration / réparation ponctuelle.
+ *
+ * Exécution prod : typiquement une fois après migration des stats anonymes (date non consignée
+ * ici — compléter si besoin).
+ *
+ * Sécurité : toujours `--dry-run` puis `--confirm` ; ne pas écraser sans `--overwrite` en
+ * connaissance de cause.
+ *
+ * Emplacement : `scripts/one-shot/`.
+ *
+ * Usage :
+ *   npx tsx scripts/one-shot/backfill-anonymous-quiz-link-stats.ts --dry-run
+ *   npx tsx scripts/one-shot/backfill-anonymous-quiz-link-stats.ts --confirm
  */
 import { pathToFileURL } from "node:url";
 
-import { prisma } from "../lib/prisma";
+import { prisma } from "../../lib/prisma";
 
 type RawAnonymousQuizAttemptStatsRow = {
   quizLinkId: string;

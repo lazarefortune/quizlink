@@ -2,17 +2,34 @@
 
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
 import { Sparkles, PenLine } from "lucide-react";
 
+import { getDashboardStats } from "@/app/(app)/dashboard/actions";
 import { BuilderLocalDraftCard } from "@/components/builder/BuilderLocalDraftCard";
+import { CreateManualServerDraftButton } from "@/components/dashboard/create-manual-server-draft-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
+import { useLocale } from "@/lib/i18n/use-locale";
 
 export default function DashboardCreatePage() {
   const { locale } = useLocale();
   const { data: session } = useSession();
+  const [serverDraftQuizIds, setServerDraftQuizIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!session?.user?.id) {
+      return;
+    }
+    getDashboardStats()
+      .then((result) => {
+        if (result.success) {
+          setServerDraftQuizIds(result.stats.serverDraftQuizIds);
+        }
+      })
+      .catch(console.error);
+  }, [session?.user?.id]);
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
@@ -26,7 +43,12 @@ export default function DashboardCreatePage() {
           </p>
         </header>
 
-        {session?.user?.id ? <BuilderLocalDraftCard userId={session.user.id} /> : null}
+        {session?.user?.id ? (
+          <BuilderLocalDraftCard
+            userId={session.user.id}
+            serverDraftQuizIds={serverDraftQuizIds}
+          />
+        ) : null}
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Card className="border-2 border-border bg-card shadow-sm">
@@ -61,9 +83,12 @@ export default function DashboardCreatePage() {
                   {t(locale, "dashboard.create.createManuallySubtitle")}
                 </p>
               </div>
-              <Button variant="outline" asChild className="w-full">
-                <Link href="/builder">{t(locale, "dashboard.create.continue")}</Link>
-              </Button>
+              <CreateManualServerDraftButton
+                variant="outline"
+                className="w-full"
+              >
+                {t(locale, "dashboard.create.continue")}
+              </CreateManualServerDraftButton>
             </CardContent>
           </Card>
         </div>

@@ -5,27 +5,29 @@ import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  clearBuilderDraftAndIndexEntry,
-  getLatestBuilderDraftIndexEntry,
-  type BuilderDraftIndexEntry,
-} from "@/lib/builder/builderLocalDraft";
+import { clearBuilderDraftAndIndexEntry, type BuilderDraftIndexEntry } from "@/lib/builder/builderLocalDraft";
+import { getFirstVisibleBuilderDraftIndexEntry } from "@/lib/builder/filterLocalDraftForDashboard";
 import { formatBuilderDraftRelativeSavedAt } from "@/lib/builder/formatBuilderDraftRelativeSavedAt";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 
 type BuilderLocalDraftCardProps = {
   userId: string;
+  /** Server DRAFT quiz ids: hide local recovery row when scope matches (recovery stays in builder). */
+  serverDraftQuizIds?: readonly string[];
 };
 
-export function BuilderLocalDraftCard({ userId }: BuilderLocalDraftCardProps) {
+export function BuilderLocalDraftCard({
+  userId,
+  serverDraftQuizIds = [],
+}: BuilderLocalDraftCardProps) {
   const { locale } = useLocale();
   const [refreshToken, setRefreshToken] = useState(0);
   const [entry, setEntry] = useState<BuilderDraftIndexEntry | null>(null);
 
   const reload = useCallback(() => {
-    setEntry(getLatestBuilderDraftIndexEntry(userId));
-  }, [userId]);
+    setEntry(getFirstVisibleBuilderDraftIndexEntry(userId, serverDraftQuizIds));
+  }, [userId, serverDraftQuizIds]);
 
   useEffect(() => {
     reload();
@@ -85,7 +87,7 @@ export function BuilderLocalDraftCard({ userId }: BuilderLocalDraftCardProps) {
         </div>
         <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
           <Button variant="blue" asChild size="sm" className="w-full sm:w-auto">
-            <Link href={continueHref}>{t(locale, "dashboard.localDraft.continue")}</Link>
+            <Link href={continueHref}>{t(locale, "dashboard.localDraft.recover")}</Link>
           </Button>
           <Button
             type="button"

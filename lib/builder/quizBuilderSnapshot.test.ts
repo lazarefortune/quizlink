@@ -11,6 +11,7 @@ const quiz: QuizBuilder = {
   settings: {
     showAnswerImmediately: true,
     randomizeQuestions: false,
+    randomizeOptions: false,
     timeLimitPerQuestion: null,
   },
   questions: [
@@ -30,12 +31,12 @@ const quiz: QuizBuilder = {
 
 describe("computeQuizBuilderSnapshot", () => {
   it("is stable for the same quiz and time limit ui", () => {
-    const ui = { enabled: false, inputValue: "" };
+    const ui = { enabled: false, minutes: 0, seconds: 0 };
     expect(computeQuizBuilderSnapshot(quiz, ui)).toBe(computeQuizBuilderSnapshot(quiz, ui));
   });
 
   it("changes when question imageKey changes", () => {
-    const ui = { enabled: false, inputValue: "" };
+    const ui = { enabled: false, minutes: 0, seconds: 0 };
     const a = computeQuizBuilderSnapshot(quiz, ui);
     const withKey: QuizBuilder = {
       ...quiz,

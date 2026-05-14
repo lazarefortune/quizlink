@@ -26,8 +26,10 @@ import {
 import { Clock, X } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
-import { cn } from "@/lib/utils";
 import { getQuestionImageSrc } from "@/lib/question-image-src";
+import { resolveQuizActionError } from "@/lib/quiz/resolveQuizActionError";
+import { resolveEffectiveShuffleSettings } from "@/lib/quiz/shuffleSettings";
+import { cn } from "@/lib/utils";
 import {
   validateAnonymousQuestionAnswer,
   validateAnonymousQuizAnswers,
@@ -48,6 +50,7 @@ type AnonymousQuizPlayContentProps = {
   settings: {
     showAnswerImmediately?: boolean;
     randomizeQuestions?: boolean;
+    randomizeOptions?: boolean;
     timeLimitPerQuestion?: number | null;
   };
   allowMultipleAttempts: boolean;
@@ -84,7 +87,9 @@ export function AnonymousQuizPlayContent({
   const [error, setError] = useState<string | null>(null);
   const [isQuizFinished, setIsQuizFinished] = useState(false);
   const [isFinishing, setIsFinishing] = useState(false);
-  const [finishingStage, setFinishingStage] = useState<"scoring" | "preparing">("scoring");
+  const [finishingStage, setFinishingStage] = useState<
+    "scoring" | "preparing" | "redirecting"
+  >("scoring");
   const [questionDirection, setQuestionDirection] = useState<1 | -1>(1);
   const sessionStartedAtRef = useRef<number>(Date.now());
   const handleFinishRef = useRef<() => Promise<void>>(async () => {});
@@ -115,9 +120,18 @@ export function AnonymousQuizPlayContent({
     timeRemaining !== null && timeLimit > 0 && timeRemaining <= 20 && timeRemaining > 10;
 
   useEffect(() => {
+    const shuffle = resolveEffectiveShuffleSettings({
+      randomizeQuestions: Boolean(settings.randomizeQuestions),
+      randomizeOptions:
+        typeof settings.randomizeOptions === "boolean"
+          ? settings.randomizeOptions
+          : undefined,
+    });
     let quizQuestions = [...initialQuestions];
-    if (settings.randomizeQuestions) {
+    if (shuffle.randomizeQuestions) {
       quizQuestions = quizQuestions.sort(() => Math.random() - 0.5);
+    }
+    if (shuffle.randomizeOptions) {
       quizQuestions = quizQuestions.map((q) => ({
         ...q,
         options: [...q.options].sort(() => Math.random() - 0.5),
@@ -135,7 +149,11 @@ export function AnonymousQuizPlayContent({
     sessionStartedAtRef.current = Date.now();
     timeSpentByQuestionIdRef.current = {};
     questionStartedAtRef.current = Date.now();
-  }, [initialQuestions, settings.randomizeQuestions]);
+  }, [
+    initialQuestions,
+    settings.randomizeQuestions,
+    settings.randomizeOptions,
+  ]);
 
   useEffect(() => {
     if (questions.length === 0) return;
@@ -240,7 +258,7 @@ export function AnonymousQuizPlayContent({
       );
 
       if (!result.success) {
-        setError(result.error);
+        setError(resolveQuizActionError(locale, result.error));
         setIsSubmitting(false);
         return;
       }
@@ -334,7 +352,8 @@ export function AnonymousQuizPlayContent({
 
   const handleFinish = useCallback(async () => {
     const finishStartedAtMs = Date.now();
-    const minimumVisibleMs = 700;
+    const minimumVisibleMs = prefersReducedMotion ? 0 : 1100;
+    const redirectPhaseMinMs = prefersReducedMotion ? 0 : 700;
     try {
       setError(null);
       setIsFinishing(true);
@@ -373,7 +392,7 @@ export function AnonymousQuizPlayContent({
       );
 
       if (!result.success) {
-        setError(result.error);
+        setError(resolveQuizActionError(locale, result.error));
         setIsFinishing(false);
         return;
       }
@@ -404,12 +423,20 @@ export function AnonymousQuizPlayContent({
         savedAt: Date.now(),
       });
 
+      setFinishingStage("redirecting");
+      const redirectPhaseStartedAtMs = Date.now();
+
       const elapsedMs = Date.now() - finishStartedAtMs;
       const remainingMs = minimumVisibleMs - elapsedMs;
       if (remainingMs > 0) {
         await new Promise((resolve) => setTimeout(resolve, remainingMs));
       }
-      router.push(`/quiz/${token}/results`);
+
+      const redirectElapsedMs = Date.now() - redirectPhaseStartedAtMs;
+      const redirectRemainingMs = redirectPhaseMinMs - redirectElapsedMs;
+      if (redirectRemainingMs > 0) {
+        await new Promise((resolve) => setTimeout(resolve, redirectRemainingMs));
+      }
 
       track(ANONYMOUS_QUIZ_COMPLETED, {
         ...buildCommonEventProps({ preferredLanguage: locale }),
@@ -418,6 +445,8 @@ export function AnonymousQuizPlayContent({
         question_count: result.totalQuestions,
         duration_sec: result.durationSec,
       });
+
+      router.push(`/quiz/${token}/results`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to finish quiz");
       setIsFinishing(false);
@@ -434,6 +463,7 @@ export function AnonymousQuizPlayContent({
     submitAnswerForQuestion,
     settings.showAnswerImmediately,
     recordTimeForQuestionId,
+    prefersReducedMotion,
   ]);
 
   handleFinishRef.current = handleFinish;
@@ -504,7 +534,13 @@ export function AnonymousQuizPlayContent({
   };
 
   return (
-    <div ref={quizContainerRef} className="min-h-screen bg-background p-8">
+    <div
+      ref={quizContainerRef}
+      className={cn(
+        "min-h-screen bg-background p-8",
+        isFinishing && "pointer-events-none select-none",
+      )}
+    >
       <div className="mx-auto max-w-2xl space-y-6">
         {error && <Alert variant="error">{error}</Alert>}
 
@@ -516,6 +552,7 @@ export function AnonymousQuizPlayContent({
                 variant="ghost"
                 size="sm"
                 onClick={handleQuit}
+                disabled={isFinishing}
                 className="text-muted-foreground hover:text-destructive"
               >
                 <X className="h-4 w-4 mr-1" />
@@ -679,7 +716,7 @@ export function AnonymousQuizPlayContent({
                 <Button
                   variant="ghost"
                   onClick={handlePrevious}
-                  disabled={currentQuestionIndex === 0}
+                  disabled={currentQuestionIndex === 0 || isFinishing}
                 >
                   {t(locale, "quiz.previous")}
                 </Button>
@@ -687,7 +724,7 @@ export function AnonymousQuizPlayContent({
                   <Button
                     variant="blue"
                     onClick={() => void handleVerify()}
-                    disabled={!isAnswered || isSubmitting}
+                    disabled={!isAnswered || isSubmitting || isFinishing}
                     className="ml-auto"
                   >
                     {isSubmitting ? t(locale, "common.loading") : t(locale, "quiz.verify")}
@@ -696,7 +733,7 @@ export function AnonymousQuizPlayContent({
                   <Button
                     variant="blue"
                     onClick={() => void handleNext()}
-                    disabled={!isAnswered}
+                    disabled={!isAnswered || isFinishing}
                     className="ml-auto"
                   >
                     {currentQuestionIndex === questions.length - 1

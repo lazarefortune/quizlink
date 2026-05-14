@@ -64,7 +64,7 @@ describe("QuizCreationSuccessContent", () => {
     render(<QuizCreationSuccessContent quizId="quiz_42" quizName="Quiz final" />);
 
     const copyButton = await screen.findByRole("button", { name: "dashboard.copy" });
-    const testQuizButton = screen.getByRole("button", { name: "dashboard.testQuiz" });
+    const testQuizButton = screen.getByRole("button", { name: "dashboard.playQuiz" });
     const editQuizButton = screen.getByRole("button", { name: "dashboard.editQuiz" });
     const myQuizzesButton = screen.getByRole("button", { name: "dashboard.seeMyQuizzes" });
 
@@ -103,7 +103,7 @@ describe("QuizCreationSuccessContent", () => {
     expect(await screen.findByText("failed_to_create_link")).toBeInTheDocument();
 
     const copyButton = screen.getByRole("button", { name: "dashboard.copy" });
-    const testQuizButton = screen.getByRole("button", { name: "dashboard.testQuiz" });
+    const testQuizButton = screen.getByRole("button", { name: "dashboard.playQuiz" });
 
     expect(copyButton).toBeDisabled();
     expect(testQuizButton).toBeDisabled();

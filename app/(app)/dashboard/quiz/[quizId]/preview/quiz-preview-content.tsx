@@ -15,8 +15,10 @@ import { buildCommonEventProps } from "@/lib/analytics/props";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t, type Locale } from "@/lib/i18n";
 import { getQuestionImageSrc } from "@/lib/question-image-src";
+import { resolveQuizActionError } from "@/lib/quiz/resolveQuizActionError";
 import { useToast } from "@/components/ui/toast";
-import { Button } from "@/components/ui/button";
+import { FullscreenBlockingOverlay } from "@/components/ui/fullscreen-blocking-overlay";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
@@ -28,6 +30,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
 
 type QuizPreviewContentProps = {
   quizId: string;
@@ -84,7 +87,11 @@ export function QuizPreviewContent({
         });
         router.push(`/quiz/${result.quizLink.token}`);
       } else {
-        showToast(result.error || t(locale, "dashboard.shareError"), "error");
+        showToast(
+          resolveQuizActionError(locale, result.error) ||
+            t(locale, "dashboard.shareError"),
+          "error",
+        );
       }
     } catch (error) {
       console.error("Error getting quiz link:", error);
@@ -99,7 +106,11 @@ export function QuizPreviewContent({
     try {
       const result = await createOrGetQuizLink(quizId, true);
       if (!result.success) {
-        showToast(result.error || t(locale, "dashboard.shareError"), "error");
+        showToast(
+          resolveQuizActionError(locale, result.error) ||
+            t(locale, "dashboard.shareError"),
+          "error",
+        );
         return;
       }
       track(PARTICIPANT_INVITED, {
@@ -138,8 +149,17 @@ export function QuizPreviewContent({
     }
   };
 
+  const isLinkActionBusy = playLoading || copyLoading;
+  const linkBlockingTitle = playLoading
+    ? t(locale, "dashboard.blockingOpenQuizTitle")
+    : t(locale, "dashboard.blockingCopyLinkTitle");
+  const linkBlockingDescription = playLoading
+    ? t(locale, "dashboard.blockingOpenQuizDescription")
+    : t(locale, "dashboard.blockingCopyLinkDescription");
+
   return (
-    <div className="min-h-0 w-full bg-background p-4 md:p-6 lg:p-8">
+    <>
+    <div className="relative min-h-0 w-full bg-background p-4 md:p-6 lg:p-8">
       <div className="mx-auto max-w-5xl space-y-6">
         <Link href="/dashboard/quizzes">
             <Button variant="ghost" size="sm" className="-ml-2 text-muted-foreground">
@@ -166,7 +186,7 @@ export function QuizPreviewContent({
                 size="sm"
                 className="gap-2"
                 onClick={handleCopyLink}
-                disabled={copyLoading}
+                disabled={copyLoading || playLoading}
               >
                 <Copy className="h-4 w-4" />
                 {copyLoading ? t(locale, "common.loading") : t(locale, "dashboard.copyLink")}
@@ -176,10 +196,10 @@ export function QuizPreviewContent({
                 size="sm"
                 className="gap-2"
                 onClick={handlePlay}
-                disabled={playLoading}
+                disabled={playLoading || copyLoading}
               >
                 <Play className="h-4 w-4" />
-                {playLoading ? t(locale, "common.loading") : t(locale, "dashboard.testQuiz")}
+                {playLoading ? t(locale, "common.loading") : t(locale, "dashboard.playQuiz")}
               </Button>
               <Link href={`/dashboard/quiz/${quizId}`}>
                 <Button variant="secondary" size="sm" className="gap-2">
@@ -289,7 +309,10 @@ export function QuizPreviewContent({
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground btn-bouncy-destructive hover:bg-destructive/90 focus-visible:ring-destructive"
+              className={cn(
+                buttonVariants({ variant: "destructive" }),
+                "focus-visible:ring-destructive",
+              )}
             >
               {isDeleting ? t(locale, "common.loading") : t(locale, "dashboard.delete")}
             </AlertDialogAction>
@@ -297,5 +320,11 @@ export function QuizPreviewContent({
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    <FullscreenBlockingOverlay
+      open={isLinkActionBusy}
+      title={linkBlockingTitle}
+      description={linkBlockingDescription}
+    />
+    </>
   );
 }

@@ -3,9 +3,8 @@ import type { Quiz, Question as PlayerQuestion } from "@/types/quiz";
 
 export function adaptQuizBuilderToPlayer(quizBuilder: QuizBuilder): Quiz {
   const adaptedQuestions: PlayerQuestion[] = quizBuilder.questions.map((q) => {
-    // Randomize options if enabled
     let options = q.options;
-    if (quizBuilder.settings.randomizeQuestions) {
+    if (quizBuilder.settings.randomizeOptions) {
       options = [...q.options].sort(() => Math.random() - 0.5);
     }
 

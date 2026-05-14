@@ -1,6 +1,7 @@
 /**
- * Seed script to initialize default coin packs
- * Run with: pnpm run seed:coin-packs
+ * [MAINTENANCE — réutilisable] Initialise les packs de pièces par défaut en base.
+ *
+ * Emplacement : `scripts/maintenance/`. Exécuter : `pnpm run seed:coin-packs`.
  */
 
 import { PrismaClient } from "@prisma/client";

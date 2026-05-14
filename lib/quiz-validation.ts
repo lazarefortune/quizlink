@@ -1,5 +1,9 @@
-import type { BuilderTimeLimitUi } from "@/lib/time-limit-seconds";
-import { parseTimeLimitSeconds } from "@/lib/time-limit-seconds";
+import {
+  totalSecondsFromMinutesSeconds,
+  TIME_LIMIT_MINUTES_MAX,
+  TIME_LIMIT_SECONDS_MAX,
+  type BuilderTimeLimitUi,
+} from "@/lib/time-limit-seconds";
 import type { QuizBuilder } from "@/types/quiz-builder";
 
 export type ValidationError = {
@@ -91,10 +95,35 @@ export function validateBuilderTimeLimit(ui: BuilderTimeLimitUi): ValidationErro
   if (!ui.enabled) {
     return null;
   }
-  if (parseTimeLimitSeconds(ui.inputValue) === null) {
+  if (!Number.isInteger(ui.minutes) || !Number.isInteger(ui.seconds)) {
     return {
       field: "settings.timeLimitPerQuestion",
       translationKey: "builder.validation.timeLimitInvalid",
+    };
+  }
+  if (ui.seconds < 0 || ui.seconds > 59) {
+    return {
+      field: "settings.timeLimitPerQuestion",
+      translationKey: "builder.validation.timeLimitSecondsOutOfRange",
+    };
+  }
+  if (ui.minutes < 0 || ui.minutes > TIME_LIMIT_MINUTES_MAX) {
+    return {
+      field: "settings.timeLimitPerQuestion",
+      translationKey: "builder.validation.timeLimitMinutesOutOfRange",
+    };
+  }
+  const total = totalSecondsFromMinutesSeconds(ui.minutes, ui.seconds);
+  if (total < 1) {
+    return {
+      field: "settings.timeLimitPerQuestion",
+      translationKey: "builder.validation.timeLimitMustBePositive",
+    };
+  }
+  if (total > TIME_LIMIT_SECONDS_MAX) {
+    return {
+      field: "settings.timeLimitPerQuestion",
+      translationKey: "builder.validation.timeLimitMaxExceeded",
     };
   }
   return null;

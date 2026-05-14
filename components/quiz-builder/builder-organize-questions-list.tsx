@@ -19,7 +19,7 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -315,7 +315,10 @@ export function BuilderOrganizeQuestionsList({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="text-base">{t(locale, "common.cancel")}</AlertDialogCancel>
-            <AlertDialogAction className="text-base" onClick={confirmDelete}>
+            <AlertDialogAction
+              className={cn(buttonVariants({ variant: "destructive" }), "text-base")}
+              onClick={confirmDelete}
+            >
               {t(locale, "common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>

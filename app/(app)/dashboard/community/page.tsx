@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { FileQuestion, Play, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
+import { resolveQuizActionError } from "@/lib/quiz/resolveQuizActionError";
 import { getPublicQuizzesPage, type PublicQuizItem } from "./actions";
 import { getOrCreatePublicQuizLink } from "@/app/quiz-link/actions";
 
@@ -74,7 +75,7 @@ export default function DashboardCommunityPage() {
         router.push(`/quiz/${result.token}`);
         return;
       }
-      setError(result.error ?? "Failed to start");
+      setError(resolveQuizActionError(locale, result.error ?? "Failed to start"));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to start");
     } finally {

@@ -8,6 +8,7 @@ import { createPortal } from "react-dom";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserMenu } from "@/components/user-menu";
 import { Button } from "@/components/ui/button";
+import { CreateManualServerDraftButton } from "@/components/dashboard/create-manual-server-draft-button";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -250,19 +251,36 @@ export function Header() {
 
                   {/* Create options for mobile - show for all users */}
                   <>
-                    <Link
-                      href={session?.user ? "/builder" : "/builder/preview"}
-                      onClick={handleCloseSidebar}
-                      className={cn(
-                        "flex items-center gap-3 px-3 py-2 text-base font-medium transition-colors rounded-md",
-                        isActive("/builder")
-                          ? "bg-accent text-accent-foreground"
-                          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                      )}
-                    >
-                      <FileText className="h-5 w-5" />
-                      {t(locale, "nav.createManually")}
-                    </Link>
+                    {session?.user ? (
+                      <CreateManualServerDraftButton
+                        variant="ghost"
+                        onCreated={handleCloseSidebar}
+                        className={cn(
+                          "flex h-auto w-full items-center justify-start gap-3 px-3 py-2 text-base font-medium transition-colors rounded-md",
+                          pathname?.startsWith("/dashboard/create") ||
+                            pathname?.startsWith("/builder")
+                            ? "bg-accent text-accent-foreground"
+                            : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                        )}
+                      >
+                        <FileText className="h-5 w-5" />
+                        {t(locale, "nav.createManually")}
+                      </CreateManualServerDraftButton>
+                    ) : (
+                      <Link
+                        href="/builder/preview"
+                        onClick={handleCloseSidebar}
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2 text-base font-medium transition-colors rounded-md",
+                          isActive("/builder/preview")
+                            ? "bg-accent text-accent-foreground"
+                            : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                        )}
+                      >
+                        <FileText className="h-5 w-5" />
+                        {t(locale, "nav.createManually")}
+                      </Link>
+                    )}
                     <Link
                       href={session?.user ? "/generate" : "/generate/preview"}
                       onClick={handleCloseSidebar}

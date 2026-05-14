@@ -106,7 +106,11 @@ const AlertDialogAction = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Action
     ref={ref}
-    className={cn(buttonVariants(), className)}
+    className={
+      className !== undefined && String(className).trim() !== ""
+        ? cn(className)
+        : cn(buttonVariants())
+    }
     {...props}
   />
 ));

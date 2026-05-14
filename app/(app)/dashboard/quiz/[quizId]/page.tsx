@@ -87,6 +87,7 @@ export default async function QuizStatsPage({ params }: PageProps) {
       <QuizDetailContent
         quizId={quizId}
         quizName={contentResult.quiz.name}
+        quizStatus={contentResult.quiz.status}
         visibility={contentResult.quiz.visibility}
         questions={contentResult.quiz.questions}
         stats={statsResult.stats}

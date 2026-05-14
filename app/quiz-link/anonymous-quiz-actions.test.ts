@@ -28,6 +28,7 @@ describe("getAnonymousQuizPlayData", () => {
       quiz: {
         id: "quiz-1",
         name: "Test",
+        status: "ACTIVE",
         settings: {},
         questions: [
           {
@@ -62,7 +63,7 @@ describe("getAnonymousQuizPlayData", () => {
       participantId: "p1",
       revokedAt: null,
       expiresAt: null,
-      quiz: { id: "q", name: "n", settings: {}, questions: [] },
+      quiz: { id: "q", name: "n", status: "ACTIVE", settings: {}, questions: [] },
     });
 
     const result = await getAnonymousQuizPlayData("tok");
@@ -77,6 +78,7 @@ const anonymousLinkQuizFixture = {
   quiz: {
     id: "quiz-1",
     name: "Test",
+    status: "ACTIVE",
     settings: {},
     questions: [
       {
@@ -166,5 +168,21 @@ describe("validateAnonymousQuizAnswers", () => {
     expect(result.details[0]?.isCorrect).toBe(false);
     expect(result.details[0]?.selectedOptionIds).toEqual([]);
     expect(result.details[0]?.selectedOptionLabels).toEqual([]);
+  });
+
+  it("refuses when quiz is DRAFT", async () => {
+    mockFindUnique.mockResolvedValue({
+      ...anonymousLinkQuizFixture,
+      quiz: { ...anonymousLinkQuizFixture.quiz, status: "DRAFT" },
+    });
+
+    const result = await validateAnonymousQuizAnswers("tok123", [
+      { questionId: "q1", selectedOptionIds: ["o1"] },
+    ]);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe("QUIZ_PLAY_DRAFT");
+    }
   });
 });

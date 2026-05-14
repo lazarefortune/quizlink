@@ -1,23 +1,25 @@
 /**
- * Audit lecture seule : coherence entre Question.imageKey (DB) et fichiers sous
- * QUESTION_IMAGE_UPLOAD_DIR (ou repertoire local par defaut).
+ * [AUDIT — réutilisable] Cohérence entre `Question.imageKey` (base) et les fichiers sous
+ * `QUESTION_IMAGE_UPLOAD_DIR` (ou répertoire local par défaut du projet).
  *
- * Usage:
- *   npx tsx scripts/audit-question-images-storage.ts --dry-run
+ * Emplacement : `scripts/audit/`. Lecture seule : aucune écriture base, aucune suppression disque.
  *
- * L'option --confirm-delete-orphans est reconnue mais reste desactivee (aucune suppression).
+ * Usage :
+ *   npx tsx scripts/audit/audit-question-images-storage.ts --dry-run
+ *
+ * L'option `--confirm-delete-orphans` est reconnue mais reste désactivée (aucune suppression).
  */
 import { pathToFileURL } from "node:url";
 import { constants as fsConstants } from "fs";
 import { access, readdir, stat } from "fs/promises";
 import path from "path";
 
-import { prisma } from "../lib/prisma";
+import { prisma } from "../../lib/prisma";
 import {
   getQuestionImageLocalBaseDir,
   getQuestionImageStorageMode,
   isSafeQuestionImageStorageKey,
-} from "../lib/storage/question-image-storage";
+} from "../../lib/storage/question-image-storage";
 import {
   buildReferencedKeySet,
   normalizeStorageKeyForCompare,

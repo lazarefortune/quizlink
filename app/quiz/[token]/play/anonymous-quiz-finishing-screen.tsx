@@ -6,7 +6,7 @@ import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 
 type AnonymousQuizFinishingScreenProps = {
-  stage: "scoring" | "preparing";
+  stage: "scoring" | "preparing" | "redirecting";
   reducedMotion: boolean;
 };
 
@@ -15,10 +15,14 @@ export function AnonymousQuizFinishingScreen({
   reducedMotion,
 }: AnonymousQuizFinishingScreenProps) {
   const { locale } = useLocale();
-  const stageText =
-    stage === "scoring"
-      ? t(locale, "quiz.calculatingScore")
-      : t(locale, "quiz.preparingCorrections");
+  let stageText: string;
+  if (stage === "scoring") {
+    stageText = t(locale, "quiz.calculatingScore");
+  } else if (stage === "preparing") {
+    stageText = t(locale, "quiz.preparingCorrections");
+  } else {
+    stageText = t(locale, "quiz.finishingRedirectStage");
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/90 p-6 backdrop-blur-sm">

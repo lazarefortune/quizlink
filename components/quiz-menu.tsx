@@ -1,13 +1,17 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { MoreVertical, Share2, Trash2, Check, Copy } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
-import { deleteQuiz } from "@/app/(app)/dashboard/actions";
+import { resolveQuizActionError } from "@/lib/quiz/resolveQuizActionError";
+import { deleteQuiz, duplicateQuiz } from "@/app/(app)/dashboard/actions";
 import { createOrGetQuizLink } from "@/app/quiz-link/actions";
+import { canQuizBeShared } from "@/lib/quiz/quizStatusPolicy";
+import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
 import { track } from "@/lib/analytics/track";
 import { PARTICIPANT_INVITED } from "@/lib/analytics/events";
 import { buildCommonEventProps } from "@/lib/analytics/props";
@@ -32,17 +36,23 @@ import {
 type QuizMenuProps = {
   quizId: string;
   quizName: string;
+  quizStatus: QuizLifecycleStatus;
   onDeleted?: () => void;
+  onDuplicated?: (newQuizId: string) => void;
 };
 
 export function QuizMenu({
   quizId,
   quizName,
+  quizStatus,
   onDeleted,
+  onDuplicated,
 }: QuizMenuProps) {
+  const router = useRouter();
   const { locale } = useLocale();
   const [isOpen, setIsOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isDuplicating, setIsDuplicating] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
@@ -88,7 +98,10 @@ export function QuizMenu({
         });
         setShareLink(`${baseUrl}/quiz/${result.quizLink.token}`);
       } else {
-        alert(result.error || t(locale, "dashboard.shareError"));
+        alert(
+          resolveQuizActionError(locale, result.error) ||
+            t(locale, "dashboard.shareError"),
+        );
         setShowShareDialog(false);
       }
     } catch (error) {
@@ -116,6 +129,25 @@ export function QuizMenu({
       document.body.removeChild(textArea);
       setLinkCopied(true);
       setTimeout(() => setLinkCopied(false), 2000);
+    }
+  };
+
+  const handleDuplicate = async () => {
+    setIsOpen(false);
+    setIsDuplicating(true);
+    try {
+      const result = await duplicateQuiz(quizId);
+      if (result.success && result.quizId) {
+        onDuplicated?.(result.quizId);
+        router.push(`/builder/${result.quizId}`);
+      } else {
+        alert(result.error || t(locale, "dashboard.duplicateError"));
+      }
+    } catch (error) {
+      console.error("Error duplicating quiz:", error);
+      alert(t(locale, "dashboard.duplicateError"));
+    } finally {
+      setIsDuplicating(false);
     }
   };
 
@@ -160,12 +192,25 @@ export function QuizMenu({
             {/* Dropdown */}
             <div className="absolute right-0 mt-2 w-48 rounded-md border border-border bg-popover shadow-lg z-50" onClick={(e) => e.stopPropagation()}>
               <div className="p-1">
+                {canQuizBeShared(quizStatus) ? (
+                  <button
+                    onClick={handleShareClick}
+                    className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent rounded-md transition-colors text-left"
+                  >
+                    <Share2 className="h-4 w-4" />
+                    {t(locale, "dashboard.share")}
+                  </button>
+                ) : null}
                 <button
-                  onClick={handleShareClick}
-                  className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent rounded-md transition-colors text-left"
+                  type="button"
+                  onClick={() => void handleDuplicate()}
+                  disabled={isDuplicating}
+                  className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent rounded-md transition-colors text-left disabled:opacity-50"
                 >
-                  <Share2 className="h-4 w-4" />
-                  {t(locale, "dashboard.share")}
+                  <Copy className="h-4 w-4" />
+                  {isDuplicating
+                    ? t(locale, "common.loading")
+                    : t(locale, "dashboard.duplicate")}
                 </button>
                 <button
                   onClick={() => {
@@ -202,7 +247,7 @@ export function QuizMenu({
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className={buttonVariants({ variant: "destructive" })}
             >
               {isDeleting
                 ? t(locale, "common.loading")

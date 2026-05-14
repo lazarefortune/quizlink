@@ -27,6 +27,7 @@ export type QuizSession = {
   settings: {
     showAnswerImmediately: boolean;
     randomizeQuestions: boolean;
+    randomizeOptions: boolean;
     timeLimitPerQuestion: number | null;
   };
   publicQuestions: PublicQuestion[];

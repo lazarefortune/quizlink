@@ -25,8 +25,10 @@ import {
 import { Clock, X } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
-import { cn } from "@/lib/utils";
 import { getQuestionImageSrc } from "@/lib/question-image-src";
+import { resolveQuizActionError } from "@/lib/quiz/resolveQuizActionError";
+import { resolveEffectiveShuffleSettings } from "@/lib/quiz/shuffleSettings";
+import { cn } from "@/lib/utils";
 import {
   submitAnswerForAttempt,
   finishQuizAttempt,
@@ -60,7 +62,7 @@ export type Attempt = {
     quiz: {
       id: string;
       name: string;
-      settings: { showAnswerImmediately?: boolean; randomizeQuestions?: boolean; timeLimitPerQuestion?: number | null };
+      settings: { showAnswerImmediately?: boolean; randomizeQuestions?: boolean; randomizeOptions?: boolean; timeLimitPerQuestion?: number | null };
       questions: Question[];
     };
   };
@@ -101,6 +103,7 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
   const settings = attempt.quizLink.quiz.settings as {
     showAnswerImmediately?: boolean;
     randomizeQuestions?: boolean;
+    randomizeOptions?: boolean;
     timeLimitPerQuestion?: number | null;
   };
 
@@ -115,15 +118,21 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
       return;
     }
 
+    const shuffle = resolveEffectiveShuffleSettings({
+      randomizeQuestions: Boolean(settings.randomizeQuestions),
+      randomizeOptions:
+        typeof settings.randomizeOptions === "boolean"
+          ? settings.randomizeOptions
+          : undefined,
+    });
+
     let quizQuestions = attempt.quizLink.quiz.questions;
 
-    // Randomize questions if enabled
-    if (settings.randomizeQuestions) {
+    if (shuffle.randomizeQuestions) {
       quizQuestions = [...quizQuestions].sort(() => Math.random() - 0.5);
     }
 
-    // Randomize options for each question if randomizeQuestions is enabled
-    if (settings.randomizeQuestions) {
+    if (shuffle.randomizeOptions) {
       quizQuestions = quizQuestions.map((q) => ({
         ...q,
         options: [...q.options].sort(() => Math.random() - 0.5),
@@ -240,7 +249,7 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
           );
 
           if (!result.success) {
-            setError(result.error);
+            setError(resolveQuizActionError(locale, result.error));
             setIsSubmitting(false);
             return;
           }
@@ -366,7 +375,7 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
 
       if (!result.success) {
         setIsQuizFinished(false);
-        setError(result.error);
+        setError(resolveQuizActionError(locale, result.error));
         return;
       }
 

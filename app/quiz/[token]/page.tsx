@@ -1,6 +1,10 @@
 import { Suspense } from "react";
-import { QuizIntroductionContent } from "./quiz-introduction-content";
+
 import { getQuizLinkByToken } from "@/app/quiz-link/actions";
+import { getRequestLocale } from "@/lib/i18n/request-locale";
+import { resolveQuizActionError } from "@/lib/quiz/resolveQuizActionError";
+
+import { QuizIntroductionContent } from "./quiz-introduction-content";
 
 type PageProps = {
   params: Promise<{ token: string }>;
@@ -8,6 +12,7 @@ type PageProps = {
 
 export default async function QuizIntroductionPage({ params }: PageProps) {
   const { token } = await params;
+  const requestLocale = await getRequestLocale();
 
   if (!token?.trim()) {
     return (
@@ -27,7 +32,9 @@ export default async function QuizIntroductionPage({ params }: PageProps) {
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="max-w-md w-full text-center">
           <h1 className="text-2xl font-bold mb-4">Quiz non trouvé</h1>
-          <p className="text-muted-foreground">{result.error}</p>
+          <p className="text-muted-foreground">
+            {resolveQuizActionError(requestLocale, result.error)}
+          </p>
         </div>
       </div>
     );

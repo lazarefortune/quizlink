@@ -14,12 +14,15 @@ import {
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
+import { resolveQuizActionError } from "@/lib/quiz/resolveQuizActionError";
 import { useToast } from "@/components/ui/toast";
 import {
   deleteQuiz,
   duplicateQuiz,
 } from "@/app/(app)/dashboard/actions";
 import { createOrGetQuizLink } from "@/app/quiz-link/actions";
+import { canQuizBeShared } from "@/lib/quiz/quizStatusPolicy";
+import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
 import { track } from "@/lib/analytics/track";
 import { PARTICIPANT_INVITED } from "@/lib/analytics/events";
 import { buildCommonEventProps } from "@/lib/analytics/props";
@@ -45,6 +48,7 @@ import { Input } from "@/components/ui/input";
 type QuizOptionsMenuProps = {
   quizId: string;
   quizName: string;
+  quizStatus?: QuizLifecycleStatus;
   onDeleted?: () => void;
   onDuplicated?: (newQuizId: string) => void;
   onEdit?: () => void;
@@ -53,6 +57,7 @@ type QuizOptionsMenuProps = {
 export function QuizOptionsMenu({
   quizId,
   quizName,
+  quizStatus = "ACTIVE",
   onDeleted,
   onDuplicated,
   onEdit,
@@ -146,7 +151,7 @@ export function QuizOptionsMenu({
         });
         setShareLink(`${baseUrl}/quiz/${result.quizLink.token}`);
       } else {
-        alert(result.error || t(locale, "dashboard.shareError"));
+        alert(resolveQuizActionError(locale, result.error) || t(locale, "dashboard.shareError"));
         setShowShareDialog(false);
       }
     } catch (error) {
@@ -208,19 +213,26 @@ export function QuizOptionsMenu({
                     className="flex items-center gap-2 w-full px-3 py-2 text-base hover:cursor-pointer hover:bg-accent rounded-md transition-colors text-left"
                   >
                     <Edit className="h-4 w-4" />
-                    {t(locale, "dashboard.edit")}
+                    {t(
+                      locale,
+                      quizStatus === "DRAFT"
+                        ? "dashboard.continueInBuilder"
+                        : "dashboard.edit",
+                    )}
                   </button>
                 )}
-                <button
-                  onClick={handleShareClick}
-                  className="flex items-center gap-2 w-full px-3 py-2 text-base hover:cursor-pointer hover:bg-accent rounded-md transition-colors text-left"
-                >
-                  <Share2 className="h-4 w-4" />
-                  {t(locale, "dashboard.shareWithLink")}
-                </button>
+                {canQuizBeShared(quizStatus) ? (
+                  <button
+                    onClick={handleShareClick}
+                    className="flex items-center gap-2 w-full px-3 py-2 text-base hover:cursor-pointer hover:bg-accent rounded-md transition-colors text-left"
+                  >
+                    <Share2 className="h-4 w-4" />
+                    {t(locale, "dashboard.shareWithLink")}
+                  </button>
+                ) : null}
                 <button
                   onClick={() => {
-                    handleDuplicate();
+                    void handleDuplicate();
                     setIsOpen(false);
                   }}
                   disabled={isDuplicating}

@@ -29,6 +29,7 @@ import {
 import {
   Trash2,
   Image as ImageIcon,
+  ImageUp,
   Undo2,
   Redo2,
   Bold,
@@ -461,7 +462,7 @@ export function QuestionEditor({
                 )}
               </div>
             </div>
-            {/* Image: actions on overlay so they stay visible (incl. mobile; previous layout hid the button under `fill`) */}
+            {/* Image: compact icon actions in a corner (no bottom strip over the image) */}
             <div className="w-full shrink-0 space-y-2 sm:w-32 md:w-40">
               <input
                 ref={imageFileInputRef}
@@ -500,30 +501,31 @@ export function QuestionEditor({
                   ) : null}
                   <div
                     className={cn(
-                      "absolute inset-x-0 bottom-0 flex gap-2 border-t border-white/10 bg-black/60 p-2 backdrop-blur-sm supports-[backdrop-filter]:bg-black/45",
+                      "absolute right-2 top-2 z-20 flex gap-1.5",
                       isImageLoading && "pointer-events-none opacity-0",
                     )}
                   >
                     <Button
                       type="button"
                       variant="secondary"
-                      size="sm"
-                      className="h-11 min-h-[44px] flex-1 touch-manipulation text-xs sm:h-9 sm:min-h-0"
+                      size="icon"
+                      className="h-10 w-10 shrink-0 touch-manipulation shadow-md ring-1 ring-border/60 sm:h-9 sm:w-9"
                       onClick={() => imageFileInputRef.current?.click()}
                       disabled={isImageLoading}
+                      aria-label={t(locale, "builder.replaceImage")}
                     >
-                      {t(locale, "builder.replaceImage")}
+                      <ImageUp className="h-4 w-4" aria-hidden />
                     </Button>
                     <Button
                       type="button"
                       variant="destructive"
-                      size="sm"
-                      className="h-11 w-11 min-h-[44px] min-w-[44px] shrink-0 touch-manipulation sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0"
+                      size="icon"
+                      className="h-10 w-10 shrink-0 touch-manipulation shadow-md ring-1 ring-destructive/30 sm:h-9 sm:w-9"
                       onClick={handleRemoveImage}
                       disabled={isImageLoading}
                       aria-label={t(locale, "builder.removeImage")}
                     >
-                      <Trash2 className="mx-auto h-4 w-4" />
+                      <Trash2 className="h-4 w-4" aria-hidden />
                     </Button>
                   </div>
                 </div>

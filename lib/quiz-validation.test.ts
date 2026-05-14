@@ -14,6 +14,7 @@ const minimalValidQuiz: QuizBuilder = {
   settings: {
     showAnswerImmediately: true,
     randomizeQuestions: false,
+    randomizeOptions: false,
     timeLimitPerQuestion: null,
   },
   questions: [
@@ -34,26 +35,42 @@ const minimalValidQuiz: QuizBuilder = {
 describe("validateBuilderTimeLimit", () => {
   it("returns null when time limit is disabled", () => {
     expect(
-      validateBuilderTimeLimit({ enabled: false, inputValue: "" }),
+      validateBuilderTimeLimit({ enabled: false, minutes: 0, seconds: 0 }),
     ).toBeNull();
   });
 
-  it("returns null when enabled with valid seconds", () => {
+  it("returns null when enabled with valid parts", () => {
     expect(
-      validateBuilderTimeLimit({ enabled: true, inputValue: "60" }),
+      validateBuilderTimeLimit({ enabled: true, minutes: 1, seconds: 0 }),
+    ).toBeNull();
+    expect(
+      validateBuilderTimeLimit({ enabled: true, minutes: 0, seconds: 45 }),
+    ).toBeNull();
+    expect(
+      validateBuilderTimeLimit({ enabled: true, minutes: 1, seconds: 30 }),
     ).toBeNull();
   });
 
-  it("returns an error when enabled but input empty", () => {
-    const err = validateBuilderTimeLimit({ enabled: true, inputValue: "" });
+  it("returns an error when total is zero", () => {
+    const err = validateBuilderTimeLimit({ enabled: true, minutes: 0, seconds: 0 });
     expect(err).not.toBeNull();
     expect(err?.field).toBe("settings.timeLimitPerQuestion");
-    expect(err?.translationKey).toBe("builder.validation.timeLimitInvalid");
+    expect(err?.translationKey).toBe("builder.validation.timeLimitMustBePositive");
   });
 
-  it("returns an error when enabled but value out of range", () => {
-    const err = validateBuilderTimeLimit({ enabled: true, inputValue: "99999" });
-    expect(err).not.toBeNull();
+  it("returns an error when seconds are out of range", () => {
+    const err = validateBuilderTimeLimit({ enabled: true, minutes: 0, seconds: 60 });
+    expect(err?.translationKey).toBe("builder.validation.timeLimitSecondsOutOfRange");
+  });
+
+  it("returns an error when minutes are out of range", () => {
+    const err = validateBuilderTimeLimit({ enabled: true, minutes: 61, seconds: 0 });
+    expect(err?.translationKey).toBe("builder.validation.timeLimitMinutesOutOfRange");
+  });
+
+  it("returns an error when total exceeds max", () => {
+    const err = validateBuilderTimeLimit({ enabled: true, minutes: 60, seconds: 1 });
+    expect(err?.translationKey).toBe("builder.validation.timeLimitMaxExceeded");
   });
 });
 

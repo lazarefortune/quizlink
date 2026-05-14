@@ -4,6 +4,7 @@ import type { QuizLinkAnonymousStats } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { creatorCountedAttemptWhere } from "@/lib/creator-quiz-attempt-filter";
+import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
 
 type QuizSettings = {
   showAnswerImmediately?: boolean;
@@ -49,6 +50,7 @@ type GetQuizStatsResponse =
         globalLowestScore: number | null;
         quizDetails: {
           visibility: string;
+          status: QuizLifecycleStatus;
           settings: QuizSettings;
           createdAt: Date;
         };
@@ -118,6 +120,8 @@ export type GetQuizContentResponse =
       quiz: {
         name: string;
         visibility: string;
+        status: QuizLifecycleStatus;
+        publishedAt: string | null;
         questions: QuizContentQuestion[];
       };
     }
@@ -144,6 +148,8 @@ export async function getQuizContent(
       select: {
         name: true,
         visibility: true,
+        status: true,
+        publishedAt: true,
         ownerId: true,
         questions: {
           orderBy: { order: "asc" },
@@ -172,6 +178,8 @@ export async function getQuizContent(
       quiz: {
         name: quiz.name,
         visibility: quiz.visibility,
+        status: quiz.status,
+        publishedAt: quiz.publishedAt ? quiz.publishedAt.toISOString() : null,
         questions: quiz.questions.map((q) => ({
           id: q.id,
           order: q.order,
@@ -219,6 +227,7 @@ export async function getQuizStats(
       select: {
         ownerId: true,
         visibility: true,
+        status: true,
         settings: true,
         createdAt: true,
         _count: {
@@ -484,6 +493,7 @@ export async function getQuizStats(
         globalLowestScore,
         quizDetails: {
           visibility: quiz.visibility,
+          status: quiz.status,
           settings,
           createdAt: quiz.createdAt,
         },

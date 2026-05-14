@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
+import { resolveQuizActionError } from "@/lib/quiz/resolveQuizActionError";
 import type { PublicQuizItem } from "./actions";
 import { getOrCreatePublicQuizLink } from "@/app/quiz-link/actions";
 
@@ -51,7 +52,7 @@ export function PublicQuizzesContent({ quizzes }: PublicQuizzesContentProps) {
         router.push(`/quiz/${result.token}`);
         return;
       }
-      setError(result.error);
+      setError(resolveQuizActionError(locale, result.error ?? "Failed to start quiz"));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to start quiz");
     } finally {

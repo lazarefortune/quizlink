@@ -15,6 +15,7 @@ const minimalQuiz: QuizBuilder = {
   settings: {
     showAnswerImmediately: true,
     randomizeQuestions: false,
+    randomizeOptions: false,
     timeLimitPerQuestion: null,
   },
   questions: [

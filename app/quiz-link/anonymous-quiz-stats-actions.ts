@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 
 import { prisma } from "@/lib/prisma";
+import { playBlockedErrorCodeForQuizStatus } from "@/lib/quiz/quizActionErrorCodes";
+import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
 
 export type RecordAnonymousStatsResult = { success: true } | { success: false; error: string };
 
@@ -38,6 +40,7 @@ async function resolveEligibleAnonymousQuizLink(
       participantId: true,
       revokedAt: true,
       expiresAt: true,
+      quiz: { select: { status: true } },
     },
   });
 
@@ -55,6 +58,13 @@ async function resolveEligibleAnonymousQuizLink(
 
   if (quizLink.participantId !== null) {
     return { ok: false, error: "This link requires a participant session" };
+  }
+
+  const statsBlocked = playBlockedErrorCodeForQuizStatus(
+    quizLink.quiz.status as QuizLifecycleStatus,
+  );
+  if (statsBlocked) {
+    return { ok: false, error: statsBlocked };
   }
 
   return { ok: true, quizLink: { id: quizLink.id, quizId: quizLink.quizId } };

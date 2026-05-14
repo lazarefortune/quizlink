@@ -1,7 +1,11 @@
+/**
+ * Helpers purs pour la migration one-shot `migrate-question-images-to-storage.ts`.
+ * Emplacement : `scripts/one-shot/`. Tests : `migrate-question-images-to-storage.helpers.test.ts`.
+ */
 import {
   detectQuestionImageFormatFromMagicBytes,
   type DetectedQuestionImageFormat,
-} from "../lib/builder/validateQuestionImageMagicBytes";
+} from "../../lib/builder/validateQuestionImageMagicBytes";
 
 const LEGACY_PREFIX = "data:image/";
 

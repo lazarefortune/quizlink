@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
+import { resolveQuizActionError } from "@/lib/quiz/resolveQuizActionError";
 import { startQuizAttempt } from "@/app/quiz-link/actions";
 import {
   recordAnonymousLinkOpen,
@@ -100,7 +101,7 @@ export function QuizIntroductionContent({
       if (isPublicLink) {
         const statsResult = await recordAnonymousQuizStart(token);
         if (!statsResult.success) {
-          setError(statsResult.error);
+          setError(resolveQuizActionError(locale, statsResult.error));
           setIsLoading(false);
           return;
         }
@@ -119,7 +120,7 @@ export function QuizIntroductionContent({
         if (errorKey === "alreadyCompleted") {
           setError(t(locale, "quiz.alreadyCompleted"));
         } else {
-          setError(attemptResult.error);
+          setError(resolveQuizActionError(locale, attemptResult.error));
         }
         setIsLoading(false);
         return;

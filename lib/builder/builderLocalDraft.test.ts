@@ -5,13 +5,20 @@ import type { QuizBuilder } from "@/types/quiz-builder";
 import {
   BUILDER_DRAFT_INDEX_FORMAT_VERSION,
   BUILDER_LOCAL_DRAFT_FORMAT_VERSION,
+  BUILDER_LOCAL_DRAFT_MAX_AGE_MS,
   buildBuilderDraftIndexKey,
   buildBuilderDraftKey,
   buildBuilderDraftTargetRoute,
+  clearBuilderDraftAndIndexEntry,
   createBuilderLocalDraftPayload,
   getBuilderDraftStorageScope,
+  isBuilderDraftIndexEntryExpired,
+  isBuilderLocalDraftPayloadExpired,
+  loadBuilderDraft,
+  loadBuilderDraftIndex,
   normalizeAndPruneBuilderDraftIndexEntries,
   parseBuilderDraftIndexJson,
+  parseBuilderDraftStorageKey,
   parseBuilderLocalDraftJson,
   saveBuilderDraft,
   shouldOfferBuilderLocalDraftRestore,
@@ -25,6 +32,7 @@ const minimalQuiz: QuizBuilder = {
   settings: {
     showAnswerImmediately: true,
     randomizeQuestions: false,
+    randomizeOptions: false,
     timeLimitPerQuestion: null,
   },
   questions: [
@@ -42,7 +50,7 @@ const minimalQuiz: QuizBuilder = {
   createdAt: new Date().toISOString(),
 };
 
-const timeLimitUi = { enabled: false, inputValue: "" };
+const timeLimitUi = { enabled: false, minutes: 0, seconds: 0 };
 
 describe("buildBuilderDraftKey", () => {
   it("embeds user id and new scope", () => {
@@ -55,6 +63,158 @@ describe("buildBuilderDraftKey", () => {
     expect(buildBuilderDraftKey("user-1", "clabc123")).toBe(
       `quizsnap:builder-draft:v${BUILDER_LOCAL_DRAFT_FORMAT_VERSION}:user-1:clabc123`,
     );
+  });
+});
+
+describe("clearBuilderDraftAndIndexEntry", () => {
+  beforeEach(() => {
+    const store = new Map<string, string>();
+    vi.stubGlobal("window", {
+      localStorage: {
+        getItem: (key: string) => store.get(key) ?? null,
+        setItem: (key: string, value: string) => {
+          store.set(key, value);
+        },
+        removeItem: (key: string) => {
+          store.delete(key);
+        },
+      },
+    } as unknown as Window & typeof globalThis);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("removes the draft payload and the index row for the scope", () => {
+    const userId = "u-clear";
+    const key = buildBuilderDraftKey(userId, "clrm");
+    const payload = createBuilderLocalDraftPayload({
+      quiz: { ...minimalQuiz, id: "clrm" },
+      timeLimitUi,
+      sourceRoute: "/builder/clrm",
+    });
+    saveBuilderDraft(key, payload, { userId, scope: "clrm" });
+    expect(window.localStorage.getItem(key)).toBeTruthy();
+    clearBuilderDraftAndIndexEntry(userId, "clrm");
+    expect(window.localStorage.getItem(key)).toBeNull();
+    const indexRaw = window.localStorage.getItem(buildBuilderDraftIndexKey(userId));
+    expect(indexRaw).toBeTruthy();
+    const parsed = parseBuilderDraftIndexJson(indexRaw!);
+    expect(parsed?.entries.some((e) => e.scope === "clrm")).toBe(false);
+  });
+});
+
+describe("parseBuilderDraftStorageKey", () => {
+  it("parses a valid key for scope new", () => {
+    const key = buildBuilderDraftKey("u1", "new");
+    expect(parseBuilderDraftStorageKey(key)).toEqual({ userId: "u1", scope: "new" });
+  });
+
+  it("parses a valid key for a quiz id scope", () => {
+    const key = buildBuilderDraftKey("u1", "clquiz1");
+    expect(parseBuilderDraftStorageKey(key)).toEqual({ userId: "u1", scope: "clquiz1" });
+  });
+
+  it("returns null for unknown prefix", () => {
+    expect(parseBuilderDraftStorageKey("other:key")).toBeNull();
+  });
+
+  it("returns null when tail has no scope segment", () => {
+    expect(
+      parseBuilderDraftStorageKey(`quizsnap:builder-draft:v${BUILDER_LOCAL_DRAFT_FORMAT_VERSION}:onlyuser`),
+    ).toBeNull();
+  });
+});
+
+describe("isBuilderDraftIndexEntryExpired", () => {
+  const staleIso = new Date(Date.now() - BUILDER_LOCAL_DRAFT_MAX_AGE_MS - 60_000).toISOString();
+  const freshIso = new Date().toISOString();
+
+  it("treats entries with no parseable activity timestamps as expired", () => {
+    expect(
+      isBuilderDraftIndexEntryExpired(
+        {
+          scope: "new",
+          draftKey: "k",
+          quizId: null,
+          quizName: "Q",
+          questionCount: 0,
+          savedAt: "not-a-date",
+          updatedAt: "also-bad",
+          targetRoute: "/builder",
+        },
+        Date.now(),
+      ),
+    ).toBe(true);
+  });
+
+  it("returns true when latest activity is older than the retention window", () => {
+    expect(
+      isBuilderDraftIndexEntryExpired(
+        {
+          scope: "cl1",
+          draftKey: "k",
+          quizId: "cl1",
+          quizName: "Q",
+          questionCount: 1,
+          savedAt: staleIso,
+          updatedAt: staleIso,
+          targetRoute: "/builder/cl1",
+        },
+        Date.now(),
+      ),
+    ).toBe(true);
+  });
+
+  it("returns false when updatedAt is within the retention window", () => {
+    expect(
+      isBuilderDraftIndexEntryExpired(
+        {
+          scope: "cl1",
+          draftKey: "k",
+          quizId: "cl1",
+          quizName: "Q",
+          questionCount: 1,
+          savedAt: staleIso,
+          updatedAt: freshIso,
+          targetRoute: "/builder/cl1",
+        },
+        Date.now(),
+      ),
+    ).toBe(false);
+  });
+});
+
+describe("isBuilderLocalDraftPayloadExpired", () => {
+  it("returns true when savedAt is not parseable", () => {
+    const payload = createBuilderLocalDraftPayload({
+      quiz: minimalQuiz,
+      timeLimitUi,
+      sourceRoute: "/builder",
+    });
+    expect(isBuilderLocalDraftPayloadExpired({ ...payload, savedAt: "x" }, Date.now())).toBe(true);
+  });
+
+  it("returns true when savedAt is older than the retention window", () => {
+    const staleIso = new Date(Date.now() - BUILDER_LOCAL_DRAFT_MAX_AGE_MS - 60_000).toISOString();
+    const payload = createBuilderLocalDraftPayload({
+      quiz: minimalQuiz,
+      timeLimitUi,
+      sourceRoute: "/builder",
+    });
+    expect(isBuilderLocalDraftPayloadExpired({ ...payload, savedAt: staleIso }, Date.now())).toBe(
+      true,
+    );
+  });
+
+  it("returns false for a freshly created payload", () => {
+    const payload = createBuilderLocalDraftPayload({
+      quiz: minimalQuiz,
+      timeLimitUi,
+      sourceRoute: "/builder",
+    });
+    expect(isBuilderLocalDraftPayloadExpired(payload, Date.now())).toBe(false);
   });
 });
 
@@ -304,5 +464,140 @@ describe("saveBuilderDraft", () => {
     expect(indexRaw).toBeTruthy();
     const parsed = parseBuilderDraftIndexJson(indexRaw as string);
     expect(parsed?.entries.some((e) => e.scope === "new")).toBe(true);
+  });
+});
+
+describe("loadBuilderDraftIndex", () => {
+  beforeEach(() => {
+    const store = new Map<string, string>();
+    vi.stubGlobal("window", {
+      localStorage: {
+        getItem: (key: string) => store.get(key) ?? null,
+        setItem: (key: string, value: string) => {
+          store.set(key, value);
+        },
+        removeItem: (key: string) => {
+          store.delete(key);
+        },
+      },
+    } as unknown as Window & typeof globalThis);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("drops expired index rows and removes their draft payloads from storage", () => {
+    const userId = "u-prune";
+    const staleIso = new Date(Date.now() - BUILDER_LOCAL_DRAFT_MAX_AGE_MS - 60_000).toISOString();
+    const staleKey = buildBuilderDraftKey(userId, "clstale");
+    const freshKey = buildBuilderDraftKey(userId, "clfresh");
+    const stalePayload = createBuilderLocalDraftPayload({
+      quiz: { ...minimalQuiz, id: "clstale" },
+      timeLimitUi,
+      sourceRoute: "/builder/clstale",
+    });
+    const freshPayload = createBuilderLocalDraftPayload({
+      quiz: { ...minimalQuiz, id: "clfresh" },
+      timeLimitUi,
+      sourceRoute: "/builder/clfresh",
+    });
+    window.localStorage.setItem(
+      staleKey,
+      JSON.stringify({ ...stalePayload, savedAt: staleIso }),
+    );
+    window.localStorage.setItem(freshKey, JSON.stringify(freshPayload));
+    window.localStorage.setItem(
+      buildBuilderDraftIndexKey(userId),
+      JSON.stringify({
+        formatVersion: BUILDER_DRAFT_INDEX_FORMAT_VERSION,
+        entries: [
+          {
+            scope: "clstale",
+            draftKey: staleKey,
+            quizId: "clstale",
+            quizName: "S",
+            questionCount: 1,
+            savedAt: staleIso,
+            updatedAt: staleIso,
+            targetRoute: "/builder/clstale",
+          },
+          {
+            scope: "clfresh",
+            draftKey: freshKey,
+            quizId: "clfresh",
+            quizName: "F",
+            questionCount: 1,
+            savedAt: freshPayload.savedAt,
+            updatedAt: freshPayload.savedAt,
+            targetRoute: "/builder/clfresh",
+          },
+        ],
+      }),
+    );
+
+    const out = loadBuilderDraftIndex(userId);
+    expect(out).toHaveLength(1);
+    expect(out[0]?.scope).toBe("clfresh");
+    expect(window.localStorage.getItem(staleKey)).toBeNull();
+    expect(window.localStorage.getItem(freshKey)).toBeTruthy();
+  });
+});
+
+describe("loadBuilderDraft", () => {
+  beforeEach(() => {
+    const store = new Map<string, string>();
+    vi.stubGlobal("window", {
+      localStorage: {
+        getItem: (key: string) => store.get(key) ?? null,
+        setItem: (key: string, value: string) => {
+          store.set(key, value);
+        },
+        removeItem: (key: string) => {
+          store.delete(key);
+        },
+      },
+    } as unknown as Window & typeof globalThis);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("returns null and clears storage when payload is past retention", () => {
+    const userId = "u-load";
+    const staleIso = new Date(Date.now() - BUILDER_LOCAL_DRAFT_MAX_AGE_MS - 60_000).toISOString();
+    const key = buildBuilderDraftKey(userId, "clgone");
+    const payload = createBuilderLocalDraftPayload({
+      quiz: { ...minimalQuiz, id: "clgone" },
+      timeLimitUi,
+      sourceRoute: "/builder",
+    });
+    window.localStorage.setItem(key, JSON.stringify({ ...payload, savedAt: staleIso }));
+    window.localStorage.setItem(
+      buildBuilderDraftIndexKey(userId),
+      JSON.stringify({
+        formatVersion: BUILDER_DRAFT_INDEX_FORMAT_VERSION,
+        entries: [
+          {
+            scope: "clgone",
+            draftKey: key,
+            quizId: "clgone",
+            quizName: "G",
+            questionCount: 1,
+            savedAt: staleIso,
+            updatedAt: staleIso,
+            targetRoute: "/builder/clgone",
+          },
+        ],
+      }),
+    );
+
+    expect(loadBuilderDraft(key)).toBeNull();
+    expect(window.localStorage.getItem(key)).toBeNull();
+    const indexRaw = window.localStorage.getItem(buildBuilderDraftIndexKey(userId));
+    expect(indexRaw).toBeTruthy();
+    const indexAfter = parseBuilderDraftIndexJson(indexRaw!);
+    expect(indexAfter?.entries ?? []).toHaveLength(0);
   });
 });

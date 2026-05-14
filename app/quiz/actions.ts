@@ -12,6 +12,7 @@ import type {
 } from "@/lib/quiz-session/quiz-session-types";
 import type { Quiz, QuizSettings } from "@/types/quiz";
 import type { Prisma } from "@prisma/client";
+import { resolveEffectiveShuffleSettings } from "@/lib/quiz/shuffleSettings";
 
 // Convert Quiz to session format
 function convertQuizToSession(quiz: Quiz): {
@@ -74,12 +75,32 @@ export async function startQuizAction(
 
     let publicQuestions: PublicQuestion[];
     let privateAnswers: PrivateAnswer[];
+    let sessionQuizSettings: QuizSettings = {
+      showAnswerImmediately: false,
+      randomizeQuestions: false,
+      randomizeOptions: false,
+      timeLimitPerQuestion: null,
+    };
 
     if (dbQuiz) {
-      const settings = (dbQuiz.settings as QuizSettings) || {
-        showAnswerImmediately: false,
-        randomizeQuestions: false,
-        timeLimitPerQuestion: null,
+      const rawSettings = (dbQuiz.settings ?? {}) as Record<string, unknown>;
+      const shuffle = resolveEffectiveShuffleSettings({
+        randomizeQuestions: Boolean(rawSettings.randomizeQuestions),
+        randomizeOptions:
+          typeof rawSettings.randomizeOptions === "boolean"
+            ? rawSettings.randomizeOptions
+            : undefined,
+      });
+      sessionQuizSettings = {
+        showAnswerImmediately: Boolean(rawSettings.showAnswerImmediately),
+        randomizeQuestions: shuffle.randomizeQuestions,
+        randomizeOptions: shuffle.randomizeOptions,
+        timeLimitPerQuestion:
+          typeof rawSettings.timeLimitPerQuestion === "number"
+            ? rawSettings.timeLimitPerQuestion
+            : rawSettings.timeLimitPerQuestion === null
+              ? null
+              : null,
       };
 
       // Convert DB quiz to session format
@@ -104,13 +125,11 @@ export async function startQuizAction(
         })),
       }));
 
-      // Randomize questions if enabled
-      if (settings.randomizeQuestions) {
+      if (sessionQuizSettings.randomizeQuestions) {
         questions = [...questions].sort(() => Math.random() - 0.5);
       }
 
-      // Randomize options for each question if enabled
-      if (settings.randomizeQuestions) {
+      if (sessionQuizSettings.randomizeOptions) {
         questions = questions.map((q) => ({
           ...q,
           options: [...q.options].sort(() => Math.random() - 0.5),
@@ -134,6 +153,26 @@ export async function startQuizAction(
         correctOptionIds: q.options.filter((opt: { id: string; label: string; isCorrect: boolean }) => opt.isCorrect).map((opt: { id: string; label: string; isCorrect: boolean }) => opt.id),
       }));
     } else {
+      if (quiz.settings) {
+        const shuffle = resolveEffectiveShuffleSettings({
+          randomizeQuestions: Boolean(quiz.settings.randomizeQuestions),
+          randomizeOptions:
+            typeof quiz.settings.randomizeOptions === "boolean"
+              ? quiz.settings.randomizeOptions
+              : undefined,
+        });
+        sessionQuizSettings = {
+          showAnswerImmediately: Boolean(quiz.settings.showAnswerImmediately),
+          randomizeQuestions: shuffle.randomizeQuestions,
+          randomizeOptions: shuffle.randomizeOptions,
+          timeLimitPerQuestion:
+            quiz.settings.timeLimitPerQuestion === null ||
+            typeof quiz.settings.timeLimitPerQuestion === "number"
+              ? quiz.settings.timeLimitPerQuestion
+              : null,
+        };
+      }
+
       // Use existing conversion for in-memory quizzes
       // Only convert if quiz has questions (complete Quiz object)
       if (quiz.questions && quiz.questions.length > 0) {
@@ -151,11 +190,7 @@ export async function startQuizAction(
       id: quizSessionId,
       quizId: dbQuiz?.id || quiz.id || "",
       title: dbQuiz?.name || (quiz as Partial<Quiz> & { id: string }).title || "",
-      settings: (dbQuiz?.settings as QuizSettings) || quiz.settings || {
-        showAnswerImmediately: false,
-        randomizeQuestions: false,
-        timeLimitPerQuestion: null,
-      },
+      settings: sessionQuizSettings,
       publicQuestions,
       privateAnswers,
       userAnswers: {},

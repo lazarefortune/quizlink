@@ -1,7 +1,10 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
+
+import { prisma } from "@/lib/prisma";
+import { playBlockedErrorCodeForQuizStatus } from "@/lib/quiz/quizActionErrorCodes";
+import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
 
 type SubmitAnswerResponse =
   | {
@@ -61,6 +64,13 @@ export async function submitAnswerForAttempt(
 
     if (attempt.status === "COMPLETED") {
       return { success: false, error: "Quiz already completed" };
+    }
+
+    const submitBlocked = playBlockedErrorCodeForQuizStatus(
+      attempt.quizLink.quiz.status as QuizLifecycleStatus,
+    );
+    if (submitBlocked) {
+      return { success: false, error: submitBlocked };
     }
 
     // Find the question
@@ -198,6 +208,13 @@ export async function finishQuizAttempt(
         correctAnswers,
         durationSec,
       };
+    }
+
+    const finishInProgressBlocked = playBlockedErrorCodeForQuizStatus(
+      attempt.quizLink.quiz.status as QuizLifecycleStatus,
+    );
+    if (finishInProgressBlocked) {
+      return { success: false, error: finishInProgressBlocked };
     }
 
     const finishedAt = new Date();
