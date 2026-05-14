@@ -35,6 +35,7 @@ describe("getAnonymousQuizPlayData", () => {
             type: "MULTIPLE_CHOICE",
             label: "Q1",
             image: null,
+            imageKey: null,
             explanation: null,
             order: 0,
             options: [
@@ -83,6 +84,7 @@ const anonymousLinkQuizFixture = {
         type: "MULTIPLE_CHOICE",
         label: "Question one",
         image: null,
+        imageKey: null,
         explanation: "Because science",
         order: 0,
         options: [
@@ -95,6 +97,7 @@ const anonymousLinkQuizFixture = {
         type: "MULTIPLE_CHOICE",
         label: "Question two",
         image: null,
+        imageKey: null,
         explanation: null,
         order: 1,
         options: [

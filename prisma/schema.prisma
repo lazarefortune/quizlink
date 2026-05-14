@@ -149,6 +149,7 @@ model Question {
   type        String // MULTIPLE_CHOICE | CHECKBOX | TRUE_FALSE
   label       String       @db.Text
   image       String?      @db.LongText
+  imageKey    String?      @map("image_key") @db.VarChar(512)
   explanation String?      @db.Text // Shown when user gets the question wrong
   order       Int // Order within the quiz
   options     Option[]

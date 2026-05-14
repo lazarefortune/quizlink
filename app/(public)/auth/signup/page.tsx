@@ -122,7 +122,7 @@ export default function SignUpPage() {
                 variants={authFormItemVariants}
                 className="mb-6 flex flex-col gap-2"
               >
-                <h1 className="font-heading text-3xl font-fredoka font-black tracking-tight text-foreground text-balance">
+                <h1 className="font-heading text-3xl font-fredoka font-semibold tracking-tight text-foreground text-balance">
                   {t(locale, "auth.signUp.title")}
                 </h1>
                 <p className="text-base leading-relaxed text-muted-foreground">
@@ -246,7 +246,7 @@ export default function SignUpPage() {
                   />
                   <Label
                     htmlFor="signup-legal"
-                    className="cursor-pointer text-sm font-normal leading-snug text-foreground"
+                    className="cursor-pointer normal-case text-sm font-normal leading-snug text-foreground"
                   >
                     {t(locale, "auth.signUp.legalIntro")}
                     <Link

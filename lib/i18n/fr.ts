@@ -475,9 +475,17 @@ export const fr = {
     savePayloadHeavyConfirm:
       "Ton quiz est très lourd, surtout à cause des images. L'enregistrement peut échouer.\n\nSouhaites-tu continuer quand même ?",
     questionImageTooLarge:
-      "Cette image est trop lourde (max. 2 Mo). Choisis une image plus légère ou compresse-la.",
+      "Cette image est trop lourde, même après optimisation automatique. Essaie une image plus légère.",
     quizSaved: "Quiz sauvegardé avec succès",
     quizCreated: "Quiz créé avec succès",
+    localDraftModalTitle: "Un brouillon non sauvegardé a été trouvé.",
+    localDraftModalDescription: "Dernière sauvegarde locale : {date}",
+    localDraftRestore: "Restaurer",
+    localDraftIgnore: "Ignorer",
+    localDraftStorageWarning:
+      "Impossible d'enregistrer le brouillon local (mémoire pleine ou quota). Ton travail reste dans l'éditeur tant que tu ne fermes pas l'onglet.",
+    localDraftRestoredToast: "Brouillon local restauré.",
+    saveErrorDraftKept: "Ton brouillon est conservé sur cet appareil.",
     linkCreated: "Lien créé",
     previewError: "Erreur lors de la préparation de l'aperçu",
     question: "Question",
@@ -498,6 +506,8 @@ export const fr = {
     replaceImage: "Remplacer",
     removeImage: "Supprimer l'image",
     imageLoading: "Chargement de l'image…",
+    questionImageImporting: "Import de l'image…",
+    questionImageUploadFailed: "Impossible d'importer l'image. Réessaie.",
     answerOptions: "Options de Réponse",
     addOption: "Ajouter une Option",
     optionPlaceholder: "Option {number}",
@@ -722,6 +732,14 @@ export const fr = {
       createManuallyTitle: "Créer manuellement",
       createManuallySubtitle: "Ajoute tes questions une par une.",
       continue: "Continuer",
+    },
+    localDraft: {
+      cardTitle: "Brouillon non sauvegardé",
+      cardDescription: "Tu as commencé un quiz sans l'enregistrer.",
+      cardMeta: "{questionCount} question(s) · sauvegardé {relativeTime}",
+      continue: "Continuer",
+      delete: "Supprimer",
+      untitledQuiz: "Quiz sans titre",
     },
     sidebar: {
       overview: "Accueil",

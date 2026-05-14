@@ -47,6 +47,7 @@ type QuizLink = {
       type: string;
       label: string;
       image: string | null;
+      imageKey?: string | null;
       order: number;
       options: Array<{
         id: string;

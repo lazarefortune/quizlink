@@ -4,6 +4,7 @@ export type PublicQuestion = {
   type: "MCQ" | "TRUE_FALSE" | "CHECKBOX";
   label: string;
   image?: string;
+  imageKey?: string;
   options: PublicQuestionOption[];
 };
 

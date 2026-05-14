@@ -107,6 +107,7 @@ export type QuizContentQuestion = {
   type: string;
   label: string;
   image: string | null;
+  imageKey: string | null;
   explanation: string | null;
   options: Array<{ id: string; label: string; isCorrect: boolean }>;
 };
@@ -152,6 +153,7 @@ export async function getQuizContent(
             type: true,
             label: true,
             image: true,
+            imageKey: true,
             explanation: true,
             options: {
               select: { id: true, label: true, isCorrect: true },
@@ -176,6 +178,7 @@ export async function getQuizContent(
           type: q.type,
           label: q.label,
           image: q.image,
+          imageKey: q.imageKey,
           explanation: q.explanation,
           options: q.options.map((o) => ({
             id: o.id,

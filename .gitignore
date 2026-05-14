@@ -45,3 +45,6 @@ next-env.d.ts
 node_modules
 
 TODO.md
+
+# Local question image uploads (see QUESTION_IMAGE_UPLOAD_DIR)
+/storage/question-images/

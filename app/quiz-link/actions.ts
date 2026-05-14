@@ -332,11 +332,12 @@ export async function getQuizLinkByToken(
           name: quizLink.quiz.name,
           visibility: quizLink.quiz.visibility,
           settings: quizLink.quiz.settings as Record<string, unknown>,
-          questions: quizLink.quiz.questions.map((q: { id: string; type: string; label: string; image: string | null; order: number; options: Array<{ id: string; label: string; isCorrect: boolean }> }) => ({
+          questions: quizLink.quiz.questions.map((q: { id: string; type: string; label: string; image: string | null; imageKey: string | null; order: number; options: Array<{ id: string; label: string; isCorrect: boolean }> }) => ({
             id: q.id,
             type: q.type,
             label: q.label,
             image: q.image,
+            imageKey: q.imageKey,
             order: q.order,
             options: q.options.map((opt: { id: string; label: string; isCorrect: boolean }) =>
               quizLink.participantId

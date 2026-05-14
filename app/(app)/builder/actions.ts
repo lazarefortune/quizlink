@@ -78,7 +78,8 @@ export async function saveQuiz(quiz: QuizBuilder, quizId?: string) {
               create: quiz.questions.map((q, index) => ({
                 type: q.type,
                 label: q.label,
-                image: q.image || null,
+                image: q.imageKey ? null : (q.image || null),
+                imageKey: q.imageKey || null,
                 explanation: q.explanation?.trim() || null,
                 order: index,
                 options: {
@@ -113,7 +114,8 @@ export async function saveQuiz(quiz: QuizBuilder, quizId?: string) {
           create: quiz.questions.map((q, index) => ({
             type: q.type,
             label: q.label,
-            image: q.image || null,
+            image: q.imageKey ? null : (q.image || null),
+            imageKey: q.imageKey || null,
             explanation: q.explanation?.trim() || null,
             order: index,
             options: {
@@ -270,6 +272,7 @@ export async function getUserQuizzes() {
           type: q.type as "MULTIPLE_CHOICE" | "CHECKBOX" | "TRUE_FALSE",
           label: q.label,
           image: q.image || undefined,
+          imageKey: q.imageKey || undefined,
           options: q.options.map((opt) => ({
             id: opt.id,
             label: opt.label,

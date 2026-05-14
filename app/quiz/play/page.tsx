@@ -28,6 +28,7 @@ import { t } from "@/lib/i18n";
 import { startQuizAction, submitAnswerAction, getResultsAction } from "@/app/quiz/actions";
 import type { PublicQuestion } from "@/lib/quiz-session/quiz-session-types";
 import type { Quiz } from "@/types/quiz";
+import { getQuestionImageSrc } from "@/lib/question-image-src";
 
 type AnswerState = {
   questionId: string;
@@ -348,6 +349,10 @@ function QuizPlayPageContent() {
   }
 
   const currentQuestion = questions[currentQuestionIndex];
+  const currentQuestionImageSrc = getQuestionImageSrc({
+    image: currentQuestion.image,
+    imageKey: currentQuestion.imageKey,
+  });
   const currentAnswer = answers.find((a) => a.questionId === currentQuestion.id);
   const showAnswerImmediately = settings?.showAnswerImmediately ?? false;
   const isVerified = currentAnswer?.isVerified ?? false;
@@ -426,16 +431,17 @@ function QuizPlayPageContent() {
 
         <Card>
           <CardHeader>
-            {currentQuestion.image && (
+            {currentQuestionImageSrc ? (
               <div className="mb-4 relative w-full h-64">
                 <Image
-                  src={currentQuestion.image}
+                  src={currentQuestionImageSrc}
                   alt="Question"
                   fill
                   className="object-contain rounded-md border"
+                  unoptimized
                 />
               </div>
-            )}
+            ) : null}
             <CardTitle className="text-xl">
               {currentQuestion.label}
             </CardTitle>

@@ -110,7 +110,7 @@ export function LegalConsentModal({ needsLegalConsent }: LegalConsentModalProps)
           />
           <Label
             htmlFor="legal-consent-checkbox"
-            className="cursor-pointer text-xs font-normal leading-snug text-foreground sm:text-sm"
+            className="cursor-pointer normal-case text-xs font-normal leading-snug text-foreground sm:text-sm"
           >
             {t(locale, "auth.signUp.legalIntro")}
             <Link

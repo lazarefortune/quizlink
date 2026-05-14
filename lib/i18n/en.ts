@@ -474,9 +474,17 @@ export const en = {
     savePayloadHeavyConfirm:
       "Your quiz is very large, mostly because of images. Saving may fail.\n\nDo you want to continue anyway?",
     questionImageTooLarge:
-      "This image is too large (max 2 MB). Choose a smaller image or compress it.",
+      "This image is still too large after automatic optimization. Try a lighter image.",
     quizSaved: "Quiz saved successfully",
     quizCreated: "Quiz created successfully",
+    localDraftModalTitle: "An unsaved local draft was found.",
+    localDraftModalDescription: "Last local save: {date}",
+    localDraftRestore: "Restore",
+    localDraftIgnore: "Discard",
+    localDraftStorageWarning:
+      "Could not save a local draft (storage full or quota). Your work stays in the editor until you close the tab.",
+    localDraftRestoredToast: "Local draft restored.",
+    saveErrorDraftKept: "Your draft is kept on this device.",
     linkCreated: "Link created",
     previewError: "Error preparing preview",
     question: "Question",
@@ -497,6 +505,8 @@ export const en = {
     replaceImage: "Replace",
     removeImage: "Remove image",
     imageLoading: "Loading image…",
+    questionImageImporting: "Importing image…",
+    questionImageUploadFailed: "Could not upload the image. Try again.",
     answerOptions: "Answer Options",
     addOption: "Add Option",
     optionPlaceholder: "Option {number}",
@@ -721,6 +731,14 @@ export const en = {
       createManuallyTitle: "Create manually",
       createManuallySubtitle: "Add your questions one by one.",
       continue: "Continue",
+    },
+    localDraft: {
+      cardTitle: "Unsaved draft",
+      cardDescription: "You started a quiz without saving it.",
+      cardMeta: "{questionCount} question(s) · saved {relativeTime}",
+      continue: "Continue",
+      delete: "Discard",
+      untitledQuiz: "Untitled quiz",
     },
     sidebar: {
       overview: "Home",

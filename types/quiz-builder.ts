@@ -14,7 +14,10 @@ export type Question = {
   id: string;
   type: QuestionType;
   label: string;
+  /** Legacy: data URL or remote URL while migrating to imageKey + served URL */
   image?: string;
+  /** Storage object key (local path segments or future S3 key) */
+  imageKey?: string;
   /** Shown when the user gets the question wrong (results page) */
   explanation?: string;
   options: QuestionOption[];

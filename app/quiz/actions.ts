@@ -23,6 +23,7 @@ function convertQuizToSession(quiz: Quiz): {
     type: q.type,
     label: q.question,
     image: q.image,
+    imageKey: q.imageKey,
     options: q.choices.map((choice, index) => ({
       id: `opt-${q.id}-${index}`,
       label: choice,
@@ -82,12 +83,20 @@ export async function startQuizAction(
       };
 
       // Convert DB quiz to session format
-      type DbQuestion = { id: string; type: string; label: string; image: string | null; options: Array<{ id: string; label: string; isCorrect: boolean }> };
+      type DbQuestion = {
+        id: string;
+        type: string;
+        label: string;
+        image: string | null;
+        imageKey: string | null;
+        options: Array<{ id: string; label: string; isCorrect: boolean }>;
+      };
       let questions = dbQuiz.questions.map((q: DbQuestion) => ({
         id: q.id,
         type: q.type as "MCQ" | "TRUE_FALSE" | "CHECKBOX",
         label: q.label,
         image: q.image || undefined,
+        imageKey: q.imageKey || undefined,
         options: q.options.map((opt: { id: string; label: string; isCorrect: boolean }) => ({
           id: opt.id,
           label: opt.label,
@@ -113,6 +122,7 @@ export async function startQuizAction(
         type: q.type,
         label: q.label,
         image: q.image,
+        imageKey: q.imageKey,
         options: q.options.map((opt: { id: string; label: string; isCorrect: boolean }) => ({
           id: opt.id,
           label: opt.label,

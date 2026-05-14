@@ -41,6 +41,7 @@ import type { Locale } from "@/lib/i18n";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { buildQuestionLabelPreview } from "@/lib/question-label-preview";
+import { getQuestionImageSrc } from "@/lib/question-image-src";
 import type { Question, QuestionType } from "@/types/quiz-builder";
 
 type BuilderOrganizeQuestionsListProps = {
@@ -108,7 +109,7 @@ function SortableOrganizeRow({
   const preview = buildQuestionLabelPreview(question.label || "", PREVIEW_MAX_LEN);
   const optionCount = question.options.length;
   const displayPreview = preview || t(locale, "builder.organizeEmptyQuestionPreview");
-  const imageSrc = question.image?.trim() ?? "";
+  const imageSrc = getQuestionImageSrc(question) ?? "";
 
   return (
     <div

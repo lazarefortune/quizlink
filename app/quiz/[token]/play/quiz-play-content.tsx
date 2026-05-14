@@ -26,6 +26,7 @@ import { Clock, X } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { getQuestionImageSrc } from "@/lib/question-image-src";
 import {
   submitAnswerForAttempt,
   finishQuizAttempt,
@@ -40,6 +41,7 @@ type Question = {
   type: string;
   label: string;
   image: string | null;
+  imageKey: string | null;
   order: number;
   explanation: string | null;
   options: Array<{
@@ -412,6 +414,10 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
   }
 
   const currentQuestion = questions[currentQuestionIndex];
+  const currentQuestionImageSrc = getQuestionImageSrc({
+    image: currentQuestion.image,
+    imageKey: currentQuestion.imageKey,
+  });
   const currentAnswer = answers.find((a) => a.questionId === currentQuestion.id);
   const showAnswerImmediately = settings?.showAnswerImmediately ?? false;
   const isVerified = currentAnswer?.isVerified ?? false;
@@ -513,16 +519,17 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
 
         <Card>
           <CardHeader>
-            {currentQuestion.image && (
+            {currentQuestionImageSrc ? (
               <div className="mb-4 relative w-full h-64">
                 <Image
-                  src={currentQuestion.image}
+                  src={currentQuestionImageSrc}
                   alt="Question"
                   fill
                   className="object-contain rounded-md border"
+                  unoptimized
                 />
               </div>
-            )}
+            ) : null}
             <CardTitle className="text-xl">{currentQuestion.label}</CardTitle>
             <CardDescription>{getQuestionDescription()}</CardDescription>
           </CardHeader>

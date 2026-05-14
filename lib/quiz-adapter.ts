@@ -21,6 +21,7 @@ export function adaptQuizBuilderToPlayer(quizBuilder: QuizBuilder): Quiz {
         choices,
         correctAnswer: correctIndex >= 0 ? correctIndex : 0,
         image: q.image,
+        imageKey: q.imageKey,
       };
     } else if (q.type === "CHECKBOX") {
       const correctIndices = options
@@ -34,6 +35,7 @@ export function adaptQuizBuilderToPlayer(quizBuilder: QuizBuilder): Quiz {
         choices,
         correctAnswer: correctIndices.length > 0 ? correctIndices : [0],
         image: q.image,
+        imageKey: q.imageKey,
       };
     } else {
       const correctIndex = options.findIndex((opt) => opt.isCorrect);
@@ -45,6 +47,7 @@ export function adaptQuizBuilderToPlayer(quizBuilder: QuizBuilder): Quiz {
         choices,
         correctAnswer: correctIndex >= 0 ? correctIndex : 0,
         image: q.image,
+        imageKey: q.imageKey,
       };
     }
   });

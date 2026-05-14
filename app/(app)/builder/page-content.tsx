@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useLayoutEffect } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, AlertCircle, ChevronDown, Play, Save } from "lucide-react";
+import { Plus, ChevronDown, Play, Save } from "lucide-react";
 import { QuizMenu } from "@/components/quiz-menu";
 import { getQuizById } from "@/app/(app)/dashboard/actions";
 import { saveQuiz } from "@/app/(app)/builder/actions";
@@ -17,6 +17,14 @@ import { track } from "@/lib/analytics/track";
 import { QUIZ_CREATED } from "@/lib/analytics/events";
 import { buildCommonEventProps } from "@/lib/analytics/props";
 import { useSession } from "next-auth/react";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/components/ui/toast";
 import { QuestionEditor } from "@/components/quiz-builder/question-editor";
 import {
@@ -28,7 +36,6 @@ import {
 import {
   buildQuizSettingsWithResolvedTimeLimit,
   deriveTimeLimitUiFromSettings,
-  resolvePersistedTimeLimit,
   type BuilderTimeLimitUi,
 } from "@/lib/time-limit-seconds";
 import { useLocale } from "@/lib/i18n/use-locale";
@@ -57,33 +64,19 @@ import { isSaveQuizPayloadTooLargeError } from "@/lib/builder/isSaveQuizPayloadT
 import {
   QUIZ_SAVE_PAYLOAD_WARN_BYTES,
 } from "@/lib/builder/quizPayloadLimits";
+import {
+  buildBuilderDraftKey,
+  clearBuilderDraftAndIndexEntry,
+  createBuilderLocalDraftPayload,
+  getBuilderDraftStorageScope,
+  loadBuilderDraft,
+  saveBuilderDraft,
+  shouldOfferBuilderLocalDraftRestore,
+  type BuilderLocalDraftPayload,
+} from "@/lib/builder/builderLocalDraft";
+import { computeQuizBuilderSnapshot } from "@/lib/builder/quizBuilderSnapshot";
 
 type BuilderViewMode = "edit" | "organize";
-
-function computeQuizBuilderSnapshot(q: QuizBuilder, timeLimitUi: BuilderTimeLimitUi): string {
-  return JSON.stringify({
-    id: q.id,
-    name: q.name,
-    visibility: q.visibility,
-    settings: {
-      ...q.settings,
-      timeLimitPerQuestion: resolvePersistedTimeLimit(q.settings, timeLimitUi),
-    },
-    timeLimitUi,
-    questions: q.questions.map((question) => ({
-      id: question.id,
-      type: question.type,
-      label: question.label,
-      explanation: question.explanation ?? "",
-      image: question.image ?? "",
-      options: question.options.map((o) => ({
-        id: o.id,
-        label: o.label,
-        isCorrect: o.isCorrect,
-      })),
-    })),
-  });
-}
 
 function loadInitialQuiz(): QuizBuilder {
   if (typeof window !== "undefined") {
@@ -149,6 +142,7 @@ type BuilderEditQuestionItemProps = {
   onChange: (updatedQuestion: Question) => void;
   onDelete: () => void;
   errors: string[];
+  quizIdForImageUpload: string | null;
   isNewlyAdded?: boolean;
   isRemoving?: boolean;
   onAnimationEnd?: () => void;
@@ -163,6 +157,7 @@ function BuilderEditQuestionItem({
   onChange,
   onDelete,
   errors,
+  quizIdForImageUpload,
   isNewlyAdded = false,
   isRemoving = false,
   onAnimationEnd,
@@ -213,6 +208,7 @@ function BuilderEditQuestionItem({
             onMoveUp={() => {}}
             onMoveDown={() => {}}
             errors={errors}
+            quizIdForImageUpload={quizIdForImageUpload}
           />
         </div>
       </motion.div>
@@ -226,10 +222,12 @@ type BuilderPageContentProps = {
 
 export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = {}) {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const urlQuizId = initialQuizId ?? searchParams.get("quizId");
   const { locale } = useLocale();
-  useSession();
+  const { data: session } = useSession();
+  const userId = session?.user?.id;
   const [quiz, setQuiz] = useState<QuizBuilder>(() => getInitialQuiz());
   const [timeLimitUi, setTimeLimitUi] = useState<BuilderTimeLimitUi>(() =>
     deriveTimeLimitUiFromSettings(getInitialQuiz().settings),
@@ -244,12 +242,25 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
   const previousQuestionCountRef = useRef(quiz.questions.length);
   const [newlyAddedQuestionId, setNewlyAddedQuestionId] = useState<string | null>(null);
   const [removingQuestionId, setRemovingQuestionId] = useState<string | null>(null);
-  const [, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [savedQuizId, setSavedQuizId] = useState<string | null>(null);
+  const quizIdForImageUpload = savedQuizId ?? urlQuizId ?? null;
   const [builderViewMode, setBuilderViewMode] = useState<BuilderViewMode>("edit");
   const [scrollToQuestionId, setScrollToQuestionId] = useState<string | null>(null);
   const unsavedBaselineRef = useRef<string | null>(null);
+  const quizRef = useRef(quiz);
+  const timeLimitUiRef = useRef(timeLimitUi);
+  const userIdRef = useRef<string | undefined>(undefined);
+  const urlQuizIdRef = useRef<string | null>(null);
+  const savedQuizIdRef = useRef<string | null>(null);
+  const hasCapturedHydratedBaselineForDraftRef = useRef(false);
+  const previousUrlQuizIdForDraftModalRef = useRef<string | null | undefined>(undefined);
+  const localDraftStorageToastShownRef = useRef(false);
+  const [localDraftModalOpen, setLocalDraftModalOpen] = useState(false);
+  const [localDraftPayload, setLocalDraftPayload] = useState<BuilderLocalDraftPayload | null>(
+    null,
+  );
   const builderMainScrollRef = useRef<HTMLElement | null>(null);
   const { showToast } = useToast();
   const {
@@ -257,6 +268,40 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
     runNavigationBypass,
     requestNavigate,
   } = useBuilderNavigationGuard();
+
+  useLayoutEffect(() => {
+    quizRef.current = quiz;
+    timeLimitUiRef.current = timeLimitUi;
+    userIdRef.current = userId;
+    urlQuizIdRef.current = urlQuizId;
+    savedQuizIdRef.current = savedQuizId;
+  }, [quiz, timeLimitUi, userId, urlQuizId, savedQuizId]);
+
+  const clearCurrentLocalBuilderDraft = useCallback(() => {
+    if (!userId) {
+      return;
+    }
+    const scope = getBuilderDraftStorageScope({ urlQuizId, savedQuizId });
+    clearBuilderDraftAndIndexEntry(userId, scope);
+  }, [userId, urlQuizId, savedQuizId]);
+
+  const handleDismissLocalDraftModal = useCallback(() => {
+    clearCurrentLocalBuilderDraft();
+    setLocalDraftModalOpen(false);
+    setLocalDraftPayload(null);
+  }, [clearCurrentLocalBuilderDraft]);
+
+  const handleRestoreLocalDraft = useCallback(() => {
+    if (!localDraftPayload) {
+      return;
+    }
+    setQuiz(localDraftPayload.quiz);
+    setTimeLimitUi(localDraftPayload.timeLimitUi);
+    clearCurrentLocalBuilderDraft();
+    setLocalDraftModalOpen(false);
+    setLocalDraftPayload(null);
+    showToast(t(locale, "builder.localDraftRestoredToast"), "success");
+  }, [localDraftPayload, clearCurrentLocalBuilderDraft, locale, showToast]);
 
   const syncDirtyToGuard = useCallback(() => {
     if (unsavedBaselineRef.current === null) {
@@ -303,6 +348,78 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
   const isQuizSaved = savedQuizId !== null || Boolean(quiz.id?.startsWith("cl"));
 
   useEffect(() => {
+    if (previousUrlQuizIdForDraftModalRef.current === undefined) {
+      previousUrlQuizIdForDraftModalRef.current = urlQuizId;
+      hasCapturedHydratedBaselineForDraftRef.current = false;
+      return;
+    }
+    if (previousUrlQuizIdForDraftModalRef.current === urlQuizId) {
+      return;
+    }
+    hasCapturedHydratedBaselineForDraftRef.current = false;
+    queueMicrotask(() => {
+      setLocalDraftModalOpen(false);
+      setLocalDraftPayload(null);
+    });
+    previousUrlQuizIdForDraftModalRef.current = urlQuizId;
+  }, [urlQuizId]);
+
+  useEffect(() => {
+    if (!userId) {
+      return;
+    }
+    if (isLoading) {
+      return;
+    }
+    if (unsavedBaselineRef.current === null) {
+      return;
+    }
+
+    const wantsRestoreDraft =
+      searchParams.get("restoreDraft") === "1" ||
+      searchParams.get("restoreDraft") === "true";
+
+    if (wantsRestoreDraft) {
+      hasCapturedHydratedBaselineForDraftRef.current = false;
+    }
+
+    if (hasCapturedHydratedBaselineForDraftRef.current) {
+      return;
+    }
+
+    hasCapturedHydratedBaselineForDraftRef.current = true;
+    const baseline = unsavedBaselineRef.current;
+    const scope = getBuilderDraftStorageScope({
+      urlQuizId,
+      savedQuizId,
+    });
+    const key = buildBuilderDraftKey(userId, scope);
+    const draft = loadBuilderDraft(key);
+    const shouldOpenModal =
+      draft !== null &&
+      (shouldOfferBuilderLocalDraftRestore(draft, baseline) || wantsRestoreDraft);
+    if (shouldOpenModal) {
+      setLocalDraftModalOpen(true);
+      setLocalDraftPayload(draft);
+    }
+  }, [userId, isLoading, urlQuizId, savedQuizId, searchParams]);
+
+  useEffect(() => {
+    if (!localDraftModalOpen) {
+      return;
+    }
+    const flag = searchParams.get("restoreDraft");
+    if (flag !== "1" && flag !== "true") {
+      return;
+    }
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("restoreDraft");
+    const queryString = params.toString();
+    const nextPath = queryString ? `${pathname}?${queryString}` : pathname;
+    router.replace(nextPath);
+  }, [localDraftModalOpen, searchParams, pathname, router]);
+
+  useEffect(() => {
     const urlQuizId = initialQuizId || searchParams.get("quizId");
     if (!urlQuizId && unsavedBaselineRef.current === null) {
       unsavedBaselineRef.current = computeQuizBuilderSnapshot(quiz, timeLimitUi);
@@ -323,11 +440,12 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
               name: result.quiz.name,
               visibility: result.quiz.visibility,
               settings: result.quiz.settings as QuizSettings,
-              questions: result.quiz.questions.map((q: { id: string; type: string; label: string; image?: string; explanation?: string; options: { id: string; label: string; isCorrect: boolean }[] }) => ({
+              questions: result.quiz.questions.map((q: { id: string; type: string; label: string; image?: string; imageKey?: string; explanation?: string; options: { id: string; label: string; isCorrect: boolean }[] }) => ({
                 id: q.id,
                 type: q.type as QuestionType,
                 label: q.label,
                 image: q.image,
+                imageKey: q.imageKey,
                 explanation: q.explanation ?? undefined,
                 options: q.options.map((opt: { id: string; label: string; isCorrect: boolean }) => ({
                   id: opt.id,
@@ -374,13 +492,86 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
     }
 
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      const baseline = unsavedBaselineRef.current;
+      const currentQuiz = quizRef.current;
+      const currentUi = timeLimitUiRef.current;
+      const currentUserId = userIdRef.current;
+      if (
+        currentUserId &&
+        baseline !== null &&
+        computeQuizBuilderSnapshot(currentQuiz, currentUi) !== baseline
+      ) {
+        const scope = getBuilderDraftStorageScope({
+          urlQuizId: urlQuizIdRef.current,
+          savedQuizId: savedQuizIdRef.current,
+        });
+        const key = buildBuilderDraftKey(currentUserId, scope);
+        const sourceRoute =
+          typeof window !== "undefined"
+            ? `${window.location.pathname}${window.location.search}`
+            : pathname;
+        saveBuilderDraft(
+          key,
+          createBuilderLocalDraftPayload({
+            quiz: currentQuiz,
+            timeLimitUi: currentUi,
+            sourceRoute,
+          }),
+          { userId: currentUserId, scope },
+        );
+      }
       event.preventDefault();
       event.returnValue = "";
     };
 
     window.addEventListener("beforeunload", onBeforeUnload);
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
-  }, [quiz, timeLimitUi]);
+  }, [quiz, timeLimitUi, pathname]);
+
+  useEffect(() => {
+    if (!userId) {
+      return;
+    }
+    const intervalMs = 8000;
+    const id = window.setInterval(() => {
+      const baseline = unsavedBaselineRef.current;
+      if (baseline === null) {
+        return;
+      }
+      const currentQuiz = quizRef.current;
+      const currentUi = timeLimitUiRef.current;
+      const currentUserId = userIdRef.current;
+      if (!currentUserId) {
+        return;
+      }
+      if (computeQuizBuilderSnapshot(currentQuiz, currentUi) === baseline) {
+        return;
+      }
+      const scope = getBuilderDraftStorageScope({
+        urlQuizId: urlQuizIdRef.current,
+        savedQuizId: savedQuizIdRef.current,
+      });
+      const key = buildBuilderDraftKey(currentUserId, scope);
+      const sourceRoute =
+        typeof window !== "undefined"
+          ? `${window.location.pathname}${window.location.search}`
+          : "";
+      const result = saveBuilderDraft(
+        key,
+        createBuilderLocalDraftPayload({
+          quiz: currentQuiz,
+          timeLimitUi: currentUi,
+          sourceRoute,
+        }),
+        { userId: currentUserId, scope },
+      );
+      if (!result.ok && !localDraftStorageToastShownRef.current) {
+        localDraftStorageToastShownRef.current = true;
+        showToast(t(locale, "builder.localDraftStorageWarning"), "warning");
+      }
+    }, intervalMs);
+    return () => window.clearInterval(id);
+  }, [userId, locale, showToast]);
 
   useEffect(() => {
     if (builderViewMode !== "edit" || scrollToQuestionId === null) {
@@ -427,12 +618,34 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
       }
     }
 
+    const draftHint = `\n${t(locale, "builder.saveErrorDraftKept")}`;
     setIsSaving(true);
     try {
       const isExistingQuiz = isQuizSaved;
       const result = await saveQuiz(quizToSave, savedQuizId || undefined);
 
       if (result.success) {
+        const clearLocalDraftsAfterServerSuccess = (quizIdForKeys: string | undefined) => {
+          if (!userId) {
+            return;
+          }
+          const scopes = new Set<string>();
+          scopes.add("new");
+          if (quizIdForKeys) {
+            scopes.add(quizIdForKeys);
+          }
+          if (savedQuizId) {
+            scopes.add(savedQuizId);
+          }
+          if (urlQuizId) {
+            scopes.add(urlQuizId);
+          }
+          for (const scopeRaw of scopes) {
+            const scope = scopeRaw === "new" ? "new" : scopeRaw;
+            clearBuilderDraftAndIndexEntry(userId, scope);
+          }
+        };
+
         const mergedQuiz: QuizBuilder =
           result.quizId !== undefined ? { ...quizToSave, id: result.quizId } : quizToSave;
         const normalizedTimeLimitUi = deriveTimeLimitUiFromSettings(mergedQuiz.settings);
@@ -471,6 +684,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
                 mergedQuiz,
                 normalizedTimeLimitUi,
               );
+              clearLocalDraftsAfterServerSuccess(result.quizId);
               runNavigationBypass(() => {
                 setBuilderHasUnsavedChanges(false);
                 router.push(buildQuizSuccessPath(result.quizId));
@@ -492,16 +706,17 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
           ? t(locale, "builder.quizSaved")
           : t(locale, "builder.quizCreated");
 
+        clearLocalDraftsAfterServerSuccess(result.quizId ?? mergedQuiz.id);
         showToast(message, "success");
       } else {
-        showToast(result.error || t(locale, "builder.saveError"), "error");
+        showToast(`${result.error || t(locale, "builder.saveError")}${draftHint}`, "error");
       }
     } catch (error) {
       console.error("Error saving quiz:", error);
       if (isSaveQuizPayloadTooLargeError(error)) {
-        showToast(t(locale, "builder.saveErrorPayloadTooLarge"), "error");
+        showToast(`${t(locale, "builder.saveErrorPayloadTooLarge")}${draftHint}`, "error");
       } else {
-        showToast(t(locale, "builder.saveError"), "error");
+        showToast(`${t(locale, "builder.saveError")}${draftHint}`, "error");
       }
     } finally {
       setIsSaving(false);
@@ -602,8 +817,54 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
 
   const prefersReducedMotion = useReducedMotion();
 
+  const localDraftFormattedSavedAt =
+    localDraftPayload !== null
+      ? new Intl.DateTimeFormat(locale === "fr" ? "fr-FR" : "en-US", {
+          dateStyle: "medium",
+          timeStyle: "short",
+        }).format(new Date(localDraftPayload.savedAt))
+      : "";
+
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-background w-full">
+    <>
+      <AlertDialog
+        open={localDraftModalOpen}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) {
+            handleDismissLocalDraftModal();
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t(locale, "builder.localDraftModalTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t(locale, "builder.localDraftModalDescription", {
+                date: localDraftFormattedSavedAt,
+              })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-full sm:w-auto"
+              onClick={handleDismissLocalDraftModal}
+            >
+              {t(locale, "builder.localDraftIgnore")}
+            </Button>
+            <Button
+              type="button"
+              variant="blue"
+              className="w-full sm:w-auto"
+              onClick={handleRestoreLocalDraft}
+            >
+              {t(locale, "builder.localDraftRestore")}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <div className="flex min-h-0 flex-1 flex-col bg-background w-full">
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row lg:items-stretch">
         {/* Desktop: options sidebar */}
         <aside className="relative z-10 hidden w-full shrink-0 border-r border-border/60 bg-muted/30 lg:flex lg:w-80 lg:flex-col lg:overflow-y-auto">
@@ -805,6 +1066,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
                             }
                             onDelete={() => handleDeleteQuestion(index)}
                             errors={getQuestionErrors(index)}
+                            quizIdForImageUpload={quizIdForImageUpload}
                             isNewlyAdded={newlyAddedQuestionId === question.id}
                             isRemoving={removingQuestionId === question.id}
                             onAnimationEnd={() => setNewlyAddedQuestionId(null)}
@@ -867,6 +1129,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
         ) : null}
       </div>
     </div>
+    </>
   );
 }
 

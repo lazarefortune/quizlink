@@ -42,6 +42,9 @@ import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { useToast } from "@/components/ui/toast";
 import { isQuestionImageFileOverMaxSize } from "@/lib/builder/quizPayloadLimits";
+import { compressQuestionImageForUpload, isCompressedQuestionImageWithinUploadLimit } from "@/lib/builder/compressQuestionImageForUpload";
+import { getQuestionImageSrc } from "@/lib/question-image-src";
+import { uploadQuestionImageAction } from "@/app/(app)/builder/image-actions";
 import type { Question, QuestionType, QuestionOption } from "@/types/quiz-builder";
 import { cn } from "@/lib/utils";
 import { Label } from "../ui/label";
@@ -58,6 +61,7 @@ type QuestionEditorProps = {
   onMoveUp: () => void;
   onMoveDown: () => void;
   errors?: string[];
+  quizIdForImageUpload?: string | null;
 };
 
 export function QuestionEditor({
@@ -69,12 +73,13 @@ export function QuestionEditor({
   onMoveUp: _onMoveUp,
   onMoveDown: _onMoveDown,
   errors = [],
+  quizIdForImageUpload = null,
 }: QuestionEditorProps) {
   const { locale } = useLocale();
   const { showToast } = useToast();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(
-    question.image || null
+    () => getQuestionImageSrc(question),
   );
   const [isImageLoading, setIsImageLoading] = useState(false);
   const [activeFormats, setActiveFormats] = useState({
@@ -119,10 +124,10 @@ export function QuestionEditor({
   }, [question.label]);
 
   useEffect(() => {
-    const src = question.image?.trim() ?? "";
-    setImagePreview(src.length > 0 ? question.image ?? null : null);
+    const resolved = getQuestionImageSrc(question);
+    setImagePreview(resolved);
     setIsImageLoading(false);
-  }, [question.id, question.image]);
+  }, [question.id, question.image, question.imageKey]);
 
   useEffect(() => {
     const handleSelectionChange = () => {
@@ -172,7 +177,7 @@ export function QuestionEditor({
     requestAnimationFrame(updateFormatState);
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) {
@@ -185,23 +190,40 @@ export function QuestionEditor({
     }
 
     setIsImageLoading(true);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setIsImageLoading(false);
-      if (reader.error) {
+    try {
+      const prepared = await compressQuestionImageForUpload(file);
+      if (!isCompressedQuestionImageWithinUploadLimit(prepared.blob)) {
+        showToast(t(locale, "builder.questionImageTooLarge"), "error", 6500);
         return;
       }
-      const imageUrl = reader.result as string;
-      setImagePreview(imageUrl);
+
+      const formData = new FormData();
+      formData.set("file", prepared.blob, prepared.suggestedFileName);
+      if (quizIdForImageUpload?.trim()) {
+        formData.set("quizId", quizIdForImageUpload.trim());
+      }
+
+      const result = await uploadQuestionImageAction(formData);
+      if (!result.success) {
+        showToast(
+          result.error || t(locale, "builder.questionImageUploadFailed"),
+          "error",
+          6500,
+        );
+        return;
+      }
+
+      setImagePreview(result.imageUrl);
       onChange({
         ...question,
-        image: imageUrl,
+        imageKey: result.imageKey,
+        image: undefined,
       });
-    };
-    reader.onerror = () => {
+    } catch {
+      showToast(t(locale, "builder.questionImageUploadFailed"), "error", 6500);
+    } finally {
       setIsImageLoading(false);
-    };
-    reader.readAsDataURL(file);
+    }
   };
 
   const handleRemoveImage = () => {
@@ -210,6 +232,7 @@ export function QuestionEditor({
     onChange({
       ...question,
       image: undefined,
+      imageKey: undefined,
     });
   };
 
@@ -471,7 +494,7 @@ export function QuestionEditor({
                         aria-hidden
                       />
                       <span className="text-center text-xs font-medium text-muted-foreground">
-                        {t(locale, "builder.imageLoading")}
+                        {t(locale, "builder.questionImageImporting")}
                       </span>
                     </div>
                   ) : null}
@@ -515,7 +538,7 @@ export function QuestionEditor({
                     aria-hidden
                   />
                   <span className="px-2 text-center text-xs font-medium text-muted-foreground">
-                    {t(locale, "builder.imageLoading")}
+                    {t(locale, "builder.questionImageImporting")}
                   </span>
                 </div>
               ) : (

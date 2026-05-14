@@ -215,11 +215,12 @@ export async function getQuizById(quizId: string) {
         name: quiz.name,
         visibility: quiz.visibility as "PRIVATE" | "PUBLIC",
         settings: quiz.settings as Prisma.InputJsonValue,
-        questions: quiz.questions.map((q: { id: string; type: string; label: string; image: string | null; explanation: string | null; options: { id: string; label: string; isCorrect: boolean }[] }) => ({
+        questions: quiz.questions.map((q: { id: string; type: string; label: string; image: string | null; imageKey: string | null; explanation: string | null; options: { id: string; label: string; isCorrect: boolean }[] }) => ({
           id: q.id,
           type: q.type as "MULTIPLE_CHOICE" | "CHECKBOX" | "TRUE_FALSE",
           label: q.label,
           image: q.image || undefined,
+          imageKey: q.imageKey || undefined,
           explanation: q.explanation ?? undefined,
           options: q.options.map((opt: { id: string; label: string; isCorrect: boolean }) => ({
             id: opt.id,
@@ -304,7 +305,8 @@ export async function updateQuiz(quizId: string, quiz: QuizBuilder) {
               create: quiz.questions.map((q, index) => ({
                 type: q.type,
                 label: q.label,
-                image: q.image || null,
+                image: q.imageKey ? null : (q.image || null),
+                imageKey: q.imageKey || null,
                 explanation: q.explanation?.trim() || null,
                 order: index,
                 options: {
@@ -459,10 +461,11 @@ export async function duplicateQuiz(quizId: string) {
         visibility: originalQuiz.visibility,
         settings: originalQuiz.settings as Prisma.InputJsonValue,
         questions: {
-          create: originalQuiz.questions.map((q: { type: string; label: string; image: string | null; order: number; options: Array<{ label: string; isCorrect: boolean }> }) => ({
+          create: originalQuiz.questions.map((q: { type: string; label: string; image: string | null; imageKey: string | null; order: number; options: Array<{ label: string; isCorrect: boolean }> }) => ({
             type: q.type,
             label: q.label,
-            image: q.image,
+            image: q.imageKey ? null : (q.image || null),
+            imageKey: q.imageKey || null,
             order: q.order,
             options: {
               create: q.options.map((opt: { label: string; isCorrect: boolean }) => ({

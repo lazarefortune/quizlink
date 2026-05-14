@@ -1,15 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { Sparkles, PenLine } from "lucide-react";
 
-import { useLocale } from "@/lib/i18n/use-locale";
+import { BuilderLocalDraftCard } from "@/components/builder/BuilderLocalDraftCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 
 export default function DashboardCreatePage() {
   const { locale } = useLocale();
+  const { data: session } = useSession();
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
@@ -22,6 +25,8 @@ export default function DashboardCreatePage() {
             {t(locale, "dashboard.create.subtitle")}
           </p>
         </header>
+
+        {session?.user?.id ? <BuilderLocalDraftCard userId={session.user.id} /> : null}
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Card className="border-2 border-border bg-card shadow-sm">

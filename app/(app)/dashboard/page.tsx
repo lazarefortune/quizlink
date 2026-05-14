@@ -27,6 +27,7 @@ import { useToast } from "@/components/ui/toast";
 import { track } from "@/lib/analytics/track";
 import { PARTICIPANT_INVITED } from "@/lib/analytics/events";
 import { buildCommonEventProps } from "@/lib/analytics/props";
+import { BuilderLocalDraftCard } from "@/components/builder/BuilderLocalDraftCard";
 import {
   resolveDashboardWelcomeGreetingKey,
   type DashboardWelcomeGreetingKey,
@@ -196,6 +197,16 @@ export default function DashboardPage() {
             )}
           </p>
         </motion.div>
+
+        {session?.user?.id ? (
+          <motion.div
+            initial={fadeIn.initial}
+            animate={fadeIn.animate}
+            transition={fadeIn.transition(0.05)}
+          >
+            <BuilderLocalDraftCard userId={session.user.id} />
+          </motion.div>
+        ) : null}
 
         {isLoading && (
           <div className="space-y-6">

@@ -10,6 +10,7 @@ export type Question = {
   choices: string[];
   correctAnswer: number | number[];
   image?: string;
+  imageKey?: string;
 };
 
 export type QuizSettings = {

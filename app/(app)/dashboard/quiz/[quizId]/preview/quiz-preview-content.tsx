@@ -14,6 +14,7 @@ import { PARTICIPANT_INVITED } from "@/lib/analytics/events";
 import { buildCommonEventProps } from "@/lib/analytics/props";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t, type Locale } from "@/lib/i18n";
+import { getQuestionImageSrc } from "@/lib/question-image-src";
 import { useToast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -221,17 +222,26 @@ export function QuizPreviewContent({
 
               <p className="text-base font-semibold text-foreground sm:text-lg">{question.label}</p>
 
-              {question.image && (
+              {(() => {
+                const imageSrc = getQuestionImageSrc({
+                  image: question.image,
+                  imageKey: question.imageKey,
+                });
+                if (!imageSrc) {
+                  return null;
+                }
+                return (
                 <div className="mt-4 overflow-hidden rounded-lg border border-border">
                   <Image
-                    src={question.image}
+                    src={imageSrc}
                     alt={question.label}
                     width={1200}
                     height={675}
                     className="h-auto w-full object-cover"
                   />
                 </div>
-              )}
+                );
+              })()}
 
               <ul className="mt-4 space-y-2">
                 {question.options.map((option) => (

@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { isSelectionCorrect } from "@/lib/anonymous-quiz-scoring";
+import { getQuestionImageSrc } from "@/lib/question-image-src";
 
 export type AnonymousQuizOptionPublic = {
   id: string;
@@ -13,6 +14,7 @@ export type AnonymousQuizQuestionPublic = {
   type: string;
   label: string;
   image: string | null;
+  imageKey: string | null;
   explanation: string | null;
   order: number;
   options: AnonymousQuizOptionPublic[];
@@ -99,6 +101,7 @@ export async function getAnonymousQuizPlayData(
         type: q.type,
         label: q.label,
         image: q.image,
+        imageKey: q.imageKey,
         explanation: q.explanation,
         order: q.order,
         options: q.options.map((opt) => ({
@@ -322,7 +325,10 @@ export async function validateAnonymousQuizAnswers(
       details.push({
         questionId: question.id,
         questionLabel: question.label,
-        questionImage: question.image,
+        questionImage: getQuestionImageSrc({
+          image: question.image,
+          imageKey: question.imageKey,
+        }),
         isCorrect,
         selectedOptionIds: filtered,
         selectedOptionLabels,
