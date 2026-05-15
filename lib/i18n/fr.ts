@@ -436,8 +436,8 @@ export const fr = {
   builder: {
     title: "Créateur de Quiz",
     subtitle: "Crée et personnalise ton quiz manuellement",
-    defaultDraftName: "Nouveau quiz",
     finalizeQuiz: "Terminer le quiz",
+    finalizeQuizShort: "Terminer",
     finalizingQuiz: "Finalisation…",
     blockingSaveTitle: "Enregistrement du quiz…",
     blockingSaveDescription: "Garde cet onglet ouvert.",
@@ -519,8 +519,8 @@ export const fr = {
       leaveWithoutSaving: "Quitter sans sauvegarder",
     },
     createQuiz: "Créer le Quiz",
-    saveNow: "Enregistrer maintenant",
-    saveChanges: "Enregistrer les modifications",
+    saveNow: "Enregistrer",
+    saveChanges: "Enregistrer",
     saveQuiz: "Sauvegarder",
     saveError: "Erreur lors de la sauvegarde du quiz",
     saveErrorPayloadTooLarge:
@@ -541,6 +541,7 @@ export const fr = {
     saveErrorDraftKept: "Ton brouillon est conservé sur cet appareil.",
     saveStatus: {
       draftSaved: "Brouillon enregistré",
+      draftSavedShort: "Enregistré",
       saving: "Enregistrement…",
       pending: "En attente",
       saveError: "Erreur d'enregistrement",

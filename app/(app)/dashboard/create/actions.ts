@@ -5,22 +5,17 @@ import type { Prisma } from "@prisma/client";
 
 import { auth } from "@/lib/auth";
 import { DEFAULT_MANUAL_QUIZ_BUILDER_SETTINGS } from "@/lib/builder/defaultManualQuizSettings";
-import { t, type Locale } from "@/lib/i18n";
 import { prisma } from "@/lib/prisma";
 
 export type CreateDraftQuizResult =
   | { success: true; quizId: string }
   | { success: false; error: string };
 
-function normalizeLocale(locale: unknown): Locale {
-  return locale === "en" ? "en" : "fr";
-}
-
 /**
  * Creates an empty manual quiz (DRAFT) for the signed-in user, then the client redirects to `/builder/{quizId}`.
  */
 export async function createDraftQuizAction(
-  localeInput: unknown = "fr"
+  _localeInput: unknown = "fr"
 ): Promise<CreateDraftQuizResult> {
   try {
     if (!prisma) {
@@ -31,9 +26,6 @@ export async function createDraftQuizAction(
     if (!session?.user?.id) {
       return { success: false, error: "You must be logged in" };
     }
-
-    const locale = normalizeLocale(localeInput);
-    const name = t(locale, "builder.defaultDraftName");
 
     const reusableEmptyDraft = await prisma.quiz.findFirst({
       where: {
@@ -51,7 +43,7 @@ export async function createDraftQuizAction(
         await prisma.quiz.create({
           data: {
             ownerId: session.user.id,
-            name,
+            name: "",
             visibility: "PRIVATE",
             status: "DRAFT",
             settings: DEFAULT_MANUAL_QUIZ_BUILDER_SETTINGS as Prisma.InputJsonValue,

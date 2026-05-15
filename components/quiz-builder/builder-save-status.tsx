@@ -155,17 +155,47 @@ export function BuilderSaveStatus({
     return null;
   }
 
+  const hideOnMobile =
+    kind === "server_idle" ||
+    kind === "server_saved_flash" ||
+    kind === "server_saved_recent" ||
+    kind === "server_idle_manual";
+
+  const isDraftSavedLine =
+    primaryKey === "builder.saveStatus.draftSaved";
+
   return (
     <div
-      className="w-full rounded-md border border-border/50 bg-muted/20 px-2.5 py-2 sm:max-w-md sm:border-0 sm:bg-transparent sm:px-0 sm:py-0"
+      className={cn(
+        "w-full rounded-md border border-border/50 bg-muted/20 px-2.5 py-2 sm:max-w-md sm:border-0 sm:bg-transparent sm:px-0 sm:py-0",
+        hideOnMobile && "hidden sm:block",
+      )}
       role="status"
       aria-live="polite"
     >
-      <div className="flex items-center justify-end gap-2">
+      <div
+        className={cn(
+          "flex items-center gap-2",
+          isDraftSavedLine
+            ? "justify-center sm:justify-end"
+            : "justify-end",
+        )}
+      >
         <StatusIcon kind={kind} />
-        <p className="text-xs font-medium leading-snug text-foreground/90 sm:text-sm">
-          {t(locale, primaryKey)}
-        </p>
+        {isDraftSavedLine ? (
+          <p className="text-xs font-medium leading-snug text-foreground/90 sm:text-sm">
+            <span className="sm:hidden">
+              {t(locale, "builder.saveStatus.draftSavedShort")}
+            </span>
+            <span className="hidden sm:inline">
+              {t(locale, "builder.saveStatus.draftSaved")}
+            </span>
+          </p>
+        ) : (
+          <p className="text-xs font-medium leading-snug text-foreground/90 sm:text-sm">
+            {t(locale, primaryKey)}
+          </p>
+        )}
       </div>
     </div>
   );

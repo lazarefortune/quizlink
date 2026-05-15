@@ -9,7 +9,7 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, ChevronDown, Save, CheckCircle2 } from "lucide-react";
+import { Plus, ChevronDown, Save, CheckCircle2, Loader2, SlidersHorizontal } from "lucide-react";
 import { QuizMenu } from "@/components/quiz-menu";
 import { QuizStatusBadge } from "@/components/quiz/quiz-status-badge";
 import { getQuizById } from "@/app/(app)/dashboard/actions";
@@ -255,12 +255,9 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
     deriveTimeLimitUiFromSettings(getInitialQuiz().settings),
   );
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
-  const [mobileQuizOptionsOpen, setMobileQuizOptionsOpen] = useState(() => {
-    if (urlQuizId) {
-      return false;
-    }
-    return getInitialQuiz().questions.length === 0;
-  });
+  const [mobileQuizOptionsOpen, setMobileQuizOptionsOpen] = useState(
+    () => getInitialQuiz().questions.length === 0,
+  );
   const previousQuestionCountRef = useRef(quiz.questions.length);
   const [newlyAddedQuestionId, setNewlyAddedQuestionId] = useState<string | null>(null);
   const [removingQuestionId, setRemovingQuestionId] = useState<string | null>(null);
@@ -397,17 +394,10 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
       nextCount,
     );
     if (resolved !== null) {
-      const shouldSkipAutoClose =
-        resolved === false &&
-        prev === 0 &&
-        nextCount > 0 &&
-        hasQuizOptionsPanelErrors(validationErrors);
-      if (!shouldSkipAutoClose) {
-        setMobileQuizOptionsOpen(resolved);
-      }
+      setMobileQuizOptionsOpen(resolved);
     }
     previousQuestionCountRef.current = nextCount;
-  }, [quiz.questions.length, validationErrors]);
+  }, [quiz.questions.length]);
 
   // Check if quiz exists in database (ID starts with "cl" for Prisma cuid)
   const isQuizSaved = savedQuizId !== null || Boolean(quiz.id?.startsWith("cl"));
@@ -1467,20 +1457,26 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
             onOpenChange={setMobileQuizOptionsOpen}
           >
             <CollapsibleTrigger
+              title={t(
+                locale,
+                mobileQuizOptionsOpen
+                  ? "builder.optionsMobileHintOpen"
+                  : "builder.optionsMobileHintClosed",
+              )}
               className={cn(
                 "flex w-full items-center justify-between gap-3 px-4 py-3 text-left outline-none transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 [&[data-state=open]>svg]:rotate-180",
                 !prefersReducedMotion && "duration-300 ease-out",
               )}
             >
-              <div className="min-w-0">
-                <p className="text-base font-semibold leading-tight">{t(locale, "builder.optionsTitle")}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {t(
-                    locale,
-                    mobileQuizOptionsOpen
-                      ? "builder.optionsMobileHintOpen"
-                      : "builder.optionsMobileHintClosed",
-                  )}
+              <div className="min-w-0 flex-1">
+                <p className="flex items-center gap-2 truncate text-lg font-semibold leading-snug sm:text-xl">
+                  <SlidersHorizontal
+                    className="h-5 w-5 shrink-0 text-muted-foreground"
+                    aria-hidden
+                  />
+                  <span className="min-w-0 truncate">
+                    {t(locale, "builder.quizSettings")}
+                  </span>
                 </p>
               </div>
               <ChevronDown
@@ -1532,9 +1528,19 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
           <div className="w-full min-w-0 max-w-none px-3 pt-3 pb-10 sm:px-4 sm:pt-4 sm:pb-12 md:px-6 md:pt-6 md:pb-16">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
               <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                <h1 className="text-lg sm:text-xl md:text-2xl font-bold h1">{t(locale, "builder.title")}</h1>
+                <h1 className="hidden text-lg font-bold h1 sm:block sm:text-xl md:text-2xl">
+                  {t(locale, "builder.title")}
+                </h1>
                 {displayedEditorialStatus !== null ? (
-                  <QuizStatusBadge status={displayedEditorialStatus} locale={locale} />
+                  <QuizStatusBadge
+                    status={displayedEditorialStatus}
+                    locale={locale}
+                    className={
+                      displayedEditorialStatus === "DRAFT"
+                        ? "hidden sm:inline-flex"
+                        : undefined
+                    }
+                  />
                 ) : null}
                 {quiz.questions.length > 0 && (
                   <Badge variant="secondary" className="text-xs sm:text-sm">
@@ -1543,23 +1549,36 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
                 )}
               </div>
               <div className="flex w-full flex-col items-stretch gap-1 sm:w-auto sm:items-end">
-                <div className="flex w-full items-center gap-2 sm:w-auto">
+                <div className="flex w-full min-w-0 flex-row items-center justify-end gap-1.5 sm:gap-2 md:w-auto">
                   {serverQuizStatus === "ARCHIVED" ? null : serverQuizStatus === "DRAFT" &&
                     savedQuizId ? (
                     <>
                       <Button
-                        variant="outline"
+                        variant="outlineBlue"
                         onClick={handleSave}
                         disabled={
-                          quiz.questions.length === 0 || isSaving || isFinalizingDraft
+                          isSaving ||
+                          isFinalizingDraft ||
+                          !isDirtyVersusBaseline
                         }
-                        className="flex-1 sm:flex-initial text-base relative"
+                        aria-label={
+                          isSaving
+                            ? t(locale, "builder.saveStatus.saving")
+                            : t(locale, "builder.saveNow")
+                        }
+                        className="relative shrink-0 w-auto"
                         size="default"
                       >
-                        <Save className="h-3 w-3 sm:h-4 sm:w-4" />
-                        {isSaving
-                          ? t(locale, "common.loading")
-                          : t(locale, "builder.saveNow")}
+                        {isSaving ? (
+                          <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+                        ) : (
+                          <Save className="h-4 w-4 shrink-0" />
+                        )}
+                        <span className="inline">
+                          {isSaving
+                            ? t(locale, "common.loading")
+                            : t(locale, "builder.saveNow")}
+                        </span>
                         {validationErrors.length > 0 && (
                           <Badge
                             className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs bg-destructive text-destructive-foreground border-destructive"
@@ -1573,30 +1592,30 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
                         variant="blue"
                         onClick={handleFinalizeDraft}
                         disabled={isSaving || isFinalizingDraft}
-                        className="flex-1 sm:flex-initial text-base gap-1.5"
+                        aria-label={
+                          isFinalizingDraft
+                            ? t(locale, "builder.finalizingQuiz")
+                            : t(locale, "builder.finalizeQuiz")
+                        }
+                        className="min-w-0 shrink gap-1.5 px-3 text-xs md:px-5 md:text-sm"
                         size="default"
                       >
-                        <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4" />
-                        {isFinalizingDraft
-                          ? t(locale, "builder.finalizingQuiz")
-                          : t(locale, "builder.finalizeQuiz")}
+                        <CheckCircle2 className="h-4 w-4 shrink-0" />
+                        <span className="min-w-0 md:hidden">
+                          {isFinalizingDraft
+                            ? t(locale, "builder.finalizingQuiz")
+                            : t(locale, "builder.finalizeQuizShort")}
+                        </span>
+                        <span className="hidden min-w-0 md:inline">
+                          {isFinalizingDraft
+                            ? t(locale, "builder.finalizingQuiz")
+                            : t(locale, "builder.finalizeQuiz")}
+                        </span>
                       </Button>
                     </>
                   ) : (
-                    <Button
-                      variant="blue"
-                      onClick={handleSave}
-                      disabled={
-                        quiz.questions.length === 0 ||
-                        isSaving ||
-                        isFinalizingDraft ||
-                        (serverQuizStatus === "ACTIVE" && !isDirtyVersusBaseline)
-                      }
-                      className="flex-1 sm:flex-initial text-base relative"
-                      size="default"
-                    >
-                      <Save className="h-3 w-3 sm:h-4 sm:w-4" />
-                      {(() => {
+                    (() => {
+                      const saveToolbarLabel = (() => {
                         if (isSaving) {
                           return t(locale, "common.loading");
                         }
@@ -1607,7 +1626,27 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
                           return t(locale, "builder.saveChanges");
                         }
                         return t(locale, "builder.saveQuiz");
-                      })()}
+                      })();
+                      return (
+                    <Button
+                      variant="blue"
+                      onClick={handleSave}
+                      disabled={
+                        isSaving ||
+                        isFinalizingDraft ||
+                        (baselineSnapshotForUi !== null &&
+                          !isDirtyVersusBaseline)
+                      }
+                      aria-label={saveToolbarLabel}
+                      className="relative h-11 w-11 min-w-0 shrink-0 px-0 md:h-11 md:w-auto md:px-5"
+                      size="default"
+                    >
+                      {isSaving ? (
+                        <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+                      ) : (
+                        <Save className="h-4 w-4 shrink-0" />
+                      )}
+                      <span className="hidden min-w-0 md:inline">{saveToolbarLabel}</span>
                       {validationErrors.length > 0 && (
                         <Badge
                           className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs bg-destructive text-destructive-foreground border-destructive"
@@ -1616,17 +1655,21 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
                         </Badge>
                       )}
                     </Button>
+                      );
+                    })()
                   )}
-                  {isQuizSaved && savedQuizId && (
-                    <QuizMenu
-                      quizId={savedQuizId}
-                      quizName={quiz.name}
-                      quizStatus={serverQuizStatus ?? "DRAFT"}
-                      onDeleted={() => {
-                        requestNavigate("/dashboard");
-                      }}
-                    />
-                  )}
+                  {isQuizSaved && savedQuizId ? (
+                    <div className="flex shrink-0">
+                      <QuizMenu
+                        quizId={savedQuizId}
+                        quizName={quiz.name}
+                        quizStatus={serverQuizStatus ?? "DRAFT"}
+                        onDeleted={() => {
+                          requestNavigate("/dashboard");
+                        }}
+                      />
+                    </div>
+                  ) : null}
                 </div>
                 <BuilderSaveStatus
                   locale={locale}

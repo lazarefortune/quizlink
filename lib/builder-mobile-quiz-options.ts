@@ -1,7 +1,6 @@
 /**
- * Mobile builder: quiz options collapsible should be open when there are no questions
- * (user sets title/settings first) and close once at least one question exists
- * (focus on the question list). Re-open if all questions are removed.
+ * Mobile builder: options collapsible is open when there are no questions (name + settings first),
+ * closes when the user adds the first question, and re-opens if all questions are removed again.
  */
 export function resolveMobileQuizOptionsOpenAfterQuestionCountChange(
   previousQuestionCount: number,

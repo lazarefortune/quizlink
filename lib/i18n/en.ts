@@ -436,8 +436,8 @@ export const en = {
   builder: {
     title: "Quiz Builder",
     subtitle: "Create and customize your quiz manually",
-    defaultDraftName: "New quiz",
     finalizeQuiz: "Finish quiz",
+    finalizeQuizShort: "Finish",
     finalizingQuiz: "Finalizing…",
     blockingSaveTitle: "Saving your quiz…",
     blockingSaveDescription: "Please keep this tab open.",
@@ -540,6 +540,7 @@ export const en = {
     saveErrorDraftKept: "Your draft is kept on this device.",
     saveStatus: {
       draftSaved: "Draft saved",
+      draftSavedShort: "Saved",
       saving: "Saving…",
       pending: "Pending",
       saveError: "Save error",

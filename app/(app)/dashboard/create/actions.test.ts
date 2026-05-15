@@ -57,7 +57,7 @@ describe("createDraftQuizAction", () => {
         visibility: "PRIVATE",
         status: "DRAFT",
         settings: DEFAULT_MANUAL_QUIZ_BUILDER_SETTINGS,
-        name: expect.any(String) as string,
+        name: "",
       }),
     });
   });

@@ -84,6 +84,7 @@ export function BuilderQuizOptionsFields({
                 setValidationErrors((prev) => prev.filter((err) => err.field !== "name"));
               }}
               required
+              placeholder={t(locale, "builder.quizNamePlaceholder")}
               className={cn(
                 "text-base",
                 getNameError() ? "border-destructive focus-visible:border-destructive" : "",
