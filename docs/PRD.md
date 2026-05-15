@@ -1,4 +1,8 @@
-📘 PRD — QuizLink
+# PRD — QuizLink
+
+> **Note :** Ce document décrit la vision produit initiale. Certains éléments ont évolué depuis (ex : Stripe est intégré, les quiz n’ont pas de lien expirant en 24h par défaut). Pour l’état actuel de l’app, voir [STRUCTURE-APP.md](STRUCTURE-APP.md) et [ARCHITECTURE.md](ARCHITECTURE.md).
+
+---
 
 QuizLink permet de générer automatiquement des quiz à partir de ressources (texte, PDF, audio…) et de les partager via un lien temporaire (24h).
 Pour conserver, modifier ou réutiliser les quiz, l’utilisateur crée un compte.

@@ -39,7 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-.cursor
 .vscode
 .idea
 node_modules
@@ -48,3 +47,7 @@ TODO.md
 
 # Local question image uploads (see QUESTION_IMAGE_UPLOAD_DIR)
 /storage/question-images/
+
+# IA
+.cursor
+.claude
