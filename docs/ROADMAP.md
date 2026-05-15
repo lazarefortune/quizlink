@@ -36,7 +36,7 @@
 - [ ] En cas d’erreur sur le formulaire de création : faire défiler jusqu’à la première erreur
 - [ ] Améliorer le champ de durée du quiz (minutes et secondes séparées)
 - [ ] Autofocus sur le champ nom du quiz lors d’une nouvelle création
-- [ ] Sauvegarde automatique du quiz
+- [x] Sauvegarde automatique du quiz
 - [ ] Améliorer la barre d’outils du textarea des quiz
 
 ## À faire — Qualité, spam & contact
