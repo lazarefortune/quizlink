@@ -79,6 +79,7 @@ import type {
 } from "@/types/quiz-builder";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BuilderMobileOrganizeTabPanel } from "@/components/quiz-builder/builder-mobile-organize-tab-panel";
+import { BuilderMobileStickyTabsBar } from "@/components/quiz-builder/builder-mobile-sticky-tabs-bar";
 import { BuilderOrganizeQuestionsList } from "@/components/quiz-builder/builder-organize-questions-list";
 import { BuilderQuestionNavigator } from "@/components/quiz-builder/builder-question-navigator";
 import { BuilderQuizSettingsSheet } from "@/components/quiz-builder/builder-quiz-settings-sheet";
@@ -1981,11 +1982,11 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
                 />
               ) : null}
             </div>
-            <div
-              ref={builderMainScrollRef}
-              className="overflow-x-hidden px-3 pb-10 pt-3 sm:px-4 sm:pb-12 sm:pt-4 md:px-6 md:pb-16 md:pt-6 lg:builder-scrollbar lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:scroll-pt-4"
-            >
-              {quiz.questions.length === 0 ? (
+            {quiz.questions.length === 0 ? (
+              <div
+                ref={builderMainScrollRef}
+                className="px-3 pb-10 pt-3 sm:px-4 sm:pb-12 sm:pt-4 md:px-6 md:pb-16 md:pt-6 lg:builder-scrollbar lg:min-h-0 lg:flex-1 lg:overflow-x-hidden lg:overflow-y-auto lg:scroll-pt-4"
+              >
                 <Card>
                   <CardContent className="py-8 sm:py-12 text-center">
                     <p className="text-base text-muted-foreground mb-4">
@@ -2002,19 +2003,28 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
                     </Button>
                   </CardContent>
                 </Card>
-              ) : (
-                <Tabs
-                  value={builderTabsValue}
-                  onValueChange={(value) => {
-                    const nextMode = value as BuilderViewMode;
-                    if (nextMode === "organize") {
-                      setOrganizePanelAnimationKey((key) => key + 1);
-                    }
-                    setBuilderViewMode(nextMode);
-                  }}
-                  className="w-full min-w-0"
+              </div>
+            ) : (
+              <Tabs
+                value={builderTabsValue}
+                onValueChange={(value) => {
+                  const nextMode = value as BuilderViewMode;
+                  if (nextMode === "organize") {
+                    setOrganizePanelAnimationKey((key) => key + 1);
+                  }
+                  setBuilderViewMode(nextMode);
+                }}
+                className="flex w-full min-w-0 flex-col"
+              >
+                <BuilderMobileStickyTabsBar
+                  className={cn(
+                    "mb-4 w-full bg-muted/10 px-3 py-1 backdrop-blur-sm lg:hidden",
+                    "supports-[backdrop-filter]:bg-muted/80",
+                    "border-b border-border/40",
+                    "sm:px-4 md:px-6",
+                  )}
                 >
-                  <TabsList className="mb-4 grid h-auto w-full grid-cols-2 lg:hidden">
+                  <TabsList className="mb-0 grid h-auto w-full grid-cols-2">
                     <TabsTrigger value="edit" className="text-base">
                       {t(locale, "builder.viewModeEdit")}
                     </TabsTrigger>
@@ -2022,6 +2032,11 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
                       {t(locale, "builder.viewModeOrganize")}
                     </TabsTrigger>
                   </TabsList>
+                </BuilderMobileStickyTabsBar>
+                <div
+                  ref={builderMainScrollRef}
+                  className="px-3 pb-10 sm:px-4 sm:pb-12 md:px-6 md:pb-16 lg:builder-scrollbar lg:min-h-0 lg:flex-1 lg:overflow-x-hidden lg:overflow-y-auto lg:scroll-pt-4 lg:pt-6"
+                >
                   <TabsContent value="edit" className="mt-0 w-full min-w-0 outline-none">
                     <div className="w-full min-w-0 space-y-3">
                       {quiz.questions.map((question, index) => (
@@ -2084,23 +2099,20 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
                       />
                     </BuilderMobileOrganizeTabPanel>
                   </TabsContent>
-                </Tabs>
-              )}
-
-              {quiz.questions.length > 0 && (
-                <div className="mt-4 flex justify-center">
-                  <Button
-                    variant="blue"
-                    onClick={() => handleAddQuestion()}
-                    size="default"
-                    className="text-base mb-10"
-                  >
-                    <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
-                    {t(locale, "builder.addQuestion")}
-                  </Button>
+                  <div className="mt-4 flex justify-center">
+                    <Button
+                      variant="blue"
+                      onClick={() => handleAddQuestion()}
+                      size="default"
+                      className="text-base mb-10"
+                    >
+                      <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
+                      {t(locale, "builder.addQuestion")}
+                    </Button>
+                  </div>
                 </div>
-              )}
-            </div>
+              </Tabs>
+            )}
             {quiz.questions.length > 0 ? (
               <BuilderBackToTopButton
                 scrollContainerRef={builderMainScrollRef}

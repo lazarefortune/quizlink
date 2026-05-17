@@ -18,7 +18,7 @@ export type CreateDraftQuizResult =
 
 /**
  * Creates or reuses an empty manual quiz (DRAFT) for the signed-in user; the client redirects to `/builder/{quizId}`.
- * Requires a non-empty trimmed quiz name (collected in the create flow before calling this action).
+ * Requires a non-empty trimmed quiz name (default title is applied client-side when the user skips naming).
  */
 export async function createDraftQuizAction(
   localeInput: unknown = "fr",

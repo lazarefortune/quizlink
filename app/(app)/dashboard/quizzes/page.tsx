@@ -18,7 +18,6 @@ import {
   getUserQuizzesPaginated,
   type UserQuizListItem,
 } from "@/app/(app)/builder/actions";
-import { CreateManualQuizNameDialog } from "@/components/dashboard/create-manual-quiz-name-dialog";
 import { useCreateManualServerDraft } from "@/components/dashboard/use-create-manual-server-draft";
 import { QuizStatusBadge } from "@/components/quiz/quiz-status-badge";
 import { deleteQuiz } from "@/app/(app)/dashboard/actions";
@@ -88,13 +87,8 @@ function CreateQuizModalTrigger({
   size?: "sm" | "default";
 }) {
   const [open, setOpen] = useState(false);
-  const {
-    isCreatingManualDraft,
-    isNameDialogOpen,
-    setNameDialogOpen,
-    openManualDraftNameDialog,
-    createManualServerDraftAndGoToBuilder,
-  } = useCreateManualServerDraft();
+  const { isCreatingManualDraft, createManualServerDraftAndGoToBuilder } =
+    useCreateManualServerDraft();
 
   const handleOpenChange = (next: boolean) => {
     setOpen(next);
@@ -124,7 +118,7 @@ function CreateQuizModalTrigger({
               disabled={isCreatingManualDraft}
               onClick={() => {
                 handleOpenChange(false);
-                openManualDraftNameDialog();
+                void createManualServerDraftAndGoToBuilder();
               }}
               className="group flex flex-col items-center gap-3 rounded-xl border-2 border-border bg-card p-5 transition-all hover:border-primary hover:shadow-md active:scale-[0.97] disabled:pointer-events-none disabled:opacity-60"
             >
@@ -154,14 +148,6 @@ function CreateQuizModalTrigger({
           </div>
         </DialogContent>
       </Dialog>
-      <CreateManualQuizNameDialog
-        open={isNameDialogOpen}
-        onOpenChange={setNameDialogOpen}
-        isBusy={isCreatingManualDraft}
-        onConfirm={(name) => {
-          void createManualServerDraftAndGoToBuilder(name);
-        }}
-      />
     </>
   );
 }

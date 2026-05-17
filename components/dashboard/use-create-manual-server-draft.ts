@@ -10,33 +10,23 @@ import { t } from "@/lib/i18n";
 
 export function useCreateManualServerDraft(): {
   isCreatingManualDraft: boolean;
-  isNameDialogOpen: boolean;
-  setNameDialogOpen: (open: boolean) => void;
-  openManualDraftNameDialog: () => void;
-  createManualServerDraftAndGoToBuilder: (trimmedName: string) => Promise<boolean>;
+  createManualServerDraftAndGoToBuilder: (nameInput?: string) => Promise<boolean>;
 } {
   const router = useRouter();
   const { locale } = useLocale();
   const { showToast } = useToast();
   const [isCreatingManualDraft, setIsCreatingManualDraft] = useState(false);
-  const [isNameDialogOpen, setNameDialogOpen] = useState(false);
-
-  const openManualDraftNameDialog = useCallback(() => {
-    setNameDialogOpen(true);
-  }, []);
 
   const createManualServerDraftAndGoToBuilder = useCallback(
-    async (trimmedName: string) => {
-      const name = trimmedName.trim();
-      if (name.length === 0) {
-        return false;
-      }
+    async (nameInput?: string) => {
+      const trimmedInput = typeof nameInput === "string" ? nameInput.trim() : "";
+      const name =
+        trimmedInput.length > 0 ? trimmedInput : t(locale, "builder.defaultDraftName");
 
       setIsCreatingManualDraft(true);
       try {
         const result = await createDraftQuizAction(locale, name);
         if (result.success) {
-          setNameDialogOpen(false);
           router.push(`/builder/${result.quizId}`);
           return true;
         }
@@ -54,9 +44,6 @@ export function useCreateManualServerDraft(): {
 
   return {
     isCreatingManualDraft,
-    isNameDialogOpen,
-    setNameDialogOpen,
-    openManualDraftNameDialog,
     createManualServerDraftAndGoToBuilder,
   };
 }

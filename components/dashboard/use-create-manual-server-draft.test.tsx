@@ -24,13 +24,14 @@ vi.mock("@/lib/i18n/use-locale", () => ({
 }));
 
 import { useCreateManualServerDraft } from "./use-create-manual-server-draft";
+import { t } from "@/lib/i18n";
 
 describe("useCreateManualServerDraft", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("navigates to the builder when draft creation succeeds", async () => {
+  it("navigates to the builder with the provided name when draft creation succeeds", async () => {
     mockCreateDraftQuizAction.mockResolvedValue({ success: true, quizId: "quiz-1" });
 
     const { result } = renderHook(() => useCreateManualServerDraft());
@@ -45,6 +46,37 @@ describe("useCreateManualServerDraft", () => {
     expect(mockPush).toHaveBeenCalledWith("/builder/quiz-1");
   });
 
+  it("uses the default draft name when no name is provided", async () => {
+    mockCreateDraftQuizAction.mockResolvedValue({ success: true, quizId: "quiz-2" });
+
+    const { result } = renderHook(() => useCreateManualServerDraft());
+
+    await act(async () => {
+      await result.current.createManualServerDraftAndGoToBuilder();
+    });
+
+    expect(mockCreateDraftQuizAction).toHaveBeenCalledWith(
+      "fr",
+      t("fr", "builder.defaultDraftName"),
+    );
+    expect(mockPush).toHaveBeenCalledWith("/builder/quiz-2");
+  });
+
+  it("uses the default draft name when the provided name is blank", async () => {
+    mockCreateDraftQuizAction.mockResolvedValue({ success: true, quizId: "quiz-3" });
+
+    const { result } = renderHook(() => useCreateManualServerDraft());
+
+    await act(async () => {
+      await result.current.createManualServerDraftAndGoToBuilder("   ");
+    });
+
+    expect(mockCreateDraftQuizAction).toHaveBeenCalledWith(
+      "fr",
+      t("fr", "builder.defaultDraftName"),
+    );
+  });
+
   it("returns false and does not navigate when draft creation fails", async () => {
     mockCreateDraftQuizAction.mockResolvedValue({ success: false, error: "failed" });
 
@@ -52,23 +84,10 @@ describe("useCreateManualServerDraft", () => {
 
     let ok = true;
     await act(async () => {
-      ok = await result.current.createManualServerDraftAndGoToBuilder("Mon quiz");
+      ok = await result.current.createManualServerDraftAndGoToBuilder();
     });
 
     expect(ok).toBe(false);
-    expect(mockPush).not.toHaveBeenCalled();
-  });
-
-  it("returns false for empty name without calling the server action", async () => {
-    const { result } = renderHook(() => useCreateManualServerDraft());
-
-    let ok = true;
-    await act(async () => {
-      ok = await result.current.createManualServerDraftAndGoToBuilder("  ");
-    });
-
-    expect(ok).toBe(false);
-    expect(mockCreateDraftQuizAction).not.toHaveBeenCalled();
     expect(mockPush).not.toHaveBeenCalled();
   });
 });

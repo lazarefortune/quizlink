@@ -7,7 +7,6 @@ import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-import { CreateManualQuizNameDialog } from "./create-manual-quiz-name-dialog";
 import { useCreateManualServerDraft } from "./use-create-manual-server-draft";
 
 type ButtonProps = ComponentProps<typeof Button>;
@@ -28,37 +27,26 @@ export function CreateManualServerDraftButton({
   ...buttonProps
 }: CreateManualServerDraftButtonProps) {
   const { locale } = useLocale();
-  const {
-    isCreatingManualDraft,
-    isNameDialogOpen,
-    setNameDialogOpen,
-    openManualDraftNameDialog,
-    createManualServerDraftAndGoToBuilder,
-  } = useCreateManualServerDraft();
+  const { isCreatingManualDraft, createManualServerDraftAndGoToBuilder } =
+    useCreateManualServerDraft();
+
+  const handleClick = (): void => {
+    void createManualServerDraftAndGoToBuilder().then((ok) => {
+      if (ok) {
+        onCreated?.();
+      }
+    });
+  };
 
   return (
-    <>
-      <Button
-        type="button"
-        {...buttonProps}
-        disabled={disabled || isCreatingManualDraft}
-        onClick={openManualDraftNameDialog}
-      >
-        {isCreatingManualDraft ? t(locale, "common.loading") : children}
-      </Button>
-      <CreateManualQuizNameDialog
-        open={isNameDialogOpen}
-        onOpenChange={setNameDialogOpen}
-        isBusy={isCreatingManualDraft}
-        onConfirm={(name) => {
-          void createManualServerDraftAndGoToBuilder(name).then((ok) => {
-            if (ok) {
-              onCreated?.();
-            }
-          });
-        }}
-      />
-    </>
+    <Button
+      type="button"
+      {...buttonProps}
+      disabled={disabled || isCreatingManualDraft}
+      onClick={handleClick}
+    >
+      {isCreatingManualDraft ? t(locale, "common.loading") : children}
+    </Button>
   );
 }
 
@@ -77,46 +65,35 @@ export function CreateManualServerDraftSurfaceButton({
   onCreated,
 }: CreateManualServerDraftSurfaceButtonProps) {
   const { locale } = useLocale();
-  const {
-    isCreatingManualDraft,
-    isNameDialogOpen,
-    setNameDialogOpen,
-    openManualDraftNameDialog,
-    createManualServerDraftAndGoToBuilder,
-  } = useCreateManualServerDraft();
+  const { isCreatingManualDraft, createManualServerDraftAndGoToBuilder } =
+    useCreateManualServerDraft();
+
+  const handleClick = (): void => {
+    void createManualServerDraftAndGoToBuilder().then((ok) => {
+      if (ok) {
+        onCreated?.();
+      }
+    });
+  };
 
   return (
-    <>
-      <button
-        type="button"
-        disabled={isCreatingManualDraft}
-        onClick={openManualDraftNameDialog}
-        className={cn(
-          "block w-full cursor-pointer rounded-2xl border-0 bg-transparent p-0 text-left transition-opacity",
-          isCreatingManualDraft && "pointer-events-none opacity-70",
-          className,
-        )}
-      >
-        {isCreatingManualDraft ? (
-          <span className="flex min-h-[4.5rem] items-center justify-center text-sm text-muted-foreground">
-            {t(locale, "common.loading")}
-          </span>
-        ) : (
-          children
-        )}
-      </button>
-      <CreateManualQuizNameDialog
-        open={isNameDialogOpen}
-        onOpenChange={setNameDialogOpen}
-        isBusy={isCreatingManualDraft}
-        onConfirm={(name) => {
-          void createManualServerDraftAndGoToBuilder(name).then((ok) => {
-            if (ok) {
-              onCreated?.();
-            }
-          });
-        }}
-      />
-    </>
+    <button
+      type="button"
+      disabled={isCreatingManualDraft}
+      onClick={handleClick}
+      className={cn(
+        "block w-full cursor-pointer rounded-2xl border-0 bg-transparent p-0 text-left transition-opacity",
+        isCreatingManualDraft && "pointer-events-none opacity-70",
+        className,
+      )}
+    >
+      {isCreatingManualDraft ? (
+        <span className="flex min-h-[4.5rem] items-center justify-center text-sm text-muted-foreground">
+          {t(locale, "common.loading")}
+        </span>
+      ) : (
+        children
+      )}
+    </button>
   );
 }
