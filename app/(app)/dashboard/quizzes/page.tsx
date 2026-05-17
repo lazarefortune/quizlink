@@ -216,7 +216,7 @@ export default function DashboardQuizzesPage() {
   };
 
   const handleOpenQuizPreview = (quizId: string) => {
-    router.push(`/dashboard/quiz/${quizId}/preview`);
+    router.push(`/dashboard/quiz/${quizId}?tab=questions`);
   };
 
   const refreshCurrentPage = () => {
@@ -399,7 +399,7 @@ export default function DashboardQuizzesPage() {
                 const isArchived = quiz.status === "ARCHIVED";
                 const titleHref = isDraft
                   ? `/builder/${quiz.id}`
-                  : `/dashboard/quiz/${quiz.id}/preview`;
+                  : `/dashboard/quiz/${quiz.id}?tab=questions`;
 
                 return (
                 <motion.div key={quiz.id} custom={i + 1} variants={fadeUp}>
@@ -550,7 +550,7 @@ export default function DashboardQuizzesPage() {
                               className="flex-1 gap-2"
                               asChild
                             >
-                              <Link href={`/dashboard/quiz/${quiz.id}/preview`}>
+                              <Link href={`/dashboard/quiz/${quiz.id}?tab=questions`}>
                                 <Eye className="h-4 w-4" />
                                 {t(locale, "dashboard.viewArchivedQuiz")}
                               </Link>

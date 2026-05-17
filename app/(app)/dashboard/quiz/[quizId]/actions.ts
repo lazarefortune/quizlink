@@ -4,6 +4,10 @@ import type { QuizLinkAnonymousStats } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { creatorCountedAttemptWhere } from "@/lib/creator-quiz-attempt-filter";
+import {
+  aggregateQuestionInsights,
+  type QuestionInsight,
+} from "@/lib/dashboard/aggregate-question-insights";
 import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
 
 type QuizSettings = {
@@ -48,6 +52,8 @@ type GetQuizStatsResponse =
         globalScoredCount: number;
         globalBestScore: number | null;
         globalLowestScore: number | null;
+        /** Mean duration (seconds) across completed identified attempts with start/end. */
+        globalAverageDurationSeconds: number | null;
         quizDetails: {
           visibility: string;
           status: QuizLifecycleStatus;
@@ -76,6 +82,10 @@ type GetQuizStatsResponse =
         }>;
       };
     }
+  | { success: false; error: string };
+
+type GetQuizQuestionInsightsResponse =
+  | { success: true; insights: QuestionInsight[] }
   | { success: false; error: string };
 
 type GetAttemptDetailsResponse =
@@ -365,6 +375,22 @@ export async function getQuizStats(
     const globalLowestScore =
       globalLowestCandidates.length > 0 ? Math.min(...globalLowestCandidates) : null;
 
+    const completedDurations = completedAttempts
+      .map((attempt) => {
+        if (!attempt.finishedAt || !attempt.startedAt) {
+          return null;
+        }
+        return Math.floor(
+          (attempt.finishedAt.getTime() - attempt.startedAt.getTime()) / 1000,
+        );
+      })
+      .filter((value): value is number => value != null && value > 0);
+    const globalAverageDurationSeconds =
+      completedDurations.length > 0
+        ? completedDurations.reduce((sum, value) => sum + value, 0) /
+          completedDurations.length
+        : null;
+
     // Calculate stats
     const totalInvitations = quizLinks.length;
     const enrolledParticipantsCount = quizLinks.filter(
@@ -491,6 +517,7 @@ export async function getQuizStats(
         globalScoredCount: combinedScoreCount,
         globalBestScore,
         globalLowestScore,
+        globalAverageDurationSeconds,
         quizDetails: {
           visibility: quiz.visibility,
           status: quiz.status,
@@ -506,6 +533,90 @@ export async function getQuizStats(
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to get quiz stats",
+    };
+  }
+}
+
+/**
+ * Per-question insights from completed identified attempts (anonymous detail is not stored).
+ */
+export async function getQuizQuestionInsights(
+  quizId: string,
+): Promise<GetQuizQuestionInsightsResponse> {
+  try {
+    if (!prisma) {
+      return { success: false, error: "Database not initialized" };
+    }
+
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const quiz = await prisma.quiz.findUnique({
+      where: { id: quizId },
+      select: {
+        ownerId: true,
+        questions: {
+          orderBy: { order: "asc" },
+          select: {
+            id: true,
+            options: {
+              select: { id: true, label: true, isCorrect: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!quiz || quiz.ownerId !== session.user.id) {
+      return { success: false, error: "Quiz not found or unauthorized" };
+    }
+
+    const attempts = await prisma.quizAttempt.findMany({
+      where: {
+        status: "COMPLETED",
+        participantId: { not: null },
+        quizLink: { quizId },
+        ...creatorCountedAttemptWhere,
+      },
+      select: {
+        answers: {
+          select: {
+            questionId: true,
+            isCorrect: true,
+            timeSpent: true,
+            selectedOptionIds: true,
+          },
+        },
+      },
+    });
+
+    const answers = attempts.flatMap((attempt) =>
+      attempt.answers.map((answer) => {
+        const rawSelected = Array.isArray(answer.selectedOptionIds)
+          ? answer.selectedOptionIds
+          : [];
+        const selectedOptionIds = rawSelected.filter(
+          (id): id is string => typeof id === "string",
+        );
+        return {
+          questionId: answer.questionId,
+          isCorrect: answer.isCorrect,
+          timeSpent: answer.timeSpent,
+          selectedOptionIds,
+        };
+      }),
+    );
+
+    const insights = aggregateQuestionInsights(quiz.questions, answers);
+    return { success: true, insights };
+  } catch (error) {
+    console.error("Error getting quiz question insights:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Failed to get question insights",
     };
   }
 }

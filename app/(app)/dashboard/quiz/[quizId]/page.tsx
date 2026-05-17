@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { QuizDetailContent } from "./quiz-detail-content";
-import { getQuizContent, getQuizStats } from "./actions";
+import { getQuizContent, getQuizQuestionInsights, getQuizStats } from "./actions";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -54,6 +54,11 @@ export default async function QuizStatsPage({ params }: PageProps) {
     getQuizStats(quizId),
   ]);
 
+  const questionInsightsResult =
+    contentResult.success && contentResult.quiz.status === "ACTIVE"
+      ? await getQuizQuestionInsights(quizId)
+      : { success: true as const, insights: [] };
+
   if (!contentResult.success) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -91,6 +96,9 @@ export default async function QuizStatsPage({ params }: PageProps) {
         visibility={contentResult.quiz.visibility}
         questions={contentResult.quiz.questions}
         stats={statsResult.stats}
+        questionInsights={
+          questionInsightsResult.success ? questionInsightsResult.insights : []
+        }
       />
     </Suspense>
   );
