@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { MoreVertical, Share2, Trash2, Check, Copy } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -32,6 +32,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { useMinWidthLg } from "@/lib/builder/useMinWidthLg";
+import { cn } from "@/lib/utils";
 
 type QuizMenuProps = {
   quizId: string;
@@ -39,6 +53,8 @@ type QuizMenuProps = {
   quizStatus: QuizLifecycleStatus;
   onDeleted?: () => void;
   onDuplicated?: (newQuizId: string) => void;
+  /** When true, share is an outline icon button next to the ⋮ menu (builder header). */
+  elevateShareButton?: boolean;
 };
 
 export function QuizMenu({
@@ -47,10 +63,12 @@ export function QuizMenu({
   quizStatus,
   onDeleted,
   onDuplicated,
+  elevateShareButton = false,
 }: QuizMenuProps) {
   const router = useRouter();
   const { locale } = useLocale();
-  const [isOpen, setIsOpen] = useState(false);
+  const isLargeViewport = useMinWidthLg();
+  const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -58,24 +76,6 @@ export function QuizMenu({
   const [linkCopied, setLinkCopied] = useState(false);
   const [shareLink, setShareLink] = useState<string>("");
   const [isLoadingLink, setIsLoadingLink] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  // Close menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isOpen]);
 
   const baseUrl =
     typeof window !== "undefined"
@@ -83,7 +83,7 @@ export function QuizMenu({
       : process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
   const handleShareClick = async () => {
-    setIsOpen(false);
+    setMobileSheetOpen(false);
     setIsLoadingLink(true);
     setShowShareDialog(true);
 
@@ -120,7 +120,6 @@ export function QuizMenu({
         setTimeout(() => setLinkCopied(false), 2000);
       });
     } else {
-      // Fallback for older browsers
       const textArea = document.createElement("textarea");
       textArea.value = shareLink;
       document.body.appendChild(textArea);
@@ -133,7 +132,7 @@ export function QuizMenu({
   };
 
   const handleDuplicate = async () => {
-    setIsOpen(false);
+    setMobileSheetOpen(false);
     setIsDuplicating(true);
     try {
       const result = await duplicateQuiz(quizId);
@@ -157,7 +156,7 @@ export function QuizMenu({
       const result = await deleteQuiz(quizId);
       if (result.success) {
         setShowDeleteDialog(false);
-        setIsOpen(false);
+        setMobileSheetOpen(false);
         onDeleted?.();
       } else {
         alert(result.error || t(locale, "dashboard.deleteError"));
@@ -170,63 +169,139 @@ export function QuizMenu({
     }
   };
 
-  return (
-    <>
-      <div className="relative" ref={menuRef}>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setIsOpen(!isOpen)}
-          className="shrink-0"
-        >
+  const openDeleteFlow = () => {
+    setMobileSheetOpen(false);
+    setShowDeleteDialog(true);
+  };
+
+  const triggerLabel = t(locale, "builder.questionActionsMenu");
+
+  const actionRowClass =
+    "flex w-full items-center gap-3 rounded-md px-3 py-3 text-left text-base transition-colors hover:bg-accent";
+
+  const overflowMenu = isLargeViewport ? (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="shrink-0" aria-label={triggerLabel}>
           <MoreVertical className="h-4 w-4" />
         </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-48">
+        {!elevateShareButton && canQuizBeShared(quizStatus) ? (
+          <DropdownMenuItem
+            className="flex cursor-pointer items-center gap-2 text-base"
+            onSelect={() => {
+              void handleShareClick();
+            }}
+          >
+            <Share2 className="h-4 w-4" />
+            {t(locale, "dashboard.share")}
+          </DropdownMenuItem>
+        ) : null}
+        <DropdownMenuItem
+          className="flex cursor-pointer items-center gap-2 text-base"
+          disabled={isDuplicating}
+          onSelect={() => {
+            void handleDuplicate();
+          }}
+        >
+          <Copy className="h-4 w-4" />
+          {isDuplicating ? t(locale, "common.loading") : t(locale, "dashboard.duplicate")}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="flex cursor-pointer items-center gap-2 text-base text-destructive focus:text-destructive"
+          onSelect={openDeleteFlow}
+        >
+          <Trash2 className="h-4 w-4" />
+          {t(locale, "dashboard.delete")}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  ) : (
+    <>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="shrink-0"
+        aria-label={triggerLabel}
+        aria-expanded={mobileSheetOpen}
+        onClick={() => setMobileSheetOpen(true)}
+      >
+        <MoreVertical className="h-4 w-4" />
+      </Button>
+      <Sheet open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
+        <SheetContent
+          side="bottom"
+          showCloseButton
+          className={cn(
+            "builder-scrollbar max-h-[min(70vh,28rem)] overflow-y-auto rounded-t-2xl p-0",
+            "pb-[max(1rem,env(safe-area-inset-bottom))]",
+          )}
+        >
+          <SheetHeader className="border-b border-border/60 px-4 pb-3 pt-6 text-left">
+            <SheetTitle className="text-lg">{t(locale, "builder.quizActionsSheetTitle")}</SheetTitle>
+          </SheetHeader>
+          <div className="flex flex-col gap-1 px-3 py-3">
+            {!elevateShareButton && canQuizBeShared(quizStatus) ? (
+              <button
+                type="button"
+                className={actionRowClass}
+                onClick={() => {
+                  void handleShareClick();
+                }}
+              >
+                <Share2 className="h-5 w-5 shrink-0" />
+                {t(locale, "dashboard.share")}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className={actionRowClass}
+              disabled={isDuplicating}
+              onClick={() => void handleDuplicate()}
+            >
+              <Copy className="h-5 w-5 shrink-0" />
+              {isDuplicating ? t(locale, "common.loading") : t(locale, "dashboard.duplicate")}
+            </button>
+            <button type="button" className={cn(actionRowClass, "text-destructive")} onClick={openDeleteFlow}>
+              <Trash2 className="h-5 w-5 shrink-0" />
+              {t(locale, "dashboard.delete")}
+            </button>
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
+  );
 
-        {isOpen && (
-          <>
-            {/* Overlay */}
-            <div
-              className="fixed inset-0 z-40"
-              onClick={() => setIsOpen(false)}
-            />
-            {/* Dropdown */}
-            <div className="absolute right-0 mt-2 w-48 rounded-md border border-border bg-popover shadow-lg z-50" onClick={(e) => e.stopPropagation()}>
-              <div className="p-1">
-                {canQuizBeShared(quizStatus) ? (
-                  <button
-                    onClick={handleShareClick}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent rounded-md transition-colors text-left"
-                  >
-                    <Share2 className="h-4 w-4" />
-                    {t(locale, "dashboard.share")}
-                  </button>
-                ) : null}
-                <button
-                  type="button"
-                  onClick={() => void handleDuplicate()}
-                  disabled={isDuplicating}
-                  className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent rounded-md transition-colors text-left disabled:opacity-50"
-                >
-                  <Copy className="h-4 w-4" />
-                  {isDuplicating
-                    ? t(locale, "common.loading")
-                    : t(locale, "dashboard.duplicate")}
-                </button>
-                <button
-                  onClick={() => {
-                    setShowDeleteDialog(true);
-                    setIsOpen(false);
-                  }}
-                  className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent rounded-md transition-colors text-left text-destructive"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  {t(locale, "dashboard.delete")}
-                </button>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
+  const shareIconButton =
+    elevateShareButton && canQuizBeShared(quizStatus) ? (
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        className="h-9 w-9 shrink-0 sm:h-10 sm:w-10"
+        aria-label={t(locale, "dashboard.share")}
+        title={t(locale, "dashboard.share")}
+        disabled={isLoadingLink}
+        onClick={() => void handleShareClick()}
+      >
+        <Share2 className="h-4 w-4" />
+      </Button>
+    ) : null;
+
+  const menuShell = <div className="relative shrink-0">{overflowMenu}</div>;
+
+  return (
+    <>
+      {elevateShareButton ? (
+        <div className="flex shrink-0 items-center gap-2">
+          {shareIconButton}
+          {menuShell}
+        </div>
+      ) : (
+        menuShell
+      )}
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent onOverlayClick={() => setShowDeleteDialog(false)}>
@@ -258,7 +333,10 @@ export function QuizMenu({
       </AlertDialog>
 
       <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
-        <DialogContent onOverlayClick={() => setShowShareDialog(false)}>
+        <DialogContent
+          onOverlayClick={() => setShowShareDialog(false)}
+          className="sm:max-w-xl"
+        >
           <DialogHeader>
             <DialogTitle>{t(locale, "dashboard.sharePlayLinkTitle")}</DialogTitle>
             <DialogDescription>
@@ -278,24 +356,24 @@ export function QuizMenu({
                   className="flex-1 font-mono text-sm"
                   onClick={(e) => (e.target as HTMLInputElement).select()}
                 />
-              <Button
-                onClick={handleCopyLink}
-                variant={linkCopied ? "secondary" : "primary"}
-                size="default"
-                className="shrink-0"
-              >
-                {linkCopied ? (
-                  <>
-                    <Check className="h-4 w-4 mr-2" />
-                    {t(locale, "dashboard.copied")}
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-4 w-4 mr-2" />
-                    {t(locale, "dashboard.copy")}
-                  </>
-                )}
-              </Button>
+                <Button
+                  onClick={handleCopyLink}
+                  variant={linkCopied ? "secondary" : "primary"}
+                  size="default"
+                  className="shrink-0"
+                >
+                  {linkCopied ? (
+                    <>
+                      <Check className="h-4 w-4 mr-2" />
+                      {t(locale, "dashboard.copied")}
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-4 w-4 mr-2" />
+                      {t(locale, "dashboard.copy")}
+                    </>
+                  )}
+                </Button>
               </div>
             )}
           </div>

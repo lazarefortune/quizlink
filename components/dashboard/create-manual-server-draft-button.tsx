@@ -1,6 +1,6 @@
 "use client";
 
-import type { ComponentProps } from "react";
+import { type ComponentProps } from "react";
 
 import { Button } from "@/components/ui/button";
 import { useLocale } from "@/lib/i18n/use-locale";
@@ -30,17 +30,20 @@ export function CreateManualServerDraftButton({
   const { isCreatingManualDraft, createManualServerDraftAndGoToBuilder } =
     useCreateManualServerDraft();
 
+  const handleClick = (): void => {
+    void createManualServerDraftAndGoToBuilder().then((ok) => {
+      if (ok) {
+        onCreated?.();
+      }
+    });
+  };
+
   return (
     <Button
       type="button"
       {...buttonProps}
       disabled={disabled || isCreatingManualDraft}
-      onClick={async () => {
-        const ok = await createManualServerDraftAndGoToBuilder();
-        if (ok) {
-          onCreated?.();
-        }
-      }}
+      onClick={handleClick}
     >
       {isCreatingManualDraft ? t(locale, "common.loading") : children}
     </Button>
@@ -65,16 +68,19 @@ export function CreateManualServerDraftSurfaceButton({
   const { isCreatingManualDraft, createManualServerDraftAndGoToBuilder } =
     useCreateManualServerDraft();
 
+  const handleClick = (): void => {
+    void createManualServerDraftAndGoToBuilder().then((ok) => {
+      if (ok) {
+        onCreated?.();
+      }
+    });
+  };
+
   return (
     <button
       type="button"
       disabled={isCreatingManualDraft}
-      onClick={async () => {
-        const ok = await createManualServerDraftAndGoToBuilder();
-        if (ok) {
-          onCreated?.();
-        }
-      }}
+      onClick={handleClick}
       className={cn(
         "block w-full cursor-pointer rounded-2xl border-0 bg-transparent p-0 text-left transition-opacity",
         isCreatingManualDraft && "pointer-events-none opacity-70",

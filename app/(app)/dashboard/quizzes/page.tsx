@@ -90,6 +90,10 @@ function CreateQuizModalTrigger({
   const { isCreatingManualDraft, createManualServerDraftAndGoToBuilder } =
     useCreateManualServerDraft();
 
+  const handleOpenChange = (next: boolean) => {
+    setOpen(next);
+  };
+
   return (
     <>
       <Button
@@ -101,7 +105,7 @@ function CreateQuizModalTrigger({
         <Plus className="h-4 w-4" />
         {t(locale, "nav.create")}
       </Button>
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent className="sm:max-w-sm mx-auto">
           <DialogHeader>
             <DialogTitle className="text-center text-xl font-black">
@@ -112,11 +116,9 @@ function CreateQuizModalTrigger({
             <button
               type="button"
               disabled={isCreatingManualDraft}
-              onClick={async () => {
-                const ok = await createManualServerDraftAndGoToBuilder();
-                if (ok) {
-                  setOpen(false);
-                }
+              onClick={() => {
+                handleOpenChange(false);
+                void createManualServerDraftAndGoToBuilder();
               }}
               className="group flex flex-col items-center gap-3 rounded-xl border-2 border-border bg-card p-5 transition-all hover:border-primary hover:shadow-md active:scale-[0.97] disabled:pointer-events-none disabled:opacity-60"
             >
@@ -140,9 +142,7 @@ function CreateQuizModalTrigger({
                 <Sparkles className="h-7 w-7" />
               </span>
               <div className="text-center">
-                <p className="text-sm font-black font-fredoka">
-                  {t(locale, "nav.createWithAI")}
-                </p>
+                <p className="text-sm font-black font-fredoka">{t(locale, "nav.createWithAI")}</p>
               </div>
             </Link>
           </div>
@@ -216,7 +216,7 @@ export default function DashboardQuizzesPage() {
   };
 
   const handleOpenQuizPreview = (quizId: string) => {
-    router.push(`/dashboard/quiz/${quizId}/preview`);
+    router.push(`/dashboard/quiz/${quizId}?tab=questions`);
   };
 
   const refreshCurrentPage = () => {
@@ -399,7 +399,7 @@ export default function DashboardQuizzesPage() {
                 const isArchived = quiz.status === "ARCHIVED";
                 const titleHref = isDraft
                   ? `/builder/${quiz.id}`
-                  : `/dashboard/quiz/${quiz.id}/preview`;
+                  : `/dashboard/quiz/${quiz.id}?tab=questions`;
 
                 return (
                 <motion.div key={quiz.id} custom={i + 1} variants={fadeUp}>
@@ -550,7 +550,7 @@ export default function DashboardQuizzesPage() {
                               className="flex-1 gap-2"
                               asChild
                             >
-                              <Link href={`/dashboard/quiz/${quiz.id}/preview`}>
+                              <Link href={`/dashboard/quiz/${quiz.id}?tab=questions`}>
                                 <Eye className="h-4 w-4" />
                                 {t(locale, "dashboard.viewArchivedQuiz")}
                               </Link>

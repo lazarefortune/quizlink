@@ -25,11 +25,14 @@ type DashboardUserMenuProps = {
   className?: string;
   /** When true, hides the “Admin” entry (e.g. sidebar is already on admin). */
   hideAdminLink?: boolean;
+  /** Desktop collapsed rail: avatar trigger only */
+  isCompact?: boolean;
 };
 
 export function DashboardUserMenu({
   className,
   hideAdminLink = false,
+  isCompact = false,
 }: DashboardUserMenuProps) {
   const { data: session } = useSession();
   const { locale } = useLocale();
@@ -56,27 +59,33 @@ export function DashboardUserMenu({
           type="button"
           variant="ghost"
           className={cn(
-            "flex h-auto min-h-0 w-full items-center gap-3 rounded-2xl border border-border/80 bg-muted/25 px-3 py-2.5 text-left shadow-none ring-offset-background transition-colors hover:bg-muted/45 focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:bg-muted/50 data-[state=open]:[&_svg:last-child]:-rotate-180",
+            "flex h-auto min-h-0 items-center rounded-2xl border border-border/80 bg-muted/25 py-2.5 text-left shadow-none ring-offset-background transition-colors hover:bg-muted/45 focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:bg-muted/50 data-[state=open]:[&_svg:last-child]:-rotate-180",
+            isCompact ? "w-full justify-center px-2" : "w-full gap-3 px-3",
             className,
           )}
+          aria-label={isCompact ? title : undefined}
         >
           <Avatar className="h-11 w-11 shrink-0 border border-primary/25 bg-primary/10">
             <AvatarFallback className="bg-primary/15 text-sm font-black uppercase tracking-wide text-primary">
               {initials}
             </AvatarFallback>
           </Avatar>
-          <div className="min-w-0 flex-1 py-0.5">
-            <p className="truncate text-sm font-black leading-tight text-foreground">
-              {title}
-            </p>
-            <p className="mt-0.5 truncate lowercase text-xs leading-snug font-normal text-muted-foreground">
-              {email || "—"}
-            </p>
-          </div>
-          <ChevronDown
-            aria-hidden
-            className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200"
-          />
+          {isCompact ? null : (
+            <>
+              <div className="min-w-0 flex-1 py-0.5">
+                <p className="truncate text-sm font-black leading-tight text-foreground">
+                  {title}
+                </p>
+                <p className="mt-0.5 truncate lowercase text-xs leading-snug font-normal text-muted-foreground">
+                  {email || "—"}
+                </p>
+              </div>
+              <ChevronDown
+                aria-hidden
+                className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200"
+              />
+            </>
+          )}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent

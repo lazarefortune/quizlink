@@ -1,53 +1,22 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { ArrowLeft, Pencil, Copy, Play, Trash2, Edit, Eye } from "lucide-react";
-import { useLocale } from "@/lib/i18n/use-locale";
-import { t } from "@/lib/i18n";
-import { resolveQuizActionError } from "@/lib/quiz/resolveQuizActionError";
-import { canQuizBeShared, canQuizShowResponseInsights } from "@/lib/quiz/quizStatusPolicy";
-import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
-import { QuizStatusBadge } from "@/components/quiz/quiz-status-badge";
-import type { QuizContentQuestion } from "./actions";
-import { QuizStatsTab } from "./quiz-stats-tab";
-import { createOrGetQuizLink } from "@/app/quiz-link/actions";
-import { deleteQuiz } from "@/app/(app)/dashboard/actions";
-import { useToast } from "@/components/ui/toast";
-import { FullscreenBlockingOverlay } from "@/components/ui/fullscreen-blocking-overlay";
-import { track } from "@/lib/analytics/track";
-import { PARTICIPANT_INVITED } from "@/lib/analytics/events";
-import { buildCommonEventProps } from "@/lib/analytics/props";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Alert } from "@/components/ui/alert";
-import { cn } from "@/lib/utils";
+import { useCallback, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
-async function writeToClipboard(text: string): Promise<void> {
-  try {
-    await navigator.clipboard.writeText(text);
-  } catch {
-    const textarea = document.createElement("textarea");
-    textarea.value = text;
-    textarea.style.position = "fixed";
-    textarea.style.opacity = "0";
-    document.body.appendChild(textarea);
-    textarea.focus();
-    textarea.select();
-    document.execCommand("copy");
-    document.body.removeChild(textarea);
-  }
-}
+import type { QuizContentQuestion } from "./actions";
+import { QuizDetailHeader } from "@/components/dashboard/quiz-detail/quiz-detail-header";
+import { QuizQuestionsTab } from "@/components/dashboard/quiz-detail/quiz-questions-tab";
+import { QuizResultsTab } from "@/components/dashboard/quiz-detail/quiz-results-tab";
+import { QuizShareLinkDialog } from "@/components/dashboard/quiz-detail/quiz-share-link-dialog";
+import { BuilderBackToTopButton } from "@/components/quiz-builder/builder-back-to-top-button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { QuestionInsight } from "@/lib/dashboard/aggregate-question-insights";
+import { parseQuizDetailTab, type QuizDetailTab } from "@/lib/dashboard/parse-quiz-detail-tab";
+import type { QuizDetailStatsInput } from "@/lib/dashboard/quiz-detail-stats";
+import { t } from "@/lib/i18n";
+import { useLocale } from "@/lib/i18n/use-locale";
+import { canQuizShowResponseInsights } from "@/lib/quiz/quizStatusPolicy";
+import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
 
 type QuizDetailContentProps = {
   quizId: string;
@@ -55,37 +24,8 @@ type QuizDetailContentProps = {
   quizStatus: QuizLifecycleStatus;
   visibility: string;
   questions: QuizContentQuestion[];
-  stats: {
-    totalQuestions: number;
-    enrolledParticipantsCount: number;
-    participants: Array<{
-      id: string;
-      name: string;
-      email: string | null;
-      attemptsCount: number;
-      lastScore: number | null;
-      lastAttemptDate: Date | null;
-    }>;
-    totalResponses: number;
-    anonymousCompletedCount: number;
-    identifiedCompletedCount: number;
-    globalScoreAverage: number;
-    globalScoredCount: number;
-    totalOpenCount: number;
-    totalStarted: number;
-    globalBestScore: number | null;
-    globalLowestScore: number | null;
-    attempts: Array<{
-      id: string;
-      participantName: string;
-      isAnonymous: boolean;
-      score: number | null;
-      duration: number | null;
-      status: string;
-      startedAt: Date;
-      finishedAt: Date | null;
-    }>;
-  };
+  stats: QuizDetailStatsInput;
+  questionInsights: QuestionInsight[];
 };
 
 export function QuizDetailContent({
@@ -95,324 +35,75 @@ export function QuizDetailContent({
   visibility: _visibility,
   questions,
   stats,
+  questionInsights,
 }: QuizDetailContentProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { locale } = useLocale();
-  const { showToast } = useToast();
-  const [playLoading, setPlayLoading] = useState(false);
-  const [copyLoading, setCopyLoading] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const scrollContainerRef = useRef<HTMLElement | null>(null);
 
-  const handlePlay = async () => {
-    setPlayLoading(true);
-    try {
-      const result = await createOrGetQuizLink(quizId, true);
-      if (result.success) {
-        track(PARTICIPANT_INVITED, {
-          ...buildCommonEventProps({ isLoggedIn: true, preferredLanguage: locale }),
-          quiz_id: quizId,
-          delivery: "link",
-          is_first_invite_for_quiz: result.isFirstInviteForQuiz,
-        });
-        router.push(`/quiz/${result.quizLink.token}`);
-      } else {
-        showToast(
-          resolveQuizActionError(locale, result.error) ||
-            t(locale, "dashboard.shareError"),
-          "error",
-        );
-      }
-    } catch (error) {
-      console.error("Error getting quiz link:", error);
-      showToast(t(locale, "dashboard.shareError"), "error");
-    } finally {
-      setPlayLoading(false);
-    }
-  };
+  const activeTab = parseQuizDetailTab(searchParams.get("tab"));
+  const showInsights = canQuizShowResponseInsights(quizStatus);
 
-  const handleCopyLink = async () => {
-    setCopyLoading(true);
-    try {
-      const result = await createOrGetQuizLink(quizId, true);
-      if (!result.success) {
-        showToast(
-          resolveQuizActionError(locale, result.error) ||
-            t(locale, "dashboard.shareError"),
-          "error",
-        );
-        return;
-      }
-      track(PARTICIPANT_INVITED, {
-        ...buildCommonEventProps({ isLoggedIn: true, preferredLanguage: locale }),
-        quiz_id: quizId,
-        delivery: "link",
-        is_first_invite_for_quiz: result.isFirstInviteForQuiz,
-      });
-      const shareUrl = `${window.location.origin}/quiz/${result.quizLink.token}`;
-      await writeToClipboard(shareUrl);
-      showToast(t(locale, "dashboard.linkCopied"), "success");
-    } catch (error) {
-      console.error("Error copying quiz link:", error);
-      showToast(t(locale, "dashboard.shareError"), "error");
-    } finally {
-      setCopyLoading(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    setIsDeleting(true);
-    try {
-      const result = await deleteQuiz(quizId);
-      if (result.success) {
-        showToast(t(locale, "dashboard.quizDeletedSuccess"), "success");
-        router.push("/dashboard/quizzes");
-      } else {
-        showToast(result.error || t(locale, "dashboard.deleteError"), "error");
-      }
-    } catch (error) {
-      console.error("Error deleting quiz:", error);
-      showToast(t(locale, "dashboard.deleteError"), "error");
-    } finally {
-      setIsDeleting(false);
-      setShowDeleteDialog(false);
-    }
-  };
-
-  const isLinkActionBusy = playLoading || copyLoading;
-  const linkBlockingTitle = playLoading
-    ? t(locale, "dashboard.blockingOpenQuizTitle")
-    : t(locale, "dashboard.blockingCopyLinkTitle");
-  const linkBlockingDescription = playLoading
-    ? t(locale, "dashboard.blockingOpenQuizDescription")
-    : t(locale, "dashboard.blockingCopyLinkDescription");
+  const setActiveTab = useCallback(
+    (tab: QuizDetailTab) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("tab", tab);
+      router.replace(`/dashboard/quiz/${quizId}?${params.toString()}`, { scroll: false });
+    },
+    [quizId, router, searchParams],
+  );
 
   return (
-    <>
     <div className="relative min-h-screen bg-background p-4 md:p-6 lg:p-8">
       <div className="mx-auto max-w-5xl space-y-6">
-        <Link href="/dashboard/quizzes">
-            <Button variant="ghost" size="sm" className="-ml-2 text-muted-foreground">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                {t(locale, "dashboard.backToMyQuizzes")}
-            </Button>
-        </Link>
-        <div className="rounded-xl border border-border bg-card p-4 sm:p-6">
-          <div className="flex flex-col gap-4">
-            <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{quizName}</h1>
-                  <QuizStatusBadge status={quizStatus} locale={locale} />
-                </div>
-                <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                    <span>
-                    {questions.length}{" "}
-                    {questions.length === 1
-                        ? t(locale, "dashboard.question")
-                        : t(locale, "dashboard.questions")}
-                    </span>
-                    <span>
-                    {canQuizShowResponseInsights(quizStatus) ? (
-                      <>
-                        {stats.totalResponses}{" "}
-                        {stats.totalResponses <= 1
-                          ? t(locale, "dashboard.responseSingular")
-                          : t(locale, "dashboard.responsesPlural")}
-                      </>
-                    ) : null}
-                    </span>
-                </div>
-            </div>
-            <div className="flex flex-col gap-3">
-              <div className="flex flex-wrap items-center gap-2">
-                {quizStatus === "ACTIVE" ? (
-                  <>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="gap-2"
-                      onClick={handleCopyLink}
-                      disabled={copyLoading || playLoading}
-                    >
-                      <Copy className="h-4 w-4" />
-                      {copyLoading ? t(locale, "common.loading") : t(locale, "dashboard.copyLink")}
-                    </Button>
-                    <Button
-                      variant="blue"
-                      size="sm"
-                      className="gap-2"
-                      onClick={handlePlay}
-                      disabled={playLoading || copyLoading}
-                    >
-                      <Play className="h-4 w-4" />
-                      {playLoading ? t(locale, "common.loading") : t(locale, "dashboard.playQuiz")}
-                    </Button>
-                    <Button
-                      variant="default"
-                      size="sm"
-                      onClick={() => router.push(`/builder/${quizId}`)}
-                      className="gap-2"
-                    >
-                      <Pencil className="h-4 w-4" />
-                      {t(locale, "dashboard.editQuiz")}
-                    </Button>
-                  </>
-                ) : null}
+        <QuizDetailHeader
+          quizId={quizId}
+          quizName={quizName}
+          quizStatus={quizStatus}
+          questionCount={questions.length}
+          responseCount={showInsights ? stats.totalResponses : 0}
+        />
 
-                {quizStatus === "DRAFT" ? (
-                  <Button variant="blue" size="sm" className="gap-2" asChild>
-                    <Link href={`/builder/${quizId}`}>
-                      <Edit className="h-4 w-4" />
-                      {t(locale, "dashboard.continueInBuilder")}
-                    </Link>
-                  </Button>
-                ) : null}
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) => setActiveTab(parseQuizDetailTab(value))}
+          className="space-y-6"
+        >
+          <TabsList className="grid h-11 w-full max-w-md grid-cols-2">
+            <TabsTrigger value="questions">{t(locale, "dashboard.quizTabQuestions")}</TabsTrigger>
+            <TabsTrigger value="results">{t(locale, "dashboard.quizTabResults")}</TabsTrigger>
+          </TabsList>
 
-                {quizStatus === "ARCHIVED" ? (
-                  <Button variant="blue" size="sm" className="gap-2" asChild>
-                    <Link href={`/dashboard/quiz/${quizId}/preview`}>
-                      <Eye className="h-4 w-4" />
-                      {t(locale, "dashboard.viewArchivedQuiz")}
-                    </Link>
-                  </Button>
-                ) : null}
+          <TabsContent value="questions" className="mt-0">
+            <QuizQuestionsTab questions={questions} />
+          </TabsContent>
 
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="gap-2"
-                  onClick={() => setShowDeleteDialog(true)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                  {t(locale, "dashboard.delete")}
-                </Button>
-              </div>
-              {quizStatus === "DRAFT" ? (
-                <p className="text-xs text-muted-foreground">
-                  {t(locale, "dashboard.draftFinishToShareHint")}
-                </p>
-              ) : null}
-            </div>
-          </div>
-        </div>
-
-        {canQuizShowResponseInsights(quizStatus) ? (
-          <>
-        <Alert variant="info" className="border-border">
-          <p>{t(locale, "dashboard.anonymousResponsesStatsNote")}</p>
-        </Alert>
-
-        <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-xl border border-border bg-card p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {t(locale, "dashboard.responsesCardTitle")}
-            </p>
-            <p className="mt-2 text-2xl font-bold tabular-nums">{stats.totalResponses}</p>
-          </div>
-          <div className="rounded-xl border border-border bg-card p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {t(locale, "dashboard.responsesAnonymousCard")}
-            </p>
-            <p className="mt-2 text-2xl font-bold tabular-nums">
-              {stats.anonymousCompletedCount}
-            </p>
-          </div>
-          <div className="rounded-xl border border-border bg-card p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {t(locale, "dashboard.responsesIdentifiedCard")}
-            </p>
-            <p className="mt-2 text-2xl font-bold tabular-nums">
-              {stats.identifiedCompletedCount}
-            </p>
-          </div>
-          <div className="rounded-xl border border-border bg-card p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {t(locale, "dashboard.averageScoreGlobal")}
-            </p>
-            <p className="mt-2 text-2xl font-bold tabular-nums">
-              {stats.globalScoredCount > 0 ? `${stats.globalScoreAverage.toFixed(1)}%` : "-"}
-            </p>
-          </div>
-        </section>
-
-        <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-xl border border-border bg-card p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {t(locale, "dashboard.opensLabel")}
-            </p>
-            <p className="mt-2 text-2xl font-bold tabular-nums">{stats.totalOpenCount}</p>
-          </div>
-          <div className="rounded-xl border border-border bg-card p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {t(locale, "dashboard.startedLabel")}
-            </p>
-            <p className="mt-2 text-2xl font-bold tabular-nums">{stats.totalStarted}</p>
-          </div>
-          <div className="rounded-xl border border-border bg-card p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {t(locale, "dashboard.bestScoreLabel")}
-            </p>
-            <p className="mt-2 text-2xl font-bold tabular-nums">
-              {stats.globalBestScore != null ? `${stats.globalBestScore.toFixed(1)}%` : "-"}
-            </p>
-          </div>
-          <div className="rounded-xl border border-border bg-card p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {t(locale, "dashboard.worstScoreLabel")}
-            </p>
-            <p className="mt-2 text-2xl font-bold tabular-nums">
-              {stats.globalLowestScore != null ? `${stats.globalLowestScore.toFixed(1)}%` : "-"}
-            </p>
-          </div>
-        </section>
-
-        <section className="space-y-3">
-          <h2 className="text-xl font-semibold">
-            {t(locale, "dashboard.viewResponses")}
-          </h2>
-          <QuizStatsTab
-            quizId={quizId}
-            quizName={quizName}
-            stats={stats}
-            onCopyLink={canQuizBeShared(quizStatus) ? handleCopyLink : undefined}
-            isCopyLoading={copyLoading || playLoading}
-          />
-        </section>
-          </>
-        ) : null}
+          <TabsContent value="results" className="mt-0">
+            <QuizResultsTab
+              quizStatus={quizStatus}
+              stats={stats}
+              questions={questions}
+              questionInsights={questionInsights}
+              onShare={() => setShowShareDialog(true)}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
 
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t(locale, "dashboard.deleteConfirmTitle")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t(locale, "dashboard.deleteConfirmDescription", { name: quizName })}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>
-              {t(locale, "common.cancel")}
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className={cn(
-                buttonVariants({ variant: "destructive" }),
-                "focus-visible:ring-destructive",
-              )}
-            >
-              {isDeleting ? t(locale, "common.loading") : t(locale, "dashboard.delete")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <QuizShareLinkDialog
+        quizId={quizId}
+        quizStatus={quizStatus}
+        open={showShareDialog}
+        onOpenChange={setShowShareDialog}
+      />
+
+      <BuilderBackToTopButton
+        scrollContainerRef={scrollContainerRef}
+        layoutKey={`${activeTab}-${questions.length}`}
+        label={t(locale, "builder.backToTop")}
+      />
     </div>
-    <FullscreenBlockingOverlay
-      open={isLinkActionBusy}
-      title={linkBlockingTitle}
-      description={linkBlockingDescription}
-    />
-    </>
   );
 }

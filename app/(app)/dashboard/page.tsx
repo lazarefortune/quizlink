@@ -397,7 +397,7 @@ export default function DashboardPage() {
                 const isArchived = quiz.status === "ARCHIVED";
                 const titleHref = isDraft
                   ? `/builder/${quiz.id}`
-                  : `/dashboard/quiz/${quiz.id}/preview`;
+                  : `/dashboard/quiz/${quiz.id}?tab=questions`;
 
                 return (
                 <motion.div
@@ -480,7 +480,7 @@ export default function DashboardPage() {
                             className="w-full gap-2"
                             asChild
                           >
-                            <Link href={`/dashboard/quiz/${quiz.id}/preview`}>
+                            <Link href={`/dashboard/quiz/${quiz.id}?tab=questions`}>
                               <Eye className="h-4 w-4" />
                               {t(locale, "dashboard.viewArchivedQuiz")}
                             </Link>
@@ -525,11 +525,11 @@ export default function DashboardPage() {
                             asChild
                           >
                             <Link
-                              href={`/dashboard/quiz/${quiz.id}`}
+                              href={`/dashboard/quiz/${quiz.id}?tab=results`}
                               className="flex w-full items-center justify-center gap-2"
                             >
                               <BarChart3 className="h-4 w-4" />
-                              {t(locale, "dashboard.viewResponses")}
+                              {t(locale, "dashboard.quizTabResults")}
                             </Link>
                           </Button>
                         ) : null}

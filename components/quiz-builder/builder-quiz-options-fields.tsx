@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
-import { Textarea } from "@/components/ui/textarea";
 import type { Locale } from "@/lib/i18n";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -16,8 +15,8 @@ import {
   TIME_LIMIT_MINUTES_MAX,
   type BuilderTimeLimitUi,
 } from "@/lib/time-limit-seconds";
+import { QUIZ_NAME_MAX_LENGTH, type ValidationError } from "@/lib/quiz-validation";
 import type { QuizBuilder } from "@/types/quiz-builder";
-import type { ValidationError } from "@/lib/quiz-validation";
 
 export type BuilderQuizOptionsFieldsProps = {
   quiz: QuizBuilder;
@@ -25,9 +24,11 @@ export type BuilderQuizOptionsFieldsProps = {
   timeLimitUi: BuilderTimeLimitUi;
   setTimeLimitUi: Dispatch<SetStateAction<BuilderTimeLimitUi>>;
   locale: Locale;
-  getNameError: () => string | null;
   getTimeLimitError: () => string | null;
   setValidationErrors: Dispatch<SetStateAction<ValidationError[]>>;
+  /** When true, show the quiz name field (mobile sheet). Desktop keeps inline title in the builder header. */
+  showNameField?: boolean;
+  getNameError?: () => string | null;
 };
 
 export function BuilderQuizOptionsFields({
@@ -36,10 +37,12 @@ export function BuilderQuizOptionsFields({
   timeLimitUi,
   setTimeLimitUi,
   locale,
-  getNameError,
   getTimeLimitError,
   setValidationErrors,
+  showNameField = false,
+  getNameError,
 }: BuilderQuizOptionsFieldsProps) {
+  const nameError = showNameField && getNameError ? getNameError() : null;
   const applyTimeLimitParts = (minutes: number, seconds: number) => {
     const m = Math.min(Math.max(Math.trunc(minutes), 0), TIME_LIMIT_MINUTES_MAX);
     const s = Math.min(Math.max(Math.trunc(seconds), 0), 59);
@@ -72,35 +75,35 @@ export function BuilderQuizOptionsFields({
   return (
     <>
       <div className="space-y-3 sm:space-y-4">
-        <div className="space-y-1.5 sm:space-y-2">
-          <label className="text-base font-medium">
-            {t(locale, "builder.quizName")}
-          </label>
-          <div className="space-y-1">
-            <Textarea
+        {showNameField ? (
+          <div className="space-y-2 border-b border-border/60 pb-4">
+            <label htmlFor="builder-quiz-name-sheet" className="text-base font-medium text-foreground">
+              {t(locale, "builder.quizNameCardLabel")}
+            </label>
+            <Input
+              id="builder-quiz-name-sheet"
               value={quiz.name}
               onChange={(e) => {
-                setQuiz({ ...quiz, name: e.target.value });
+                setQuiz((prev) => ({ ...prev, name: e.target.value }));
                 setValidationErrors((prev) => prev.filter((err) => err.field !== "name"));
               }}
-              required
-              placeholder={t(locale, "builder.quizNamePlaceholder")}
+              placeholder={t(locale, "builder.quizNameInputPlaceholder")}
+              maxLength={QUIZ_NAME_MAX_LENGTH}
               className={cn(
                 "text-base",
-                getNameError() ? "border-destructive focus-visible:border-destructive" : "",
+                nameError ? "border-destructive focus-visible:border-destructive" : "",
               )}
+              aria-invalid={nameError !== null}
+              autoComplete="off"
             />
-            {getNameError() && (
+            {nameError ? (
               <p className="flex items-center gap-1 text-xs text-destructive">
-                <AlertCircle className="h-3 w-3" />
-                {getNameError()}
+                <AlertCircle className="h-3 w-3 shrink-0" />
+                {nameError}
               </p>
-            )}
+            ) : null}
           </div>
-        </div>
-      </div>
-
-      <div className="space-y-3 border-t border-border/60 pt-3 sm:space-y-4 sm:pt-4">
+        ) : null}
         <div className="flex items-start gap-2">
           <Switch
             checked={quiz.settings.showAnswerImmediately}
@@ -196,9 +199,7 @@ export function BuilderQuizOptionsFields({
 
         {timeLimitUi.enabled && (
           <div className="space-y-3 border border-border/70 rounded-lg bg-muted/20 p-4">
-            <p className="text-base font-semibold text-foreground">
-              {t(locale, "builder.timeLimitSectionTitle")}
-            </p>
+            <p className="text-base font-semibold text-foreground">{t(locale, "builder.timeLimitSectionTitle")}</p>
             <div className="flex flex-wrap items-end gap-3">
               <div className="space-y-1">
                 <label htmlFor="builder-time-limit-minutes" className="text-base text-muted-foreground">
@@ -252,9 +253,7 @@ export function BuilderQuizOptionsFields({
             </div>
 
             <div className="space-y-1.5">
-              <p className="text-base text-muted-foreground">
-                {t(locale, "builder.timeLimitPresetsLabel")}
-              </p>
+              <p className="text-base text-muted-foreground">{t(locale, "builder.timeLimitPresetsLabel")}</p>
               <div className="flex flex-wrap gap-2">
                 <Button
                   type="button"

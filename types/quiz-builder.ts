@@ -28,6 +28,8 @@ export type QuizSettings = {
   randomizeQuestions: boolean;
   randomizeOptions: boolean;
   timeLimitPerQuestion: number | null;
+  /** When false, draft server autosave is off; omit or true = autosave enabled (default). */
+  autoSaveEnabled?: boolean;
 };
 
 export type QuizBuilder = {

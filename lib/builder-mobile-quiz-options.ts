@@ -1,6 +1,7 @@
 /**
- * Mobile builder: options collapsible is open when there are no questions (name + settings first),
- * closes when the user adds the first question, and re-opens if all questions are removed again.
+ * Mobile / sheet UX: open quiz settings when there are no questions (title + options first),
+ * close when the first question is added (questions stay primary), re-open when all questions are
+ * removed. Skip auto-close when adding the first question would hide quiz-options validation errors.
  */
 export function resolveMobileQuizOptionsOpenAfterQuestionCountChange(
   previousQuestionCount: number,

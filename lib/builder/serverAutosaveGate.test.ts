@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   evaluateServerAutosaveGate,
+  isBuilderQuizValidForFinalize,
   mergeBuilderSaveValidationErrors,
   SERVER_AUTOSAVE_DEBOUNCE_MS,
 } from "@/lib/builder/serverAutosaveGate";
@@ -56,6 +57,28 @@ describe("mergeBuilderSaveValidationErrors", () => {
     const quiz = baseQuiz();
     const ui: BuilderTimeLimitUi = { enabled: false, minutes: 99, seconds: 99 };
     expect(mergeBuilderSaveValidationErrors(quiz, ui)).toEqual([]);
+  });
+});
+
+describe("isBuilderQuizValidForFinalize", () => {
+  it("is false when there are no questions", () => {
+    const quiz = { ...baseQuiz(), questions: [] };
+    expect(isBuilderQuizValidForFinalize(quiz, baseTimeLimitUi())).toBe(false);
+  });
+
+  it("is false when the quiz name is invalid", () => {
+    const quiz = { ...baseQuiz(), name: "   " };
+    expect(isBuilderQuizValidForFinalize(quiz, baseTimeLimitUi())).toBe(false);
+  });
+
+  it("is false when time limit is enabled but invalid", () => {
+    const quiz = baseQuiz();
+    const ui: BuilderTimeLimitUi = { enabled: true, minutes: 0, seconds: 0 };
+    expect(isBuilderQuizValidForFinalize(quiz, ui)).toBe(false);
+  });
+
+  it("is true for a minimal valid quiz and time limit UI", () => {
+    expect(isBuilderQuizValidForFinalize(baseQuiz(), baseTimeLimitUi())).toBe(true);
   });
 });
 
@@ -205,6 +228,23 @@ describe("evaluateServerAutosaveGate", () => {
         autosavePayloadMaxBytes: 500,
       }),
     ).toEqual({ proceed: false, reason: "payload_over_autosave_limit" });
+  });
+
+  it("blocks when draft server autosave is disabled in settings", () => {
+    const q = baseQuiz();
+    const quiz = { ...q, settings: { ...q.settings, autoSaveEnabled: false } };
+    expect(
+      evaluateServerAutosaveGate({
+        savedQuizId: "clid",
+        quizLifecycleStatus: "DRAFT",
+        baselineSnapshot: baseline,
+        currentSnapshot: other,
+        quizForValidation: quiz,
+        timeLimitUi: baseTimeLimitUi(),
+        estimatedPayloadBytes: 100,
+        autosavePayloadMaxBytes: 1_000_000,
+      }),
+    ).toEqual({ proceed: false, reason: "auto_save_disabled" });
   });
 
   it("allows when all preconditions pass for DRAFT", () => {

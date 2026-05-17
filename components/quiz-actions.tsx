@@ -160,7 +160,7 @@ export function QuizActions({
   };
 
   const handleView = () => {
-    router.push(`/dashboard/quiz/${quizId}/preview`);
+    router.push(`/dashboard/quiz/${quizId}?tab=questions`);
   };
 
   const isDraft = quizStatus === "DRAFT";

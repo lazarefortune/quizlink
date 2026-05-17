@@ -1,7 +1,15 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+} from "react";
 import { motion, useReducedMotion } from "framer-motion";
+import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,7 +17,14 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, ChevronDown, Save, CheckCircle2, Loader2, SlidersHorizontal } from "lucide-react";
+import {
+  Plus,
+  Save,
+  CheckCircle2,
+  Loader2,
+  ArrowLeft,
+  Settings,
+} from "lucide-react";
 import { QuizMenu } from "@/components/quiz-menu";
 import { QuizStatusBadge } from "@/components/quiz/quiz-status-badge";
 import { getQuizById } from "@/app/(app)/dashboard/actions";
@@ -63,13 +78,14 @@ import type {
   QuestionType,
 } from "@/types/quiz-builder";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { BuilderMobileOrganizeTabPanel } from "@/components/quiz-builder/builder-mobile-organize-tab-panel";
+import { BuilderMobileStickyTabsBar } from "@/components/quiz-builder/builder-mobile-sticky-tabs-bar";
 import { BuilderOrganizeQuestionsList } from "@/components/quiz-builder/builder-organize-questions-list";
-import { BuilderQuizOptionsFields } from "@/components/quiz-builder/builder-quiz-options-fields";
+import { BuilderQuestionNavigator } from "@/components/quiz-builder/builder-question-navigator";
+import { BuilderQuizSettingsSheet } from "@/components/quiz-builder/builder-quiz-settings-sheet";
+import { BuilderDraftSaveSplitButton } from "@/components/quiz-builder/builder-draft-save-split-button";
+import { BuilderQuizTitleInput } from "@/components/quiz-builder/builder-quiz-title-input";
+import { BuilderMobileQuizCard } from "@/components/quiz-builder/builder-mobile-quiz-card";
 import { BuilderSaveStatus } from "@/components/quiz-builder/builder-save-status";
 import { BuilderBackToTopButton } from "@/components/quiz-builder/builder-back-to-top-button";
 import { FullscreenBlockingOverlay } from "@/components/ui/fullscreen-blocking-overlay";
@@ -94,12 +110,24 @@ import {
   type BuilderLocalDraftPayload,
 } from "@/lib/builder/builderLocalDraft";
 import { buildPlayableContentMultisetKey } from "@/lib/builder/quizContentChangeDetection";
-import { computeQuizBuilderSnapshot } from "@/lib/builder/quizBuilderSnapshot";
-import { mergeQuizSettingsFromStored } from "@/lib/quiz/mergeQuizSettingsFromStored";
 import {
   evaluateServerAutosaveGate,
+  isBuilderQuizValidForFinalize,
   SERVER_AUTOSAVE_DEBOUNCE_MS,
 } from "@/lib/builder/serverAutosaveGate";
+import { shouldShowBuilderSaveStatusRow } from "@/lib/builder/builderSaveStatusRowVisibility";
+import { useBuilderSaveStatusDisplayKind } from "@/lib/builder/useBuilderSaveStatusDisplayKind";
+import {
+  isCreateQuizButtonDisabledForNoQuestionsAndClean,
+  isDraftServerManualSaveActionDisabled,
+  isDraftServerManualSaveBusy,
+  isActivePrimarySaveDisabled,
+} from "@/lib/builder/builderManualSaveButtonPolicy";
+import { resolveEffectiveAutoSaveEnabled } from "@/lib/builder/resolveEffectiveAutoSaveEnabled";
+import { computeQuizBuilderSnapshot } from "@/lib/builder/quizBuilderSnapshot";
+import { pickDominantVisibleQuestionId } from "@/lib/builder/pickDominantVisibleQuestionId";
+import { useMinWidthLg } from "@/lib/builder/useMinWidthLg";
+import { mergeQuizSettingsFromStored } from "@/lib/quiz/mergeQuizSettingsFromStored";
 import type { BuilderServerSaveUiPhase } from "@/lib/builder/builderSaveStatusDisplay";
 
 type BuilderViewMode = "edit" | "organize";
@@ -198,7 +226,7 @@ function BuilderEditQuestionItem({
       id={`builder-question-${question.id}`}
       ref={itemRef}
       className={cn(
-        "relative group w-full min-w-0 rounded-lg p-2",
+        "relative group w-full min-w-0 rounded-lg p-0",
         index % 2 === 0 ? "bg-background" : "bg-muted/30",
         isNewlyAdded && "animate-question-appear",
         isRemoving && "animate-question-remove pointer-events-none",
@@ -255,9 +283,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
     deriveTimeLimitUiFromSettings(getInitialQuiz().settings),
   );
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
-  const [mobileQuizOptionsOpen, setMobileQuizOptionsOpen] = useState(
-    () => getInitialQuiz().questions.length === 0,
-  );
+  const [quizSettingsSheetOpen, setQuizSettingsSheetOpen] = useState(false);
   const previousQuestionCountRef = useRef(quiz.questions.length);
   const [newlyAddedQuestionId, setNewlyAddedQuestionId] = useState<string | null>(null);
   const [removingQuestionId, setRemovingQuestionId] = useState<string | null>(null);
@@ -275,7 +301,9 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
   const quizIdForImageUpload = savedQuizId ?? urlQuizId ?? null;
   const displayedEditorialStatus = urlQuizId ? serverQuizStatus : null;
   const [builderViewMode, setBuilderViewMode] = useState<BuilderViewMode>("edit");
+  const [organizePanelAnimationKey, setOrganizePanelAnimationKey] = useState(0);
   const [scrollToQuestionId, setScrollToQuestionId] = useState<string | null>(null);
+  const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const unsavedBaselineRef = useRef<string | null>(null);
   const baselinePlayableMultisetKeyRef = useRef<string | null>(null);
   const quizRef = useRef(quiz);
@@ -297,16 +325,21 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
     null,
   );
   const [activeSaveStatsModalOpen, setActiveSaveStatsModalOpen] = useState(false);
+  const [finalizeDraftConfirmOpen, setFinalizeDraftConfirmOpen] = useState(false);
   const [isStatsModalDraftCopyBusy, setIsStatsModalDraftCopyBusy] = useState(false);
   const pendingConfirmedStatsResetRef = useRef(false);
-  const builderMainScrollRef = useRef<HTMLElement | null>(null);
+  const builderMainScrollRef = useRef<HTMLDivElement | null>(null);
+  const intersectionRatiosRef = useRef<Map<string, number>>(new Map());
   const finalizeNavigationStartedRef = useRef(false);
   const prefersReducedMotion = useReducedMotion();
+  const isLargeViewport = useMinWidthLg();
+  const isEditorScrollTrackingActive = isLargeViewport || builderViewMode === "edit";
   const { showToast } = useToast();
   const {
     setBuilderHasUnsavedChanges,
     runNavigationBypass,
     requestNavigate,
+    interceptLinkClick,
   } = useBuilderNavigationGuard();
 
   useLayoutEffect(() => {
@@ -381,12 +414,18 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
   }, [syncDirtyToGuard, setBuilderHasUnsavedChanges]);
 
   useEffect(() => {
-    if (hasQuizOptionsPanelErrors(validationErrors)) {
-      setMobileQuizOptionsOpen(true);
+    if (!isLargeViewport) {
+      return;
     }
-  }, [validationErrors]);
+    if (hasQuizOptionsPanelErrors(validationErrors)) {
+      setQuizSettingsSheetOpen(true);
+    }
+  }, [isLargeViewport, validationErrors]);
 
   useEffect(() => {
+    if (!isLargeViewport) {
+      return;
+    }
     const prev = previousQuestionCountRef.current;
     const nextCount = quiz.questions.length;
     const resolved = resolveMobileQuizOptionsOpenAfterQuestionCountChange(
@@ -394,10 +433,17 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
       nextCount,
     );
     if (resolved !== null) {
-      setMobileQuizOptionsOpen(resolved);
+      const shouldSkipAutoClose =
+        resolved === false &&
+        prev === 0 &&
+        nextCount > 0 &&
+        hasQuizOptionsPanelErrors(validationErrors);
+      if (!shouldSkipAutoClose) {
+        setQuizSettingsSheetOpen(resolved);
+      }
     }
     previousQuestionCountRef.current = nextCount;
-  }, [quiz.questions.length]);
+  }, [quiz.questions.length, validationErrors, isLargeViewport]);
 
   // Check if quiz exists in database (ID starts with "cl" for Prisma cuid)
   const isQuizSaved = savedQuizId !== null || Boolean(quiz.id?.startsWith("cl"));
@@ -649,6 +695,11 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
       return;
     }
 
+    if (serverQuizStatus === "DRAFT" && !resolveEffectiveAutoSaveEnabled(quiz.settings)) {
+      clearServerAutosaveDebounceTimer();
+      return;
+    }
+
     const mergedForEstimate: QuizBuilder = {
       ...quiz,
       settings: buildQuizSettingsWithResolvedTimeLimit(quiz.settings, timeLimitUi),
@@ -829,7 +880,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
   }, [quiz, timeLimitUi, serverSaveUiPhase]);
 
   useEffect(() => {
-    if (builderViewMode !== "edit" || scrollToQuestionId === null) {
+    if (!isEditorScrollTrackingActive || scrollToQuestionId === null) {
       return;
     }
     const targetId = scrollToQuestionId;
@@ -849,7 +900,66 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
     return () => {
       cancelled = true;
     };
-  }, [builderViewMode, scrollToQuestionId]);
+  }, [isEditorScrollTrackingActive, scrollToQuestionId]);
+
+  useEffect(() => {
+    if (typeof IntersectionObserver === "undefined") {
+      return;
+    }
+    if (!isEditorScrollTrackingActive || quiz.questions.length === 0) {
+      return;
+    }
+    const root = builderMainScrollRef.current;
+    if (!root) {
+      return;
+    }
+
+    const orderedIds = quiz.questions.map((q) => q.id);
+    intersectionRatiosRef.current = new Map();
+
+    const thresholds = Array.from({ length: 21 }, (_, i) => i / 20) as number[];
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const match = /^builder-question-(.+)$/.exec(entry.target.id);
+          if (match?.[1]) {
+            intersectionRatiosRef.current.set(match[1], entry.intersectionRatio);
+          }
+        }
+        const next = pickDominantVisibleQuestionId(intersectionRatiosRef.current, orderedIds);
+        setActiveQuestionId(next);
+      },
+      {
+        root,
+        rootMargin: "-10% 0px -38% 0px",
+        threshold: thresholds,
+      },
+    );
+
+    let cancelled = false;
+    let raf2 = 0;
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        if (cancelled) {
+          return;
+        }
+        for (const id of orderedIds) {
+          const el = document.getElementById(`builder-question-${id}`);
+          if (el) {
+            observer.observe(el);
+          }
+        }
+      });
+    });
+
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+      observer.disconnect();
+    };
+  }, [isEditorScrollTrackingActive, quiz.questions]);
 
   const isDirtyVersusBaseline = useMemo(
     () =>
@@ -882,6 +992,22 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
       autosavePayloadMaxBytes: QUIZ_SAVE_PAYLOAD_WARN_BYTES,
     }).proceed;
   }, [savedQuizId, baselineSnapshotForUi, quiz, timeLimitUi, serverQuizStatus]);
+
+  const canFinalizeDraftQuiz = useMemo(
+    () => isBuilderQuizValidForFinalize(quiz, timeLimitUi),
+    [quiz, timeLimitUi],
+  );
+
+  const builderSaveStatusKind = useBuilderSaveStatusDisplayKind({
+    phase: serverSaveUiPhase,
+    savedQuizId,
+    quizLifecycleStatus: serverQuizStatus,
+    isDirtyVersusBaseline,
+    quizQuestionCount: quiz.questions.length,
+    gateProceedsForServerAutosave,
+    isManualSaving: isSaving || isFinalizingDraft,
+    lastServerAutosaveSuccessAt: isDirtyVersusBaseline ? null : lastServerAutosaveSuccessAt,
+  });
 
   const handleSave = async () => {
     const timeLimitError = validateBuilderTimeLimit(timeLimitUi);
@@ -1143,6 +1269,10 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
       return;
     }
 
+    if (isFinalizingDraftRef.current) {
+      return;
+    }
+
     if (quiz.questions.length === 0) {
       showToast(t(locale, "builder.finalizeAddQuestionFirst"), "error");
       return;
@@ -1268,6 +1398,13 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
     setScrollToQuestionId(questionId);
   };
 
+  const handleNavigatorQuestionClick = useCallback((questionId: string) => {
+    setBuilderViewMode("edit");
+    setScrollToQuestionId(questionId);
+  }, []);
+
+  const builderTabsValue = isLargeViewport ? "edit" : builderViewMode;
+
   const handleQuestionChange = (index: number, updatedQuestion: Question) => {
     const newQuestions = [...quiz.questions];
     newQuestions[index] = updatedQuestion;
@@ -1343,6 +1480,285 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
         }).format(new Date(localDraftPayload.savedAt))
       : "";
 
+  const builderBackHref = useMemo(() => {
+    const id = savedQuizId ?? urlQuizId;
+    if (id == null || String(id).trim() === "") {
+      return "/dashboard/quizzes";
+    }
+    return `/dashboard/quiz/${String(id).trim()}`;
+  }, [savedQuizId, urlQuizId]);
+
+  const builderBackLabel = useMemo(() => {
+    const id = savedQuizId ?? urlQuizId;
+    if (id == null || String(id).trim() === "") {
+      return t(locale, "builder.backToQuizzes");
+    }
+    return t(locale, "builder.backToQuizDetail");
+  }, [savedQuizId, urlQuizId, locale]);
+
+  const builderMobileBackLinkText = useMemo(() => {
+    const id = savedQuizId ?? urlQuizId;
+    if (id == null || String(id).trim() === "") {
+      return t(locale, "builder.mobileBackLink");
+    }
+    return t(locale, "builder.mobileBackToQuizLink");
+  }, [savedQuizId, urlQuizId, locale]);
+
+  const handleQuizTitleChange = useCallback((next: string) => {
+    setQuiz((prev) => ({ ...prev, name: next }));
+    setValidationErrors((prev) => prev.filter((err) => err.field !== "name"));
+  }, []);
+
+  const renderBuilderSaveActions = (layout: "desktop" | "mobile") => {
+    const isMobileLayout = layout === "mobile";
+    const saveIconClass = "h-3 w-3 sm:h-4 sm:w-4 shrink-0";
+    const validationBadge =
+      validationErrors.length > 0 ? (
+        <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs bg-destructive text-destructive-foreground border-destructive">
+          {validationErrors.length}
+        </Badge>
+      ) : null;
+
+    if (serverQuizStatus === "ARCHIVED") {
+      return null;
+    }
+
+    const mobileActionButtonClass = isMobileLayout
+      ? "w-full text-base relative gap-1.5"
+      : "flex-1 sm:flex-initial text-base relative gap-1.5";
+
+    if (serverQuizStatus === "DRAFT" && savedQuizId) {
+      const draftBusy = isDraftServerManualSaveBusy({
+        isSaving,
+        isFinalizingDraft,
+        builderSaveStatusKind,
+        serverSaveUiPhase,
+      });
+      const draftSaveDisabled = isDraftServerManualSaveActionDisabled({
+        isDirtyVersusBaseline,
+        isSaving,
+        isFinalizingDraft,
+        builderSaveStatusKind,
+        serverSaveUiPhase,
+      });
+      const showDraftSaveSpinner = draftBusy;
+
+      const draftSaveControl = (
+        <BuilderDraftSaveSplitButton
+          locale={locale}
+          quiz={quiz}
+          setQuiz={setQuiz}
+          onPrimarySaveClick={handleSave}
+          primaryDisabled={draftSaveDisabled}
+          isBusy={draftBusy}
+          showPrimarySpinner={showDraftSaveSpinner}
+          autosaveQueued={
+            builderSaveStatusKind === "server_pending" && !draftBusy
+          }
+          savedClean={
+            !isDirtyVersusBaseline &&
+            builderSaveStatusKind !== "server_error"
+          }
+          validationBadge={validationBadge}
+          isDestructiveStyled={builderSaveStatusKind === "server_error"}
+          centerPrimaryContent={isMobileLayout}
+        />
+      );
+
+      if (isMobileLayout) {
+        return (
+          <div className="flex w-full min-w-0 flex-col gap-2 border-b border-border/60 pb-5">
+            {draftSaveControl}
+            <Button
+              type="button"
+              variant="blue"
+              onClick={() => setFinalizeDraftConfirmOpen(true)}
+              disabled={
+                !canFinalizeDraftQuiz ||
+                isSaving ||
+                isFinalizingDraft ||
+                serverSaveUiPhase === "autosaving"
+              }
+              className="w-full min-w-0 justify-center text-base gap-1.5"
+              size="default"
+              aria-label={t(locale, "builder.finalizeQuiz")}
+            >
+              {isFinalizingDraft
+                ? t(locale, "builder.finalizingQuiz")
+                : t(locale, "builder.finalizeQuizShort")}
+            </Button>
+          </div>
+        );
+      }
+
+      return (
+        <>
+          <div className="flex min-w-0 flex-1 items-end justify-end sm:flex-initial">
+            {draftSaveControl}
+          </div>
+          <Button
+            type="button"
+            variant="blue"
+            onClick={() => setFinalizeDraftConfirmOpen(true)}
+            disabled={
+              !canFinalizeDraftQuiz ||
+              isSaving ||
+              isFinalizingDraft ||
+              serverSaveUiPhase === "autosaving"
+            }
+            className="min-w-0 flex-1 self-start text-base gap-1.5 sm:flex-initial"
+            size="default"
+          >
+            <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4" />
+            {isFinalizingDraft
+              ? t(locale, "builder.finalizingQuiz")
+              : t(locale, "builder.finalizeQuiz")}
+          </Button>
+        </>
+      );
+    }
+
+    if (
+      isCreateQuizButtonDisabledForNoQuestionsAndClean({
+        quizQuestionCount: quiz.questions.length,
+        isDirtyVersusBaseline,
+      })
+    ) {
+      return (
+        <Button
+          variant="blue"
+          onClick={handleSave}
+          disabled
+          className={mobileActionButtonClass}
+          size="default"
+        >
+          <Save className={saveIconClass} />
+          {t(locale, "builder.createQuiz")}
+          {validationBadge}
+        </Button>
+      );
+    }
+
+    if (builderSaveStatusKind === "server_error") {
+      const errorLabel =
+        serverQuizStatus === "ACTIVE"
+          ? t(locale, "builder.saveChanges")
+          : t(locale, "builder.save");
+      return (
+        <Button
+          variant="outline"
+          onClick={handleSave}
+          className={cn(
+            mobileActionButtonClass,
+            "border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive",
+          )}
+          size="default"
+        >
+          <Save className={saveIconClass} />
+          {errorLabel}
+          {validationBadge}
+        </Button>
+      );
+    }
+
+    if (isSaving) {
+      const savingLabel = (() => {
+        if (!isQuizSaved) {
+          return t(locale, "builder.createQuiz");
+        }
+        if (serverQuizStatus === "ACTIVE") {
+          return t(locale, "builder.saveChanges");
+        }
+        return t(locale, "builder.saveQuiz");
+      })();
+      return (
+        <Button
+          variant="blue"
+          disabled
+          aria-busy={true}
+          className={mobileActionButtonClass}
+          size="default"
+        >
+          <Loader2 className={cn(saveIconClass, "animate-spin")} />
+          {savingLabel}
+          {validationBadge}
+        </Button>
+      );
+    }
+
+    if (serverQuizStatus === "ACTIVE") {
+      return (
+        <Button
+          variant="blue"
+          onClick={handleSave}
+          disabled={isActivePrimarySaveDisabled({
+            serverQuizStatus,
+            isDirtyVersusBaseline,
+            isSaving: false,
+            isFinalizingDraft,
+          })}
+          className={mobileActionButtonClass}
+          size="default"
+        >
+          <Save className={saveIconClass} />
+          {t(locale, "builder.saveChanges")}
+          {validationBadge}
+        </Button>
+      );
+    }
+
+    const primaryLabel = (() => {
+      if (!isQuizSaved) {
+        return t(locale, "builder.createQuiz");
+      }
+      return t(locale, "builder.saveQuiz");
+    })();
+
+    return (
+      <Button
+        variant="blue"
+        onClick={handleSave}
+        disabled={isFinalizingDraft}
+        className={mobileActionButtonClass}
+        size="default"
+      >
+        <Save className={saveIconClass} />
+        {primaryLabel}
+        {validationBadge}
+      </Button>
+    );
+  };
+
+  const builderHeaderSaveActions = renderBuilderSaveActions("desktop");
+  const builderMobileSaveActions = renderBuilderSaveActions("mobile");
+
+  const builderHeaderQuizMenu =
+    isQuizSaved && savedQuizId ? (
+      <QuizMenu
+        quizId={savedQuizId}
+        quizName={quiz.name}
+        quizStatus={serverQuizStatus ?? "DRAFT"}
+        elevateShareButton
+        onDeleted={() => {
+          requestNavigate("/dashboard");
+        }}
+      />
+    ) : null;
+
+  const builderHeaderSettingsButton = (
+    <Button
+      type="button"
+      variant="outline"
+      size="icon"
+      className="hidden h-10 w-10 shrink-0 lg:inline-flex"
+      aria-label={t(locale, "builder.quizSettingsIconAriaLabel")}
+      title={t(locale, "builder.quizSettingsIconAriaLabel")}
+      onClick={() => setQuizSettingsSheetOpen(true)}
+    >
+      <Settings className="h-4 w-4" />
+    </Button>
+  );
+
   return (
     <>
       <AlertDialog
@@ -1378,6 +1794,46 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
               onClick={handleRestoreLocalDraft}
             >
               {t(locale, "builder.localDraftRestore")}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog
+        open={finalizeDraftConfirmOpen}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen && !isFinalizingDraft) {
+            setFinalizeDraftConfirmOpen(false);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t(locale, "builder.finalizeConfirmModal.title")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t(locale, "builder.finalizeConfirmModal.description")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col-reverse gap-4 sm:gap-1 sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-full sm:w-auto"
+              onClick={() => setFinalizeDraftConfirmOpen(false)}
+              disabled={isFinalizingDraft}
+            >
+              {t(locale, "builder.finalizeConfirmModal.cancel")}
+            </Button>
+            <Button
+              type="button"
+              variant="blue"
+              className="w-full sm:w-auto"
+              disabled={isFinalizingDraft}
+              onClick={() => {
+                setFinalizeDraftConfirmOpen(false);
+                void handleFinalizeDraft();
+              }}
+            >
+              {t(locale, "builder.finalizeConfirmModal.confirm")}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1429,384 +1885,257 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <div className="flex min-h-0 flex-1 flex-col bg-background w-full">
-      <div className="flex min-h-0 flex-1 flex-col lg:flex-row lg:items-stretch">
-        {/* Desktop: options sidebar */}
-        <aside className="relative z-10 hidden w-full shrink-0 border-r border-border/60 bg-muted/30 lg:flex lg:w-80 lg:flex-col lg:overflow-y-auto">
-          <div className="space-y-4 p-4 sm:space-y-6 sm:p-6">
-            <div>
-              <h2 className="h1 mb-3 text-lg font-semibold uppercase sm:mb-4">{t(locale, "builder.optionsTitle")}</h2>
+      <div className="flex min-w-0 flex-col bg-background lg:min-h-0 lg:flex-1">
+        <header className="hidden shrink-0 border-b border-border/60 bg-muted/10 px-3 pb-2 pt-2 sm:px-4 sm:pb-3 sm:pt-3 md:px-6 lg:sticky lg:top-0 lg:z-20 lg:block">
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-row items-center justify-between gap-4">
+              <div className="flex min-w-0 flex-1 items-center gap-3">
+                <Button
+                  asChild
+                  variant="outline"
+                  size="icon"
+                  className="h-10 w-10 shrink-0"
+                  aria-label={builderBackLabel}
+                >
+                  <Link
+                    href={builderBackHref}
+                    onClick={(event) => {
+                      interceptLinkClick(event, builderBackHref);
+                    }}
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <div className="flex min-w-0 flex-1 flex-row flex-wrap items-center gap-x-3 gap-y-1">
+                  <BuilderQuizTitleInput
+                    labelText={t(locale, "builder.quizNameCardLabel")}
+                    value={quiz.name}
+                    onChange={handleQuizTitleChange}
+                    placeholder={t(locale, "builder.quizNameInputPlaceholder")}
+                    getNameError={getNameError}
+                  />
+                </div>
+              </div>
+              <div className="flex min-w-0 shrink-0 flex-wrap items-center justify-end gap-2">
+                {builderHeaderSaveActions}
+                {builderHeaderSettingsButton}
+                {builderHeaderQuizMenu}
+              </div>
             </div>
-            <BuilderQuizOptionsFields
-              quiz={quiz}
-              setQuiz={setQuiz}
-              timeLimitUi={timeLimitUi}
-              setTimeLimitUi={setTimeLimitUi}
+          </div>
+          {shouldShowBuilderSaveStatusRow(builderSaveStatusKind) && !isLoading ? (
+            <div className="mt-2 sm:mt-3">
+              <BuilderSaveStatus
+                locale={locale}
+                kind={builderSaveStatusKind}
+                isLoading={isLoading}
+              />
+            </div>
+          ) : null}
+        </header>
+
+        <div className="flex flex-col lg:min-h-0 lg:flex-1 lg:flex-row lg:items-stretch">
+          <div className="relative z-10 hidden min-h-0 w-full shrink-0 border-r border-border/60 bg-muted/25 lg:flex lg:w-56 lg:flex-col lg:self-stretch 2xl:w-60">
+            <BuilderQuestionNavigator
               locale={locale}
-              getNameError={getNameError}
-              getTimeLimitError={getTimeLimitError}
-              setValidationErrors={setValidationErrors}
+              questions={quiz.questions}
+              activeQuestionId={
+                isEditorScrollTrackingActive && quiz.questions.length > 0 ? activeQuestionId : null
+              }
+              onQuestionClick={handleNavigatorQuestionClick}
+              onAddQuestion={() => {
+                handleAddQuestion();
+              }}
+              onReorder={(nextQuestions) => {
+                setQuiz((prev) => ({
+                  ...prev,
+                  questions: nextQuestions,
+                }));
+              }}
             />
           </div>
-        </aside>
 
-        {/* Mobile: compact collapsible strip — questions stay primary below */}
-        <div className="shrink-0 border-b border-border/60 bg-muted/30 lg:hidden">
-          <Collapsible
-            open={mobileQuizOptionsOpen}
-            onOpenChange={setMobileQuizOptionsOpen}
-          >
-            <CollapsibleTrigger
-              title={t(
-                locale,
-                mobileQuizOptionsOpen
-                  ? "builder.optionsMobileHintOpen"
-                  : "builder.optionsMobileHintClosed",
-              )}
-              className={cn(
-                "flex w-full items-center justify-between gap-3 px-4 py-3 text-left outline-none transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 [&[data-state=open]>svg]:rotate-180",
-                !prefersReducedMotion && "duration-300 ease-out",
-              )}
-            >
-              <div className="min-w-0 flex-1">
-                <p className="flex items-center gap-2 truncate text-lg font-semibold leading-snug sm:text-xl">
-                  <SlidersHorizontal
-                    className="h-5 w-5 shrink-0 text-muted-foreground"
-                    aria-hidden
-                  />
-                  <span className="min-w-0 truncate">
-                    {t(locale, "builder.quizSettings")}
-                  </span>
-                </p>
-              </div>
-              <ChevronDown
-                className={cn(
-                  "h-5 w-5 shrink-0 text-muted-foreground transition-transform",
-                  prefersReducedMotion ? "duration-0" : "duration-300 ease-out",
-                )}
+          <section className="relative flex flex-col bg-muted/10 min-w-0 lg:min-h-0 lg:flex-1 lg:overflow-hidden">
+            <div className="space-y-3 px-3 pb-2 pt-2 lg:hidden sm:px-4 md:px-6">
+              <BuilderMobileQuizCard
+                locale={locale}
+                quizName={quiz.name}
+                onQuizNameChange={handleQuizTitleChange}
+                getNameError={getNameError}
+                editorialStatus={displayedEditorialStatus}
+                backHref={builderBackHref}
+                backLinkText={builderMobileBackLinkText}
+                onBackLinkClick={(event) => {
+                  interceptLinkClick(event, builderBackHref);
+                }}
+                onOpenSettings={() => setQuizSettingsSheetOpen(true)}
+                trailingActions={builderHeaderQuizMenu}
               />
-            </CollapsibleTrigger>
-            <CollapsibleContent
-              className={cn(
-                "overflow-hidden",
-                "data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up",
-                "motion-reduce:data-[state=open]:animate-none motion-reduce:data-[state=closed]:animate-none",
-              )}
-            >
-              <motion.div
-                initial={prefersReducedMotion ? false : { opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={
-                  prefersReducedMotion
-                    ? { duration: 0 }
-                    : { duration: 0.22, ease: [0.22, 1, 0.36, 1], delay: 0.05 }
-                }
-                className="border-t border-border/40 px-4 pb-4 pt-3"
-              >
-                <div className="space-y-4">
-                  <BuilderQuizOptionsFields
-                    quiz={quiz}
-                    setQuiz={setQuiz}
-                    timeLimitUi={timeLimitUi}
-                    setTimeLimitUi={setTimeLimitUi}
-                    locale={locale}
-                    getNameError={getNameError}
-                    getTimeLimitError={getTimeLimitError}
-                    setValidationErrors={setValidationErrors}
-                  />
-                </div>
-              </motion.div>
-            </CollapsibleContent>
-          </Collapsible>
-        </div>
-
-        {/* Main Content - Questions */}
-        <main
-          ref={builderMainScrollRef}
-          className="relative flex min-h-0 flex-1 scroll-pt-4 overflow-y-auto bg-muted/10 min-w-0"
-        >
-          <div className="w-full min-w-0 max-w-none px-3 pt-3 pb-10 sm:px-4 sm:pt-4 sm:pb-12 md:px-6 md:pt-6 md:pb-16">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
-              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                <h1 className="hidden text-lg font-bold h1 sm:block sm:text-xl md:text-2xl">
-                  {t(locale, "builder.title")}
-                </h1>
-                {displayedEditorialStatus !== null ? (
-                  <QuizStatusBadge
-                    status={displayedEditorialStatus}
-                    locale={locale}
-                    className={
-                      displayedEditorialStatus === "DRAFT"
-                        ? "hidden sm:inline-flex"
-                        : undefined
-                    }
-                  />
-                ) : null}
-                {quiz.questions.length > 0 && (
-                  <Badge variant="secondary" className="text-xs sm:text-sm">
-                    {quiz.questions.length} {quiz.questions.length === 1 ? t(locale, "dashboard.question") : t(locale, "dashboard.questions")}
-                  </Badge>
-                )}
-              </div>
-              <div className="flex w-full flex-col items-stretch gap-1 sm:w-auto sm:items-end">
-                <div className="flex w-full min-w-0 flex-row items-center justify-end gap-1.5 sm:gap-2 md:w-auto">
-                  {serverQuizStatus === "ARCHIVED" ? null : serverQuizStatus === "DRAFT" &&
-                    savedQuizId ? (
-                    <>
-                      <Button
-                        variant="outlineBlue"
-                        onClick={handleSave}
-                        disabled={
-                          isSaving ||
-                          isFinalizingDraft ||
-                          !isDirtyVersusBaseline
-                        }
-                        aria-label={
-                          isSaving
-                            ? t(locale, "builder.saveStatus.saving")
-                            : t(locale, "builder.saveNow")
-                        }
-                        className="relative shrink-0 w-auto"
-                        size="default"
-                      >
-                        {isSaving ? (
-                          <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
-                        ) : (
-                          <Save className="h-4 w-4 shrink-0" />
-                        )}
-                        <span className="inline">
-                          {isSaving
-                            ? t(locale, "common.loading")
-                            : t(locale, "builder.saveNow")}
-                        </span>
-                        {validationErrors.length > 0 && (
-                          <Badge
-                            className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs bg-destructive text-destructive-foreground border-destructive"
-                          >
-                            {validationErrors.length}
-                          </Badge>
-                        )}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="blue"
-                        onClick={handleFinalizeDraft}
-                        disabled={isSaving || isFinalizingDraft}
-                        aria-label={
-                          isFinalizingDraft
-                            ? t(locale, "builder.finalizingQuiz")
-                            : t(locale, "builder.finalizeQuiz")
-                        }
-                        className="min-w-0 shrink gap-1.5 px-3 text-xs md:px-5 md:text-sm"
-                        size="default"
-                      >
-                        <CheckCircle2 className="h-4 w-4 shrink-0" />
-                        <span className="min-w-0 md:hidden">
-                          {isFinalizingDraft
-                            ? t(locale, "builder.finalizingQuiz")
-                            : t(locale, "builder.finalizeQuizShort")}
-                        </span>
-                        <span className="hidden min-w-0 md:inline">
-                          {isFinalizingDraft
-                            ? t(locale, "builder.finalizingQuiz")
-                            : t(locale, "builder.finalizeQuiz")}
-                        </span>
-                      </Button>
-                    </>
-                  ) : (
-                    (() => {
-                      const saveToolbarLabel = (() => {
-                        if (isSaving) {
-                          return t(locale, "common.loading");
-                        }
-                        if (!isQuizSaved) {
-                          return t(locale, "builder.createQuiz");
-                        }
-                        if (serverQuizStatus === "ACTIVE") {
-                          return t(locale, "builder.saveChanges");
-                        }
-                        return t(locale, "builder.saveQuiz");
-                      })();
-                      return (
-                    <Button
-                      variant="blue"
-                      onClick={handleSave}
-                      disabled={
-                        isSaving ||
-                        isFinalizingDraft ||
-                        (baselineSnapshotForUi !== null &&
-                          !isDirtyVersusBaseline)
-                      }
-                      aria-label={saveToolbarLabel}
-                      className="relative h-11 w-11 min-w-0 shrink-0 px-0 md:h-11 md:w-auto md:px-5"
-                      size="default"
-                    >
-                      {isSaving ? (
-                        <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
-                      ) : (
-                        <Save className="h-4 w-4 shrink-0" />
-                      )}
-                      <span className="hidden min-w-0 md:inline">{saveToolbarLabel}</span>
-                      {validationErrors.length > 0 && (
-                        <Badge
-                          className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs bg-destructive text-destructive-foreground border-destructive"
-                        >
-                          {validationErrors.length}
-                        </Badge>
-                      )}
-                    </Button>
-                      );
-                    })()
-                  )}
-                  {isQuizSaved && savedQuizId ? (
-                    <div className="flex shrink-0">
-                      <QuizMenu
-                        quizId={savedQuizId}
-                        quizName={quiz.name}
-                        quizStatus={serverQuizStatus ?? "DRAFT"}
-                        onDeleted={() => {
-                          requestNavigate("/dashboard");
-                        }}
-                      />
-                    </div>
-                  ) : null}
-                </div>
+              {builderMobileSaveActions !== null ? (
+                <div className="flex w-full flex-col gap-2">{builderMobileSaveActions}</div>
+              ) : null}
+              {shouldShowBuilderSaveStatusRow(builderSaveStatusKind) && !isLoading ? (
                 <BuilderSaveStatus
                   locale={locale}
-                  phase={serverSaveUiPhase}
-                  savedQuizId={savedQuizId}
-                  quizLifecycleStatus={serverQuizStatus}
-                  isDirtyVersusBaseline={isDirtyVersusBaseline}
-                  quizQuestionCount={quiz.questions.length}
-                  gateProceedsForServerAutosave={gateProceedsForServerAutosave}
-                  isManualSaving={isSaving || isFinalizingDraft}
-                  lastServerAutosaveSuccessAt={
-                    isDirtyVersusBaseline ? null : lastServerAutosaveSuccessAt
-                  }
+                  kind={builderSaveStatusKind}
                   isLoading={isLoading}
                 />
-              </div>
+              ) : null}
             </div>
-
             {quiz.questions.length === 0 ? (
-              <Card>
-                <CardContent className="py-8 sm:py-12 text-center">
-                  <p className="text-base text-muted-foreground mb-4">
-                    {t(locale, "builder.noQuestions")}
-                  </p>
-                  <Button variant="primary" onClick={() => handleAddQuestion()} size="default" className="text-base">
-                    <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
-                    {t(locale, "builder.addQuestion")}
-                  </Button>
-                </CardContent>
-              </Card>
+              <div
+                ref={builderMainScrollRef}
+                className="px-3 pb-10 pt-3 sm:px-4 sm:pb-12 sm:pt-4 md:px-6 md:pb-16 md:pt-6 lg:builder-scrollbar lg:min-h-0 lg:flex-1 lg:overflow-x-hidden lg:overflow-y-auto lg:scroll-pt-4"
+              >
+                <Card>
+                  <CardContent className="py-8 sm:py-12 text-center">
+                    <p className="text-base text-muted-foreground mb-4">
+                      {t(locale, "builder.noQuestions")}
+                    </p>
+                    <Button
+                      variant="primary"
+                      onClick={() => handleAddQuestion()}
+                      size="default"
+                      className="text-base"
+                    >
+                      <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
+                      {t(locale, "builder.addQuestion")}
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
             ) : (
               <Tabs
-                value={builderViewMode}
-                onValueChange={(value) => setBuilderViewMode(value as BuilderViewMode)}
-                className="w-full min-w-0"
+                value={builderTabsValue}
+                onValueChange={(value) => {
+                  const nextMode = value as BuilderViewMode;
+                  if (nextMode === "organize") {
+                    setOrganizePanelAnimationKey((key) => key + 1);
+                  }
+                  setBuilderViewMode(nextMode);
+                }}
+                className="flex w-full min-w-0 flex-col"
               >
-                <TabsList className="mb-4 grid h-auto w-full grid-cols-2 sm:inline-flex sm:w-auto">
-                  <TabsTrigger value="edit" className="text-base">
-                    {t(locale, "builder.viewModeEdit")}
-                  </TabsTrigger>
-                  <TabsTrigger value="organize" className="text-base">
-                    {t(locale, "builder.viewModeOrganize")}
-                  </TabsTrigger>
-                </TabsList>
-                <TabsContent value="edit" className="mt-0 w-full min-w-0 outline-none">
-                  <div className="w-full min-w-0">
-                    {quiz.questions.map((question, index) => (
-                      <div key={question.id}>
-                        {index > 0 && (
-                          <div className="relative z-20 -my-2 flex h-4 items-center justify-center group/insert">
-                            <div className="pointer-events-none flex items-center justify-center gap-2 opacity-0 transition-opacity group-hover/insert:opacity-100">
-                              <div className="h-0.5 w-24 rounded-full bg-blue/60 shadow-sm" />
-                              <Button
-                                variant="blue"
-                                size="icon"
-                                className="z-30 h-7 w-7 shrink-0 rounded-full shadow-lg pointer-events-auto"
-                                onClick={() => handleAddQuestion(index)}
-                              >
-                                <Plus className="h-4 w-4" />
-                              </Button>
-                              <div className="h-0.5 w-24 rounded-full bg-blue/60 shadow-sm" />
+                <BuilderMobileStickyTabsBar
+                  className={cn(
+                    "mb-4 w-full bg-muted/10 px-3 py-1 backdrop-blur-sm lg:hidden",
+                    "supports-[backdrop-filter]:bg-muted/80",
+                    "border-b border-border/40",
+                    "sm:px-4 md:px-6",
+                  )}
+                >
+                  <TabsList className="mb-0 grid h-auto w-full grid-cols-2">
+                    <TabsTrigger value="edit" className="text-base">
+                      {t(locale, "builder.viewModeEdit")}
+                    </TabsTrigger>
+                    <TabsTrigger value="organize" className="text-base">
+                      {t(locale, "builder.viewModeOrganize")}
+                    </TabsTrigger>
+                  </TabsList>
+                </BuilderMobileStickyTabsBar>
+                <div
+                  ref={builderMainScrollRef}
+                  className="px-3 pb-10 sm:px-4 sm:pb-12 md:px-6 md:pb-16 lg:builder-scrollbar lg:min-h-0 lg:flex-1 lg:overflow-x-hidden lg:overflow-y-auto lg:scroll-pt-4 lg:pt-6"
+                >
+                  <TabsContent value="edit" className="mt-0 w-full min-w-0 outline-none">
+                    <div className="w-full min-w-0 space-y-3">
+                      {quiz.questions.map((question, index) => (
+                        <div key={question.id}>
+                          {index > 0 && (
+                            <div className="relative z-20 -my-2 mb-2 flex h-4 items-center justify-center group/insert">
+                              <div className="pointer-events-none flex items-center justify-center gap-2 opacity-100 md:opacity-0 transition-opacity group-hover/insert:opacity-100">
+                                <div className="h-0.5 w-24 rounded-full bg-blue/60 shadow-sm" />
+                                <Button
+                                  variant="blue"
+                                  size="icon"
+                                  className="z-30 h-7 w-7 shrink-0 rounded-full shadow-lg pointer-events-auto"
+                                  onClick={() => handleAddQuestion(index)}
+                                >
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                                <div className="h-0.5 w-24 rounded-full bg-blue/60 shadow-sm" />
+                              </div>
                             </div>
+                          )}
+                          <div className="relative z-10">
+                            <BuilderEditQuestionItem
+                              question={question}
+                              index={index}
+                              totalQuestions={quiz.questions.length}
+                              onChange={(updatedQuestion) =>
+                                handleQuestionChange(index, updatedQuestion)
+                              }
+                              onDelete={() => handleDeleteQuestion(index)}
+                              errors={getQuestionErrors(index)}
+                              quizIdForImageUpload={quizIdForImageUpload}
+                              isNewlyAdded={newlyAddedQuestionId === question.id}
+                              isRemoving={removingQuestionId === question.id}
+                              onAnimationEnd={() => setNewlyAddedQuestionId(null)}
+                              onRemoveAnimationEnd={() => commitDeleteQuestion(question.id)}
+                            />
                           </div>
-                        )}
-                        <div className="relative z-10">
-                          <BuilderEditQuestionItem
-                            question={question}
-                            index={index}
-                            totalQuestions={quiz.questions.length}
-                            onChange={(updatedQuestion) =>
-                              handleQuestionChange(index, updatedQuestion)
-                            }
-                            onDelete={() => handleDeleteQuestion(index)}
-                            errors={getQuestionErrors(index)}
-                            quizIdForImageUpload={quizIdForImageUpload}
-                            isNewlyAdded={newlyAddedQuestionId === question.id}
-                            isRemoving={removingQuestionId === question.id}
-                            onAnimationEnd={() => setNewlyAddedQuestionId(null)}
-                            onRemoveAnimationEnd={() => commitDeleteQuestion(question.id)}
-                          />
                         </div>
-                      </div>
-                    ))}
-                    <div className="relative z-20 mt-4 flex h-4 items-center justify-center group/insert">
-                      <div className="pointer-events-none flex items-center justify-center gap-2 opacity-0 transition-opacity group-hover/insert:opacity-100">
-                        <div className="h-0.5 w-24 rounded-full bg-blue/60 shadow-sm" />
-                        <Button
-                          variant="blue"
-                          size="icon"
-                          className="z-30 h-7 w-7 shrink-0 rounded-full shadow-lg pointer-events-auto"
-                          onClick={() => handleAddQuestion(quiz.questions.length)}
-                        >
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                        <div className="h-0.5 w-24 rounded-full bg-blue/60 shadow-sm" />
-                      </div>
+                      ))}
                     </div>
+                  </TabsContent>
+                  <TabsContent value="organize" className="mt-0 outline-none lg:hidden">
+                    <BuilderMobileOrganizeTabPanel
+                      animationKey={organizePanelAnimationKey}
+                      prefersReducedMotion={prefersReducedMotion}
+                    >
+                      <BuilderOrganizeQuestionsList
+                        locale={locale}
+                        questions={quiz.questions}
+                        onReorder={(nextQuestions) =>
+                          setQuiz({
+                            ...quiz,
+                            questions: nextQuestions,
+                          })
+                        }
+                        onMoveUp={(index) => handleMoveQuestion(index, "up")}
+                        onMoveDown={(index) => handleMoveQuestion(index, "down")}
+                        onDeleteQuestion={commitDeleteQuestion}
+                        onEditQuestion={handleEditQuestionFromOrganize}
+                      />
+                    </BuilderMobileOrganizeTabPanel>
+                  </TabsContent>
+                  <div className="mt-4 flex justify-center">
+                    <Button
+                      variant="blue"
+                      onClick={() => handleAddQuestion()}
+                      size="default"
+                      className="text-base mb-10"
+                    >
+                      <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
+                      {t(locale, "builder.addQuestion")}
+                    </Button>
                   </div>
-                </TabsContent>
-                <TabsContent value="organize" className="mt-0 outline-none">
-                  <BuilderOrganizeQuestionsList
-                    locale={locale}
-                    questions={quiz.questions}
-                    onReorder={(nextQuestions) =>
-                      setQuiz({
-                        ...quiz,
-                        questions: nextQuestions,
-                      })
-                    }
-                    onMoveUp={(index) => handleMoveQuestion(index, "up")}
-                    onMoveDown={(index) => handleMoveQuestion(index, "down")}
-                    onDeleteQuestion={commitDeleteQuestion}
-                    onEditQuestion={handleEditQuestionFromOrganize}
-                  />
-                </TabsContent>
+                </div>
               </Tabs>
             )}
-
-            {quiz.questions.length > 0 && (
-              <div className="mt-4 flex justify-center">
-                <Button variant="blue" onClick={() => handleAddQuestion()} size="default" className="text-base mb-10">
-                  <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
-                  {t(locale, "builder.addQuestion")}
-                </Button>
-              </div>
-            )}
-          </div>
-        </main>
-        {quiz.questions.length > 0 ? (
-          <BuilderBackToTopButton
-            scrollContainerRef={builderMainScrollRef}
-            layoutKey={`${quiz.questions.length}-${builderViewMode}`}
-            label={t(locale, "builder.backToTop")}
-          />
-        ) : null}
+            {quiz.questions.length > 0 ? (
+              <BuilderBackToTopButton
+                scrollContainerRef={builderMainScrollRef}
+                layoutKey={`${quiz.questions.length}-${builderViewMode}`}
+                label={t(locale, "builder.backToTop")}
+              />
+            ) : null}
+          </section>
+        </div>
       </div>
-    </div>
+      <BuilderQuizSettingsSheet
+        open={quizSettingsSheetOpen}
+        onOpenChange={setQuizSettingsSheetOpen}
+        locale={locale}
+        quiz={quiz}
+        setQuiz={setQuiz}
+        timeLimitUi={timeLimitUi}
+        setTimeLimitUi={setTimeLimitUi}
+        getTimeLimitError={getTimeLimitError}
+        getNameError={getNameError}
+        setValidationErrors={setValidationErrors}
+        showNameField={false}
+      />
       <FullscreenBlockingOverlay
         open={isSaving || isFinalizingDraft}
         title={

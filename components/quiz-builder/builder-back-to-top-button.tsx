@@ -15,6 +15,21 @@ type BuilderBackToTopButtonProps = {
 
 const DEFAULT_BACK_TO_TOP_THRESHOLD = 420;
 
+/** Matches `id` on the dashboard shell scroll region (`dashboard-mobile-scroll-layout`). */
+const DASHBOARD_MAIN_SCROLL_ID = "dashboard-main-scroll";
+
+function resolveScrollContainer(
+  scrollContainerRef: React.RefObject<HTMLElement | null>,
+): HTMLElement | null {
+  if (scrollContainerRef.current) {
+    return scrollContainerRef.current;
+  }
+  if (typeof document === "undefined") {
+    return null;
+  }
+  return document.getElementById(DASHBOARD_MAIN_SCROLL_ID);
+}
+
 export function useShowBuilderBackToTop(
   scrollContainerRef: React.RefObject<HTMLElement | null>,
   layoutKey: string | number,
@@ -23,37 +38,41 @@ export function useShowBuilderBackToTop(
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    let attachedScrollRoot: HTMLElement | null = null;
+    let resizeObserver: ResizeObserver | null = null;
+
     const measure = (): void => {
-      const main = scrollContainerRef.current;
+      const scrollRoot = resolveScrollContainer(scrollContainerRef);
       const fromWindow = typeof window !== "undefined" ? window.scrollY : 0;
-      const fromMain = main?.scrollTop ?? 0;
+      const fromMain = scrollRoot?.scrollTop ?? 0;
       setVisible(Math.max(fromWindow, fromMain) > thresholdPx);
     };
 
-    measure();
+    const attach = (): void => {
+      measure();
+
+      window.addEventListener("scroll", measure, { passive: true });
+      window.addEventListener("resize", measure, { passive: true });
+
+      attachedScrollRoot = resolveScrollContainer(scrollContainerRef);
+      attachedScrollRoot?.addEventListener("scroll", measure, { passive: true });
+
+      if (typeof ResizeObserver !== "undefined" && attachedScrollRoot) {
+        resizeObserver = new ResizeObserver(measure);
+        resizeObserver.observe(attachedScrollRoot);
+      }
+    };
 
     const rafId = requestAnimationFrame(measure);
-
-    window.addEventListener("scroll", measure, { passive: true });
-    window.addEventListener("resize", measure, { passive: true });
-
-    const main = scrollContainerRef.current;
-    main?.addEventListener("scroll", measure, { passive: true });
-
-    const ro =
-      typeof ResizeObserver !== "undefined" && main
-        ? new ResizeObserver(measure)
-        : null;
-    if (main && ro) {
-      ro.observe(main);
-    }
+    const attachTimer = window.setTimeout(attach, 0);
 
     return () => {
       cancelAnimationFrame(rafId);
+      window.clearTimeout(attachTimer);
       window.removeEventListener("scroll", measure);
       window.removeEventListener("resize", measure);
-      main?.removeEventListener("scroll", measure);
-      ro?.disconnect();
+      attachedScrollRoot?.removeEventListener("scroll", measure);
+      resizeObserver?.disconnect();
     };
   }, [scrollContainerRef, layoutKey, thresholdPx]);
 
@@ -61,7 +80,8 @@ export function useShowBuilderBackToTop(
 }
 
 export function scrollBuilderPanelsToTop(scrollContainerRef: React.RefObject<HTMLElement | null>): void {
-  scrollContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+  const scrollRoot = resolveScrollContainer(scrollContainerRef);
+  scrollRoot?.scrollTo({ top: 0, behavior: "smooth" });
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -83,7 +103,7 @@ export function BuilderBackToTopButton({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.82, y: 16 }}
           transition={{ type: "spring", stiffness: 460, damping: 32 }}
-          className="fixed bottom-20 right-4 z-40 sm:bottom-10 sm:right-8"
+          className="fixed bottom-10 right-8 z-40 hidden lg:block"
         >
           <Button
             type="button"

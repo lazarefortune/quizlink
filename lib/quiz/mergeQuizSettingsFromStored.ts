@@ -27,6 +27,11 @@ export function mergeQuizSettingsFromStored(stored: unknown): QuizSettings {
       ? raw.randomizeOptions
       : randomizeQuestions;
 
+  const autoSaveEnabled =
+    typeof raw.autoSaveEnabled === "boolean"
+      ? raw.autoSaveEnabled
+      : DEFAULT_MANUAL_QUIZ_BUILDER_SETTINGS.autoSaveEnabled;
+
   return {
     showAnswerImmediately:
       typeof raw.showAnswerImmediately === "boolean"
@@ -35,5 +40,6 @@ export function mergeQuizSettingsFromStored(stored: unknown): QuizSettings {
     randomizeQuestions,
     randomizeOptions,
     timeLimitPerQuestion: readTimeLimitFromStored(raw),
+    autoSaveEnabled,
   };
 }

@@ -18,6 +18,7 @@ export type QuizSettings = {
   randomizeQuestions: boolean;
   randomizeOptions: boolean;
   timeLimitPerQuestion: number | null;
+  autoSaveEnabled?: boolean;
 };
 
 export type Quiz = {
