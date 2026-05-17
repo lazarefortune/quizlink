@@ -11,7 +11,7 @@
 
 - [ ] Améliorer la page d’inscription
 - [ ] Améliorer la page d’accueil
-- [ ] Améliorer le tableau de bord
+- [x] Améliorer le tableau de bord
 - [ ] Après une inscription manuelle, connecter l’utilisateur tout de suite
 - [ ] Montrer une animation de gain de pièces (coins) après l’inscription
 
@@ -34,12 +34,13 @@
 - [ ] Création avec l’IA : avertir / bloquer la sortie de page si l’utilisateur a saisi du contenu (éviter la perte)
 - [ ] Pendant la création d’un quiz : animation de chargement et ne pas montrer le quiz tant que ce n’est pas prêt
 - [ ] En cas d’erreur sur le formulaire de création : faire défiler jusqu’à la première erreur
-- [ ] Améliorer le champ de durée du quiz (minutes et secondes séparées)
+- [x] Améliorer le champ de durée du quiz (minutes et secondes séparées)
 - [ ] Autofocus sur le champ nom du quiz lors d’une nouvelle création
 - [x] Sauvegarde automatique du quiz
 - [ ] Améliorer la barre d’outils du textarea des quiz
 - [ ] S'il y a une erreur dans le formulaire de création, faire défiler jusqu'à la première erreur et proposer d'aller à la prochaine erreur. (Sur desktop afficher en rouge dans la sidebar de gauche les questions qui ont une erreur.)
 - [ ] Mettre un message d'erreur quand le nom d'un quiz est trop long.
+- [ ] Sur mobile, dans l'onglet "Organiser", mettre le numéro des questions.
 
 ## À faire — Qualité, spam & contact
 

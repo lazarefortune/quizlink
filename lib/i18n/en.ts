@@ -1431,7 +1431,7 @@ export const en = {
   },
 
   support: {
-    navLabel: "Support",
+    navLabel: "Help & Support",
     helpSection: "Help",
     title: "Contact support",
     description: "A bug, an idea, or a question? Send me a message.",

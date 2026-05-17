@@ -139,7 +139,7 @@ export function BuilderQuestionNavigator({
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="flex h-full min-h-0 flex-1 flex-col">
       <div className="shrink-0 space-y-3 border-b border-border/60 p-3">
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
@@ -161,7 +161,7 @@ export function BuilderQuestionNavigator({
       </div>
       <nav
         ref={listScrollRef}
-        className="min-h-0 flex-1 overflow-y-auto overflow-x-visible p-2 builder-scrollbar"
+        className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain p-2 builder-scrollbar"
         aria-label={t(locale, "builder.questionNavigatorAria")}
       >
         <DndContext
