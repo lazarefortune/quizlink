@@ -12,6 +12,9 @@ export type ValidationError = {
   params?: Record<string, string | number>;
 };
 
+/** Aligns with a reasonable title length for storage and UI; enforced in builder validation and inputs. */
+export const QUIZ_NAME_MAX_LENGTH = 200;
+
 /** Errors shown in the quiz options panel (name + settings / time limit). */
 export function hasQuizOptionsPanelErrors(errors: ValidationError[]): boolean {
   return errors.some(
@@ -26,6 +29,12 @@ export function validateQuiz(quiz: QuizBuilder): ValidationError[] {
     errors.push({
       field: "name",
       translationKey: "builder.validation.quizNameRequired",
+    });
+  } else if (quiz.name.length > QUIZ_NAME_MAX_LENGTH) {
+    errors.push({
+      field: "name",
+      translationKey: "builder.validation.quizNameMaxLength",
+      params: { max: QUIZ_NAME_MAX_LENGTH },
     });
   }
 

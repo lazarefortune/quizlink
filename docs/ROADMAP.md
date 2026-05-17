@@ -38,6 +38,8 @@
 - [ ] Autofocus sur le champ nom du quiz lors d’une nouvelle création
 - [x] Sauvegarde automatique du quiz
 - [ ] Améliorer la barre d’outils du textarea des quiz
+- [ ] S'il y a une erreur dans le formulaire de création, faire défiler jusqu'à la première erreur et proposer d'aller à la prochaine erreur. (Sur desktop afficher en rouge dans la sidebar de gauche les questions qui ont une erreur.)
+- [ ] Mettre un message d'erreur quand le nom d'un quiz est trop long.
 
 ## À faire — Qualité, spam & contact
 

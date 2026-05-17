@@ -18,6 +18,7 @@ import {
   getUserQuizzesPaginated,
   type UserQuizListItem,
 } from "@/app/(app)/builder/actions";
+import { CreateManualQuizNameDialog } from "@/components/dashboard/create-manual-quiz-name-dialog";
 import { useCreateManualServerDraft } from "@/components/dashboard/use-create-manual-server-draft";
 import { QuizStatusBadge } from "@/components/quiz/quiz-status-badge";
 import { deleteQuiz } from "@/app/(app)/dashboard/actions";
@@ -87,8 +88,17 @@ function CreateQuizModalTrigger({
   size?: "sm" | "default";
 }) {
   const [open, setOpen] = useState(false);
-  const { isCreatingManualDraft, createManualServerDraftAndGoToBuilder } =
-    useCreateManualServerDraft();
+  const {
+    isCreatingManualDraft,
+    isNameDialogOpen,
+    setNameDialogOpen,
+    openManualDraftNameDialog,
+    createManualServerDraftAndGoToBuilder,
+  } = useCreateManualServerDraft();
+
+  const handleOpenChange = (next: boolean) => {
+    setOpen(next);
+  };
 
   return (
     <>
@@ -101,7 +111,7 @@ function CreateQuizModalTrigger({
         <Plus className="h-4 w-4" />
         {t(locale, "nav.create")}
       </Button>
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent className="sm:max-w-sm mx-auto">
           <DialogHeader>
             <DialogTitle className="text-center text-xl font-black">
@@ -112,11 +122,9 @@ function CreateQuizModalTrigger({
             <button
               type="button"
               disabled={isCreatingManualDraft}
-              onClick={async () => {
-                const ok = await createManualServerDraftAndGoToBuilder();
-                if (ok) {
-                  setOpen(false);
-                }
+              onClick={() => {
+                handleOpenChange(false);
+                openManualDraftNameDialog();
               }}
               className="group flex flex-col items-center gap-3 rounded-xl border-2 border-border bg-card p-5 transition-all hover:border-primary hover:shadow-md active:scale-[0.97] disabled:pointer-events-none disabled:opacity-60"
             >
@@ -140,14 +148,20 @@ function CreateQuizModalTrigger({
                 <Sparkles className="h-7 w-7" />
               </span>
               <div className="text-center">
-                <p className="text-sm font-black font-fredoka">
-                  {t(locale, "nav.createWithAI")}
-                </p>
+                <p className="text-sm font-black font-fredoka">{t(locale, "nav.createWithAI")}</p>
               </div>
             </Link>
           </div>
         </DialogContent>
       </Dialog>
+      <CreateManualQuizNameDialog
+        open={isNameDialogOpen}
+        onOpenChange={setNameDialogOpen}
+        isBusy={isCreatingManualDraft}
+        onConfirm={(name) => {
+          void createManualServerDraftAndGoToBuilder(name);
+        }}
+      />
     </>
   );
 }

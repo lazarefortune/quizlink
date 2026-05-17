@@ -10,30 +10,53 @@ import { t } from "@/lib/i18n";
 
 export function useCreateManualServerDraft(): {
   isCreatingManualDraft: boolean;
-  createManualServerDraftAndGoToBuilder: () => Promise<boolean>;
+  isNameDialogOpen: boolean;
+  setNameDialogOpen: (open: boolean) => void;
+  openManualDraftNameDialog: () => void;
+  createManualServerDraftAndGoToBuilder: (trimmedName: string) => Promise<boolean>;
 } {
   const router = useRouter();
   const { locale } = useLocale();
   const { showToast } = useToast();
   const [isCreatingManualDraft, setIsCreatingManualDraft] = useState(false);
+  const [isNameDialogOpen, setNameDialogOpen] = useState(false);
 
-  const createManualServerDraftAndGoToBuilder = useCallback(async () => {
-    setIsCreatingManualDraft(true);
-    try {
-      const result = await createDraftQuizAction(locale);
-      if (result.success) {
-        router.push(`/builder/${result.quizId}`);
-        return true;
+  const openManualDraftNameDialog = useCallback(() => {
+    setNameDialogOpen(true);
+  }, []);
+
+  const createManualServerDraftAndGoToBuilder = useCallback(
+    async (trimmedName: string) => {
+      const name = trimmedName.trim();
+      if (name.length === 0) {
+        return false;
       }
-      showToast(result.error || t(locale, "common.error"), "error");
-      return false;
-    } catch {
-      showToast(t(locale, "common.error"), "error");
-      return false;
-    } finally {
-      setIsCreatingManualDraft(false);
-    }
-  }, [locale, router, showToast]);
 
-  return { isCreatingManualDraft, createManualServerDraftAndGoToBuilder };
+      setIsCreatingManualDraft(true);
+      try {
+        const result = await createDraftQuizAction(locale, name);
+        if (result.success) {
+          setNameDialogOpen(false);
+          router.push(`/builder/${result.quizId}`);
+          return true;
+        }
+        showToast(result.error || t(locale, "common.error"), "error");
+        return false;
+      } catch {
+        showToast(t(locale, "common.error"), "error");
+        return false;
+      } finally {
+        setIsCreatingManualDraft(false);
+      }
+    },
+    [locale, router, showToast],
+  );
+
+  return {
+    isCreatingManualDraft,
+    isNameDialogOpen,
+    setNameDialogOpen,
+    openManualDraftNameDialog,
+    createManualServerDraftAndGoToBuilder,
+  };
 }

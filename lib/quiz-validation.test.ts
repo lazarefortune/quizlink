@@ -3,6 +3,7 @@ import {
   hasQuizOptionsPanelErrors,
   validateBuilderTimeLimit,
   validateQuiz,
+  QUIZ_NAME_MAX_LENGTH,
   type ValidationError,
 } from "./quiz-validation";
 import type { QuizBuilder } from "@/types/quiz-builder";
@@ -77,6 +78,27 @@ describe("validateBuilderTimeLimit", () => {
 describe("validateQuiz", () => {
   it("passes for minimal valid quiz", () => {
     expect(validateQuiz(minimalValidQuiz)).toHaveLength(0);
+  });
+
+  it("returns an error when quiz name exceeds max length", () => {
+    const longName = "x".repeat(QUIZ_NAME_MAX_LENGTH + 1);
+    const errors = validateQuiz({ ...minimalValidQuiz, name: longName });
+    expect(errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          field: "name",
+          translationKey: "builder.validation.quizNameMaxLength",
+          params: { max: QUIZ_NAME_MAX_LENGTH },
+        }),
+      ]),
+    );
+  });
+
+  it("does not add max-length error when name is empty (trimmed)", () => {
+    const errors = validateQuiz({ ...minimalValidQuiz, name: "" });
+    expect(errors.some((e) => e.translationKey === "builder.validation.quizNameMaxLength")).toBe(
+      false,
+    );
   });
 });
 

@@ -8,4 +8,5 @@ export const DEFAULT_MANUAL_QUIZ_BUILDER_SETTINGS: QuizSettings = {
   randomizeQuestions: false,
   randomizeOptions: false,
   timeLimitPerQuestion: null,
+  autoSaveEnabled: true,
 };

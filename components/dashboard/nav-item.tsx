@@ -13,6 +13,8 @@ type NavItemProps = {
   icon: LucideIcon;
   onClick?: () => void;
   className?: string;
+  /** Desktop icon-only rail; keeps labels for screen readers */
+  isCompact?: boolean;
 };
 
 export function NavItem({
@@ -21,6 +23,7 @@ export function NavItem({
   icon: Icon,
   onClick,
   className,
+  isCompact = false,
 }: NavItemProps) {
   const pathname = usePathname();
   const { interceptLinkClick } = useBuilderNavigationGuard();
@@ -39,15 +42,18 @@ export function NavItem({
         onClick?.();
       }}
       className={cn(
-        "flex items-center border-2 gap-3 rounded-xl px-3 py-2.5 text-lg font-medium transition-all",
+        "flex items-center border-2 rounded-xl py-2.5 text-lg font-medium transition-all",
+        isCompact ? "justify-center gap-0 px-2" : "gap-3 px-3",
         isActive
           ? "bg-primary text-primary-foreground border-primary"
           : "text-muted-foreground border-transparent hover:bg-muted hover:text-foreground",
         className,
       )}
+      title={isCompact ? label : undefined}
+      aria-label={isCompact ? label : undefined}
     >
       <Icon className="h-5 w-5 shrink-0" />
-      {label}
+      {isCompact ? null : label}
     </Link>
   );
 }

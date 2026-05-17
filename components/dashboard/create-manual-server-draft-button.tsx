@@ -1,12 +1,13 @@
 "use client";
 
-import type { ComponentProps } from "react";
+import { type ComponentProps } from "react";
 
 import { Button } from "@/components/ui/button";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
+import { CreateManualQuizNameDialog } from "./create-manual-quiz-name-dialog";
 import { useCreateManualServerDraft } from "./use-create-manual-server-draft";
 
 type ButtonProps = ComponentProps<typeof Button>;
@@ -27,23 +28,37 @@ export function CreateManualServerDraftButton({
   ...buttonProps
 }: CreateManualServerDraftButtonProps) {
   const { locale } = useLocale();
-  const { isCreatingManualDraft, createManualServerDraftAndGoToBuilder } =
-    useCreateManualServerDraft();
+  const {
+    isCreatingManualDraft,
+    isNameDialogOpen,
+    setNameDialogOpen,
+    openManualDraftNameDialog,
+    createManualServerDraftAndGoToBuilder,
+  } = useCreateManualServerDraft();
 
   return (
-    <Button
-      type="button"
-      {...buttonProps}
-      disabled={disabled || isCreatingManualDraft}
-      onClick={async () => {
-        const ok = await createManualServerDraftAndGoToBuilder();
-        if (ok) {
-          onCreated?.();
-        }
-      }}
-    >
-      {isCreatingManualDraft ? t(locale, "common.loading") : children}
-    </Button>
+    <>
+      <Button
+        type="button"
+        {...buttonProps}
+        disabled={disabled || isCreatingManualDraft}
+        onClick={openManualDraftNameDialog}
+      >
+        {isCreatingManualDraft ? t(locale, "common.loading") : children}
+      </Button>
+      <CreateManualQuizNameDialog
+        open={isNameDialogOpen}
+        onOpenChange={setNameDialogOpen}
+        isBusy={isCreatingManualDraft}
+        onConfirm={(name) => {
+          void createManualServerDraftAndGoToBuilder(name).then((ok) => {
+            if (ok) {
+              onCreated?.();
+            }
+          });
+        }}
+      />
+    </>
   );
 }
 
@@ -62,32 +77,46 @@ export function CreateManualServerDraftSurfaceButton({
   onCreated,
 }: CreateManualServerDraftSurfaceButtonProps) {
   const { locale } = useLocale();
-  const { isCreatingManualDraft, createManualServerDraftAndGoToBuilder } =
-    useCreateManualServerDraft();
+  const {
+    isCreatingManualDraft,
+    isNameDialogOpen,
+    setNameDialogOpen,
+    openManualDraftNameDialog,
+    createManualServerDraftAndGoToBuilder,
+  } = useCreateManualServerDraft();
 
   return (
-    <button
-      type="button"
-      disabled={isCreatingManualDraft}
-      onClick={async () => {
-        const ok = await createManualServerDraftAndGoToBuilder();
-        if (ok) {
-          onCreated?.();
-        }
-      }}
-      className={cn(
-        "block w-full cursor-pointer rounded-2xl border-0 bg-transparent p-0 text-left transition-opacity",
-        isCreatingManualDraft && "pointer-events-none opacity-70",
-        className,
-      )}
-    >
-      {isCreatingManualDraft ? (
-        <span className="flex min-h-[4.5rem] items-center justify-center text-sm text-muted-foreground">
-          {t(locale, "common.loading")}
-        </span>
-      ) : (
-        children
-      )}
-    </button>
+    <>
+      <button
+        type="button"
+        disabled={isCreatingManualDraft}
+        onClick={openManualDraftNameDialog}
+        className={cn(
+          "block w-full cursor-pointer rounded-2xl border-0 bg-transparent p-0 text-left transition-opacity",
+          isCreatingManualDraft && "pointer-events-none opacity-70",
+          className,
+        )}
+      >
+        {isCreatingManualDraft ? (
+          <span className="flex min-h-[4.5rem] items-center justify-center text-sm text-muted-foreground">
+            {t(locale, "common.loading")}
+          </span>
+        ) : (
+          children
+        )}
+      </button>
+      <CreateManualQuizNameDialog
+        open={isNameDialogOpen}
+        onOpenChange={setNameDialogOpen}
+        isBusy={isCreatingManualDraft}
+        onConfirm={(name) => {
+          void createManualServerDraftAndGoToBuilder(name).then((ok) => {
+            if (ok) {
+              onCreated?.();
+            }
+          });
+        }}
+      />
+    </>
   );
 }

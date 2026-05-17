@@ -2,6 +2,7 @@ import type { QuizBuilder } from "@/types/quiz-builder";
 import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
 import { validateBuilderTimeLimit, validateQuiz } from "@/lib/quiz-validation";
 import type { BuilderTimeLimitUi } from "@/lib/time-limit-seconds";
+import { resolveEffectiveAutoSaveEnabled } from "@/lib/builder/resolveEffectiveAutoSaveEnabled";
 
 export const SERVER_AUTOSAVE_DEBOUNCE_MS = 5_000;
 
@@ -12,7 +13,8 @@ export type ServerAutosaveGateReason =
   | "clean"
   | "no_questions"
   | "validation_errors"
-  | "payload_over_autosave_limit";
+  | "payload_over_autosave_limit"
+  | "auto_save_disabled";
 
 export type ServerAutosaveGate =
   | { proceed: true }
@@ -25,6 +27,17 @@ export function mergeBuilderSaveValidationErrors(
   const timeLimitError = validateBuilderTimeLimit(timeLimitUi);
   const errors = validateQuiz(quiz);
   return timeLimitError ? [...errors, timeLimitError] : errors;
+}
+
+/** Matches finalize-draft preconditions: at least one question and zero merged save/finalize validation errors. */
+export function isBuilderQuizValidForFinalize(
+  quiz: QuizBuilder,
+  timeLimitUi: BuilderTimeLimitUi,
+): boolean {
+  if (quiz.questions.length === 0) {
+    return false;
+  }
+  return mergeBuilderSaveValidationErrors(quiz, timeLimitUi).length === 0;
 }
 
 export function evaluateServerAutosaveGate(input: {
@@ -42,6 +55,9 @@ export function evaluateServerAutosaveGate(input: {
   }
   if (input.quizLifecycleStatus !== "DRAFT") {
     return { proceed: false, reason: "not_draft" };
+  }
+  if (!resolveEffectiveAutoSaveEnabled(input.quizForValidation.settings)) {
+    return { proceed: false, reason: "auto_save_disabled" };
   }
   if (input.baselineSnapshot === null) {
     return { proceed: false, reason: "baseline_missing" };
