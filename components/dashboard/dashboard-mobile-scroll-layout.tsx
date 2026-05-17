@@ -1,5 +1,7 @@
 "use client";
 
+import { usePathname } from "next/navigation";
+
 import { cn } from "@/lib/utils";
 
 import { Topbar } from "./topbar";
@@ -12,6 +14,8 @@ type DashboardMobileScrollLayoutProps = {
 export function DashboardMobileScrollLayout({
   children,
 }: DashboardMobileScrollLayoutProps) {
+  const pathname = usePathname();
+  const isBuilderRoute = pathname?.startsWith("/builder") ?? false;
   const { isHeaderVisible, isScrolledDown } = useScrollBehavior();
 
   return (
@@ -27,7 +31,10 @@ export function DashboardMobileScrollLayout({
       >
         <div
           id="dashboard-main-scroll"
-          className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden overscroll-y-contain"
+          className={cn(
+            "flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden overscroll-y-contain",
+            isBuilderRoute && "lg:overflow-hidden",
+          )}
         >
           {children}
         </div>

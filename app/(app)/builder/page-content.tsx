@@ -1885,7 +1885,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <div className="flex min-w-0 flex-col bg-background lg:min-h-0 lg:flex-1">
+      <div className="flex min-w-0 flex-col bg-background lg:min-h-0 lg:h-full lg:flex-1 lg:overflow-hidden">
         <header className="hidden shrink-0 border-b border-border/60 bg-muted/10 px-3 pb-2 pt-2 sm:px-4 sm:pb-3 sm:pt-3 md:px-6 lg:sticky lg:top-0 lg:z-20 lg:block">
           <div className="flex flex-col gap-2">
             <div className="flex flex-row items-center justify-between gap-4">
@@ -1934,8 +1934,8 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
           ) : null}
         </header>
 
-        <div className="flex flex-col lg:min-h-0 lg:flex-1 lg:flex-row lg:items-stretch">
-          <div className="relative z-10 hidden min-h-0 w-full shrink-0 border-r border-border/60 bg-muted/25 lg:flex lg:w-56 lg:flex-col lg:self-stretch 2xl:w-60">
+        <div className="flex min-h-0 flex-col lg:h-full lg:flex-1 lg:flex-row lg:items-stretch lg:overflow-hidden">
+          <div className="relative z-10 hidden min-h-0 w-full shrink-0 border-r border-border/60 bg-muted/25 lg:flex lg:h-full lg:w-64 lg:flex-col lg:self-stretch lg:overflow-hidden 2xl:w-72">
             <BuilderQuestionNavigator
               locale={locale}
               questions={quiz.questions}
@@ -2014,7 +2014,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
                   }
                   setBuilderViewMode(nextMode);
                 }}
-                className="flex w-full min-w-0 flex-col"
+                className="flex min-h-0 w-full min-w-0 flex-1 flex-col lg:overflow-hidden"
               >
                 <BuilderMobileStickyTabsBar
                   className={cn(

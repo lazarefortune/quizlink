@@ -156,19 +156,20 @@ function SortableOrganizeRow({
             <ChevronDown className="h-4 w-4" />
           </Button>
         </div>
-        <span
-          className="flex h-7 min-w-7 items-center justify-center rounded-full bg-muted/90 px-1.5 text-xs font-semibold tabular-nums text-muted-foreground sm:h-8 sm:min-w-8"
-          aria-hidden
-        >
-          {index + 1}
-        </span>
       </div>
 
       <button
         type="button"
         onClick={onEdit}
+        aria-label={t(locale, "builder.questionNumber", {
+          number: String(index + 1),
+        })}
         className="min-w-0 flex-1 rounded-lg px-1.5 py-0.5 text-left outline-none transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       >
+        <div className="mt-1 flex gap-1.5 text-sm font-medium leading-snug text-foreground mb-1">
+          <span className="shrink-0 font-semibold tabular-nums text-muted-foreground">{index + 1}.</span>
+          <p className="min-w-0 line-clamp-2">{displayPreview}</p>
+        </div>
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
           <span className="max-w-full truncate text-xs font-medium text-muted-foreground">
             {questionTypeLabel(locale, question.type)}
@@ -177,7 +178,6 @@ function SortableOrganizeRow({
             {t(locale, "builder.organizeOptionCount", { count: optionCount })}
           </span>
         </div>
-        <p className="mt-1 line-clamp-2 text-sm font-medium leading-snug text-foreground">{displayPreview}</p>
         {imageSrc !== "" ? (
           <div
             className="relative mt-2 h-7 w-[3.25rem] shrink-0 overflow-hidden rounded border border-border/50 bg-muted/50"
