@@ -18,7 +18,6 @@ import {
 import { duplicateQuiz, deleteQuiz } from "@/app/(app)/dashboard/actions";
 import { createOrGetQuizLink } from "@/app/quiz-link/actions";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,7 +44,7 @@ import { track } from "@/lib/analytics/track";
 import { PARTICIPANT_INVITED } from "@/lib/analytics/events";
 import { buildCommonEventProps } from "@/lib/analytics/props";
 import { resolveQuizActionError } from "@/lib/quiz/resolveQuizActionError";
-import { canQuizBePlayed, canQuizShowResponseInsights } from "@/lib/quiz/quizStatusPolicy";
+import { canQuizBePlayed } from "@/lib/quiz/quizStatusPolicy";
 import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
 import { cn } from "@/lib/utils";
 
@@ -55,16 +54,12 @@ type QuizDetailHeaderProps = {
   quizId: string;
   quizName: string;
   quizStatus: QuizLifecycleStatus;
-  questionCount: number;
-  responseCount: number;
 };
 
 export function QuizDetailHeader({
   quizId,
   quizName,
   quizStatus,
-  questionCount,
-  responseCount,
 }: QuizDetailHeaderProps) {
   const router = useRouter();
   const { locale } = useLocale();
@@ -75,7 +70,6 @@ export function QuizDetailHeader({
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
 
-  const showResponseBadge = canQuizShowResponseInsights(quizStatus);
   const canPlay = canQuizBePlayed(quizStatus);
 
   const handlePlay = async () => {
@@ -177,7 +171,11 @@ export function QuizDetailHeader({
     <>
       <header className="space-y-4">
         <Link href="/dashboard/quizzes">
-          <Button variant="ghost" size="sm" className="-ml-2 text-muted-foreground hover:text-foreground">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-2 text-muted-foreground hover:text-foreground"
+          >
             <ArrowLeft className="mr-2 h-4 w-4" />
             {t(locale, "dashboard.backToMyQuizzes")}
           </Button>
@@ -189,23 +187,6 @@ export function QuizDetailHeader({
               <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
                 {quizName}
               </h1>
-              <div className="flex flex-wrap items-center gap-2">
-                <QuizStatusBadge status={quizStatus} locale={locale} />
-                <Badge variant="secondary" className="font-normal">
-                  {questionCount}{" "}
-                  {questionCount === 1
-                    ? t(locale, "dashboard.question")
-                    : t(locale, "dashboard.questions")}
-                </Badge>
-                {showResponseBadge ? (
-                  <Badge variant="outline" className="font-normal tabular-nums">
-                    {responseCount}{" "}
-                    {responseCount <= 1
-                      ? t(locale, "dashboard.responseSingular")
-                      : t(locale, "dashboard.responsesPlural")}
-                  </Badge>
-                ) : null}
-              </div>
             </div>
 
             <div className="flex shrink-0 items-center gap-2 self-start">
@@ -245,7 +226,10 @@ export function QuizDetailHeader({
                 <DropdownMenuContent align="end" className="w-52">
                   {quizStatus === "ACTIVE" ? (
                     <DropdownMenuItem asChild>
-                      <Link href={`/builder/${quizId}`} className="flex cursor-pointer items-center gap-2">
+                      <Link
+                        href={`/builder/${quizId}`}
+                        className="flex cursor-pointer items-center gap-2"
+                      >
                         <Pencil className="h-4 w-4" />
                         {t(locale, "dashboard.editQuiz")}
                       </Link>
@@ -253,7 +237,10 @@ export function QuizDetailHeader({
                   ) : null}
                   {quizStatus === "DRAFT" ? (
                     <DropdownMenuItem asChild>
-                      <Link href={`/builder/${quizId}`} className="flex cursor-pointer items-center gap-2">
+                      <Link
+                        href={`/builder/${quizId}`}
+                        className="flex cursor-pointer items-center gap-2"
+                      >
                         <Pencil className="h-4 w-4" />
                         {t(locale, "dashboard.editQuiz")}
                       </Link>
@@ -276,7 +263,9 @@ export function QuizDetailHeader({
                     onSelect={() => void handleDuplicate()}
                   >
                     <Copy className="h-4 w-4" />
-                    {isDuplicating ? t(locale, "common.loading") : t(locale, "dashboard.duplicate")}
+                    {isDuplicating
+                      ? t(locale, "common.loading")
+                      : t(locale, "dashboard.duplicate")}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
@@ -303,9 +292,13 @@ export function QuizDetailHeader({
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t(locale, "dashboard.deleteConfirmTitle")}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {t(locale, "dashboard.deleteConfirmTitle")}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              {t(locale, "dashboard.deleteConfirmDescription", { name: quizName })}
+              {t(locale, "dashboard.deleteConfirmDescription", {
+                name: quizName,
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -320,7 +313,9 @@ export function QuizDetailHeader({
                 "focus-visible:ring-destructive",
               )}
             >
-              {isDeleting ? t(locale, "common.loading") : t(locale, "dashboard.delete")}
+              {isDeleting
+                ? t(locale, "common.loading")
+                : t(locale, "dashboard.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import type { QuizContentQuestion } from "./actions";
 import { QuizDetailHeader } from "@/components/dashboard/quiz-detail/quiz-detail-header";
 import { QuizQuestionsTab } from "@/components/dashboard/quiz-detail/quiz-questions-tab";
+import { MessageCircleQuestionMark, Users } from "lucide-react";
 import { QuizResultsTab } from "@/components/dashboard/quiz-detail/quiz-results-tab";
 import { QuizShareLinkDialog } from "@/components/dashboard/quiz-detail/quiz-share-link-dialog";
 import { BuilderBackToTopButton } from "@/components/quiz-builder/builder-back-to-top-button";
@@ -15,14 +16,12 @@ import { parseQuizDetailTab, type QuizDetailTab } from "@/lib/dashboard/parse-qu
 import type { QuizDetailStatsInput } from "@/lib/dashboard/quiz-detail-stats";
 import { t } from "@/lib/i18n";
 import { useLocale } from "@/lib/i18n/use-locale";
-import { canQuizShowResponseInsights } from "@/lib/quiz/quizStatusPolicy";
 import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
 
 type QuizDetailContentProps = {
   quizId: string;
   quizName: string;
   quizStatus: QuizLifecycleStatus;
-  visibility: string;
   questions: QuizContentQuestion[];
   stats: QuizDetailStatsInput;
   questionInsights: QuestionInsight[];
@@ -32,7 +31,6 @@ export function QuizDetailContent({
   quizId,
   quizName,
   quizStatus,
-  visibility: _visibility,
   questions,
   stats,
   questionInsights,
@@ -44,7 +42,6 @@ export function QuizDetailContent({
   const scrollContainerRef = useRef<HTMLElement | null>(null);
 
   const activeTab = parseQuizDetailTab(searchParams.get("tab"));
-  const showInsights = canQuizShowResponseInsights(quizStatus);
 
   const setActiveTab = useCallback(
     (tab: QuizDetailTab) => {
@@ -62,18 +59,31 @@ export function QuizDetailContent({
           quizId={quizId}
           quizName={quizName}
           quizStatus={quizStatus}
-          questionCount={questions.length}
-          responseCount={showInsights ? stats.totalResponses : 0}
         />
 
         <Tabs
           value={activeTab}
           onValueChange={(value) => setActiveTab(parseQuizDetailTab(value))}
-          className="space-y-6"
+          className="space-y-6 pb-20"
         >
           <TabsList className="grid h-11 w-full max-w-md grid-cols-2">
-            <TabsTrigger value="questions">{t(locale, "dashboard.quizTabQuestions")}</TabsTrigger>
-            <TabsTrigger value="results">{t(locale, "dashboard.quizTabResults")}</TabsTrigger>
+            <TabsTrigger
+              value="questions"
+              className="inline-flex items-center gap-1.5"
+            >
+              {" "}
+              <MessageCircleQuestionMark className="h-4 w-4" />{" "}
+              {t(locale, "dashboard.quizTabQuestions")}{" "}
+              ({questions.length})
+            </TabsTrigger>
+            <TabsTrigger
+              value="results"
+              className="inline-flex items-center gap-1.5"
+            >
+              {" "}
+              <Users className="h-4 w-4" />{" "}
+              {t(locale, "dashboard.quizTabResults")} ({stats.totalResponses})
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="questions" className="mt-0">
