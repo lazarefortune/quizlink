@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { CheckCircle2, Circle } from "lucide-react";
+import { CheckCheck, CheckCircle2, Circle, CircleCheck, CircleCheckBig, CopyCheck, MessageCircleQuestionMark } from "lucide-react";
 
 import type { QuizContentQuestion } from "@/app/(app)/dashboard/quiz/[quizId]/actions";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +26,19 @@ function questionTypeLabel(type: string, locale: Locale): string {
   return type;
 }
 
+function questionTypeIcon(type: string): React.ReactNode {
+  if (type === "MULTIPLE_CHOICE") {
+    return <CircleCheck className="h-4 w-4" />;
+  }
+  if (type === "CHECKBOX") {
+    return <CopyCheck className="h-4 w-4" />;
+  }
+  if (type === "TRUE_FALSE") {
+    return <CheckCheck className="h-4 w-4" />;
+  }
+  return <MessageCircleQuestionMark className="h-4 w-4" />;
+}
+
 export function QuizQuestionsTab({ questions }: QuizQuestionsTabProps) {
   const { locale } = useLocale();
 
@@ -33,11 +46,14 @@ export function QuizQuestionsTab({ questions }: QuizQuestionsTabProps) {
     <section className="space-y-4">
       {questions.map((question, index) => (
         <article key={question.id} className="rounded-xl border border-border bg-card p-4 sm:p-5">
-          <div className="mb-3 flex flex-wrap items-center gap-2">
-            <Badge variant="outline">
+          <div className="mb-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <span className="text-base font-medium text-primary">
               {t(locale, "dashboard.questionLabel")} {index + 1}
+            </span>
+            <Badge variant="secondary" className="inline-flex items-center gap-1.5">
+              {questionTypeIcon(question.type)}
+              {questionTypeLabel(question.type, locale)}
             </Badge>
-            <Badge variant="secondary">{questionTypeLabel(question.type, locale)}</Badge>
           </div>
 
           <p className="text-base font-semibold text-foreground sm:text-lg">{question.label}</p>
@@ -67,12 +83,12 @@ export function QuizQuestionsTab({ questions }: QuizQuestionsTabProps) {
             {question.options.map((option) => (
               <li
                 key={option.id}
-                className="flex items-start gap-2 rounded-md border border-border/70 px-3 py-2"
+                className="flex items-center gap-2 rounded-md border border-border/70 px-3 py-2"
               >
                 {option.isCorrect ? (
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
+                  <CircleCheckBig strokeWidth={2} className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                 ) : (
-                  <Circle className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/60" />
+                  <Circle strokeWidth={2} className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/60" />
                 )}
                 <span
                   className={

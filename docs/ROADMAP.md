@@ -17,6 +17,7 @@
 ## Phase 2 — Expérience joueur
 
 - [ ] Améliorer le design de la page résultat
+- [ ] Accélérer le chargement des images des questions lors du jeu d’un quiz
 - [ ] Améliorer l’affichage du temps et du type de question sur la page quiz
 - [ ] Ajouter une animation de chargement avant le début du quiz
 - [ ] Conserver la progression du quiz si l’utilisateur actualise la page

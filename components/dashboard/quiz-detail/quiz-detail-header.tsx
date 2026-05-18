@@ -190,6 +190,7 @@ export function QuizDetailHeader({
             </div>
 
             <div className="flex shrink-0 items-center gap-2 self-start">
+              {primaryAction}
               <Button
                 type="button"
                 variant="outline"
@@ -210,7 +211,6 @@ export function QuizDetailHeader({
                 <Share2 className="h-4 w-4" />
                 {t(locale, "dashboard.share")}
               </Button>
-              {primaryAction}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
