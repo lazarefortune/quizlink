@@ -49,16 +49,18 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
         className={cn(alertVariants({ variant }), className)}
         {...props}
       >
-        <span className="alert-icon-wrap inline-flex size-8 shrink-0 items-center justify-center rounded-lg">
-          <IconComponent className="h-5 w-5" />
-        </span>
-        <div className="min-w-0 flex-1">
-          {title && (
-            <h5 className="mb-1 font-semibold leading-none tracking-tight">
-              {title}
-            </h5>
-          )}
-          <div className="text-sm [&_p]:leading-relaxed">{children}</div>
+        <div className="flex items-start flex-col sm:flex-row justify-start sm:justify-start gap-3">
+          <span className="alert-icon-wrap inline-flex size-8 shrink-0 items-center justify-center rounded-lg">
+            <IconComponent className="h-5 w-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            {title && (
+              <h5 className="mb-1 font-semibold leading-none tracking-tight">
+                {title}
+              </h5>
+            )}
+            <div className="text-sm [&_p]:leading-relaxed">{children}</div>
+          </div>
         </div>
       </div>
     );

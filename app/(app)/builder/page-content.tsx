@@ -2252,6 +2252,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
                         onMoveDown={(index) => handleMoveQuestion(index, "down")}
                         onDeleteQuestion={commitDeleteQuestion}
                         onEditQuestion={handleEditQuestionFromOrganize}
+                        questionErrorIds={questionErrorIds}
                       />
                     </BuilderMobileOrganizeTabPanel>
                   </TabsContent>

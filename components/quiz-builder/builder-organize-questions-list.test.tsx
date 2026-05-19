@@ -60,4 +60,50 @@ describe("BuilderOrganizeQuestionsList", () => {
 
     expect(screen.getByRole("button", { name: "Question 1" })).toBeTruthy();
   });
+
+  it("flags only the questions whose ids are in questionErrorIds", () => {
+    const questions = [
+      makeQuestion("q1", "Première"),
+      makeQuestion("q2", "Deuxième"),
+      makeQuestion("q3", "Troisième"),
+    ];
+
+    const { container } = render(
+      <BuilderOrganizeQuestionsList
+        locale="fr"
+        questions={questions}
+        questionErrorIds={new Set(["q1", "q3"])}
+        onReorder={vi.fn()}
+        onMoveUp={vi.fn()}
+        onMoveDown={vi.fn()}
+        onDeleteQuestion={vi.fn()}
+        onEditQuestion={vi.fn()}
+      />,
+    );
+
+    const errorRows = container.querySelectorAll('[data-has-error="true"]');
+    expect(errorRows).toHaveLength(2);
+    expect(
+      screen.getAllByRole("img", { name: "Cette question contient une erreur" }),
+    ).toHaveLength(2);
+  });
+
+  it("does not render any error marker when no ids are provided", () => {
+    const { container } = render(
+      <BuilderOrganizeQuestionsList
+        locale="fr"
+        questions={[makeQuestion("q1", "Ma question")]}
+        onReorder={vi.fn()}
+        onMoveUp={vi.fn()}
+        onMoveDown={vi.fn()}
+        onDeleteQuestion={vi.fn()}
+        onEditQuestion={vi.fn()}
+      />,
+    );
+
+    expect(container.querySelector('[data-has-error="true"]')).toBeNull();
+    expect(
+      screen.queryByRole("img", { name: "Cette question contient une erreur" }),
+    ).toBeNull();
+  });
 });

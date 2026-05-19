@@ -36,7 +36,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ChevronDown, ChevronUp, GripVertical, MoreHorizontal, Pencil } from "lucide-react";
+import {
+  AlertCircle,
+  ChevronDown,
+  ChevronUp,
+  GripVertical,
+  MoreHorizontal,
+  Pencil,
+} from "lucide-react";
 import type { Locale } from "@/lib/i18n";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -52,6 +59,8 @@ type BuilderOrganizeQuestionsListProps = {
   onMoveDown: (index: number) => void;
   onDeleteQuestion: (questionId: string) => void;
   onEditQuestion: (questionId: string) => void;
+  /** Question ids flagged by validation. Renders a discreet red marker per row. */
+  questionErrorIds?: ReadonlySet<string>;
 };
 
 const PREVIEW_MAX_LEN = 88;
@@ -78,6 +87,8 @@ type SortableOrganizeRowProps = {
   onMoveDown: () => void;
   onDelete: () => void;
   onEdit: () => void;
+  hasError?: boolean;
+  errorIndicatorAriaLabel?: string;
 };
 
 function SortableOrganizeRow({
@@ -89,6 +100,8 @@ function SortableOrganizeRow({
   onMoveDown,
   onEdit,
   onDelete,
+  hasError = false,
+  errorIndicatorAriaLabel,
 }: SortableOrganizeRowProps) {
   const {
     attributes,
@@ -115,10 +128,14 @@ function SortableOrganizeRow({
     <div
       ref={setNodeRef}
       style={style}
+      data-has-error={hasError ? "true" : undefined}
       className={cn(
-        "flex gap-2 rounded-xl border border-border/50 bg-card/90 py-2 pl-2 pr-1.5 shadow-sm sm:gap-3 sm:py-2.5 sm:pl-3 sm:pr-2",
+        "flex gap-2 rounded-xl border bg-card/90 py-2 pl-2 pr-1.5 shadow-sm sm:gap-3 sm:py-2.5 sm:pl-3 sm:pr-2",
         "transition-[box-shadow,border-color,background-color] duration-150",
         "hover:border-border hover:bg-muted/25 hover:shadow-md",
+        !hasError && "border-border/50",
+        hasError &&
+          "border-destructive/55 bg-destructive/[0.06] hover:border-destructive/65 hover:bg-destructive/10 dark:border-destructive/45",
         isDragging && "z-10 shadow-lg ring-2 ring-blue/30 ring-offset-2 ring-offset-background",
       )}
     >
@@ -166,9 +183,25 @@ function SortableOrganizeRow({
         })}
         className="min-w-0 flex-1 rounded-lg px-1.5 py-0.5 text-left outline-none transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       >
-        <div className="mt-1 flex gap-1.5 text-sm font-medium leading-snug text-foreground mb-1">
-          <span className="shrink-0 font-semibold tabular-nums text-muted-foreground">{index + 1}.</span>
-          <p className="min-w-0 line-clamp-2">{displayPreview}</p>
+        <div className="mt-1 flex items-start gap-1.5 text-sm font-medium leading-snug text-foreground mb-1">
+          <span
+            className={cn(
+              "shrink-0 font-semibold tabular-nums text-muted-foreground",
+              hasError && "text-destructive",
+            )}
+          >
+            {index + 1}.
+          </span>
+          <p className={cn("min-w-0 line-clamp-2", hasError && "text-destructive")}>
+            {displayPreview}
+          </p>
+          {hasError ? (
+            <AlertCircle
+              className="mt-0.5 h-3.5 w-3.5 shrink-0 text-destructive"
+              aria-label={errorIndicatorAriaLabel}
+              role="img"
+            />
+          ) : null}
         </div>
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
           <span className="max-w-full truncate text-xs font-medium text-muted-foreground">
@@ -244,6 +277,7 @@ export function BuilderOrganizeQuestionsList({
   onMoveDown,
   onDeleteQuestion,
   onEditQuestion,
+  questionErrorIds,
 }: BuilderOrganizeQuestionsListProps) {
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
@@ -300,6 +334,11 @@ export function BuilderOrganizeQuestionsList({
                   onMoveDown={() => onMoveDown(index)}
                   onEdit={() => onEditQuestion(question.id)}
                   onDelete={() => setDeleteTargetId(question.id)}
+                  hasError={questionErrorIds?.has(question.id) ?? false}
+                  errorIndicatorAriaLabel={t(
+                    locale,
+                    "builder.questionNavigatorErrorIndicatorAria",
+                  )}
                 />
               </li>
             ))}
