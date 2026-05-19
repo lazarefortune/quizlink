@@ -115,7 +115,7 @@ export function QuizCreationSuccessContent({
             <Input
               value={isLoadingLink ? t(locale, "dashboard.loadingShareLink") : shareLink}
               readOnly
-              className="font-mono text-sm"
+              className="text-base"
               onClick={(event) => (event.target as HTMLInputElement).select()}
             />
             <Button

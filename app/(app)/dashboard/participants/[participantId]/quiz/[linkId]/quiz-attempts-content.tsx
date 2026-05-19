@@ -44,6 +44,7 @@ import {
 } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
+import { richTextToPlainText } from "@/lib/rich-text/richTextToPlainText";
 import { formatScoreFraction } from "@/lib/formatScore";
 import { useToast } from "@/components/ui/toast";
 import {
@@ -667,7 +668,7 @@ export function QuizAttemptsContent({
                           )}
                         </div>
                         <p className="text-lg h1 font-semibold">
-                          {answer.questionLabel}
+                          {richTextToPlainText(answer.questionLabel)}
                         </p>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>

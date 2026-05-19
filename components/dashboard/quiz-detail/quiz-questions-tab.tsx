@@ -5,9 +5,11 @@ import { CheckCheck, CheckCircle2, Circle, CircleCheck, CircleCheckBig, CopyChec
 
 import type { QuizContentQuestion } from "@/app/(app)/dashboard/quiz/[quizId]/actions";
 import { Badge } from "@/components/ui/badge";
+import { QuizRichText } from "@/components/quiz/quiz-rich-text";
 import { t, type Locale } from "@/lib/i18n";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { getQuestionImageSrc } from "@/lib/question-image-src";
+import { richTextToPlainText } from "@/lib/rich-text/richTextToPlainText";
 
 type QuizQuestionsTabProps = {
   questions: QuizContentQuestion[];
@@ -56,7 +58,10 @@ export function QuizQuestionsTab({ questions }: QuizQuestionsTabProps) {
             </Badge>
           </div>
 
-          <p className="text-base font-semibold text-foreground sm:text-lg">{question.label}</p>
+          <QuizRichText
+            html={question.label}
+            className="text-base text-foreground sm:text-lg"
+          />
 
           {(() => {
             const imageSrc = getQuestionImageSrc({
@@ -70,7 +75,7 @@ export function QuizQuestionsTab({ questions }: QuizQuestionsTabProps) {
               <div className="mt-4 overflow-hidden rounded-lg border border-border">
                 <Image
                   src={imageSrc}
-                  alt={question.label}
+                  alt={richTextToPlainText(question.label)}
                   width={1200}
                   height={675}
                   className="h-auto w-full object-cover"

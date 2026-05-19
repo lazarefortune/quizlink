@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useRef, useEffect, useCallback } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,13 +30,6 @@ import {
   Trash2,
   Image as ImageIcon,
   ImageUp,
-  Undo2,
-  Redo2,
-  Bold,
-  Italic,
-  Underline,
-  Strikethrough,
-  Pen,
   Loader2,
   Plus,
 } from "lucide-react";
@@ -54,6 +47,7 @@ import { Label } from "../ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Radio } from "@/components/ui/radio";
+import { RichTextQuestionEditor } from "@/components/quiz-builder/rich-text-question-editor";
 
 type QuestionEditorProps = {
   question: Question;
@@ -110,60 +104,13 @@ export function QuestionEditor({
     () => getQuestionImageSrc(question),
   );
   const [isImageLoading, setIsImageLoading] = useState(false);
-  const [activeFormats, setActiveFormats] = useState({
-    bold: false,
-    italic: false,
-    underline: false,
-    strikeThrough: false,
-    insertUnorderedList: false,
-    insertOrderedList: false,
-  });
-  const editorRef = useRef<HTMLDivElement>(null);
   const imageFileInputRef = useRef<HTMLInputElement>(null);
-
-  const updateFormatState = useCallback(() => {
-    const sel = document.getSelection();
-    const inEditor = editorRef.current && sel?.anchorNode && editorRef.current.contains(sel.anchorNode);
-    if (!inEditor) {
-      setActiveFormats({
-        bold: false,
-        italic: false,
-        underline: false,
-        strikeThrough: false,
-        insertUnorderedList: false,
-        insertOrderedList: false,
-      });
-      return;
-    }
-    setActiveFormats({
-      bold: document.queryCommandState("bold"),
-      italic: document.queryCommandState("italic"),
-      underline: document.queryCommandState("underline"),
-      strikeThrough: document.queryCommandState("strikeThrough"),
-      insertUnorderedList: document.queryCommandState("insertUnorderedList"),
-      insertOrderedList: document.queryCommandState("insertOrderedList"),
-    });
-  }, []);
-
-  useEffect(() => {
-    if (editorRef.current && editorRef.current.textContent !== question.label) {
-      editorRef.current.textContent = question.label;
-    }
-  }, [question.label]);
 
   useEffect(() => {
     const resolved = getQuestionImageSrc(question);
     setImagePreview(resolved);
     setIsImageLoading(false);
   }, [question.id, question.image, question.imageKey]);
-
-  useEffect(() => {
-    const handleSelectionChange = () => {
-      updateFormatState();
-    };
-    document.addEventListener("selectionchange", handleSelectionChange);
-    return () => document.removeEventListener("selectionchange", handleSelectionChange);
-  }, [updateFormatState]);
 
   const handleTypeChange = (newType: QuestionType) => {
     let newOptions = [...question.options];
@@ -188,21 +135,11 @@ export function QuestionEditor({
     });
   };
 
-  const handleLabelChange = () => {
-    if (editorRef.current) {
-      const newLabel = editorRef.current.textContent || "";
-      onChange({
-        ...question,
-        label: newLabel,
-      });
-    }
-  };
-
-  const handleFormat = (command: string, value?: string) => {
-    document.execCommand(command, false, value);
-    editorRef.current?.focus();
-    handleLabelChange();
-    requestAnimationFrame(updateFormatState);
+  const handleLabelChange = (nextLabel: string) => {
+    onChange({
+      ...question,
+      label: nextLabel,
+    });
   };
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -371,7 +308,7 @@ export function QuestionEditor({
           </div>
         </div>
 
-        {/* Question with formatting toolbar */}
+        {/* Question label */}
         <div className="space-y-1.5 sm:space-y-2">
           <h3 className="text-lg font-semibold">
             {t(locale, "builder.questionNumber", {
@@ -380,131 +317,14 @@ export function QuestionEditor({
           </h3>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <div className="flex-1 space-y-2 min-w-0">
-              {/* Formatting Toolbar */}
-              <div className="flex items-center gap-0.5 sm:gap-1 p-1 sm:p-1.5 border-2 border-border/60 rounded-md bg-muted/30 overflow-x-auto">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 sm:h-7 sm:w-7 shrink-0"
-                  onClick={() => handleFormat("undo")}
-                  type="button"
-                >
-                  <Undo2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 sm:h-7 sm:w-7 shrink-0"
-                  onClick={() => handleFormat("redo")}
-                  type="button"
-                >
-                  <Redo2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                </Button>
-                <div className="h-4 w-px bg-border mx-0.5 sm:mx-1 shrink-0" />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={cn(
-                    "h-6 w-6 sm:h-7 sm:w-7 shrink-0",
-                    activeFormats.bold && "bg-primary text-primary-foreground",
-                  )}
-                  onClick={() => handleFormat("bold")}
-                  type="button"
-                >
-                  <Bold className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={cn(
-                    "h-6 w-6 sm:h-7 sm:w-7 shrink-0",
-                    activeFormats.italic &&
-                      "bg-primary text-primary-foreground",
-                  )}
-                  onClick={() => handleFormat("italic")}
-                  type="button"
-                >
-                  <Italic className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={cn(
-                    "h-6 w-6 sm:h-7 sm:w-7 shrink-0",
-                    activeFormats.underline &&
-                      "bg-primary text-primary-foreground",
-                  )}
-                  onClick={() => handleFormat("underline")}
-                  type="button"
-                >
-                  <Underline className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={cn(
-                    "h-6 w-6 sm:h-7 sm:w-7 shrink-0",
-                    activeFormats.strikeThrough &&
-                      "bg-primary text-primary-foreground",
-                  )}
-                  onClick={() => handleFormat("strikeThrough")}
-                  type="button"
-                >
-                  <Strikethrough className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                </Button>
-                <div className="h-4 w-px bg-border mx-0.5 sm:mx-1 shrink-0" />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={cn(
-                    "h-6 w-6 sm:h-7 sm:w-7 shrink-0",
-                    (activeFormats.bold ||
-                      activeFormats.italic ||
-                      activeFormats.underline ||
-                      activeFormats.strikeThrough ||
-                      activeFormats.insertUnorderedList ||
-                      activeFormats.insertOrderedList) &&
-                      "bg-primary text-primary-foreground",
-                  )}
-                  onClick={() => {
-                    handleFormat("removeFormat");
-                  }}
-                  type="button"
-                >
-                  <Pen className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                </Button>
-              </div>
-              {/* Question Editor (contentEditable) */}
-              <div className="relative">
-                <div
-                  ref={editorRef}
-                  contentEditable
-                  role="textbox"
-                  aria-multiline="true"
-                  aria-invalid={errorFlags.hasLabelError || undefined}
-                  data-builder-error-target={
-                    errorFlags.hasLabelError ? "question-label" : undefined
-                  }
-                  onInput={handleLabelChange}
-                  onBlur={handleLabelChange}
-                  onFocus={updateFormatState}
-                  onKeyUp={updateFormatState}
-                  onMouseUp={updateFormatState}
-                  className={cn(
-                    "min-h-[100px] sm:min-h-[120px] w-full rounded-md border-2 bg-background px-3 py-2 text-base outline-none transition-colors focus:!border-primary focus-visible:!border-primary resize-none overflow-y-auto",
-                    errorFlags.hasLabelError
-                      ? "border-destructive/70 focus:!border-destructive focus-visible:!border-destructive"
-                      : "border-input",
-                  )}
-                  style={{ whiteSpace: "pre-wrap" }}
-                  suppressContentEditableWarning
-                />
-                {!question.label && (
-                  <div className="absolute top-2 left-3 text-base text-muted-foreground pointer-events-none select-none">
-                    {t(locale, "builder.questionLabelPlaceholder")}
-                  </div>
-                )}
-              </div>
+              <RichTextQuestionEditor
+                value={question.label}
+                onChange={handleLabelChange}
+                hasError={errorFlags.hasLabelError}
+                errorTargetId="question-label"
+                placeholder={t(locale, "builder.questionLabelPlaceholder")}
+                ariaLabel={t(locale, "builder.questionLabel")}
+              />
             </div>
             {/* Image: compact icon actions in a corner (no bottom strip over the image) */}
             <div className="w-full shrink-0 space-y-2 sm:w-32 md:w-40">

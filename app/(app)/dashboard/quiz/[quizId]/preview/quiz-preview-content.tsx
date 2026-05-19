@@ -16,6 +16,8 @@ import { useLocale } from "@/lib/i18n/use-locale";
 import { t, type Locale } from "@/lib/i18n";
 import { getQuestionImageSrc } from "@/lib/question-image-src";
 import { resolveQuizActionError } from "@/lib/quiz/resolveQuizActionError";
+import { richTextToPlainText } from "@/lib/rich-text/richTextToPlainText";
+import { QuizRichText } from "@/components/quiz/quiz-rich-text";
 import { useToast } from "@/components/ui/toast";
 import { FullscreenBlockingOverlay } from "@/components/ui/fullscreen-blocking-overlay";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -240,7 +242,10 @@ export function QuizPreviewContent({
                 </Badge>
               </div>
 
-              <p className="text-base font-semibold text-foreground sm:text-lg">{question.label}</p>
+              <QuizRichText
+                html={question.label}
+                className="text-base text-foreground sm:text-lg"
+              />
 
               {(() => {
                 const imageSrc = getQuestionImageSrc({
@@ -254,7 +259,7 @@ export function QuizPreviewContent({
                 <div className="mt-4 overflow-hidden rounded-lg border border-border">
                   <Image
                     src={imageSrc}
-                    alt={question.label}
+                    alt={richTextToPlainText(question.label)}
                     width={1200}
                     height={675}
                     className="h-auto w-full object-cover"

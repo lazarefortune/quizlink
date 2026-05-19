@@ -14,6 +14,7 @@ import {
 } from "@/lib/storage/question-image-storage";
 import { QUIZ_ACTION_ERROR_CODE } from "@/lib/quiz/quizActionErrorCodes";
 import { canQuizBeMadePublic } from "@/lib/quiz/quizStatusPolicy";
+import { sanitizeQuizRichText } from "@/lib/rich-text/sanitizeQuizRichText";
 import type { QuizBuilder } from "@/types/quiz-builder";
 import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
 
@@ -329,7 +330,7 @@ export async function updateQuiz(quizId: string, quiz: QuizBuilder) {
             questions: {
               create: quiz.questions.map((q, index) => ({
                 type: q.type,
-                label: q.label,
+                label: sanitizeQuizRichText(q.label),
                 image: q.imageKey ? null : (q.image || null),
                 imageKey: q.imageKey || null,
                 explanation: q.explanation?.trim() || null,

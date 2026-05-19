@@ -1,3 +1,4 @@
+import { richTextToPlainText } from "@/lib/rich-text/richTextToPlainText";
 import {
   totalSecondsFromMinutesSeconds,
   TIME_LIMIT_MINUTES_MAX,
@@ -42,7 +43,7 @@ export function validateQuiz(quiz: QuizBuilder): ValidationError[] {
     const questionPrefix = `questions[${index}]`;
     const questionNumber = index + 1;
 
-    if (!question.label.trim()) {
+    if (richTextToPlainText(question.label).length === 0) {
       errors.push({
         field: `${questionPrefix}.label`,
         translationKey: "builder.validation.questionLabelRequired",

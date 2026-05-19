@@ -27,6 +27,7 @@ import { Clock, X } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { getQuestionImageSrc } from "@/lib/question-image-src";
+import { QuizRichText } from "@/components/quiz/quiz-rich-text";
 import { resolveQuizActionError } from "@/lib/quiz/resolveQuizActionError";
 import { resolveEffectiveShuffleSettings } from "@/lib/quiz/shuffleSettings";
 import { cn } from "@/lib/utils";
@@ -629,7 +630,9 @@ export function AnonymousQuizPlayContent({
                     />
                   </div>
                 ) : null}
-                <CardTitle className="text-xl">{currentQuestion.label}</CardTitle>
+                <CardTitle className="text-xl">
+                  <QuizRichText html={currentQuestion.label} />
+                </CardTitle>
                 <CardDescription>{getQuestionDescription()}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">

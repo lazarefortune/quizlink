@@ -28,6 +28,7 @@ import { t } from "@/lib/i18n";
 import { getQuestionImageSrc } from "@/lib/question-image-src";
 import { resolveQuizActionError } from "@/lib/quiz/resolveQuizActionError";
 import { resolveEffectiveShuffleSettings } from "@/lib/quiz/shuffleSettings";
+import { QuizRichText } from "@/components/quiz/quiz-rich-text";
 import { cn } from "@/lib/utils";
 import {
   submitAnswerForAttempt,
@@ -539,7 +540,9 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
                 />
               </div>
             ) : null}
-            <CardTitle className="text-xl">{currentQuestion.label}</CardTitle>
+            <CardTitle className="text-xl">
+              <QuizRichText html={currentQuestion.label} />
+            </CardTitle>
             <CardDescription>{getQuestionDescription()}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">

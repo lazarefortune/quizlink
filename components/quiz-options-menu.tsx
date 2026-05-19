@@ -307,7 +307,7 @@ export function QuizOptionsMenu({
                 <Input
                   value={shareLink}
                   readOnly
-                  className="flex-1 font-mono text-sm"
+                  className="flex-1 text-base"
                   onClick={(e) => (e.target as HTMLInputElement).select()}
                 />
                 <Button

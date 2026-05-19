@@ -149,6 +149,50 @@ describe("validateQuiz", () => {
     );
   });
 
+  it("flags a question with only empty rich-text markup as missing label", () => {
+    const errors = validateQuiz({
+      ...minimalValidQuiz,
+      questions: [
+        {
+          id: "qu1",
+          type: "MULTIPLE_CHOICE",
+          label: "<p><br></p>",
+          options: [
+            { id: "o1", label: "A", isCorrect: true },
+            { id: "o2", label: "B", isCorrect: false },
+          ],
+        },
+      ],
+    });
+    expect(
+      errors.some(
+        (e) =>
+          e.field === "questions[0].label" &&
+          e.translationKey === "builder.validation.questionLabelRequired",
+      ),
+    ).toBe(true);
+  });
+
+  it("accepts a question whose label contains whitelisted formatting tags", () => {
+    const errors = validateQuiz({
+      ...minimalValidQuiz,
+      questions: [
+        {
+          id: "qu1",
+          type: "MULTIPLE_CHOICE",
+          label: "<p><strong>Real</strong> question</p>",
+          options: [
+            { id: "o1", label: "A", isCorrect: true },
+            { id: "o2", label: "B", isCorrect: false },
+          ],
+        },
+      ],
+    });
+    expect(
+      errors.some((e) => e.field === "questions[0].label"),
+    ).toBe(false);
+  });
+
   it("does not emit 'exactly one correct' on CHECKBOX questions with multiple correct answers", () => {
     const errors = validateQuiz({
       ...minimalValidQuiz,

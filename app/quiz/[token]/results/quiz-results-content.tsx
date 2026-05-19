@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, XCircle, RotateCcw, ArrowLeft } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
+import { QuizRichText } from "@/components/quiz/quiz-rich-text";
 
 export type Attempt = {
   id: string;
@@ -151,7 +152,10 @@ export function QuizResultsContent({ attempt }: QuizResultsContentProps) {
                     <CardHeader>
                       <div className="flex items-start justify-between gap-2">
                         <CardTitle className="text-xl">
-                          {t(locale, "quiz.question")} {index + 1}: {question.label}
+                          <span>
+                            {t(locale, "quiz.question")} {index + 1}:{" "}
+                          </span>
+                          <QuizRichText as="span" html={question.label} />
                         </CardTitle>
                         {isCorrect ? (
                           <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400 shrink-0" />

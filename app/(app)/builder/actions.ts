@@ -14,6 +14,7 @@ import { buildPlayableContentMultisetKey } from "@/lib/builder/quizContentChange
 import { mergeBuilderSaveValidationErrors } from "@/lib/builder/serverAutosaveGate";
 import { prisma } from "@/lib/prisma";
 import { t, type Locale } from "@/lib/i18n";
+import { sanitizeQuizRichText } from "@/lib/rich-text/sanitizeQuizRichText";
 import {
   copyQuestionImageStorageObject,
   deleteQuestionImage,
@@ -158,7 +159,7 @@ export async function saveModifiedQuizAsDraftCopyAction(
           questions: {
             create: quizBuilder.questions.map((q, index) => ({
               type: q.type,
-              label: q.label,
+              label: sanitizeQuizRichText(q.label),
               image: q.imageKey ? null : (q.image || null),
               imageKey: null,
               explanation: q.explanation?.trim() || null,
@@ -396,7 +397,7 @@ export async function saveQuiz(
             questions: {
               create: quiz.questions.map((q, index) => ({
                 type: q.type,
-                label: q.label,
+                label: sanitizeQuizRichText(q.label),
                 image: q.imageKey ? null : (q.image || null),
                 imageKey: q.imageKey || null,
                 explanation: q.explanation?.trim() || null,
@@ -432,7 +433,7 @@ export async function saveQuiz(
         questions: {
           create: quiz.questions.map((q, index) => ({
             type: q.type,
-            label: q.label,
+            label: sanitizeQuizRichText(q.label),
             image: q.imageKey ? null : (q.image || null),
             imageKey: q.imageKey || null,
             explanation: q.explanation?.trim() || null,

@@ -29,6 +29,7 @@ import { startQuizAction, submitAnswerAction, getResultsAction } from "@/app/qui
 import type { PublicQuestion } from "@/lib/quiz-session/quiz-session-types";
 import type { Quiz } from "@/types/quiz";
 import { getQuestionImageSrc } from "@/lib/question-image-src";
+import { QuizRichText } from "@/components/quiz/quiz-rich-text";
 
 type AnswerState = {
   questionId: string;
@@ -444,7 +445,7 @@ function QuizPlayPageContent() {
               </div>
             ) : null}
             <CardTitle className="text-xl">
-              {currentQuestion.label}
+              <QuizRichText html={currentQuestion.label} />
             </CardTitle>
             <CardDescription>
               {getQuestionDescription()}

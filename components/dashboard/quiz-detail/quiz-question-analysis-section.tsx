@@ -5,6 +5,7 @@ import Image from "next/image";
 import type { QuizContentQuestion } from "@/app/(app)/dashboard/quiz/[quizId]/actions";
 import type { QuestionInsight } from "@/lib/dashboard/aggregate-question-insights";
 import { Badge } from "@/components/ui/badge";
+import { QuizRichText } from "@/components/quiz/quiz-rich-text";
 import { t, type Locale } from "@/lib/i18n";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { getQuestionImageSrc } from "@/lib/question-image-src";
@@ -83,7 +84,10 @@ export function QuizQuestionAnalysisSection({
                 ) : null}
               </div>
 
-              <p className="mt-3 text-base font-semibold text-foreground">{question.label}</p>
+              <QuizRichText
+                html={question.label}
+                className="mt-3 text-base font-semibold text-foreground"
+              />
 
               {imageSrc ? (
                 <div className="relative mt-3 aspect-video max-h-48 w-full max-w-md overflow-hidden rounded-lg border border-border bg-muted">
