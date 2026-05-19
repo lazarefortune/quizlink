@@ -127,6 +127,18 @@ import { resolveEffectiveAutoSaveEnabled } from "@/lib/builder/resolveEffectiveA
 import { computeQuizBuilderSnapshot } from "@/lib/builder/quizBuilderSnapshot";
 import { pickDominantVisibleQuestionId } from "@/lib/builder/pickDominantVisibleQuestionId";
 import { useMinWidthLg } from "@/lib/builder/useMinWidthLg";
+import {
+  buildBuilderQuestionErrorIdSet,
+  countBuilderValidationProblemAreas,
+  findFirstBuilderValidationErrorTarget,
+  type BuilderValidationErrorTarget,
+} from "@/lib/builder/builderValidationTarget";
+import {
+  reindexValidationErrorsForQuestions,
+  removeValidationErrorsAfterQuestionChange,
+  removeValidationErrorsForField,
+} from "@/lib/builder/builderValidationErrorFilters";
+import { computeBuilderValidationErrors } from "@/lib/builder/computeBuilderValidationErrors";
 import { mergeQuizSettingsFromStored } from "@/lib/quiz/mergeQuizSettingsFromStored";
 import type { BuilderServerSaveUiPhase } from "@/lib/builder/builderSaveStatusDisplay";
 
@@ -191,7 +203,7 @@ type BuilderEditQuestionItemProps = {
   totalQuestions: number;
   onChange: (updatedQuestion: Question) => void;
   onDelete: () => void;
-  errors: string[];
+  errors: ValidationError[];
   quizIdForImageUpload: string | null;
   isNewlyAdded?: boolean;
   isRemoving?: boolean;
@@ -283,6 +295,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
     deriveTimeLimitUiFromSettings(getInitialQuiz().settings),
   );
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
+  const [shouldValidateBuilderLive, setShouldValidateBuilderLive] = useState(false);
   const [quizSettingsSheetOpen, setQuizSettingsSheetOpen] = useState(false);
   const previousQuestionCountRef = useRef(quiz.questions.length);
   const [newlyAddedQuestionId, setNewlyAddedQuestionId] = useState<string | null>(null);
@@ -421,6 +434,111 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
       setQuizSettingsSheetOpen(true);
     }
   }, [isLargeViewport, validationErrors]);
+
+  const questionErrorIds = useMemo(
+    () => buildBuilderQuestionErrorIdSet(validationErrors, quiz.questions),
+    [validationErrors, quiz.questions],
+  );
+  const validationProblemAreaCount = useMemo(
+    () => countBuilderValidationProblemAreas(validationErrors, quiz.questions),
+    [validationErrors, quiz.questions],
+  );
+
+  const scrollToBuilderValidationTarget = useCallback(
+    (target: BuilderValidationErrorTarget) => {
+      const tryFocus = (element: HTMLElement) => {
+        if (
+          element instanceof HTMLInputElement ||
+          element instanceof HTMLTextAreaElement ||
+          element instanceof HTMLSelectElement
+        ) {
+          element.focus({ preventScroll: true });
+        }
+      };
+
+      const scrollToElement = (element: HTMLElement) => {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+        tryFocus(element);
+      };
+
+      const findAfterPaint = (
+        select: () => HTMLElement | null,
+        onFound: (el: HTMLElement) => void,
+        opts: { delayMs?: number } = {},
+      ) => {
+        const run = () => {
+          const el = select();
+          if (el) {
+            onFound(el);
+          }
+        };
+        if (opts.delayMs && opts.delayMs > 0) {
+          window.setTimeout(run, opts.delayMs);
+          return;
+        }
+        requestAnimationFrame(() => {
+          requestAnimationFrame(run);
+        });
+      };
+
+      if (target.type === "quiz-name") {
+        findAfterPaint(
+          () =>
+            document.querySelector<HTMLElement>(
+              '[data-builder-error-target="quiz-name"]',
+            ),
+          scrollToElement,
+        );
+        return;
+      }
+
+      if (target.type === "quiz-settings") {
+        setQuizSettingsSheetOpen(true);
+        // Sheet open animation: wait a bit before locating the field inside.
+        findAfterPaint(
+          () =>
+            document.querySelector<HTMLElement>(
+              '[data-builder-error-target="quiz-settings"]',
+            ),
+          scrollToElement,
+          { delayMs: 250 },
+        );
+        return;
+      }
+
+      setBuilderViewMode("edit");
+      // Reuse the existing scrollToQuestionId effect: it waits for the tab/edit
+      // mode to mount the target card before calling scrollIntoView.
+      setScrollToQuestionId(target.questionId);
+    },
+    [],
+  );
+
+  const handleValidationFailedSave = useCallback(
+    (errors: ValidationError[]) => {
+      setValidationErrors(errors);
+      setShouldValidateBuilderLive(true);
+      const target = findFirstBuilderValidationErrorTarget(errors, quiz.questions);
+      if (target) {
+        scrollToBuilderValidationTarget(target);
+      }
+    },
+    [quiz.questions, scrollToBuilderValidationTarget],
+  );
+
+  const resetBuilderValidationState = useCallback(() => {
+    setShouldValidateBuilderLive(false);
+    setValidationErrors([]);
+  }, []);
+
+  // Live validation: only after the user attempted a save/finalize that failed.
+  // Before that, the builder never shows red — see "no blame at first" UX rule.
+  useEffect(() => {
+    if (!shouldValidateBuilderLive) {
+      return;
+    }
+    setValidationErrors(computeBuilderValidationErrors(quiz, timeLimitUi));
+  }, [shouldValidateBuilderLive, quiz, timeLimitUi]);
 
   useEffect(() => {
     if (!isLargeViewport) {
@@ -1014,7 +1132,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
     const errors = validateQuiz(quiz);
     const mergedErrors = timeLimitError ? [...errors, timeLimitError] : errors;
     if (mergedErrors.length > 0) {
-      setValidationErrors(mergedErrors);
+      handleValidationFailedSave(mergedErrors);
       return;
     }
 
@@ -1141,6 +1259,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
               setLastServerAutosaveSuccessAt(Date.now());
               setServerSaveUiPhase("idle");
               autosaveErrorSnapshotRef.current = null;
+              resetBuilderValidationState();
               runNavigationBypass(() => {
                 setBuilderHasUnsavedChanges(false);
                 router.push(buildQuizSuccessPath(result.quizId));
@@ -1166,6 +1285,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
         setLastServerAutosaveSuccessAt(Date.now());
         setServerSaveUiPhase("idle");
         autosaveErrorSnapshotRef.current = null;
+        resetBuilderValidationState();
         showToast(message, "success");
       } else {
         showToast(`${result.error || t(locale, "builder.saveError")}${draftHint}`, "error");
@@ -1195,7 +1315,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
     const errors = validateQuiz(quiz);
     const mergedErrors = timeLimitError ? [...errors, timeLimitError] : errors;
     if (mergedErrors.length > 0) {
-      setValidationErrors(mergedErrors);
+      handleValidationFailedSave(mergedErrors);
       showToast(t(locale, "builder.saveError"), "error");
       return;
     }
@@ -1237,6 +1357,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
         }
 
         setActiveSaveStatsModalOpen(false);
+        resetBuilderValidationState();
         showToast(t(locale, "builder.activeSaveStatsModal.draftCopySuccessToast"), "success");
         runNavigationBypass(() => {
           setBuilderHasUnsavedChanges(false);
@@ -1282,7 +1403,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
     const errors = validateQuiz(quiz);
     const mergedErrors = timeLimitError ? [...errors, timeLimitError] : errors;
     if (mergedErrors.length > 0) {
-      setValidationErrors(mergedErrors);
+      handleValidationFailedSave(mergedErrors);
       return;
     }
 
@@ -1351,6 +1472,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
         mergedQuiz,
       );
       syncDirtyToGuard();
+      resetBuilderValidationState();
       showToast(t(locale, "builder.finalizeSuccessToast"), "success");
       setLastServerAutosaveSuccessAt(Date.now());
       setServerSaveUiPhase("idle");
@@ -1406,13 +1528,23 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
   const builderTabsValue = isLargeViewport ? "edit" : builderViewMode;
 
   const handleQuestionChange = (index: number, updatedQuestion: Question) => {
+    const previousQuestion = quiz.questions[index];
     const newQuestions = [...quiz.questions];
     newQuestions[index] = updatedQuestion;
     setQuiz({
       ...quiz,
       questions: newQuestions,
     });
-    setValidationErrors([]);
+    if (previousQuestion) {
+      setValidationErrors((prev) =>
+        removeValidationErrorsAfterQuestionChange(
+          prev,
+          index,
+          previousQuestion,
+          updatedQuestion,
+        ),
+      );
+    }
   };
 
   const handleDeleteQuestion = (index: number) => {
@@ -1423,12 +1555,16 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
   };
 
   const commitDeleteQuestion = (questionId: string) => {
-    const newQuestions = quiz.questions.filter((q) => q.id !== questionId);
+    const previousQuestions = quiz.questions;
+    const newQuestions = previousQuestions.filter((q) => q.id !== questionId);
     setRemovingQuestionId(null);
     setQuiz({
       ...quiz,
       questions: newQuestions,
     });
+    setValidationErrors((prev) =>
+      reindexValidationErrorsForQuestions(prev, previousQuestions, newQuestions),
+    );
   };
 
   const handleMoveQuestion = (index: number, direction: "up" | "down") => {
@@ -1439,7 +1575,8 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
       return;
     }
 
-    const newQuestions = [...quiz.questions];
+    const previousQuestions = quiz.questions;
+    const newQuestions = [...previousQuestions];
     const targetIndex = direction === "up" ? index - 1 : index + 1;
     [newQuestions[index], newQuestions[targetIndex]] = [
       newQuestions[targetIndex],
@@ -1450,12 +1587,14 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
       ...quiz,
       questions: newQuestions,
     });
+    setValidationErrors((prev) =>
+      reindexValidationErrorsForQuestions(prev, previousQuestions, newQuestions),
+    );
   };
 
-  const getQuestionErrors = (questionIndex: number): string[] => {
-    return validationErrors
-      .filter((error) => error.field.startsWith(`questions[${questionIndex}]`))
-      .map((error) => t(locale, error.translationKey, error.params || {}));
+  const getQuestionErrors = (questionIndex: number): ValidationError[] => {
+    const prefix = `questions[${questionIndex}]`;
+    return validationErrors.filter((error) => error.field.startsWith(prefix));
   };
 
   const getNameError = (): string | null => {
@@ -1506,16 +1645,16 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
 
   const handleQuizTitleChange = useCallback((next: string) => {
     setQuiz((prev) => ({ ...prev, name: next }));
-    setValidationErrors((prev) => prev.filter((err) => err.field !== "name"));
+    setValidationErrors((prev) => removeValidationErrorsForField(prev, "name"));
   }, []);
 
   const renderBuilderSaveActions = (layout: "desktop" | "mobile") => {
     const isMobileLayout = layout === "mobile";
     const saveIconClass = "h-3 w-3 sm:h-4 sm:w-4 shrink-0";
     const validationBadge =
-      validationErrors.length > 0 ? (
+      validationProblemAreaCount > 0 ? (
         <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs bg-destructive text-destructive-foreground border-destructive">
-          {validationErrors.length}
+          {validationProblemAreaCount}
         </Badge>
       ) : null;
 
@@ -1947,11 +2086,20 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
                 handleAddQuestion();
               }}
               onReorder={(nextQuestions) => {
+                const previousQuestions = quiz.questions;
                 setQuiz((prev) => ({
                   ...prev,
                   questions: nextQuestions,
                 }));
+                setValidationErrors((prev) =>
+                  reindexValidationErrorsForQuestions(
+                    prev,
+                    previousQuestions,
+                    nextQuestions,
+                  ),
+                );
               }}
+              questionErrorIds={questionErrorIds}
             />
           </div>
 
@@ -2086,12 +2234,20 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
                       <BuilderOrganizeQuestionsList
                         locale={locale}
                         questions={quiz.questions}
-                        onReorder={(nextQuestions) =>
+                        onReorder={(nextQuestions) => {
+                          const previousQuestions = quiz.questions;
                           setQuiz({
                             ...quiz,
                             questions: nextQuestions,
-                          })
-                        }
+                          });
+                          setValidationErrors((prev) =>
+                            reindexValidationErrorsForQuestions(
+                              prev,
+                              previousQuestions,
+                              nextQuestions,
+                            ),
+                          );
+                        }}
                         onMoveUp={(index) => handleMoveQuestion(index, "up")}
                         onMoveDown={(index) => handleMoveQuestion(index, "down")}
                         onDeleteQuestion={commitDeleteQuestion}

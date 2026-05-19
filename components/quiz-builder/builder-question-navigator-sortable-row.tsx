@@ -2,7 +2,13 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { CheckCheck, CircleCheck, CopyCheck, GripVertical } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCheck,
+  CircleCheck,
+  CopyCheck,
+  GripVertical,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Question } from "@/types/quiz-builder";
 
@@ -14,6 +20,9 @@ type BuilderQuestionNavigatorSortableRowProps = {
   displayPreview: string;
   dragHandleAriaLabel: string;
   onNavigate: () => void;
+  /** When true, render a discreet error dot/border on the row. */
+  hasError?: boolean;
+  errorIndicatorAriaLabel?: string;
 };
 
 export function BuilderQuestionNavigatorSortableRow({
@@ -24,6 +33,8 @@ export function BuilderQuestionNavigatorSortableRow({
   displayPreview,
   dragHandleAriaLabel,
   onNavigate,
+  hasError = false,
+  errorIndicatorAriaLabel,
 }: BuilderQuestionNavigatorSortableRowProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useSortable({
     id: question.id,
@@ -40,6 +51,7 @@ export function BuilderQuestionNavigatorSortableRow({
     <div
       ref={setNodeRef}
       style={style}
+      data-has-error={hasError ? "true" : undefined}
       className={cn(
         "flex w-full items-stretch gap-0 rounded-sm border text-foreground",
         "transition-[box-shadow,border-color,background-color] duration-150 ease-out",
@@ -55,6 +67,9 @@ export function BuilderQuestionNavigatorSortableRow({
             "border-border/50 bg-card/80 shadow-sm",
             "hover:border-border hover:bg-muted/40 dark:border-border/60 dark:bg-card/55",
           ],
+        !isDragging &&
+          hasError &&
+          "border-destructive/55 bg-destructive/[0.06] hover:border-destructive/65 hover:bg-destructive/10 dark:border-destructive/45",
       )}
     >
       <button
@@ -79,12 +94,29 @@ export function BuilderQuestionNavigatorSortableRow({
         )}
       >
         <div className="flex items-baseline gap-2">
-          <span className="shrink-0 text-xs font-semibold tabular-nums text-muted-foreground">
+          <span
+            className={cn(
+              "shrink-0 text-xs font-semibold tabular-nums text-muted-foreground",
+              hasError && "text-destructive",
+            )}
+          >
             {index + 1}.
           </span>
-          <span className="min-w-0 flex-1 truncate font-medium leading-snug">
+          <span
+            className={cn(
+              "min-w-0 flex-1 truncate font-medium leading-snug",
+              hasError && "text-destructive",
+            )}
+          >
             {displayPreview}
           </span>
+          {hasError ? (
+            <AlertCircle
+              className="h-3.5 w-3.5 shrink-0 text-destructive"
+              aria-label={errorIndicatorAriaLabel}
+              role="img"
+            />
+          ) : null}
         </div>
         <div className="flex items-center gap-1">
             {/* icon for type */}

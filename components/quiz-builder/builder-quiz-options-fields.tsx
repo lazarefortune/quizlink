@@ -16,6 +16,7 @@ import {
   type BuilderTimeLimitUi,
 } from "@/lib/time-limit-seconds";
 import { QUIZ_NAME_MAX_LENGTH, type ValidationError } from "@/lib/quiz-validation";
+import { removeValidationErrorsForField } from "@/lib/builder/builderValidationErrorFilters";
 import type { QuizBuilder } from "@/types/quiz-builder";
 
 export type BuilderQuizOptionsFieldsProps = {
@@ -58,7 +59,7 @@ export function BuilderQuizOptionsFields({
       },
     }));
     setValidationErrors((prev) =>
-      prev.filter((err) => err.field !== "settings.timeLimitPerQuestion"),
+      removeValidationErrorsForField(prev, "settings.timeLimitPerQuestion"),
     );
   };
 
@@ -85,7 +86,7 @@ export function BuilderQuizOptionsFields({
               value={quiz.name}
               onChange={(e) => {
                 setQuiz((prev) => ({ ...prev, name: e.target.value }));
-                setValidationErrors((prev) => prev.filter((err) => err.field !== "name"));
+                setValidationErrors((prev) => removeValidationErrorsForField(prev, "name"));
               }}
               placeholder={t(locale, "builder.quizNameInputPlaceholder")}
               maxLength={QUIZ_NAME_MAX_LENGTH}
@@ -185,7 +186,7 @@ export function BuilderQuizOptionsFields({
                 },
               });
               setValidationErrors((prev) =>
-                prev.filter((err) => err.field !== "settings.timeLimitPerQuestion"),
+                removeValidationErrorsForField(prev, "settings.timeLimitPerQuestion"),
               );
             }}
             className="mt-0.5 shrink-0"
@@ -207,6 +208,7 @@ export function BuilderQuizOptionsFields({
                 </label>
                 <Input
                   id="builder-time-limit-minutes"
+                  data-builder-error-target="quiz-settings"
                   type="number"
                   min={0}
                   max={TIME_LIMIT_MINUTES_MAX}

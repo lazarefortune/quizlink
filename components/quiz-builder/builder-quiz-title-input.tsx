@@ -48,6 +48,11 @@ export type BuilderQuizTitleInputProps = {
    * `inline` — borderless until focus — desktop builder header.
    */
   variant?: "inline" | "field";
+  /**
+   * Tags the textarea so the scroll-to-first-error helper can find it.
+   * Set to "quiz-name" on both the desktop header and the mobile card.
+   */
+  errorTargetId?: string;
 };
 
 export function BuilderQuizTitleInput({
@@ -58,6 +63,7 @@ export function BuilderQuizTitleInput({
   getNameError,
   maxLength = QUIZ_NAME_MAX_LENGTH,
   variant = "inline",
+  errorTargetId = "quiz-name",
 }: BuilderQuizTitleInputProps) {
   const isFieldVariant = variant === "field";
   const nameError = getNameError();
@@ -123,6 +129,8 @@ export function BuilderQuizTitleInput({
         ref={textareaRef}
         id={fieldId}
         aria-labelledby={labelId}
+        aria-invalid={nameError !== null}
+        data-builder-error-target={errorTargetId}
         title={value.trim().length > 0 ? value : undefined}
         rows={isFieldVariant ? 3 : 1}
         value={value}

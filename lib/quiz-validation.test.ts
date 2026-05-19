@@ -100,6 +100,76 @@ describe("validateQuiz", () => {
       false,
     );
   });
+
+  it("emits only 'at least one correct' when no answer is correct on a single-choice question", () => {
+    const errors = validateQuiz({
+      ...minimalValidQuiz,
+      questions: [
+        {
+          id: "qu1",
+          type: "MULTIPLE_CHOICE",
+          label: "Q1",
+          options: [
+            { id: "o1", label: "A", isCorrect: false },
+            { id: "o2", label: "B", isCorrect: false },
+          ],
+        },
+      ],
+    });
+    const correctnessErrors = errors.filter(
+      (e) => e.field === "questions[0].correctAnswer",
+    );
+    expect(correctnessErrors).toHaveLength(1);
+    expect(correctnessErrors[0]?.translationKey).toBe(
+      "builder.validation.atLeastOneCorrectAnswer",
+    );
+  });
+
+  it("emits 'exactly one correct' only when 2+ correct answers are picked on a single-choice question", () => {
+    const errors = validateQuiz({
+      ...minimalValidQuiz,
+      questions: [
+        {
+          id: "qu1",
+          type: "MULTIPLE_CHOICE",
+          label: "Q1",
+          options: [
+            { id: "o1", label: "A", isCorrect: true },
+            { id: "o2", label: "B", isCorrect: true },
+          ],
+        },
+      ],
+    });
+    const correctnessErrors = errors.filter(
+      (e) => e.field === "questions[0].correctAnswer",
+    );
+    expect(correctnessErrors).toHaveLength(1);
+    expect(correctnessErrors[0]?.translationKey).toBe(
+      "builder.validation.exactlyOneCorrectAnswer",
+    );
+  });
+
+  it("does not emit 'exactly one correct' on CHECKBOX questions with multiple correct answers", () => {
+    const errors = validateQuiz({
+      ...minimalValidQuiz,
+      questions: [
+        {
+          id: "qu1",
+          type: "CHECKBOX",
+          label: "Q1",
+          options: [
+            { id: "o1", label: "A", isCorrect: true },
+            { id: "o2", label: "B", isCorrect: true },
+          ],
+        },
+      ],
+    });
+    expect(
+      errors.some(
+        (e) => e.translationKey === "builder.validation.exactlyOneCorrectAnswer",
+      ),
+    ).toBe(false);
+  });
 });
 
 describe("hasQuizOptionsPanelErrors", () => {

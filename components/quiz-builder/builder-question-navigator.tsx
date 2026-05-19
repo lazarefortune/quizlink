@@ -36,6 +36,8 @@ type BuilderQuestionNavigatorProps = {
   onQuestionClick: (questionId: string) => void;
   onAddQuestion: () => void;
   onReorder: (nextQuestions: Question[]) => void;
+  /** Question ids flagged by validation after a save attempt. */
+  questionErrorIds?: ReadonlySet<string>;
 };
 
 function questionTypeShortLabel(locale: Locale, type: QuestionType): string {
@@ -58,6 +60,7 @@ export function BuilderQuestionNavigator({
   onQuestionClick,
   onAddQuestion,
   onReorder,
+  questionErrorIds,
 }: BuilderQuestionNavigatorProps) {
   const listScrollRef = useRef<HTMLElement | null>(null);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
@@ -195,6 +198,7 @@ export function BuilderQuestionNavigator({
                   activeDragId !== overId &&
                   overId === question.id;
 
+                const hasError = questionErrorIds?.has(question.id) ?? false;
                 return (
                   <li key={question.id} className="relative">
                     {showDropIndicatorAbove ? (
@@ -207,6 +211,11 @@ export function BuilderQuestionNavigator({
                       question={question}
                       index={index}
                       isActive={isActive}
+                      hasError={hasError}
+                      errorIndicatorAriaLabel={t(
+                        locale,
+                        "builder.questionNavigatorErrorIndicatorAria",
+                      )}
                       typeLabel={questionTypeShortLabel(locale, question.type)}
                       displayPreview={displayPreview}
                       dragHandleAriaLabel={dragHandleAria}

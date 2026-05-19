@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useMemo, useState, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,9 +38,11 @@ import {
   Strikethrough,
   Pen,
   Loader2,
+  Plus,
 } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
+import type { ValidationError } from "@/lib/quiz-validation";
 import { useToast } from "@/components/ui/toast";
 import { isQuestionImageFileOverMaxSize } from "@/lib/builder/quizPayloadLimits";
 import { compressQuestionImageForUpload, isCompressedQuestionImageWithinUploadLimit } from "@/lib/builder/compressQuestionImageForUpload";
@@ -61,7 +63,8 @@ type QuestionEditorProps = {
   onDelete: () => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
-  errors?: string[];
+  /** Raw validation errors scoped to this question (so we can style fields precisely). */
+  errors?: ValidationError[];
   quizIdForImageUpload?: string | null;
 };
 
@@ -77,6 +80,30 @@ export function QuestionEditor({
   quizIdForImageUpload = null,
 }: QuestionEditorProps) {
   const { locale } = useLocale();
+  const questionFieldPrefix = `questions[${index}]`;
+  const errorFlags = useMemo(() => {
+    const labelField = `${questionFieldPrefix}.label`;
+    const optionsField = `${questionFieldPrefix}.options`;
+    const correctAnswerField = `${questionFieldPrefix}.correctAnswer`;
+    const optionLabelFieldOf = (optIndex: number) =>
+      `${questionFieldPrefix}.options[${optIndex}].label`;
+    return {
+      hasLabelError: errors.some((error) => error.field === labelField),
+      hasOptionsCountError: errors.some(
+        (error) => error.field === optionsField,
+      ),
+      hasCorrectAnswerError: errors.some(
+        (error) => error.field === correctAnswerField,
+      ),
+      hasOptionLabelError: (optIndex: number) =>
+        errors.some((error) => error.field === optionLabelFieldOf(optIndex)),
+    };
+  }, [errors, questionFieldPrefix]);
+  const hasAnyError = errors.length > 0;
+  const translatedErrors = useMemo(
+    () => errors.map((error) => t(locale, error.translationKey, error.params || {})),
+    [errors, locale],
+  );
   const { showToast } = useToast();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(
@@ -283,12 +310,18 @@ export function QuestionEditor({
 
   return (
     <>
-    <Card className="w-full max-w-none border-2 border-border bg-card shadow-sm">
+    <Card
+      data-has-error={hasAnyError ? "true" : undefined}
+      className={cn(
+        "w-full max-w-none border-2 bg-card shadow-sm",
+        hasAnyError ? "border-destructive/55 dark:border-destructive/45" : "border-border",
+      )}
+    >
       <CardContent className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
-        {errors.length > 0 && (
+        {hasAnyError && (
           <Alert variant="error" title={t(locale, "builder.validationErrors")}>
             <ul className="list-disc list-inside space-y-1">
-              {errors.map((error, idx) => (
+              {translatedErrors.map((error, idx) => (
                 <li key={idx} className="text-xs sm:text-sm">
                   {error}
                 </li>
@@ -446,12 +479,23 @@ export function QuestionEditor({
                 <div
                   ref={editorRef}
                   contentEditable
+                  role="textbox"
+                  aria-multiline="true"
+                  aria-invalid={errorFlags.hasLabelError || undefined}
+                  data-builder-error-target={
+                    errorFlags.hasLabelError ? "question-label" : undefined
+                  }
                   onInput={handleLabelChange}
                   onBlur={handleLabelChange}
                   onFocus={updateFormatState}
                   onKeyUp={updateFormatState}
                   onMouseUp={updateFormatState}
-                  className="min-h-[100px] sm:min-h-[120px] w-full rounded-md border-2 border-input bg-background px-3 py-2 text-base outline-none transition-colors focus:!border-primary focus-visible:!border-primary resize-none overflow-y-auto"
+                  className={cn(
+                    "min-h-[100px] sm:min-h-[120px] w-full rounded-md border-2 bg-background px-3 py-2 text-base outline-none transition-colors focus:!border-primary focus-visible:!border-primary resize-none overflow-y-auto",
+                    errorFlags.hasLabelError
+                      ? "border-destructive/70 focus:!border-destructive focus-visible:!border-destructive"
+                      : "border-input",
+                  )}
                   style={{ whiteSpace: "pre-wrap" }}
                   suppressContentEditableWarning
                 />
@@ -577,7 +621,13 @@ export function QuestionEditor({
 
         {/* Options */}
         <div className="space-y-2 sm:space-y-3">
-          <Label className="text-base font-medium">
+          <Label
+            className={cn(
+              "text-base font-medium",
+              (errorFlags.hasCorrectAnswerError || errorFlags.hasOptionsCountError) &&
+                "text-destructive",
+            )}
+          >
             {t(locale, "builder.answerOptions")}
           </Label>
           <div className="space-y-2">
@@ -647,7 +697,12 @@ export function QuestionEditor({
                     number: (optIndex + 1).toString(),
                   })}
                   onClick={(e) => e.stopPropagation()}
-                  className="flex-1 text-base border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-auto min-w-0"
+                  aria-invalid={errorFlags.hasOptionLabelError(optIndex) || undefined}
+                  className={cn(
+                    "flex-1 text-base border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 pl-1 h-auto min-w-0",
+                    errorFlags.hasOptionLabelError(optIndex) &&
+                      "text-destructive placeholder:text-destructive/60",
+                  )}
                 />
                 {question.options.length > 2 && (
                   <Button
@@ -666,7 +721,8 @@ export function QuestionEditor({
             ))}
           </div>
           {question.type !== "TRUE_FALSE" && (
-            <Button variant="ghost" size="sm" onClick={handleAddOption}>
+            <Button variant="ghost" size="sm" className="border-2 border-border border-dashed rounded-xs normal-case gap-1" onClick={handleAddOption}>
+              <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
               {t(locale, "builder.addOption")}
             </Button>
           )}

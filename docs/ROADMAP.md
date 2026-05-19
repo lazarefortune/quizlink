@@ -6,7 +6,7 @@
 - [ ] Scroll vers la première erreur du formulaire
 - [ ] Sur desktop, afficher en rouge dans la sidebar les questions avec erreur
 - [ ] Améliorer la barre d’outils du textarea
-- [ ] Création IA : avertir avant de quitter si du contenu a été saisi
+- [ ] Création IA : avertir avant de quitter si du contenu a été saisi, ou faire en async et prévenir l'utilisateur que la génération est en cours ou quand elle est terminée.
 - [ ] Pendant la création IA : afficher une animation de chargement propre
 - [x] Message d’erreur quand le nom d’un quiz est trop long
 - [x] Améliorer le champ de durée du quiz avec minutes et secondes séparées

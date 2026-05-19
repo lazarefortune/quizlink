@@ -76,9 +76,7 @@ export function validateQuiz(quiz: QuizBuilder): ValidationError[] {
         translationKey: "builder.validation.atLeastOneCorrectAnswer",
         params: { number: questionNumber },
       });
-    }
-
-    if (question.type === "MULTIPLE_CHOICE" && correctAnswers !== 1) {
+    } else if (question.type === "MULTIPLE_CHOICE" && correctAnswers > 1) {
       errors.push({
         field: `${questionPrefix}.correctAnswer`,
         translationKey: "builder.validation.exactlyOneCorrectAnswer",
