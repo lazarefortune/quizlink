@@ -112,6 +112,7 @@ export async function signUpAction(
     return {
       success: true,
       userId: user.id,
+      email: user.email,
     };
   } catch (error) {
     console.error("Error creating user:", error);

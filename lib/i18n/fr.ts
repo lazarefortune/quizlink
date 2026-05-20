@@ -114,6 +114,7 @@ export const fr = {
       description: "Connecte-toi pour retrouver tes quiz",
       button: "Se connecter",
       invalidCredentials: "Email ou mot de passe invalide",
+      emailNotVerified: "Tu dois vérifier ton email avant de te connecter.",
       error: "Une erreur s'est produite. Réessaie.",
     },
     signUp: {
@@ -129,6 +130,7 @@ export const fr = {
       legalMid: " et la ",
       legalPrivacyLink: "politique de confidentialité",
       legalEnd: ".",
+      accountCreated: "Compte créé. Vérifie ton email pour l'activer.",
     },
     name: "Nom",
     namePlaceholder: "Ton nom",
@@ -162,7 +164,8 @@ export const fr = {
     },
     verifyEmail: {
       title: "Vérifie ton email",
-      description: "On t'a envoyé un code de vérification à ton adresse email",
+      description: "Vérifie ton email pour activer ton compte.",
+      descriptionWithEmail: "On t'a envoyé un code de vérification à {email}",
       code: "Code de vérification",
       codeHint: "Entre le code à 6 chiffres que tu as reçu par email",
       verify: "Vérifier",

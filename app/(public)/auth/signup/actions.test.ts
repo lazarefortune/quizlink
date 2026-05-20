@@ -86,9 +86,15 @@ describe("signUpAction", () => {
   });
 
   it("persists legal acceptance versions when legalAccepted is true", async () => {
+    mockUserCreate.mockResolvedValue({ id: "new-user-id", email: "jane@example.com" });
     const result = await signUpAction("Jane", "jane@example.com", "password123", true, "fr");
 
     expect(result.success).toBe(true);
+    if (!result.success) {
+      return;
+    }
+    expect(result.email).toBe("jane@example.com");
+    expect(result.userId).toBe("new-user-id");
     expect(mockUserCreate).toHaveBeenCalledTimes(1);
     const createArg = mockUserCreate.mock.calls[0][0];
     expect(createArg.data.termsVersion).toBe(CURRENT_TERMS_VERSION);
@@ -97,6 +103,22 @@ describe("signUpAction", () => {
     expect(createArg.data.privacyAcceptedAt).toBeInstanceOf(Date);
     expect(createArg.data.termsAcceptedAt).toEqual(createArg.data.privacyAcceptedAt);
     expect(mockSendVerificationEmail).toHaveBeenCalled();
+    expect(mockInitializeUserCoins).toHaveBeenCalledTimes(1);
     expect(mockInitializeUserCoins).toHaveBeenCalledWith("new-user-id");
+    expect(mockRecordUserLifecycleEvent).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns error when email is already used and does not initialize coins", async () => {
+    mockUserFindUnique.mockResolvedValue({ id: "existing-user" });
+
+    const result = await signUpAction("Jane", "jane@example.com", "password123", true, "fr");
+
+    expect(result.success).toBe(false);
+    if (result.success) {
+      return;
+    }
+    expect(result.error).toBe("An account with this email already exists");
+    expect(mockUserCreate).not.toHaveBeenCalled();
+    expect(mockInitializeUserCoins).not.toHaveBeenCalled();
   });
 });

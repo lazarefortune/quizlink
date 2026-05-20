@@ -14,6 +14,7 @@ import {
 } from "@/lib/userAuthEvents";
 import { recordUserLifecycleEvent, USER_LIFECYCLE_EVENT_TYPES } from "@/lib/userLifecycleEvents";
 import { sendUserSignupNotificationIfNeeded } from "@/lib/sendUserSignupNotificationIfNeeded";
+import { getCredentialsLoginRejection } from "@/lib/auth/validate-credentials-login";
 
 const CREDENTIALS_FAILURE_REASON = "CREDENTIALS_REJECTED";
 
@@ -71,18 +72,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth((req: NextRequest | 
             where: { email },
           });
 
-          if (!user) {
-            await recordCredentialsLoginFailureSafe(null, audit);
+          const rejection = getCredentialsLoginRejection(user);
+          if (rejection) {
+            await recordCredentialsLoginFailureSafe(
+              rejection === "USER_NOT_FOUND" ? null : user?.id ?? null,
+              audit,
+            );
             return null;
           }
 
-          if (!user.emailVerifiedAt) {
-            await recordCredentialsLoginFailureSafe(user.id, audit);
-            return null;
-          }
-
-          if (!user.passwordHash) {
-            await recordCredentialsLoginFailureSafe(user.id, audit);
+          if (!user?.passwordHash) {
             return null;
           }
 

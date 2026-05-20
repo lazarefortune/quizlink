@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -22,10 +22,11 @@ import { track } from "@/lib/analytics/track";
 import { SIGNUP_COMPLETED } from "@/lib/analytics/events";
 import { buildCommonEventProps } from "@/lib/analytics/props";
 import { signIn as nextAuthSignIn } from "next-auth/react";
+import { buildVerifyEmailHref, resolveSafeCallbackUrl } from "@/lib/auth/safe-callback-url";
 import { Eye, EyeOff, ArrowRight, Mail, Lock, User, Check } from "lucide-react";
 import { GoogleIcon } from "@/components/ui/google-icon";
 
-export default function SignUpPage() {
+function SignUpForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -34,7 +35,11 @@ export default function SignUpPage() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { locale } = useLocale();
+
+  const callbackUrl = searchParams.get("callbackUrl");
+  const postAuthRedirect = resolveSafeCallbackUrl(callbackUrl);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,16 +64,23 @@ export default function SignUpPage() {
 
     try {
       const result = await signUpAction(name.trim(), email, password, legalAccepted, locale);
-      if (result.success) {
-        track(SIGNUP_COMPLETED, {
-          ...buildCommonEventProps({ preferredLanguage: locale }),
-          from_page: "signup",
-          language: locale === "fr" || locale === "en" ? locale : "fr",
-        });
-        router.push(`/auth/verify-email?email=${encodeURIComponent(email)}`);
-      } else {
+      if (!result.success) {
         setError(result.error || t(locale, "auth.signUp.error"));
+        return;
       }
+
+      track(SIGNUP_COMPLETED, {
+        ...buildCommonEventProps({ preferredLanguage: locale }),
+        from_page: "signup",
+        language: locale === "fr" || locale === "en" ? locale : "fr",
+      });
+
+      const verifyEmailPath = buildVerifyEmailHref(
+        result.email ?? email,
+        callbackUrl,
+        { created: true },
+      );
+      router.push(verifyEmailPath);
     } catch {
       setError(t(locale, "auth.signUp.error"));
     } finally {
@@ -137,7 +149,9 @@ export default function SignUpPage() {
                   variant="outline"
                   size="lg"
                   className="h-12 w-full gap-3"
-                  onClick={() => nextAuthSignIn("google", { callbackUrl: "/dashboard" })}
+                  onClick={() =>
+                    nextAuthSignIn("google", { callbackUrl: postAuthRedirect })
+                  }
                 >
                   <GoogleIcon className="h-5 w-5" />
                   {t(locale, "auth.googleSignUp")}
@@ -296,7 +310,11 @@ export default function SignUpPage() {
               >
                 {t(locale, "auth.hasAccount")}{" "}
                 <Link
-                  href="/auth/signin"
+                  href={
+                    callbackUrl
+                      ? `/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`
+                      : "/auth/signin"
+                  }
                   className="font-semibold text-primary transition-colors hover:text-primary/80"
                 >
                   {t(locale, "auth.signInLink")}
@@ -312,5 +330,19 @@ export default function SignUpPage() {
         <SignupSidePanel />
       </div>
     </div>
+  );
+}
+
+export default function SignUpPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-[50vh] items-center justify-center">
+          <p className="text-muted-foreground">{t("fr", "common.loading")}</p>
+        </div>
+      }
+    >
+      <SignUpForm />
+    </Suspense>
   );
 }

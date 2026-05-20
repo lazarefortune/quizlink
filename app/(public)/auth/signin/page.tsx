@@ -17,6 +17,11 @@ import {
   authFormItemVariants,
 } from "@/lib/auth-motion-variants";
 import { checkEmailVerified } from "./actions";
+import {
+  buildSignInHref,
+  buildVerifyEmailHref,
+  resolveSafeCallbackUrl,
+} from "@/lib/auth/safe-callback-url";
 import { useToast } from "@/components/ui/toast";
 import { SigninSidePanel } from "@/components/auth/signin-side-panel";
 import { ArrowRight, Mail, Lock, Eye, EyeOff } from "lucide-react";
@@ -33,13 +38,16 @@ function SignInForm() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  const callbackUrl = searchParams.get("callbackUrl");
+  const postAuthRedirect = resolveSafeCallbackUrl(callbackUrl);
+
   useEffect(() => {
     const verified = searchParams.get("verified");
     if (verified === "true") {
       showToast(t(locale, "auth.verifyEmail.success"), "success");
-      router.replace("/auth/signin");
+      router.replace(buildSignInHref(callbackUrl));
     }
-  }, [searchParams, locale, showToast, router]);
+  }, [searchParams, locale, showToast, router, callbackUrl]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,12 +64,15 @@ function SignInForm() {
       if (result?.error) {
         const emailCheck = await checkEmailVerified(email);
         if (emailCheck.exists && !emailCheck.verified) {
-          router.push(`/auth/verify-email?email=${encodeURIComponent(email)}`);
+          setError(t(locale, "auth.signIn.emailNotVerified"));
+          router.push(
+            buildVerifyEmailHref(email, callbackUrl, { requiresVerification: true }),
+          );
           return;
         }
         setError(t(locale, "auth.signIn.invalidCredentials"));
       } else {
-        router.push("/dashboard");
+        router.push(postAuthRedirect);
         router.refresh();
       }
     } catch {
@@ -130,7 +141,7 @@ function SignInForm() {
               variant="outline"
               size="lg"
               className="h-12 w-full gap-3"
-              onClick={() => nextAuthSignIn("google", { callbackUrl: "/dashboard" })}
+              onClick={() => nextAuthSignIn("google", { callbackUrl: postAuthRedirect })}
             >
               <GoogleIcon className="h-5 w-5" />
               {t(locale, "auth.googleSignIn")}

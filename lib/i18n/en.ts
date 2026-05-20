@@ -114,6 +114,7 @@ export const en = {
       description: "Sign in to retrieve your quizzes",
       button: "Sign In",
       invalidCredentials: "Invalid email or password",
+      emailNotVerified: "You need to verify your email before signing in.",
       error: "An error occurred. Please try again.",
     },
     signUp: {
@@ -129,6 +130,7 @@ export const en = {
       legalMid: " and the ",
       legalPrivacyLink: "Privacy Policy",
       legalEnd: ".",
+      accountCreated: "Account created. Check your email to activate it.",
     },
     name: "Name",
     namePlaceholder: "Your name",
@@ -162,7 +164,8 @@ export const en = {
     },
     verifyEmail: {
       title: "Verify your email",
-      description: "We've sent a verification code to your email address",
+      description: "Check your email to activate your account.",
+      descriptionWithEmail: "We sent a verification code to {email}",
       code: "Verification code",
       codeHint: "Enter the 6-digit code you received by email",
       verify: "Verify",

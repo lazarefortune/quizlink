@@ -15,6 +15,7 @@ import { useToast } from "@/components/ui/toast";
 import { track } from "@/lib/analytics/track";
 import { EMAIL_VERIFIED } from "@/lib/analytics/events";
 import { buildCommonEventProps } from "@/lib/analytics/props";
+import { buildSignInHref } from "@/lib/auth/safe-callback-url";
 
 function VerifyEmailForm() {
   const searchParams = useSearchParams();
@@ -24,9 +25,14 @@ function VerifyEmailForm() {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
+
+  const callbackUrl = searchParams.get("callbackUrl");
+  const accountJustCreated = searchParams.get("created") === "true";
+  const requiresVerification = searchParams.get("requiresVerification") === "true";
 
   useEffect(() => {
     const emailParam = searchParams.get("email");
@@ -34,6 +40,17 @@ function VerifyEmailForm() {
       setEmail(emailParam);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    if (accountJustCreated) {
+      setInfoMessage(t(locale, "auth.signUp.accountCreated"));
+      return;
+    }
+
+    if (requiresVerification) {
+      setInfoMessage(t(locale, "auth.signIn.emailNotVerified"));
+    }
+  }, [accountJustCreated, requiresVerification, locale]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,14 +77,13 @@ function VerifyEmailForm() {
           method: "code",
         });
         showToast(t(locale, "auth.verifyEmail.success"), "success");
-        // Small delay to show the toast before redirecting
         setTimeout(() => {
-          router.push("/auth/signin?verified=true");
+          router.push(buildSignInHref(callbackUrl, true));
         }, 500);
       } else {
         setError(result.error || t(locale, "auth.verifyEmail.error"));
       }
-    } catch (_err) {
+    } catch {
       setError(t(locale, "auth.verifyEmail.error"));
     } finally {
       setIsLoading(false);
@@ -91,12 +107,16 @@ function VerifyEmailForm() {
       } else {
         setError(result.error || t(locale, "auth.verifyEmail.resendError"));
       }
-    } catch (_err) {
+    } catch {
       setError(t(locale, "auth.verifyEmail.resendError"));
     } finally {
       setIsResending(false);
     }
   };
+
+  const description = email
+    ? t(locale, "auth.verifyEmail.descriptionWithEmail").replace("{email}", email)
+    : t(locale, "auth.verifyEmail.description");
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
@@ -126,10 +146,18 @@ function VerifyEmailForm() {
           </div>
           <CardHeader className="px-0 pt-0">
             <CardTitle>{t(locale, "auth.verifyEmail.title")}</CardTitle>
-            <CardDescription>{t(locale, "auth.verifyEmail.description")}</CardDescription>
+            <CardDescription>{description}</CardDescription>
           </CardHeader>
           <div className="px-0">
           <form onSubmit={handleSubmit} className="space-y-4">
+            {infoMessage && (
+              <div
+                className="p-3 text-sm text-primary bg-primary/10 rounded-md"
+                role="status"
+              >
+                {infoMessage}
+              </div>
+            )}
             {error && (
               <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
                 {error}
