@@ -9,6 +9,7 @@
 - [ ] Ajouter une option pour rendre un lien de quiz permanent (infini)
 - [ ] Ajouter une option pour rendre un lien de quiz expirable (date)
 - [ ] Activer pour chaque question si elle est obligatoire ou non, par défaut non.
+- [ ] Dans la liste des questions dans le dashboard quand on clique sur jouer un quiz je veux que ça ouvre dans un nouvel onglet, pareil sur la page details d'un quiz
 - [x] Améliorer la barre d’outils du textarea
 - [x] Sur desktop, afficher en rouge dans la sidebar les questions avec erreur
 - [x] Scroll vers la première erreur du formulaire

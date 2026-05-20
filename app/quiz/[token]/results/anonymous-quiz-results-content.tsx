@@ -112,7 +112,7 @@ export function AnonymousQuizResultsContent({
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-8">
-      <div className="mx-auto max-w-2xl space-y-6">
+      <div className="mx-auto max-w-3xl space-y-6">
         <motion.h1
           initial={prefersReducedMotion ? false : { opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -152,9 +152,6 @@ export function AnonymousQuizResultsContent({
             </Button>
             <Button variant="outline" className="w-full sm:w-auto" onClick={handleBackToQuiz}>
               {t(locale, "quiz.returnToQuiz")}
-            </Button>
-            <Button variant="outline" className="w-full sm:w-auto" onClick={() => router.push("/")}>
-              {t(locale, "nav.home")}
             </Button>
           </CardFooter>
           </Card>
