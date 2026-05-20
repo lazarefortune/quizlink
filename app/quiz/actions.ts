@@ -10,9 +10,9 @@ import type {
   PrivateAnswer,
   QuizSession,
 } from "@/lib/quiz-session/quiz-session-types";
-import type { Quiz, QuizSettings } from "@/types/quiz";
+import type { Quiz } from "@/types/quiz";
 import type { Prisma } from "@prisma/client";
-import { resolveEffectiveShuffleSettings } from "@/lib/quiz/shuffleSettings";
+import { resolveEffectiveQuizSettings } from "@/lib/quiz/resolveEffectiveQuizSettings";
 
 // Convert Quiz to session format
 function convertQuizToSession(quiz: Quiz): {
@@ -75,33 +75,16 @@ export async function startQuizAction(
 
     let publicQuestions: PublicQuestion[];
     let privateAnswers: PrivateAnswer[];
-    let sessionQuizSettings: QuizSettings = {
+    let sessionQuizSettings: QuizSession["settings"] = {
       showAnswerImmediately: false,
+      showAnswersAtEnd: true,
       randomizeQuestions: false,
       randomizeOptions: false,
       timeLimitPerQuestion: null,
     };
 
     if (dbQuiz) {
-      const rawSettings = (dbQuiz.settings ?? {}) as Record<string, unknown>;
-      const shuffle = resolveEffectiveShuffleSettings({
-        randomizeQuestions: Boolean(rawSettings.randomizeQuestions),
-        randomizeOptions:
-          typeof rawSettings.randomizeOptions === "boolean"
-            ? rawSettings.randomizeOptions
-            : undefined,
-      });
-      sessionQuizSettings = {
-        showAnswerImmediately: Boolean(rawSettings.showAnswerImmediately),
-        randomizeQuestions: shuffle.randomizeQuestions,
-        randomizeOptions: shuffle.randomizeOptions,
-        timeLimitPerQuestion:
-          typeof rawSettings.timeLimitPerQuestion === "number"
-            ? rawSettings.timeLimitPerQuestion
-            : rawSettings.timeLimitPerQuestion === null
-              ? null
-              : null,
-      };
+      sessionQuizSettings = resolveEffectiveQuizSettings(dbQuiz.settings);
 
       // Convert DB quiz to session format
       type DbQuestion = {
@@ -154,23 +137,7 @@ export async function startQuizAction(
       }));
     } else {
       if (quiz.settings) {
-        const shuffle = resolveEffectiveShuffleSettings({
-          randomizeQuestions: Boolean(quiz.settings.randomizeQuestions),
-          randomizeOptions:
-            typeof quiz.settings.randomizeOptions === "boolean"
-              ? quiz.settings.randomizeOptions
-              : undefined,
-        });
-        sessionQuizSettings = {
-          showAnswerImmediately: Boolean(quiz.settings.showAnswerImmediately),
-          randomizeQuestions: shuffle.randomizeQuestions,
-          randomizeOptions: shuffle.randomizeOptions,
-          timeLimitPerQuestion:
-            quiz.settings.timeLimitPerQuestion === null ||
-            typeof quiz.settings.timeLimitPerQuestion === "number"
-              ? quiz.settings.timeLimitPerQuestion
-              : null,
-        };
+        sessionQuizSettings = resolveEffectiveQuizSettings(quiz.settings);
       }
 
       // Use existing conversion for in-memory quizzes

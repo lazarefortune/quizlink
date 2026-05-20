@@ -346,9 +346,9 @@ export const fr = {
 
   // Quiz play
   quiz: {
-    selectCorrectAnswer: "Sélectionnez la bonne réponse",
-    selectAllCorrectAnswers: "Sélectionnez toutes les bonnes réponses",
-    selectTrueOrFalse: "Sélectionnez Vrai ou Faux",
+    selectCorrectAnswer: "Une seule réponse",
+    selectAllCorrectAnswers: "Plusieurs réponses possibles",
+    selectTrueOrFalse: "Une seule réponse",
     next: "Suivant",
     continue: "Continuer",
     previous: "Précédent",
@@ -356,6 +356,12 @@ export const fr = {
     verify: "Vérifier",
     timeRemaining: "Temps restant",
     seconds: "secondes",
+    timerSecondsLeftLabel: "{count} secondes restantes",
+    timerSecondsShort: "{count}s",
+    timeLeftLabel: "Temps restant",
+    backToCurrentQuestion: "Revenir à la question en cours",
+    backToCurrentQuestionShort: "Revenir",
+    answerLocked: "Réponse enregistrée",
     correct: "Correct",
     incorrect: "Incorrect",
     loading: "Chargement du quiz...",
@@ -405,6 +411,7 @@ export const fr = {
     resultsFor: "Résultats pour",
     correctAnswers: "bonnes réponses",
     detailedResults: "Résultats détaillés",
+    answerDetailsHidden: "Le détail des réponses n’est pas affiché pour ce quiz.",
     question: "Question",
     yourAnswer: "Ta réponse",
     noAnswer: "Aucune réponse",
@@ -478,8 +485,12 @@ export const fr = {
     visibility: "Visibilité",
     quizSettings: "Paramètres du Quiz",
     quizSettingsDescription: "Configurez le comportement du quiz",
-    showAnswerImmediately: "Afficher la Réponse Immédiatement",
-    showAnswerDescription: "Afficher la bonne réponse juste après avoir répondu",
+    showCorrectionAfterEachQuestion: "Correction après chaque question",
+    showCorrectionAfterEachQuestionDescription:
+      "Le joueur voit la correction juste après avoir répondu.",
+    showAnswersAtEnd: "Afficher les réponses à la fin",
+    showAnswersAtEndDescription:
+      "Le joueur peut revoir ses réponses, les bonnes réponses et les explications dans le récapitulatif.",
     randomizeQuestions: "Mélanger l'ordre des questions",
     randomizeDescription: "Chaque tentative peut afficher les questions dans un ordre différent",
     randomizeOptions: "Mélanger l'ordre des réponses",

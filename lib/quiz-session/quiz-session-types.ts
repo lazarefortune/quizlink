@@ -26,6 +26,8 @@ export type QuizSession = {
   title: string;
   settings: {
     showAnswerImmediately: boolean;
+    /** Show the per-question answer details on the recap page at the end. */
+    showAnswersAtEnd: boolean;
     randomizeQuestions: boolean;
     randomizeOptions: boolean;
     timeLimitPerQuestion: number | null;

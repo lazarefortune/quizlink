@@ -121,9 +121,37 @@ export function BuilderQuizOptionsFields({
           />
           <div className="flex min-w-0 flex-1 items-start gap-1">
             <label className="flex-1 text-base font-medium wrap-break-word">
-              {t(locale, "builder.showAnswerImmediately")}
+              {t(locale, "builder.showCorrectionAfterEachQuestion")}
             </label>
-            <InfoTooltip content={t(locale, "builder.showAnswerDescription")} className="shrink-0" />
+            <InfoTooltip
+              content={t(locale, "builder.showCorrectionAfterEachQuestionDescription")}
+              className="shrink-0"
+            />
+          </div>
+        </div>
+
+        <div className="flex items-start gap-2">
+          <Switch
+            checked={quiz.settings.showAnswersAtEnd ?? true}
+            onCheckedChange={(checked: boolean) =>
+              setQuiz({
+                ...quiz,
+                settings: {
+                  ...quiz.settings,
+                  showAnswersAtEnd: checked,
+                },
+              })
+            }
+            className="mt-0.5 shrink-0"
+          />
+          <div className="flex min-w-0 flex-1 items-start gap-1">
+            <label className="flex-1 text-base font-medium wrap-break-word">
+              {t(locale, "builder.showAnswersAtEnd")}
+            </label>
+            <InfoTooltip
+              content={t(locale, "builder.showAnswersAtEndDescription")}
+              className="shrink-0"
+            />
           </div>
         </div>
 

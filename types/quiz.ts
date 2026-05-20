@@ -15,6 +15,11 @@ export type Question = {
 
 export type QuizSettings = {
   showAnswerImmediately: boolean;
+  /**
+   * Show the per-question answer details on the recap page at the end of the quiz.
+   * Defaults to true when missing to preserve behavior for older quizzes.
+   */
+  showAnswersAtEnd?: boolean;
   randomizeQuestions: boolean;
   randomizeOptions: boolean;
   timeLimitPerQuestion: number | null;

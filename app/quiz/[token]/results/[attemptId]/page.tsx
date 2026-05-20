@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { QuizResultsContent } from "../quiz-results-content";
 import { prisma } from "@/lib/prisma";
+import { resolveEffectiveQuizSettings } from "@/lib/quiz/resolveEffectiveQuizSettings";
 
 type PageProps = {
   params: Promise<{ token: string; attemptId: string }>;
@@ -45,6 +46,30 @@ export default async function QuizResultsPage({ params }: PageProps) {
       },
     },
   });
+
+  // Avoid transmitting which option is correct (and the explanation text) to the
+  // client when the quiz hides per-question details on the recap page.
+  type OptionWithCorrect = { isCorrect: boolean };
+  type QuestionWithOptions = { explanation: string | null; options: OptionWithCorrect[] };
+  if (attempt) {
+    const { showAnswersAtEnd } = resolveEffectiveQuizSettings(
+      attempt.quizLink.quiz.settings,
+    );
+    if (!showAnswersAtEnd) {
+      for (const question of attempt.quizLink.quiz.questions as QuestionWithOptions[]) {
+        question.explanation = null;
+        for (const option of question.options) {
+          option.isCorrect = false;
+        }
+      }
+      for (const answer of attempt.answers as { question: QuestionWithOptions }[]) {
+        answer.question.explanation = null;
+        for (const option of answer.question.options) {
+          option.isCorrect = false;
+        }
+      }
+    }
+  }
 
   if (!attempt) {
     return (

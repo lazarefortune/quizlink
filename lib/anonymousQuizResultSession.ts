@@ -18,6 +18,18 @@ export type AnonymousQuizResultSession = {
   totalQuestions: number;
   correctAnswersCount: number;
   durationSec?: number;
+  /**
+   * Mirrors the quiz `showAnswerImmediately` setting at the time the session was saved.
+   * When false, the results page must not reveal correct answers or explanations.
+   * Optional for backward compatibility with previously stored sessions (defaults to true on load).
+   */
+  showAnswerImmediately?: boolean;
+  /**
+   * Mirrors the quiz `showAnswersAtEnd` setting at the time the session was saved.
+   * When false, the results page only shows the global summary (no per-question details).
+   * Optional for backward compatibility with previously stored sessions (defaults to true on load).
+   */
+  showAnswersAtEnd?: boolean;
   details: AnonymousQuizResultDetail[];
   savedAt: number;
 };

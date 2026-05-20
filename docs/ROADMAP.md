@@ -8,6 +8,7 @@
 - [ ] Rendre un lien de quiz temporaire (24h) par défaut
 - [ ] Ajouter une option pour rendre un lien de quiz permanent (infini)
 - [ ] Ajouter une option pour rendre un lien de quiz expirable (date)
+- [ ] Activer pour chaque question si elle est obligatoire ou non, par défaut non.
 - [x] Améliorer la barre d’outils du textarea
 - [x] Sur desktop, afficher en rouge dans la sidebar les questions avec erreur
 - [x] Scroll vers la première erreur du formulaire
@@ -21,14 +22,16 @@
 
 - [ ] Améliorer le design de la page résultat
 - [ ] Accélérer le chargement des images des questions lors du jeu d’un quiz
-- [ ] Améliorer l’affichage du temps et du type de question sur la page quiz
 - [ ] Ajouter une animation de chargement avant le début du quiz
 - [ ] Conserver la progression du quiz si l’utilisateur actualise la page
-- [ ] Quand on ne coche pas l'option "Afficher la bonne réponse juste après avoir répondu", configurer l'option pour ne jamais afficher les bonnes réponses à l’utilisateur à la fin sur la page résultat
-- [ ] Dans le récapitulatif, ne pas afficher les réponses si l’option “ne pas afficher les réponses” a été choisie
+- [x] Quand on ne coche pas l'option "Afficher la bonne réponse juste après avoir répondu", configurer l'option pour ne jamais afficher les bonnes réponses à l’utilisateur à la fin sur la page résultat
+- [x] Améliorer l’affichage du temps et du type de question sur la page quiz
+- [x] Ajouter une option “Afficher les réponses à la fin”
+- [x] Si désactivée, masquer le détail des réponses dans le récapitulatif
+- [x] Renommer l’option actuelle en “Correction après chaque question”
 - [ ] À la fin du quiz, proposer de créer son propre quiz plutôt que seulement recommencer
-- [ ] Vérifier que l’option “mélanger les questions” fonctionne bien côté joueur
 - [ ] Ouvrir les quiz dans un nouvel onglet quand on veut les lancer
+- [x] Vérifier que l’option “mélanger les questions” fonctionne bien côté joueur
 
 ---
 

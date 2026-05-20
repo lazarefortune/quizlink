@@ -15,6 +15,7 @@ import { CheckCircle2, XCircle, RotateCcw, ArrowLeft } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { QuizRichText } from "@/components/quiz/quiz-rich-text";
+import { mergeQuizSettingsFromStored } from "@/lib/quiz/mergeQuizSettingsFromStored";
 
 export type Attempt = {
   id: string;
@@ -25,6 +26,7 @@ export type Attempt = {
     quiz: {
       id: string;
       name: string;
+      settings: unknown;
       questions: Array<{
         id: string;
         label: string;
@@ -80,6 +82,9 @@ export function QuizResultsContent({ attempt }: QuizResultsContentProps) {
   const totalQuestions = attempt.quizLink.quiz.questions.length;
   const correctAnswers = attempt.answers.filter((a) => a.isCorrect).length;
   const score = attempt.score ?? (totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0);
+  const effectiveSettings = mergeQuizSettingsFromStored(attempt.quizLink.quiz.settings);
+  const shouldRevealAnswers = effectiveSettings.showAnswerImmediately;
+  const shouldShowAnswerDetails = effectiveSettings.showAnswersAtEnd ?? true;
 
   const getAnswerForQuestion = (questionId: string) => {
     return attempt.answers.find((a) => a.questionId === questionId);
@@ -134,9 +139,15 @@ export function QuizResultsContent({ attempt }: QuizResultsContentProps) {
               <div className="text-muted-foreground">
                 {score.toFixed(0)}% {t(locale, "quiz.correctAnswers")}
               </div>
+              {!shouldShowAnswerDetails && (
+                <p className="text-sm text-muted-foreground">
+                  {t(locale, "quiz.answerDetailsHidden")}
+                </p>
+              )}
             </div>
 
             {/* Detailed Results */}
+            {shouldShowAnswerDetails && (
             <div className="space-y-4">
               <h3 className="text-xl font-medium">
                 {t(locale, "quiz.detailedResults")}
@@ -171,15 +182,26 @@ export function QuizResultsContent({ attempt }: QuizResultsContentProps) {
                         </p>
                         {selectedOptions.length > 0 ? (
                           <div className="space-y-1">
-                            {selectedOptions.map((opt) => (
-                              <Badge
-                                key={opt.id}
-                                variant={opt.isCorrect ? "default" : "outline"}
-                                className={opt.isCorrect ? "mr-2 text-white bg-green-600" : "mr-2 text-white bg-red-500 dark:bg-red-700"}
-                              >
-                                {opt.label}
-                              </Badge>
-                            ))}
+                            {selectedOptions.map((opt) => {
+                              const badgeClass = shouldRevealAnswers
+                                ? opt.isCorrect
+                                  ? "mr-2 text-white bg-green-600"
+                                  : "mr-2 text-white bg-red-500 dark:bg-red-700"
+                                : "mr-2";
+                              return (
+                                <Badge
+                                  key={opt.id}
+                                  variant={
+                                    shouldRevealAnswers && opt.isCorrect
+                                      ? "default"
+                                      : "outline"
+                                  }
+                                  className={badgeClass}
+                                >
+                                  {opt.label}
+                                </Badge>
+                              );
+                            })}
                           </div>
                         ) : (
                           <p className="text-base text-muted-foreground">
@@ -187,7 +209,7 @@ export function QuizResultsContent({ attempt }: QuizResultsContentProps) {
                           </p>
                         )}
                       </div>
-                      {!isCorrect && (
+                      {shouldRevealAnswers && !isCorrect && (
                         <div>
                           <p className="text-base font-medium mb-2">
                             {t(locale, "quiz.correctAnswer")}:
@@ -206,7 +228,7 @@ export function QuizResultsContent({ attempt }: QuizResultsContentProps) {
                           {t(locale, "quiz.timeSpent")}: {formatDuration(answer.timeSpent)}
                         </p>
                       ) : null}
-                      {!isCorrect && question.explanation?.trim() ? (
+                      {shouldRevealAnswers && !isCorrect && question.explanation?.trim() ? (
                         <div className="mt-3 rounded-lg border border-border bg-muted/50 p-3">
                           <p className="text-sm font-medium text-foreground mb-1">
                             {t(locale, "quiz.explanation")}
@@ -221,6 +243,7 @@ export function QuizResultsContent({ attempt }: QuizResultsContentProps) {
                 );
               })}
             </div>
+            )}
 
             {/* Restart Button */}
             {attempt.quizLink.allowMultipleAttempts && (

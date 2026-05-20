@@ -12,7 +12,9 @@ import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
 
 type QuizSettings = {
   showAnswerImmediately?: boolean;
+  showAnswersAtEnd?: boolean;
   randomizeQuestions?: boolean;
+  randomizeOptions?: boolean;
   timeLimitPerQuestion?: number | null;
 };
 

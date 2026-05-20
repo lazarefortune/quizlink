@@ -1225,6 +1225,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
           if (!isQuizSaved && result.quizId) {
             const settings = mergedQuiz.settings ?? {
               showAnswerImmediately: false,
+              showAnswersAtEnd: true,
               randomizeQuestions: false,
               randomizeOptions: false,
               timeLimitPerQuestion: null,

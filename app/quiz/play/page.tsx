@@ -47,7 +47,9 @@ function QuizPlayPageContent() {
   const [quizTitle, setQuizTitle] = useState<string>("");
   const [settings, setSettings] = useState<{
     showAnswerImmediately: boolean;
+    showAnswersAtEnd: boolean;
     randomizeQuestions: boolean;
+    randomizeOptions: boolean;
     timeLimitPerQuestion: number | null;
   } | null>(null);
   const [questions, setQuestions] = useState<PublicQuestion[]>([]);
@@ -139,6 +141,7 @@ function QuizPlayPageContent() {
             title: "",
             settings: {
               showAnswerImmediately: false,
+              showAnswersAtEnd: true,
               randomizeQuestions: false,
               randomizeOptions: false,
               timeLimitPerQuestion: null,

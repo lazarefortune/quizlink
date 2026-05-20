@@ -346,9 +346,9 @@ export const en = {
 
   // Quiz play
   quiz: {
-    selectCorrectAnswer: "Select the correct answer",
-    selectAllCorrectAnswers: "Select all correct answers",
-    selectTrueOrFalse: "Select True or False",
+    selectCorrectAnswer: "Single answer",
+    selectAllCorrectAnswers: "Multiple answers",
+    selectTrueOrFalse: "Single answer",
     next: "Next",
     continue: "Continue",
     previous: "Previous",
@@ -356,6 +356,12 @@ export const en = {
     verify: "Verify",
     timeRemaining: "Time remaining",
     seconds: "seconds",
+    timerSecondsLeftLabel: "{count} seconds left",
+    timerSecondsShort: "{count}s",
+    timeLeftLabel: "Time left",
+    backToCurrentQuestion: "Back to current question",
+    backToCurrentQuestionShort: "Back",
+    answerLocked: "Answer saved",
     correct: "Correct",
     incorrect: "Incorrect",
     loading: "Loading quiz...",
@@ -405,6 +411,7 @@ export const en = {
     resultsFor: "Results for",
     correctAnswers: "correct answers",
     detailedResults: "Detailed results",
+    answerDetailsHidden: "The answer details are not shown for this quiz.",
     question: "Question",
     yourAnswer: "Your answer",
     noAnswer: "No answer",
@@ -477,8 +484,12 @@ export const en = {
     visibility: "Visibility",
     quizSettings: "Quiz Settings",
     quizSettingsDescription: "Configure how the quiz behaves",
-    showAnswerImmediately: "Show Answer Immediately",
-    showAnswerDescription: "Display correct answer right after responding",
+    showCorrectionAfterEachQuestion: "Show correction after each question",
+    showCorrectionAfterEachQuestionDescription:
+      "The player sees the correction right after answering.",
+    showAnswersAtEnd: "Show answers at the end",
+    showAnswersAtEndDescription:
+      "The player can review their answers, the correct answers and explanations in the recap.",
     randomizeQuestions: "Shuffle question order",
     randomizeDescription: "Each attempt may show questions in a different order",
     randomizeOptions: "Shuffle answer order",

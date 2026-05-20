@@ -37,6 +37,10 @@ export function mergeQuizSettingsFromStored(stored: unknown): QuizSettings {
       typeof raw.showAnswerImmediately === "boolean"
         ? raw.showAnswerImmediately
         : DEFAULT_MANUAL_QUIZ_BUILDER_SETTINGS.showAnswerImmediately,
+    showAnswersAtEnd:
+      typeof raw.showAnswersAtEnd === "boolean"
+        ? raw.showAnswersAtEnd
+        : DEFAULT_MANUAL_QUIZ_BUILDER_SETTINGS.showAnswersAtEnd,
     randomizeQuestions,
     randomizeOptions,
     timeLimitPerQuestion: readTimeLimitFromStored(raw),

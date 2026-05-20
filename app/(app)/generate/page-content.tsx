@@ -125,6 +125,7 @@ export function GeneratePage() {
           visibility: "PRIVATE",
           settings: {
             showAnswerImmediately: options.showAnswerImmediately,
+            showAnswersAtEnd: true,
             randomizeQuestions: options.randomizeQuestions,
             randomizeOptions: options.randomizeOptions,
             timeLimitPerQuestion: options.timeLimitPerQuestion,
@@ -250,6 +251,7 @@ export function GeneratePage() {
         visibility: "PRIVATE",
         settings: {
           showAnswerImmediately: options.showAnswerImmediately,
+          showAnswersAtEnd: true,
           randomizeQuestions: options.randomizeQuestions,
           randomizeOptions: options.randomizeOptions,
           timeLimitPerQuestion: options.timeLimitPerQuestion,

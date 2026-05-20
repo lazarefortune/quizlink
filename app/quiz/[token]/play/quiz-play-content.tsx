@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -22,13 +21,24 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Clock, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { getQuestionImageSrc } from "@/lib/question-image-src";
 import { resolveQuizActionError } from "@/lib/quiz/resolveQuizActionError";
 import { resolveEffectiveShuffleSettings } from "@/lib/quiz/shuffleSettings";
+import {
+  isQuizAnswerLocked,
+  shouldShowQuizAnswerCorrection,
+} from "@/lib/quiz/quizAnswerLock";
+import {
+  findNextUnlockedQuestionId,
+  findQuestionIndexById,
+} from "@/lib/quiz/quizActiveTimedQuestion";
+import { useQuizQuestionTimer } from "@/lib/quiz/useQuizQuestionTimer";
 import { QuizRichText } from "@/components/quiz/quiz-rich-text";
+import { QuizQuestionTypeBadge } from "@/components/quiz/quiz-question-type-badge";
+import { QuizQuestionFloatingTimer } from "@/components/quiz/quiz-question-floating-timer";
 import { cn } from "@/lib/utils";
 import {
   submitAnswerForAttempt,
@@ -82,6 +92,8 @@ type AnswerState = {
   questionId: string;
   selectedOptionIds: string[];
   isVerified: boolean;
+  isLocked: boolean;
+  isExpired: boolean;
   isCorrect?: boolean;
   correctOptionIds?: string[];
   timeSpent?: number;
@@ -92,14 +104,17 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
   const { locale } = useLocale();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [activeTimedQuestionId, setActiveTimedQuestionId] = useState<string | null>(
+    null,
+  );
   const [answers, setAnswers] = useState<AnswerState[]>([]);
+  const answersRef = useRef<AnswerState[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
-  const [isTimeUp, setIsTimeUp] = useState(false);
   const [showQuitConfirm, setShowQuitConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
   const [isQuizFinished, setIsQuizFinished] = useState(false);
+  const handleFinishRef = useRef<() => Promise<void>>(async () => {});
 
   const settings = attempt.quizLink.quiz.settings as {
     showAnswerImmediately?: boolean;
@@ -109,8 +124,6 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
   };
 
   const timeLimit = settings.timeLimitPerQuestion ?? 0;
-  const isTimerDanger = timeRemaining !== null && timeLimit > 0 && timeRemaining <= 10;
-  const isTimerWarning = timeRemaining !== null && timeLimit > 0 && timeRemaining <= 20 && timeRemaining > 10;
 
   // Initialize questions and answers (only once when attempt changes)
   useEffect(() => {
@@ -141,12 +154,17 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
     }
 
     setQuestions(quizQuestions);
-    setAnswers(
-      quizQuestions.map((q) => ({
-        questionId: q.id,
-        selectedOptionIds: [],
-        isVerified: false,
-      }))
+    const initialAnswers = quizQuestions.map<AnswerState>((q) => ({
+      questionId: q.id,
+      selectedOptionIds: [],
+      isVerified: false,
+      isLocked: false,
+      isExpired: false,
+    }));
+    answersRef.current = initialAnswers;
+    setAnswers(initialAnswers);
+    setActiveTimedQuestionId(
+      timeLimit > 0 && quizQuestions[0] ? quizQuestions[0].id : null,
     );
   // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: init answers from attempt once per attempt.id
   }, [attempt.id]);
@@ -157,51 +175,80 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
     setQuestionStartTime(Date.now());
   }, [currentQuestionIndex, questions.length]);
 
-  // Derived: whether current question's answer is verified (used so timer doesn't reset on selection change)
-  const currentQuestionForTimer = questions[currentQuestionIndex];
-  const isCurrentAnswerVerified =
-    (currentQuestionForTimer && answers.find((a) => a.questionId === currentQuestionForTimer.id)?.isVerified) ?? false;
+  const activeTimedAnswer = activeTimedQuestionId
+    ? answers.find((answer) => answer.questionId === activeTimedQuestionId)
+    : undefined;
+  const isActiveTimedQuestionLocked = isQuizAnswerLocked(activeTimedAnswer);
 
-  // Timer effect: only depend on question index and verified state, not on answers (selection)
-  useEffect(() => {
-    if (!settings.timeLimitPerQuestion || questions.length === 0) {
-      return;
-    }
+  const buildAnswersByQuestionId = useCallback(
+    (source: AnswerState[]) =>
+      Object.fromEntries(source.map((answer) => [answer.questionId, answer])),
+    [],
+  );
 
-    const currentQuestion = questions[currentQuestionIndex];
-    if (!currentQuestion) return;
+  const lockQuestionOnTimerExpire = useCallback((questionId: string) => {
+    setAnswers((prev) => {
+      const next = prev.map((a) =>
+        a.questionId === questionId
+          ? { ...a, isExpired: true, isLocked: true }
+          : a,
+      );
+      answersRef.current = next;
+      return next;
+    });
+  }, []);
 
-    if (isCurrentAnswerVerified) {
-      setTimeRemaining(null);
-      setIsTimeUp(false);
-      return;
-    }
+  const handleTimerExpire = useCallback(
+    (questionId: string) => {
+      lockQuestionOnTimerExpire(questionId);
 
-    let timerValue = settings.timeLimitPerQuestion;
-    setTimeRemaining(timerValue);
-    setIsTimeUp(false);
+      const answersByQuestionId = buildAnswersByQuestionId(answersRef.current);
+      const nextActiveTimedQuestionId = findNextUnlockedQuestionId(
+        questions,
+        answersByQuestionId,
+        questionId,
+      );
 
-    const interval = setInterval(() => {
-      timerValue -= 1;
-      if (timerValue <= 0) {
-        setIsTimeUp(true);
-        clearInterval(interval);
-        setTimeout(() => {
-          if (currentQuestionIndex < questions.length - 1) {
-            setCurrentQuestionIndex((i) => i + 1);
-          } else {
-            handleFinish();
+      setTimeout(() => {
+        if (nextActiveTimedQuestionId) {
+          const nextIndex = findQuestionIndexById(
+            questions,
+            nextActiveTimedQuestionId,
+          );
+          if (nextIndex !== null) {
+            setActiveTimedQuestionId(nextActiveTimedQuestionId);
+            setCurrentQuestionIndex(nextIndex);
+            return;
           }
-        }, 500);
-        setTimeRemaining(0);
-      } else {
-        setTimeRemaining(timerValue);
-      }
-    }, 1000);
+        }
 
-    return () => clearInterval(interval);
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- handleFinish/questions intentionally excluded to avoid restarting timer on answer change
-  }, [currentQuestionIndex, settings.timeLimitPerQuestion, questions.length, isCurrentAnswerVerified]);
+        setActiveTimedQuestionId(null);
+        void handleFinishRef.current();
+      }, 500);
+    },
+    [questions, lockQuestionOnTimerExpire, buildAnswersByQuestionId],
+  );
+
+  const { timeRemaining: activeTimedTimeRemaining, isTimeUp } = useQuizQuestionTimer({
+    totalSeconds: timeLimit,
+    activeTimedQuestionId: activeTimedQuestionId ?? undefined,
+    isActiveTimedQuestionLocked,
+    onBackgroundExpire: lockQuestionOnTimerExpire,
+    onExpire: handleTimerExpire,
+  });
+
+  const handleBackToActiveTimedQuestion = useCallback(() => {
+    if (!activeTimedQuestionId) {
+      return;
+    }
+
+    const targetIndex = findQuestionIndexById(questions, activeTimedQuestionId);
+    if (targetIndex === null) {
+      return;
+    }
+
+    setCurrentQuestionIndex(targetIndex);
+  }, [activeTimedQuestionId, questions]);
 
   // Prevent window close/refresh when quiz is in progress
   useEffect(() => {
@@ -255,20 +302,23 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
             return;
           }
 
-          setAnswers((prev) =>
-            prev.map((a) => {
+          setAnswers((prev) => {
+            const next = prev.map((a) => {
               if (a.questionId === questionId) {
                 return {
                   ...a,
                   isVerified: true,
+                  isLocked: true,
                   isCorrect: result.isCorrect,
                   correctOptionIds: result.correctOptionIds,
                   timeSpent,
                 };
               }
               return a;
-            })
-          );
+            });
+            answersRef.current = next;
+            return next;
+          });
           setIsSubmitting(false);
           return;
         } catch (err) {
@@ -288,8 +338,7 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
     const currentQuestion = questions[currentQuestionIndex];
     const currentAnswer = answers.find((a) => a.questionId === currentQuestion.id);
 
-    // Don't allow modification once answer is verified
-    if (currentAnswer?.isVerified) return;
+    if (isQuizAnswerLocked(currentAnswer)) return;
 
     const updatedAnswers = answers.map((a) => {
       if (a.questionId !== currentQuestion.id) return a;
@@ -336,8 +385,22 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
     }
 
     if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
+      const nextIndex = currentQuestionIndex + 1;
+      const answersByQuestionId = buildAnswersByQuestionId(answersRef.current);
+      const nextActiveTimedQuestionId = findNextUnlockedQuestionId(
+        questions,
+        answersByQuestionId,
+        currentQuestion.id,
+      );
+
+      setCurrentQuestionIndex(nextIndex);
+      if (timeLimit > 0) {
+        setActiveTimedQuestionId(nextActiveTimedQuestionId);
+      }
     } else {
+      if (timeLimit > 0) {
+        setActiveTimedQuestionId(null);
+      }
       handleFinish();
     }
   };
@@ -348,7 +411,7 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
     }
   };
 
-  const handleFinish = async () => {
+  const handleFinish = useCallback(async () => {
     try {
       // Save current question answer if not already verified
       const currentQuestion = questions[currentQuestionIndex];
@@ -395,7 +458,20 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
       setIsQuizFinished(false); // Reset if error
       setError(err instanceof Error ? err.message : "Failed to finish quiz");
     }
-  };
+  }, [
+    answers,
+    attempt.id,
+    attempt.participantId,
+    attempt.quizLink.quiz.id,
+    currentQuestionIndex,
+    locale,
+    questions,
+    router,
+    submitAnswerForQuestion,
+    token,
+  ]);
+
+  handleFinishRef.current = handleFinish;
 
   const handleQuit = () => {
     setShowQuitConfirm(true);
@@ -431,22 +507,17 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
   const currentAnswer = answers.find((a) => a.questionId === currentQuestion.id);
   const showAnswerImmediately = settings?.showAnswerImmediately ?? false;
   const isVerified = currentAnswer?.isVerified ?? false;
+  const isLocked = isQuizAnswerLocked(currentAnswer);
+  const showCorrection = shouldShowQuizAnswerCorrection({
+    isVerified,
+    showAnswerImmediately,
+  });
 
   const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
   const isAnswered = currentAnswer && currentAnswer.selectedOptionIds.length > 0;
 
-  const getQuestionDescription = () => {
-    if (currentQuestion.type === "MULTIPLE_CHOICE") {
-      return t(locale, "quiz.selectCorrectAnswer");
-    } else if (currentQuestion.type === "CHECKBOX") {
-      return t(locale, "quiz.selectAllCorrectAnswers");
-    } else {
-      return t(locale, "quiz.selectTrueOrFalse");
-    }
-  };
-
   const isOptionCorrect = (optionId: string) => {
-    if (!isVerified) return false;
+    if (!showCorrection) return false;
     return currentAnswer?.correctOptionIds?.includes(optionId) ?? false;
   };
 
@@ -455,13 +526,13 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
   };
 
   const isOptionIncorrect = (optionId: string) => {
-    if (!isVerified) return false;
+    if (!showCorrection) return false;
     return isOptionSelected(optionId) && !isOptionCorrect(optionId);
   };
 
   return (
-    <div className="min-h-screen bg-background p-8">
-      <div className="mx-auto max-w-2xl space-y-6">
+    <div className="min-h-screen bg-background px-4 py-6 pb-28 sm:p-8">
+      <div className="mx-auto w-full max-w-none space-y-6 md:max-w-3xl">
         {error && <Alert variant="error">{error}</Alert>}
 
         <header className="space-y-2">
@@ -469,7 +540,7 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
             <h1 className="h1 text-xl sm:text-2xl font-bold break-words flex-1">
               {attempt.quizLink.quiz.name}
             </h1>
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
               <Button
                 variant="ghost"
                 size="sm"
@@ -490,35 +561,6 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
               style={{ width: `${progress}%` }}
             />
           </div>
-
-          {timeRemaining !== null && timeLimit > 0 && (
-            <div className="mt-4">
-              <div
-                className={cn(
-                  "inline-flex items-center gap-2 rounded-lg px-3 py-1.5 font-semibold tabular-nums transition-colors",
-                  isTimerDanger &&
-                    "bg-destructive/15 text-destructive border border-destructive/40 animate-pulse",
-                  isTimerWarning &&
-                    !isTimerDanger &&
-                    "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/40",
-                  !isTimerWarning &&
-                    !isTimerDanger &&
-                    "bg-muted/80 text-muted-foreground border border-border",
-                )}
-              >
-                <Clock
-                  className={cn(
-                    "h-4 w-4 shrink-0",
-                    isTimerDanger && "text-destructive",
-                    isTimerWarning && !isTimerDanger && "text-amber-600 dark:text-amber-400",
-                  )}
-                />
-                <span>
-                  {timeRemaining} {t(locale, "quiz.seconds")}
-                </span>
-              </div>
-            </div>
-          )}
         </header>
 
         {isTimeUp && (
@@ -528,9 +570,9 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
         )}
 
         <Card>
-          <CardHeader>
+          <CardHeader className="p-5 sm:p-6">
             {currentQuestionImageSrc ? (
-              <div className="mb-4 relative w-full h-64">
+              <div className="mb-4 relative w-full h-48 sm:h-64">
                 <Image
                   src={currentQuestionImageSrc}
                   alt="Question"
@@ -540,12 +582,19 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
                 />
               </div>
             ) : null}
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              <QuizQuestionTypeBadge type={currentQuestion.type} locale={locale} />
+              {isLocked && !showCorrection && (
+                <Badge variant="secondary">
+                  {t(locale, "quiz.answerLocked")}
+                </Badge>
+              )}
+            </div>
             <CardTitle className="text-xl">
               <QuizRichText html={currentQuestion.label} />
             </CardTitle>
-            <CardDescription>{getQuestionDescription()}</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-3 p-5 pt-0 sm:p-6 sm:pt-0">
             {currentQuestion.options.map((option) => {
               const selected = isOptionSelected(option.id);
               const correct = isOptionCorrect(option.id);
@@ -559,7 +608,7 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
               let letterBgColor = "";
               let letterTextColor = "";
 
-              if (isVerified) {
+              if (showCorrection) {
                 if (correct) {
                   // Green for correct answers - same color for border and badge
                   borderColor = "#22c55e"; // green-500
@@ -594,22 +643,22 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
                 <button
                   key={option.id}
                   onClick={() => handleAnswerSelect(option.id)}
-                  disabled={isVerified}
+                  disabled={isLocked}
                   className={cn(
                     "w-full text-left p-4 rounded-lg border-2 transition-all duration-200",
                     !borderColor && "border-border",
-                    isVerified
+                    isLocked
                       ? "cursor-not-allowed"
                       : "cursor-pointer hover:shadow-sm",
                     selected ? "border-b-4" : "",
                   )}
                   style={borderColor ? { borderColor } : undefined}
                 >
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3 sm:gap-4">
                     {/* Letter badge */}
                     <div
                       className={cn(
-                        "flex items-center justify-center w-10 h-10 rounded-md font-semibold text-sm shrink-0 transition-colors",
+                        "flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-md font-semibold text-sm shrink-0 transition-colors",
                         letterBgColor,
                         letterTextColor,
                       )}
@@ -617,8 +666,8 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
                       {optionLetter}
                     </div>
                     {/* Option text */}
-                    <div className="flex-1">
-                      <span className="text-base">{option.label}</span>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-base break-words">{option.label}</span>
                     </div>
                   </div>
                 </button>
@@ -629,7 +678,7 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
             isVerified &&
             currentAnswer?.isCorrect === false &&
             currentQuestion.explanation?.trim() && (
-              <div className="px-6 pb-4">
+              <div className="px-5 pb-4 sm:px-6">
                 <Alert variant="info" className="border-blue/40 bg-blue/5">
                   <span className="font-medium">{t(locale, "quiz.explanation")}</span>
                   <p className="mt-1 text-sm text-muted-foreground">
@@ -638,7 +687,7 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
                 </Alert>
               </div>
             )}
-          <CardFooter className="flex gap-4">
+          <CardFooter className="flex gap-4 p-5 pt-0 sm:p-6 sm:pt-0">
             <Button
               variant="ghost"
               onClick={handlePrevious}
@@ -646,7 +695,7 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
             >
               {t(locale, "quiz.previous")}
             </Button>
-            {showAnswerImmediately && !isVerified ? (
+            {showAnswerImmediately && !isLocked ? (
               <Button
                 variant="blue"
                 onClick={handleVerify}
@@ -661,7 +710,7 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
               <Button
                 variant="blue"
                 onClick={handleNext}
-                disabled={!isAnswered}
+                disabled={!isAnswered && !isLocked}
                 className="ml-auto"
               >
                 {currentQuestionIndex === questions.length - 1
@@ -691,6 +740,18 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
           </DialogContent>
         </Dialog>
       </div>
+      {timeLimit > 0 &&
+        activeTimedQuestionId &&
+        activeTimedTimeRemaining !== null && (
+        <QuizQuestionFloatingTimer
+          timeLeftSeconds={activeTimedTimeRemaining}
+          totalSeconds={timeLimit}
+          locale={locale}
+          viewedQuestionId={currentQuestion.id}
+          activeTimedQuestionId={activeTimedQuestionId}
+          onBackToCurrentQuestion={handleBackToActiveTimedQuestion}
+        />
+      )}
     </div>
   );
 }

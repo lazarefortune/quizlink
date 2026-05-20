@@ -3,7 +3,7 @@
 import { isSelectionCorrect } from "@/lib/anonymous-quiz-scoring";
 import { prisma } from "@/lib/prisma";
 import { getQuestionImageSrc } from "@/lib/question-image-src";
-import { resolveEffectiveShuffleSettings } from "@/lib/quiz/shuffleSettings";
+import { resolveEffectiveQuizSettings } from "@/lib/quiz/resolveEffectiveQuizSettings";
 import { playBlockedErrorCodeForQuizStatus } from "@/lib/quiz/quizActionErrorCodes";
 import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
 
@@ -23,18 +23,21 @@ export type AnonymousQuizQuestionPublic = {
   options: AnonymousQuizOptionPublic[];
 };
 
+export type AnonymousQuizPlaySettings = {
+  showAnswerImmediately: boolean;
+  showAnswersAtEnd: boolean;
+  randomizeQuestions: boolean;
+  randomizeOptions: boolean;
+  timeLimitPerQuestion: number | null;
+};
+
 export type GetAnonymousQuizPlayDataResult =
   | {
       success: true;
       data: {
         quizId: string;
         quizName: string;
-        settings: {
-          showAnswerImmediately?: boolean;
-          randomizeQuestions?: boolean;
-          randomizeOptions?: boolean;
-          timeLimitPerQuestion?: number | null;
-        };
+        settings: AnonymousQuizPlaySettings;
         allowMultipleAttempts: boolean;
         questions: AnonymousQuizQuestionPublic[];
       };
@@ -94,25 +97,7 @@ export async function getAnonymousQuizPlayData(
       return { success: false, error: "This link requires a participant session" };
     }
 
-    const rawSettings = (quizLink.quiz.settings ?? {}) as Record<string, unknown>;
-    const shuffle = resolveEffectiveShuffleSettings({
-      randomizeQuestions: Boolean(rawSettings.randomizeQuestions),
-      randomizeOptions:
-        typeof rawSettings.randomizeOptions === "boolean"
-          ? rawSettings.randomizeOptions
-          : undefined,
-    });
-    const settings = {
-      showAnswerImmediately: Boolean(rawSettings.showAnswerImmediately),
-      randomizeQuestions: shuffle.randomizeQuestions,
-      randomizeOptions: shuffle.randomizeOptions,
-      timeLimitPerQuestion:
-        typeof rawSettings.timeLimitPerQuestion === "number"
-          ? rawSettings.timeLimitPerQuestion
-          : rawSettings.timeLimitPerQuestion === null
-            ? null
-            : undefined,
-    };
+    const settings = resolveEffectiveQuizSettings(quizLink.quiz.settings);
 
     const questions: AnonymousQuizQuestionPublic[] = quizLink.quiz.questions.map(
       (q) => ({
@@ -269,6 +254,12 @@ export type ValidateAnonymousQuizAnswersResult =
       totalQuestions: number;
       correctAnswersCount: number;
       durationSec?: number;
+      /**
+       * Mirror of quiz `showAnswersAtEnd` setting so the client can decide whether to render
+       * per-question details. When false, `details` will be stripped of correct answers and
+       * explanations.
+       */
+      showAnswersAtEnd: boolean;
       details: AnonymousQuizDetailRow[];
     }
   | { success: false; error: string };
@@ -329,6 +320,9 @@ export async function validateAnonymousQuizAnswers(
       answers.map((a) => [a.questionId, a.selectedOptionIds])
     );
 
+    const effectiveSettings = resolveEffectiveQuizSettings(quizLink.quiz.settings);
+    const showAnswersAtEnd = effectiveSettings.showAnswersAtEnd;
+
     const details: AnonymousQuizDetailRow[] = [];
     let correctCount = 0;
 
@@ -355,6 +349,8 @@ export async function validateAnonymousQuizAnswers(
         (id) => optionById.get(id)?.label ?? ""
       );
 
+      // When `showAnswersAtEnd` is false, do not transmit correct answer labels/ids or
+      // explanations to the client to avoid leaking them in the network response.
       details.push({
         questionId: question.id,
         questionLabel: question.label,
@@ -365,9 +361,9 @@ export async function validateAnonymousQuizAnswers(
         isCorrect,
         selectedOptionIds: filtered,
         selectedOptionLabels,
-        correctOptionIds,
-        correctOptionLabels,
-        explanation: question.explanation,
+        correctOptionIds: showAnswersAtEnd ? correctOptionIds : [],
+        correctOptionLabels: showAnswersAtEnd ? correctOptionLabels : [],
+        explanation: showAnswersAtEnd ? question.explanation : null,
       });
     }
 
@@ -385,6 +381,7 @@ export async function validateAnonymousQuizAnswers(
       totalQuestions,
       correctAnswersCount: correctCount,
       durationSec,
+      showAnswersAtEnd,
       details,
     };
   } catch (e) {

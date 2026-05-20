@@ -107,6 +107,9 @@ export function AnonymousQuizResultsContent({
     );
   }
 
+  const shouldRevealAnswers = result.showAnswerImmediately ?? true;
+  const shouldShowAnswerDetails = result.showAnswersAtEnd ?? true;
+
   return (
     <div className="min-h-screen bg-background p-4 sm:p-8">
       <div className="mx-auto max-w-2xl space-y-6">
@@ -136,6 +139,11 @@ export function AnonymousQuizResultsContent({
               <p className="mt-1 text-muted-foreground">
                 {result.correctAnswersCount} / {result.totalQuestions} {t(locale, "quiz.correctAnswers")}
               </p>
+              {!shouldShowAnswerDetails && (
+                <p className="mt-3 text-sm text-muted-foreground">
+                  {t(locale, "quiz.answerDetailsHidden")}
+                </p>
+              )}
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-2 sm:flex-row sm:justify-center sm:gap-3">
@@ -152,7 +160,7 @@ export function AnonymousQuizResultsContent({
           </Card>
         </motion.div>
 
-        {result.details.length > 0 && (
+        {shouldShowAnswerDetails && result.details.length > 0 && (
           <section id="anonymous-quiz-corrections" className="scroll-mt-8 space-y-4">
             <motion.h2
               initial={prefersReducedMotion ? false : { opacity: 0, y: 8 }}
@@ -228,13 +236,15 @@ export function AnonymousQuizResultsContent({
                             {hasSelected ? selectedText : t(locale, "quiz.noAnswer")}
                           </p>
                         </div>
-                        <div>
-                          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                            {t(locale, "quiz.correctAnswer")}
-                          </p>
-                          <p className="mt-1 text-foreground">{correctText}</p>
-                        </div>
-                        {row.explanation?.trim() && (
+                        {shouldRevealAnswers && (
+                          <div>
+                            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                              {t(locale, "quiz.correctAnswer")}
+                            </p>
+                            <p className="mt-1 text-foreground">{correctText}</p>
+                          </div>
+                        )}
+                        {shouldRevealAnswers && row.explanation?.trim() && (
                           <Alert variant="info" className="border-blue/40 bg-blue/5">
                             <span className="font-medium">{t(locale, "quiz.explanation")}</span>
                             <p className="mt-1 text-sm text-muted-foreground">{row.explanation.trim()}</p>

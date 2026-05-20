@@ -5,6 +5,7 @@ import type { QuizSettings } from "@/types/quiz-builder";
  */
 export const DEFAULT_MANUAL_QUIZ_BUILDER_SETTINGS: QuizSettings = {
   showAnswerImmediately: true,
+  showAnswersAtEnd: true,
   randomizeQuestions: false,
   randomizeOptions: false,
   timeLimitPerQuestion: null,

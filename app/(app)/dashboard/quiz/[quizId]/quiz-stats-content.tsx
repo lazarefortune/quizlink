@@ -55,6 +55,7 @@ import {
 
 type QuizSettings = {
   showAnswerImmediately?: boolean;
+  showAnswersAtEnd?: boolean;
   randomizeQuestions?: boolean;
   randomizeOptions?: boolean;
   timeLimitPerQuestion?: number | null;
@@ -283,10 +284,20 @@ export function QuizStatsContent({
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">
-                {t(locale, "builder.showAnswerImmediately")}
+                {t(locale, "builder.showCorrectionAfterEachQuestion")}
               </p>
               <p className="mt-1">
                 {stats.quizDetails.settings.showAnswerImmediately
+                  ? t(locale, "common.yes")
+                  : t(locale, "common.no")}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">
+                {t(locale, "builder.showAnswersAtEnd")}
+              </p>
+              <p className="mt-1">
+                {(stats.quizDetails.settings.showAnswersAtEnd ?? true)
                   ? t(locale, "common.yes")
                   : t(locale, "common.no")}
               </p>

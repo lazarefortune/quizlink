@@ -6,6 +6,34 @@ describe("mergeQuizSettingsFromStored", () => {
     expect(mergeQuizSettingsFromStored({})).toMatchObject({ autoSaveEnabled: true });
   });
 
+  it("defaults showAnswersAtEnd to true when absent (legacy quiz backward compat)", () => {
+    expect(mergeQuizSettingsFromStored({})).toMatchObject({ showAnswersAtEnd: true });
+  });
+
+  it("preserves showAnswersAtEnd false", () => {
+    expect(
+      mergeQuizSettingsFromStored({
+        showAnswerImmediately: true,
+        showAnswersAtEnd: false,
+        randomizeQuestions: false,
+        randomizeOptions: false,
+        timeLimitPerQuestion: null,
+      }),
+    ).toMatchObject({ showAnswersAtEnd: false });
+  });
+
+  it("preserves showAnswersAtEnd true when explicitly set", () => {
+    expect(
+      mergeQuizSettingsFromStored({
+        showAnswerImmediately: false,
+        showAnswersAtEnd: true,
+        randomizeQuestions: false,
+        randomizeOptions: false,
+        timeLimitPerQuestion: null,
+      }),
+    ).toMatchObject({ showAnswersAtEnd: true });
+  });
+
   it("preserves autoSaveEnabled false", () => {
     expect(
       mergeQuizSettingsFromStored({
