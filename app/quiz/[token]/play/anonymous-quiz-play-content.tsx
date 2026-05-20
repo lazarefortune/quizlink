@@ -612,7 +612,7 @@ export function AnonymousQuizPlayContent({
 
         <header className="space-y-2">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-            <h1 className="h1 text-xl sm:text-2xl font-bold break-words flex-1">{quizName}</h1>
+            <h1 className="h1 text-xl sm:text-2xl font-semibold break-words flex-1">{quizName}</h1>
             <div className="flex flex-wrap items-center gap-2 shrink-0">
               <Button
                 variant="ghost"
@@ -621,7 +621,7 @@ export function AnonymousQuizPlayContent({
                 disabled={isFinishing}
                 className="text-muted-foreground hover:text-destructive"
               >
-                <X className="h-4 w-4 mr-1" />
+                <X className="h-4 w-4" />
                 {t(locale, "quiz.quit")}
               </Button>
               <Badge variant="outline">
@@ -672,7 +672,10 @@ export function AnonymousQuizPlayContent({
                     />
                   </div>
                 ) : null}
-                <div className="mb-2 flex flex-wrap items-center gap-2">
+                <CardTitle className="text-xl font-medium mb-3">
+                  <QuizRichText html={currentQuestion.label} />
+                </CardTitle>
+                <div className="flex flex-wrap items-center gap-2">
                   <QuizQuestionTypeBadge type={currentQuestion.type} locale={locale} />
                   {isLocked && !showCorrection && (
                     <Badge variant="secondary">
@@ -680,9 +683,6 @@ export function AnonymousQuizPlayContent({
                     </Badge>
                   )}
                 </div>
-                <CardTitle className="text-xl font-medium">
-                  <QuizRichText html={currentQuestion.label} />
-                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 p-5 pt-0 sm:p-6 sm:pt-0">
                 {currentQuestion.options.map((option) => {
@@ -799,7 +799,7 @@ export function AnonymousQuizPlayContent({
         </AnimatePresence>
 
         <Dialog open={showQuitConfirm} onOpenChange={setShowQuitConfirm}>
-          <DialogContent>
+          <DialogContent className="sm:max-w-xl">
             <DialogHeader>
               <DialogTitle>{t(locale, "quiz.quit")}</DialogTitle>
               <DialogDescription>{t(locale, "quiz.quitConfirm")}</DialogDescription>

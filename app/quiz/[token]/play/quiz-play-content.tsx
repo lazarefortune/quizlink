@@ -537,7 +537,7 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
 
         <header className="space-y-2">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-            <h1 className="h1 text-xl sm:text-2xl font-bold break-words flex-1">
+            <h1 className="h1 text-xl sm:text-2xl font-semibold break-words flex-1">
               {attempt.quizLink.quiz.name}
             </h1>
             <div className="flex flex-wrap items-center gap-2 shrink-0">
@@ -722,7 +722,7 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
         </Card>
 
         <Dialog open={showQuitConfirm} onOpenChange={setShowQuitConfirm}>
-          <DialogContent>
+          <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>{t(locale, "quiz.quit")}</DialogTitle>
               <DialogDescription>

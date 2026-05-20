@@ -530,7 +530,7 @@ function QuizPlayPageContent() {
         </Card>
 
         <Dialog open={showQuitConfirm} onOpenChange={setShowQuitConfirm}>
-          <DialogContent>
+          <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>{t(locale, "quiz.quit")}</DialogTitle>
               <DialogDescription>

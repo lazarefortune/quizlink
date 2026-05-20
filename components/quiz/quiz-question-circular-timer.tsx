@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import type { Locale } from "@/lib/i18n";
 import {
   formatQuizTimeRemainingAriaLabel,
-  formatQuizTimeRemainingHuman,
+  formatQuizTimeRemainingCompact,
 } from "@/lib/quiz/formatQuizTimeRemainingHuman";
 import { resolveQuizTimerInfo, type QuizTimerState } from "@/lib/quiz/quizTimerState";
 
@@ -70,7 +70,7 @@ export function QuizQuestionCircularTimer({
   const sizeConfig = SIZE_CONFIG[size];
   const dashOffset = SVG_CIRCUMFERENCE * (1 - info.percent / 100);
   const ariaLabel = formatQuizTimeRemainingAriaLabel(safeSeconds, locale);
-  const displayLabel = formatQuizTimeRemainingHuman(safeSeconds, locale);
+  const displayLabel = formatQuizTimeRemainingCompact(safeSeconds);
   const displayTextClass =
     displayLabel.length > 4 ? "text-[10px]" : sizeConfig.text;
 
