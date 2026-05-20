@@ -2,6 +2,13 @@
 
 ## Phase 1 — Builder & création
 
+- [x] Ajouter “Donner mon avis” avec étoiles
+- [x] Ajouter micro-feedback après création d’un quiz
+- [ ] Ajouter signalement contextualisé après erreur builder
+- [ ] Améliorer l’admin des feedbacks et adapter les notifications emails de l'admin
+
+- [ ] Ajouter un système de parrainage et de récompenses pour les utilisateurs qui partagent leur quiz
+
 - [ ] Autofocus sur le champ nom du quiz lors d’une nouvelle création
 - [ ] Création IA : avertir avant de quitter si du contenu a été saisi, ou faire en async et prévenir l'utilisateur que la génération est en cours ou quand elle est terminée.
 - [ ] Pendant la création IA : afficher une animation de chargement propre

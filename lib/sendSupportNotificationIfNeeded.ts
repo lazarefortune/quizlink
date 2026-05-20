@@ -59,7 +59,7 @@ export async function sendSupportNotificationIfNeeded(feedbackId: string): Promi
       recipients: settings.emails,
       feedbackId: feedback.id,
       type: feedback.type,
-      message: feedback.message,
+      message: feedback.message ?? "",
       page: feedback.page,
       userEmail: feedback.user?.email ?? null,
       userName: feedback.user?.name ?? null,

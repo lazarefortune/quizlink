@@ -27,6 +27,10 @@ vi.mock("@/lib/i18n", () => ({
   t: (_locale: string, key: string) => key,
 }));
 
+vi.mock("@/components/user-feedback/quiz-creation-feedback-card", () => ({
+  QuizCreationFeedbackCard: () => null,
+}));
+
 describe("QuizCreationSuccessContent", () => {
   beforeEach(() => {
     vi.clearAllMocks();

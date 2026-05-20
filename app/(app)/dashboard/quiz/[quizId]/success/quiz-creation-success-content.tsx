@@ -10,16 +10,21 @@ import { FullscreenBlockingOverlay } from "@/components/ui/fullscreen-blocking-o
 import { Input } from "@/components/ui/input";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
+import { QuizCreationFeedbackCard } from "@/components/user-feedback/quiz-creation-feedback-card";
 import { resolveQuizActionError } from "@/lib/quiz/resolveQuizActionError";
 
 type QuizCreationSuccessContentProps = {
   quizId: string;
   quizName: string;
+  questionCount?: number;
+  quizStatus?: string;
 };
 
 export function QuizCreationSuccessContent({
   quizId,
   quizName,
+  questionCount,
+  quizStatus,
 }: QuizCreationSuccessContentProps) {
   const router = useRouter();
   const { locale } = useLocale();
@@ -108,7 +113,7 @@ export function QuizCreationSuccessContent({
         </p>
 
         <div className="mt-6 space-y-3">
-          <label className="text-sm font-semibold text-foreground">
+          <label className="text-base font-semibold text-foreground">
             {t(locale, "dashboard.sharePlayLinkTitle")}
           </label>
           <div className="flex flex-col gap-2 sm:flex-row">
@@ -137,7 +142,7 @@ export function QuizCreationSuccessContent({
             </Button>
           </div>
           {linkError ? (
-            <p className="text-sm text-destructive">{linkError}</p>
+            <p className="text-base text-destructive">{linkError}</p>
           ) : null}
         </div>
 
@@ -165,6 +170,13 @@ export function QuizCreationSuccessContent({
             {t(locale, "dashboard.seeMyQuizzes")}
           </Button>
         </div>
+
+        <QuizCreationFeedbackCard
+          quizId={quizId}
+          questionCount={questionCount}
+          quizStatus={quizStatus}
+          className="mt-6"
+        />
       </div>
     </div>
   );

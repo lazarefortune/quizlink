@@ -12,8 +12,10 @@ import { Badge } from "@/components/ui/badge";
 import { Alert } from "@/components/ui/alert";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
+import { QuizRichText } from "@/components/quiz/quiz-rich-text";
 import { formatScoreWithPercent } from "@/lib/formatScore";
 import { formatAnswerDuration } from "@/lib/formatAnswerDuration";
+import { richTextToPlainText } from "@/lib/rich-text/richTextToPlainText";
 import {
   clearAnonymousQuizResultFromSession,
   loadAnonymousQuizResultFromSession,
@@ -192,16 +194,22 @@ export function AnonymousQuizResultsContent({
                           <div className="relative mb-2 h-52 w-full overflow-hidden rounded-md border bg-muted/30">
                             <Image
                               src={row.questionImage}
-                              alt={row.questionLabel}
+                              alt={richTextToPlainText(row.questionLabel)}
                               fill
                               className="object-contain"
                             />
                           </div>
                         )}
                         <div className="flex flex-wrap items-start justify-between gap-2">
-                          <CardTitle className="text-base font-medium leading-snug">
-                            {index + 1}. {row.questionLabel}
-                          </CardTitle>
+                          <div className="min-w-0 flex-1 space-y-1">
+                            <p className="text-base text-primary font-medium uppercase tracking-wide">
+                              {t(locale, "quiz.question")} {index + 1}
+                            </p>
+                            <QuizRichText
+                              html={row.questionLabel}
+                              className="text-base font-medium leading-snug"
+                            />
+                          </div>
                           <Badge
                             variant="outline"
                             className={

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,8 @@ import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { QuizRichText } from "@/components/quiz/quiz-rich-text";
 import { mergeQuizSettingsFromStored } from "@/lib/quiz/mergeQuizSettingsFromStored";
+import { getQuestionImageSrc } from "@/lib/question-image-src";
+import { richTextToPlainText } from "@/lib/rich-text/richTextToPlainText";
 
 export type Attempt = {
   id: string;
@@ -31,6 +34,8 @@ export type Attempt = {
         id: string;
         label: string;
         type: string;
+        image: string | null;
+        imageKey: string | null;
         explanation: string | null;
         options: Array<{
           id: string;
@@ -158,20 +163,39 @@ export function QuizResultsContent({ attempt }: QuizResultsContentProps) {
                 const selectedOptions = answer ? getSelectedOptions(answer) : [];
                 const correctOptions = getCorrectOptions(question);
 
+                const questionImageSrc = getQuestionImageSrc({
+                  image: question.image,
+                  imageKey: question.imageKey,
+                });
+
                 return (
                   <Card key={question.id} className={isCorrect ? "border-green-500" : "border-red-500"}>
-                    <CardHeader>
+                    <CardHeader className="space-y-3">
+                      {questionImageSrc ? (
+                        <div className="relative h-48 w-full overflow-hidden rounded-md border sm:h-64">
+                          <Image
+                            src={questionImageSrc}
+                            alt={richTextToPlainText(question.label)}
+                            fill
+                            className="object-contain"
+                            unoptimized
+                          />
+                        </div>
+                      ) : null}
                       <div className="flex items-start justify-between gap-2">
-                        <CardTitle className="text-xl">
-                          <span>
-                            {t(locale, "quiz.question")} {index + 1}:{" "}
-                          </span>
-                          <QuizRichText as="span" html={question.label} />
-                        </CardTitle>
+                        <div className="min-w-0 flex-1 space-y-2">
+                          <p className="text-sm font-medium text-muted-foreground">
+                            {t(locale, "quiz.question")} {index + 1}
+                          </p>
+                          <QuizRichText
+                            html={question.label}
+                            className="text-lg font-semibold leading-snug sm:text-xl"
+                          />
+                        </div>
                         {isCorrect ? (
-                          <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400 shrink-0" />
+                          <CheckCircle2 className="h-6 w-6 shrink-0 text-green-600 dark:text-green-400" />
                         ) : (
-                          <XCircle className="h-6 w-6 text-red-600 dark:text-red-400 shrink-0" />
+                          <XCircle className="h-6 w-6 shrink-0 text-red-600 dark:text-red-400" />
                         )}
                       </div>
                     </CardHeader>

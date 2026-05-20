@@ -14,7 +14,12 @@ type GetFeedbacksResponse =
         userId: string | null;
         user: { email: string; name: string } | null;
         type: string;
-        message: string;
+        rating: number | null;
+        message: string | null;
+        featureRequest: string | null;
+        category: string | null;
+        quizId: string | null;
+        metadata: unknown;
         page: string;
         userAgent: string;
         status: string;
@@ -89,7 +94,12 @@ export async function getFeedbacksAction(
             }
           : null,
         type: f.type,
+        rating: f.rating,
         message: f.message,
+        featureRequest: f.featureRequest,
+        category: f.category,
+        quizId: f.quizId,
+        metadata: f.metadata,
         page: f.page,
         userAgent: f.userAgent,
         status: f.status,

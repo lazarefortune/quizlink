@@ -59,6 +59,7 @@ import {
   FileText,
   Bell,
   Headset,
+  Star,
 } from "lucide-react";
 import { GoogleIcon } from "@/components/ui/google-icon";
 import { format } from "date-fns";
@@ -197,7 +198,7 @@ function NotificationSwitchRow({
 }
 
 export function AccountContent({ user: initialUser }: AccountContentProps) {
-  const { openSupportFeedback } = useSupportFeedback();
+  const { openUserFeedback, openSupportFeedback } = useSupportFeedback();
   const { openConsentPanel } = useCookieConsent();
   const router = useRouter();
   const { locale, setLocale } = useLocale();
@@ -589,6 +590,29 @@ export function AccountContent({ user: initialUser }: AccountContentProps) {
                   value={t(locale, "cookieConsent.account.rowHint")}
                   onClick={() => openConsentPanel()}
                 />
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* User feedback */}
+          <div className="space-y-2">
+            <h2 className="text-lg h2 font-semibold text-muted-foreground px-1 uppercase">
+              {t(locale, "userFeedback.account.sectionTitle")}
+            </h2>
+            <Card className="border-2">
+              <CardContent className="space-y-4 p-4">
+                <p className="text-base text-muted-foreground">
+                  {t(locale, "userFeedback.account.teaser")}
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full sm:w-auto"
+                  onClick={() => openUserFeedback()}
+                >
+                  <Star className="mr-2 h-4 w-4" />
+                  {t(locale, "userFeedback.account.cta")}
+                </Button>
               </CardContent>
             </Card>
           </div>

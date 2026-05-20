@@ -42,12 +42,36 @@ type Feedback = {
   userId: string | null;
   user: { email: string; name: string } | null;
   type: string;
-  message: string;
+  rating: number | null;
+  message: string | null;
+  featureRequest: string | null;
+  category: string | null;
+  quizId: string | null;
+  metadata: unknown;
   page: string;
   userAgent: string;
   status: string;
   createdAt: Date;
 };
+
+function formatFeedbackPreview(
+  feedback: Feedback,
+  noMessageLabel: string,
+): string {
+  if (feedback.message?.trim()) {
+    return feedback.message;
+  }
+
+  if (feedback.featureRequest?.trim()) {
+    return feedback.featureRequest;
+  }
+
+  if (feedback.rating !== null) {
+    return `${feedback.rating}/5`;
+  }
+
+  return noMessageLabel;
+}
 
 type AdminFeedbackContentProps = {
   initialFeedbacks: Feedback[];
@@ -196,6 +220,21 @@ export function AdminFeedbackContent({
                 </SelectItem>
                 <SelectItem value="FEEDBACK">
                   {t(locale, "feedback.types.feedback")}
+                </SelectItem>
+                <SelectItem value="APP_REVIEW">
+                  {t(locale, "feedback.types.app_review")}
+                </SelectItem>
+                <SelectItem value="FEATURE_REQUEST">
+                  {t(locale, "feedback.types.feature_request")}
+                </SelectItem>
+                <SelectItem value="QUIZ_CREATION_REVIEW">
+                  {t(locale, "feedback.types.quiz_creation_review")}
+                </SelectItem>
+                <SelectItem value="SAVE_ERROR_REPORT">
+                  {t(locale, "feedback.types.save_error_report")}
+                </SelectItem>
+                <SelectItem value="SUPPORT_MESSAGE">
+                  {t(locale, "feedback.types.support_message")}
                 </SelectItem>
               </SelectContent>
             </Select>
@@ -373,7 +412,12 @@ export function AdminFeedbackContent({
                         </Badge>
                       </div>
                     </div>
-                    <p className="text-sm line-clamp-2">{fb.message}</p>
+                    <p className="text-sm line-clamp-2">
+                      {formatFeedbackPreview(
+                        fb,
+                        t(locale, "admin.feedback.details.noMessage"),
+                      )}
+                    </p>
                   </CardContent>
                 </Card>
               ))}
@@ -490,14 +534,66 @@ export function AdminFeedbackContent({
                   </p>
                 </div>
 
+                {selectedFeedback.rating !== null ? (
+                  <div>
+                    <Label className="text-xs text-muted-foreground">
+                      {t(locale, "admin.feedback.details.rating")}
+                    </Label>
+                    <p className="text-sm font-medium">{selectedFeedback.rating}/5</p>
+                  </div>
+                ) : null}
+
+                {selectedFeedback.category ? (
+                  <div>
+                    <Label className="text-xs text-muted-foreground">
+                      {t(locale, "admin.feedback.details.category")}
+                    </Label>
+                    <p className="text-sm">{selectedFeedback.category}</p>
+                  </div>
+                ) : null}
+
+                {selectedFeedback.quizId ? (
+                  <div>
+                    <Label className="text-xs text-muted-foreground">
+                      {t(locale, "admin.feedback.details.quizId")}
+                    </Label>
+                    <p className="font-mono text-sm break-all">{selectedFeedback.quizId}</p>
+                  </div>
+                ) : null}
+
                 <div>
                   <Label className="text-xs text-muted-foreground">
                     {t(locale, "admin.feedback.details.message")}
                   </Label>
                   <div className="mt-1.5 p-4 bg-muted rounded-lg whitespace-pre-wrap text-sm">
-                    {selectedFeedback.message}
+                    {selectedFeedback.message?.trim()
+                      ? selectedFeedback.message
+                      : t(locale, "admin.feedback.details.noMessage")}
                   </div>
                 </div>
+
+                {selectedFeedback.featureRequest?.trim() ? (
+                  <div>
+                    <Label className="text-xs text-muted-foreground">
+                      {t(locale, "admin.feedback.details.featureRequest")}
+                    </Label>
+                    <div className="mt-1.5 p-4 bg-muted rounded-lg whitespace-pre-wrap text-sm">
+                      {selectedFeedback.featureRequest}
+                    </div>
+                  </div>
+                ) : null}
+
+                {selectedFeedback.metadata !== null &&
+                selectedFeedback.metadata !== undefined ? (
+                  <div>
+                    <Label className="text-xs text-muted-foreground">
+                      {t(locale, "admin.feedback.details.metadata")}
+                    </Label>
+                    <pre className="mt-1.5 max-h-48 overflow-auto rounded-lg bg-muted p-4 text-xs">
+                      {JSON.stringify(selectedFeedback.metadata, null, 2)}
+                    </pre>
+                  </div>
+                ) : null}
 
                 <div>
                   <Label className="text-xs text-muted-foreground">

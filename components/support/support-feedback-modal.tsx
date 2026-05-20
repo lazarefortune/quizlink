@@ -62,7 +62,7 @@ export function SupportFeedbackModal({ isOpen, onClose }: SupportFeedbackModalPr
       return;
     }
 
-    if (message.trim().length > 2000) {
+    if (message.trim().length > 1500) {
       setError(t(locale, "support.validation.messageTooLong"));
       return;
     }
@@ -139,10 +139,10 @@ export function SupportFeedbackModal({ isOpen, onClose }: SupportFeedbackModalPr
               onChange={(e) => setMessage(e.target.value)}
               placeholder={t(locale, "support.form.messagePlaceholder")}
               rows={6}
-              maxLength={2000}
+              maxLength={1500}
             />
             <div className="text-right text-xs text-muted-foreground">
-              {message.length}/2000
+              {message.length}/1500
             </div>
           </div>
 

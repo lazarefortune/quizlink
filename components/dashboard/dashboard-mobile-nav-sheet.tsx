@@ -8,6 +8,7 @@ import {
   Library,
   House,
   Headset,
+  Star,
   Menu,
   Plus,
   Shield,
@@ -39,7 +40,7 @@ export function DashboardMobileNavSheet() {
   const { data: session } = useSession();
   const { locale } = useLocale();
   const router = useRouter();
-  const { openSupportFeedback } = useSupportFeedback();
+  const { openUserFeedback, openSupportFeedback } = useSupportFeedback();
   const { interceptLinkClick, requestAction } = useBuilderNavigationGuard();
 
   const handleSignOut = () => {
@@ -141,17 +142,30 @@ export function DashboardMobileNavSheet() {
               <p className="mb-2 px-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
                 {t(locale, "support.helpSection")}
               </p>
-              <button
-                type="button"
-                onClick={() => {
-                  setOpen(false);
-                  openSupportFeedback();
-                }}
-                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-lg font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                <Headset className="h-5 w-5 shrink-0" />
-                {t(locale, "support.navLabel")}
-              </button>
+              <div className="flex flex-col gap-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpen(false);
+                    openUserFeedback();
+                  }}
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-lg font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  <Star className="h-5 w-5 shrink-0" />
+                  {t(locale, "userFeedback.navLabel")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpen(false);
+                    openSupportFeedback();
+                  }}
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-lg font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  <Headset className="h-5 w-5 shrink-0" />
+                  {t(locale, "support.navLabel")}
+                </button>
+              </div>
             </div>
 
             <Separator />

@@ -1,7 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronsLeft, ChevronsRight, Coins, House, Plus, Headset, Library } from "lucide-react";
+import {
+  ChevronsLeft,
+  ChevronsRight,
+  Coins,
+  House,
+  Plus,
+  Headset,
+  Library,
+  Star,
+} from "lucide-react";
 import { useSession } from "next-auth/react";
 
 import { useLocale } from "@/lib/i18n/use-locale";
@@ -22,22 +31,26 @@ type SidebarProps = {
   className?: string;
 };
 
-function SidebarSupportTrigger({
+function SidebarFeedbackNavButton({
   onNavClick,
   isCompact,
+  label,
+  ariaLabel,
+  icon: Icon,
+  onClick,
 }: {
   onNavClick?: () => void;
   isCompact: boolean;
+  label: string;
+  ariaLabel: string;
+  icon: typeof Star;
+  onClick: () => void;
 }) {
-  const { locale } = useLocale();
-  const { openSupportFeedback } = useSupportFeedback();
-  const label = t(locale, "support.navLabel");
-
   return (
     <button
       type="button"
       onClick={() => {
-        openSupportFeedback();
+        onClick();
         onNavClick?.();
       }}
       className={cn(
@@ -45,9 +58,9 @@ function SidebarSupportTrigger({
         isCompact ? "justify-center px-2 py-2.5" : "gap-3 px-3 py-2.5",
       )}
       title={isCompact ? label : undefined}
-      aria-label={label}
+      aria-label={ariaLabel}
     >
-      <Headset className="h-5 w-5 shrink-0" />
+      <Icon className="h-5 w-5 shrink-0" />
       {isCompact ? null : label}
     </button>
   );
@@ -55,6 +68,7 @@ function SidebarSupportTrigger({
 
 export function Sidebar({ onNavClick, className }: SidebarProps) {
   const { locale } = useLocale();
+  const { openUserFeedback, openSupportFeedback } = useSupportFeedback();
   const { data: session } = useSession();
   const { interceptLinkClick } = useBuilderNavigationGuard();
   const { isCollapsed, toggleCollapsed } = useDashboardSidebarLayout();
@@ -134,7 +148,22 @@ export function Sidebar({ onNavClick, className }: SidebarProps) {
           onClick={onNavClick}
           isCompact={isCollapsed}
         />
-        <SidebarSupportTrigger onNavClick={onNavClick} isCompact={isCollapsed} />
+        <SidebarFeedbackNavButton
+          onNavClick={onNavClick}
+          isCompact={isCollapsed}
+          label={t(locale, "userFeedback.navLabel")}
+          ariaLabel={t(locale, "userFeedback.navLabel")}
+          icon={Star}
+          onClick={openUserFeedback}
+        />
+        <SidebarFeedbackNavButton
+          onNavClick={onNavClick}
+          isCompact={isCollapsed}
+          label={t(locale, "support.navLabel")}
+          ariaLabel={t(locale, "support.navLabel")}
+          icon={Headset}
+          onClick={openSupportFeedback}
+        />
       </nav>
 
       <div className={cn("shrink-0", isCollapsed ? "px-2 pb-2" : "px-3 pb-3")}>

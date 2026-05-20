@@ -9,32 +9,42 @@ import {
 } from "react";
 
 import { SupportFeedbackModal } from "@/components/support/support-feedback-modal";
+import { UserFeedbackModal } from "@/components/user-feedback/user-feedback-modal";
 
-type SupportFeedbackContextValue = {
+type FeedbackHubContextValue = {
+  openUserFeedback: () => void;
   openSupportFeedback: () => void;
 };
 
-const SupportFeedbackContext = createContext<SupportFeedbackContextValue | null>(
-  null,
-);
+const FeedbackHubContext = createContext<FeedbackHubContextValue | null>(null);
 
-export function useSupportFeedback(): SupportFeedbackContextValue {
-  const ctx = useContext(SupportFeedbackContext);
+export function useSupportFeedback(): FeedbackHubContextValue {
+  const ctx = useContext(FeedbackHubContext);
   if (!ctx) {
     throw new Error("useSupportFeedback must be used within SupportFeedbackProvider");
   }
   return ctx;
 }
 
+export function useFeedbackHub(): FeedbackHubContextValue {
+  return useSupportFeedback();
+}
+
 export function SupportFeedbackProvider({ children }: { children: ReactNode }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const openSupportFeedback = useCallback(() => setIsOpen(true), []);
-  const closeSupportFeedback = useCallback(() => setIsOpen(false), []);
+  const [isSupportOpen, setIsSupportOpen] = useState(false);
+  const [isUserFeedbackOpen, setIsUserFeedbackOpen] = useState(false);
+
+  const openSupportFeedback = useCallback(() => setIsSupportOpen(true), []);
+  const closeSupportFeedback = useCallback(() => setIsSupportOpen(false), []);
+
+  const openUserFeedback = useCallback(() => setIsUserFeedbackOpen(true), []);
+  const closeUserFeedback = useCallback(() => setIsUserFeedbackOpen(false), []);
 
   return (
-    <SupportFeedbackContext.Provider value={{ openSupportFeedback }}>
+    <FeedbackHubContext.Provider value={{ openUserFeedback, openSupportFeedback }}>
       {children}
-      <SupportFeedbackModal isOpen={isOpen} onClose={closeSupportFeedback} />
-    </SupportFeedbackContext.Provider>
+      <SupportFeedbackModal isOpen={isSupportOpen} onClose={closeSupportFeedback} />
+      <UserFeedbackModal isOpen={isUserFeedbackOpen} onClose={closeUserFeedback} />
+    </FeedbackHubContext.Provider>
   );
 }

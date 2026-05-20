@@ -37,7 +37,10 @@ vi.mock("@/lib/i18n", () => ({
 }));
 
 vi.mock("@/components/support/support-feedback-provider", () => ({
-  useSupportFeedback: () => ({ openSupportFeedback: vi.fn() }),
+  useSupportFeedback: () => ({
+    openUserFeedback: vi.fn(),
+    openSupportFeedback: vi.fn(),
+  }),
   SupportFeedbackProvider: ({ children }: { children: ReactNode }) => children,
 }));
 

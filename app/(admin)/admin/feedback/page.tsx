@@ -35,7 +35,12 @@ export default async function AdminFeedbackPage() {
         }
       : null,
     type: f.type,
+    rating: f.rating,
     message: f.message,
+    featureRequest: f.featureRequest,
+    category: f.category,
+    quizId: f.quizId,
+    metadata: f.metadata,
     page: f.page,
     userAgent: f.userAgent,
     status: f.status,

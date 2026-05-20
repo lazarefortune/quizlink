@@ -303,15 +303,21 @@ model CoinPack {
 }
 
 model Feedback {
-  id        String   @id @default(cuid())
-  userId    String?  @map("user_id")
-  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  type      String   @db.VarChar(50) // "BUG" | "SUGGESTION" | "FEEDBACK"
-  message   String   @db.Text
-  page      String   @db.VarChar(500)
-  userAgent String   @map("user_agent") @db.VarChar(500)
-  status    String   @default("NEW") @db.VarChar(50) // "NEW" | "IN_PROGRESS" | "DONE"
-  createdAt DateTime @default(now()) @map("created_at")
+  id             String   @id @default(cuid())
+  userId         String?  @map("user_id")
+  user           User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  quizId         String?  @map("quiz_id") @db.VarChar(191)
+  type           String   @db.VarChar(50)
+  rating         Int?
+  message        String?  @db.Text
+  featureRequest String?  @map("feature_request") @db.Text
+  category       String?  @db.VarChar(50)
+  metadata       Json?
+  page           String   @db.VarChar(500)
+  userAgent      String   @map("user_agent") @db.VarChar(500)
+  status         String   @default("NEW") @db.VarChar(50) // "NEW" | "IN_PROGRESS" | "DONE"
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
   @@index([userId])
   @@index([status])
