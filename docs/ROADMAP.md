@@ -4,7 +4,7 @@
 
 - [x] Ajouter “Donner mon avis” avec étoiles
 - [x] Ajouter micro-feedback après création d’un quiz
-- [ ] Ajouter signalement contextualisé après erreur builder
+- [x] Ajouter signalement contextualisé après erreur builder
 - [ ] Améliorer l’admin des feedbacks et adapter les notifications emails de l'admin
 
 - [ ] Ajouter un système de parrainage et de récompenses pour les utilisateurs qui partagent leur quiz

@@ -87,6 +87,8 @@ import { BuilderDraftSaveSplitButton } from "@/components/quiz-builder/builder-d
 import { BuilderQuizTitleInput } from "@/components/quiz-builder/builder-quiz-title-input";
 import { BuilderMobileQuizCard } from "@/components/quiz-builder/builder-mobile-quiz-card";
 import { BuilderSaveStatus } from "@/components/quiz-builder/builder-save-status";
+import { BuilderSaveErrorReportBanner } from "@/components/builder/builder-save-error-report-banner";
+import { useSupportFeedback } from "@/components/support/support-feedback-provider";
 import { BuilderBackToTopButton } from "@/components/quiz-builder/builder-back-to-top-button";
 import { FullscreenBlockingOverlay } from "@/components/ui/fullscreen-blocking-overlay";
 import { useBuilderNavigationGuard } from "@/components/dashboard/builder-navigation-guard-context";
@@ -95,6 +97,10 @@ import { DEFAULT_MANUAL_QUIZ_BUILDER_SETTINGS } from "@/lib/builder/defaultManua
 import { resolveFinalizeDraftQuizError } from "@/lib/builder/finalizeDraftQuizErrors";
 import { estimateQuizPayloadSize } from "@/lib/builder/estimateQuizPayloadSize";
 import { isSaveQuizPayloadTooLargeError } from "@/lib/builder/isSaveQuizPayloadTooLargeError";
+import {
+  buildBuilderSaveErrorMetadata,
+  type BuilderSaveErrorPhase,
+} from "@/lib/builder/builder-save-error-report";
 import {
   QUIZ_SAVE_PAYLOAD_WARN_BYTES,
 } from "@/lib/builder/quizPayloadLimits";
@@ -288,6 +294,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
   const searchParams = useSearchParams();
   const urlQuizId = initialQuizId ?? searchParams.get("quizId");
   const { locale } = useLocale();
+  const { openSupportFeedback } = useSupportFeedback();
   const { data: session } = useSession();
   const userId = session?.user?.id;
   const [quiz, setQuiz] = useState<QuizBuilder>(() => getInitialQuiz());
@@ -305,6 +312,11 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
   const [isFinalizingDraft, setIsFinalizingDraft] = useState(false);
   const [baselineSnapshotForUi, setBaselineSnapshotForUi] = useState<string | null>(null);
   const [serverSaveUiPhase, setServerSaveUiPhase] = useState<BuilderServerSaveUiPhase>("idle");
+  const [saveErrorReport, setSaveErrorReport] = useState<{
+    phase: BuilderSaveErrorPhase;
+    errorMessage?: string;
+    errorCode?: string;
+  } | null>(null);
   const [lastServerAutosaveSuccessAt, setLastServerAutosaveSuccessAt] = useState<number | null>(
     null,
   );
@@ -891,6 +903,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
               timeLimitUiRef.current,
             );
             setServerSaveUiPhase("autosaveError");
+            setSaveErrorReport({ phase: "autosave", errorMessage: result.error });
             return;
           }
 
@@ -941,6 +954,11 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
             timeLimitUiRef.current,
           );
           setServerSaveUiPhase("autosaveError");
+          setSaveErrorReport({
+            phase: "autosave",
+            errorMessage: error instanceof Error ? error.message : undefined,
+            errorCode: isSaveQuizPayloadTooLargeError(error) ? "PAYLOAD_TOO_LARGE" : undefined,
+          });
         } finally {
           autosaveInFlightRef.current = false;
         }
@@ -1127,6 +1145,66 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
     lastServerAutosaveSuccessAt: isDirtyVersusBaseline ? null : lastServerAutosaveSuccessAt,
   });
 
+  const showSaveErrorReportBanner =
+    saveErrorReport !== null || serverSaveUiPhase === "autosaveError";
+
+  const clearSaveErrorReport = useCallback(() => {
+    setSaveErrorReport(null);
+  }, []);
+
+  const recordSaveFailure = useCallback(
+    (phase: BuilderSaveErrorPhase, errorMessage?: string, errorCode?: string) => {
+      setSaveErrorReport({ phase, errorMessage, errorCode });
+    },
+    [],
+  );
+
+  const openSaveErrorSupportReport = useCallback(() => {
+    const phase = saveErrorReport?.phase ?? "autosave";
+    const quizForEstimate: QuizBuilder = {
+      ...quiz,
+      settings: buildQuizSettingsWithResolvedTimeLimit(quiz.settings, timeLimitUi),
+    };
+
+    openSupportFeedback({
+      type: "SAVE_ERROR_REPORT",
+      quizId: savedQuizId ?? urlQuizId ?? undefined,
+      metadata: buildBuilderSaveErrorMetadata({
+        phase,
+        locale,
+        pathname: pathname || "/builder",
+        quizId: quiz.id,
+        savedQuizId,
+        urlQuizId,
+        quizStatus: serverQuizStatus,
+        questionCount: quiz.questions.length,
+        errorMessage: saveErrorReport?.errorMessage,
+        errorCode: saveErrorReport?.errorCode,
+        payloadSizeBytes: estimateQuizPayloadSize(quizForEstimate),
+        isDraft: serverQuizStatus === "DRAFT",
+        isActive: serverQuizStatus === "ACTIVE",
+      }),
+    });
+  }, [
+    locale,
+    openSupportFeedback,
+    pathname,
+    quiz,
+    saveErrorReport,
+    savedQuizId,
+    serverQuizStatus,
+    timeLimitUi,
+    urlQuizId,
+  ]);
+
+  const saveErrorReportBanner = showSaveErrorReportBanner ? (
+    <BuilderSaveErrorReportBanner
+      locale={locale}
+      onReportIssue={openSaveErrorSupportReport}
+      className="mt-2"
+    />
+  ) : null;
+
   const handleSave = async () => {
     const timeLimitError = validateBuilderTimeLimit(timeLimitUi);
     const errors = validateQuiz(quiz);
@@ -1260,6 +1338,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
               setLastServerAutosaveSuccessAt(Date.now());
               setServerSaveUiPhase("idle");
               autosaveErrorSnapshotRef.current = null;
+              clearSaveErrorReport();
               resetBuilderValidationState();
               runNavigationBypass(() => {
                 setBuilderHasUnsavedChanges(false);
@@ -1287,15 +1366,26 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
         setServerSaveUiPhase("idle");
         autosaveErrorSnapshotRef.current = null;
         resetBuilderValidationState();
+        clearSaveErrorReport();
         showToast(message, "success");
       } else {
+        recordSaveFailure("manual_save", result.error);
         showToast(`${result.error || t(locale, "builder.saveError")}${draftHint}`, "error");
       }
     } catch (error) {
       console.error("Error saving quiz:", error);
       if (isSaveQuizPayloadTooLargeError(error)) {
+        recordSaveFailure(
+          "manual_save",
+          error instanceof Error ? error.message : undefined,
+          "PAYLOAD_TOO_LARGE",
+        );
         showToast(`${t(locale, "builder.saveErrorPayloadTooLarge")}${draftHint}`, "error");
       } else {
+        recordSaveFailure(
+          "manual_save",
+          error instanceof Error ? error.message : undefined,
+        );
         showToast(`${t(locale, "builder.saveError")}${draftHint}`, "error");
       }
     } finally {
@@ -1368,9 +1458,15 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
       }
 
       const draftHint = `\n${t(locale, "builder.saveErrorDraftKept")}`;
+      recordSaveFailure("save_as_draft_copy", copyResult.error);
       showToast(`${copyResult.error || t(locale, "builder.saveError")}${draftHint}`, "error");
     } catch (error) {
       console.error("saveModifiedQuizAsDraftCopyAction from builder:", error);
+      recordSaveFailure(
+        "save_as_draft_copy",
+        error instanceof Error ? error.message : undefined,
+        isSaveQuizPayloadTooLargeError(error) ? "PAYLOAD_TOO_LARGE" : undefined,
+      );
       showToast(
         `${t(locale, "builder.saveError")}\n${t(locale, "builder.saveErrorDraftKept")}`,
         "error",
@@ -1436,6 +1532,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
     try {
       const saveResult = await saveQuiz(quizToSave, savedQuizId);
       if (!saveResult.success) {
+        recordSaveFailure("finalize", saveResult.error);
         showToast(
           `${t(locale, "builder.saveError")}\n${t(locale, "builder.saveErrorDraftKept")}`,
           "error",
@@ -1478,6 +1575,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
       setLastServerAutosaveSuccessAt(Date.now());
       setServerSaveUiPhase("idle");
       autosaveErrorSnapshotRef.current = null;
+      clearSaveErrorReport();
 
       const finalizeRevealMs = prefersReducedMotion ? 0 : 900;
       if (finalizeRevealMs > 0) {
@@ -2072,6 +2170,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
               />
             </div>
           ) : null}
+          {saveErrorReportBanner}
         </header>
 
         <div className="flex min-h-0 flex-col lg:h-full lg:flex-1 lg:flex-row lg:items-stretch lg:overflow-hidden">
@@ -2130,6 +2229,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
                   isLoading={isLoading}
                 />
               ) : null}
+              {saveErrorReportBanner}
             </div>
             {quiz.questions.length === 0 ? (
               <div

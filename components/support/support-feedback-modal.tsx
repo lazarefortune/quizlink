@@ -26,13 +26,29 @@ import { useToast } from "@/components/ui/toast";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import type { FeedbackType } from "@/lib/schemas/feedback.schema";
+import {
+  sanitizeSupportFeedbackMetadata,
+  type SupportFeedbackPreset,
+} from "@/components/support/support-feedback-preset";
+
+const CLASSIC_SUPPORT_TYPES = ["BUG", "SUGGESTION", "FEEDBACK"] as const;
+type ClassicSupportType = (typeof CLASSIC_SUPPORT_TYPES)[number];
 
 type SupportFeedbackModalProps = {
   isOpen: boolean;
+  preset: SupportFeedbackPreset | null;
   onClose: () => void;
 };
 
-export function SupportFeedbackModal({ isOpen, onClose }: SupportFeedbackModalProps) {
+function isClassicSupportType(value: string): value is ClassicSupportType {
+  return CLASSIC_SUPPORT_TYPES.includes(value as ClassicSupportType);
+}
+
+export function SupportFeedbackModal({
+  isOpen,
+  preset,
+  onClose,
+}: SupportFeedbackModalProps) {
   const [type, setType] = useState<FeedbackType | "">("");
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -41,13 +57,24 @@ export function SupportFeedbackModal({ isOpen, onClose }: SupportFeedbackModalPr
   const { showToast } = useToast();
   const { locale } = useLocale();
 
+  const isSaveErrorReportPreset = preset?.type === "SAVE_ERROR_REPORT";
+  const isSaveErrorReport = type === "SAVE_ERROR_REPORT" || isSaveErrorReportPreset;
+  const presetMetadata = sanitizeSupportFeedbackMetadata(preset?.metadata);
+
   useEffect(() => {
     if (!isOpen) {
       setType("");
       setMessage("");
       setError(null);
+      return;
     }
-  }, [isOpen]);
+
+    if (preset) {
+      setType(preset.type);
+      setMessage(preset.message ?? "");
+      setError(null);
+    }
+  }, [isOpen, preset]);
 
   const handleSubmit = async () => {
     setError(null);
@@ -57,14 +84,34 @@ export function SupportFeedbackModal({ isOpen, onClose }: SupportFeedbackModalPr
       return;
     }
 
-    if (message.trim().length < 5) {
-      setError(t(locale, "support.validation.messageTooShort"));
-      return;
-    }
+    const trimmedMessage = message.trim();
+    const hasMetadata = presetMetadata !== undefined && Object.keys(presetMetadata).length > 0;
 
-    if (message.trim().length > 1500) {
-      setError(t(locale, "support.validation.messageTooLong"));
-      return;
+    if (isSaveErrorReport) {
+      if (trimmedMessage.length > 1500) {
+        setError(t(locale, "support.validation.messageTooLong"));
+        return;
+      }
+
+      if (trimmedMessage.length > 0 && trimmedMessage.length < 5) {
+        setError(t(locale, "support.validation.messageTooShort"));
+        return;
+      }
+
+      if (trimmedMessage.length === 0 && !hasMetadata) {
+        setError(t(locale, "support.validation.messageOrMetadataRequired"));
+        return;
+      }
+    } else {
+      if (trimmedMessage.length < 5) {
+        setError(t(locale, "support.validation.messageTooShort"));
+        return;
+      }
+
+      if (trimmedMessage.length > 1500) {
+        setError(t(locale, "support.validation.messageTooLong"));
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -75,9 +122,11 @@ export function SupportFeedbackModal({ isOpen, onClose }: SupportFeedbackModalPr
 
       const result = await createFeedbackAction({
         type: type as FeedbackType,
-        message: message.trim(),
+        message: trimmedMessage || undefined,
         page,
         userAgent,
+        quizId: preset?.quizId,
+        metadata: isSaveErrorReport ? presetMetadata : undefined,
       });
 
       if (!result.success) {
@@ -98,40 +147,80 @@ export function SupportFeedbackModal({ isOpen, onClose }: SupportFeedbackModalPr
     }
   };
 
+  const canSubmit = (() => {
+    if (!type || isSubmitting) {
+      return false;
+    }
+
+    const trimmedMessage = message.trim();
+
+    if (isSaveErrorReport) {
+      const hasMetadata =
+        presetMetadata !== undefined && Object.keys(presetMetadata).length > 0;
+      if (trimmedMessage.length === 0) {
+        return hasMetadata;
+      }
+      return trimmedMessage.length >= 5;
+    }
+
+    return trimmedMessage.length >= 5;
+  })();
+
+  const dialogTitle = isSaveErrorReport
+    ? t(locale, "support.reportIssue")
+    : t(locale, "support.title");
+
+  const dialogDescription = isSaveErrorReport
+    ? t(locale, "support.errorReportDescription")
+    : t(locale, "support.description");
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>{t(locale, "support.title")}</DialogTitle>
-          <DialogDescription>{t(locale, "support.description")}</DialogDescription>
+          <DialogTitle>{dialogTitle}</DialogTitle>
+          <DialogDescription>{dialogDescription}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="support-feedback-type">
-              {t(locale, "support.form.typeLabel")}{" "}
-              <span className="text-destructive">*</span>
-            </Label>
-            <Select value={type} onValueChange={(value) => setType(value as FeedbackType)}>
-              <SelectTrigger id="support-feedback-type">
-                <SelectValue placeholder={t(locale, "support.form.typePlaceholder")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="BUG">{t(locale, "support.types.bug")}</SelectItem>
-                <SelectItem value="SUGGESTION">
-                  {t(locale, "support.types.suggestion")}
-                </SelectItem>
-                <SelectItem value="FEEDBACK">
-                  {t(locale, "support.types.questionFeedback")}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {isSaveErrorReportPreset ? (
+            <p className="text-sm text-muted-foreground">
+              {t(locale, "support.metadataAttached")}
+            </p>
+          ) : (
+            <div className="space-y-2">
+              <Label htmlFor="support-feedback-type">
+                {t(locale, "support.form.typeLabel")}{" "}
+                <span className="text-destructive">*</span>
+              </Label>
+              <Select
+                value={type}
+                onValueChange={(value) => {
+                  if (isClassicSupportType(value)) {
+                    setType(value);
+                  }
+                }}
+              >
+                <SelectTrigger id="support-feedback-type">
+                  <SelectValue placeholder={t(locale, "support.form.typePlaceholder")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="BUG">{t(locale, "support.types.bug")}</SelectItem>
+                  <SelectItem value="SUGGESTION">
+                    {t(locale, "support.types.suggestion")}
+                  </SelectItem>
+                  <SelectItem value="FEEDBACK">
+                    {t(locale, "support.types.questionFeedback")}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="support-feedback-message">
               {t(locale, "support.form.messageLabel")}{" "}
-              <span className="text-destructive">*</span>
+              {isSaveErrorReport ? null : <span className="text-destructive">*</span>}
             </Label>
             <Textarea
               id="support-feedback-message"
@@ -160,7 +249,7 @@ export function SupportFeedbackModal({ isOpen, onClose }: SupportFeedbackModalPr
           <Button
             variant="primary"
             onClick={() => void handleSubmit()}
-            disabled={isSubmitting || !type || message.trim().length < 5}
+            disabled={!canSubmit}
             isLoading={isSubmitting}
           >
             {t(locale, "support.form.send")}

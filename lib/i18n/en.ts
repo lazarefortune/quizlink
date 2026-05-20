@@ -1468,6 +1468,10 @@ export const en = {
   support: {
     navLabel: "Help & Support",
     helpSection: "Help",
+    reportIssue: "Report issue",
+    errorReportDescription:
+      "Describe what happened if you want. Technical context will be attached automatically.",
+    metadataAttached: "Technical context will be attached automatically.",
     title: "Contact support",
     description: "A bug, an idea, or a question? Send me a message.",
     form: {
@@ -1482,11 +1486,13 @@ export const en = {
       bug: "Bug",
       suggestion: "Suggestion",
       questionFeedback: "Question / feedback",
+      saveErrorReport: "Save error report",
     },
     validation: {
       typeRequired: "Please select a type",
       messageTooShort: "Message must be at least 5 characters",
       messageTooLong: "Message cannot exceed 1500 characters",
+      messageOrMetadataRequired: "Add a message or use the attached technical context",
     },
     success: {
       sent: "Message sent",

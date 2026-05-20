@@ -1476,6 +1476,10 @@ export const fr = {
   support: {
     navLabel: "Aide & Support",
     helpSection: "Aide",
+    reportIssue: "Signaler le problème",
+    errorReportDescription:
+      "Décris ce qui s'est passé si tu veux. Le contexte technique sera joint automatiquement.",
+    metadataAttached: "Le contexte technique sera joint automatiquement.",
     title: "Contacter le support",
     description: "Un bug, une idée ou une question ? Envoie-moi un message.",
     form: {
@@ -1490,11 +1494,13 @@ export const fr = {
       bug: "Bug",
       suggestion: "Suggestion",
       questionFeedback: "Question / feedback",
+      saveErrorReport: "Erreur de sauvegarde",
     },
     validation: {
       typeRequired: "Sélectionne un type",
       messageTooShort: "Le message doit contenir au moins 5 caractères",
       messageTooLong: "Le message ne peut pas dépasser 1500 caractères",
+      messageOrMetadataRequired: "Ajoute un message ou utilise le contexte technique joint",
     },
     success: {
       sent: "Message envoyé",

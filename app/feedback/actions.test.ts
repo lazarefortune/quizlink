@@ -105,6 +105,35 @@ describe("createFeedbackAction", () => {
     expect(result).toEqual({ success: true });
   });
 
+  it("creates SAVE_ERROR_REPORT with metadata and no message", async () => {
+    const result = await createFeedbackAction({
+      type: "SAVE_ERROR_REPORT",
+      page: "/builder/quiz_1",
+      userAgent: "Mozilla/5.0",
+      quizId: "quiz_1",
+      metadata: {
+        source: "builder_save_error",
+        phase: "manual_save",
+        questionCount: 3,
+      },
+    });
+
+    expect(result).toEqual({ success: true });
+    expect(mockCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        type: "SAVE_ERROR_REPORT",
+        message: null,
+        quizId: "quiz_1",
+        metadata: {
+          source: "builder_save_error",
+          phase: "manual_save",
+          questionCount: 3,
+        },
+      }),
+      select: { id: true, type: true },
+    });
+  });
+
   it("returns validation error without creating when page is invalid", async () => {
     const result = await createFeedbackAction({
       type: "BUG",
