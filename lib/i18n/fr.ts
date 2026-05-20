@@ -182,6 +182,10 @@ export const fr = {
     googleSignUp: "S'inscrire avec Google",
     orSeparator: "ou",
     googleOnlyAccount: "Ton compte utilise la connexion Google. La modification du mot de passe n'est pas disponible.",
+    sidePanelVerifyEmail: {
+      title: "Plus qu'une étape !",
+      description: "Confirme ton adresse email pour activer ton compte et accéder à tes quiz.",
+    },
     sidePanelForgot: {
       title: "Pas de panique !",
       description: "On t'envoie un lien par email pour réinitialiser ton mot de passe.",

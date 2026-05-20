@@ -182,6 +182,10 @@ export const en = {
     googleSignUp: "Sign up with Google",
     orSeparator: "or",
     googleOnlyAccount: "Your account uses Google sign-in. Password change is not available.",
+    sidePanelVerifyEmail: {
+      title: "Almost there!",
+      description: "Confirm your email address to activate your account and access your quizzes.",
+    },
     sidePanelForgot: {
       title: "No worries!",
       description: "We'll email you a link to reset your password.",
