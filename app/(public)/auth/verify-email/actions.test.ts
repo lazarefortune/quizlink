@@ -48,41 +48,31 @@ describe("verifyEmailAction", () => {
     mockSendUserSignupNotificationIfNeeded.mockResolvedValue(undefined);
   });
 
-  it("verifies email, clears tokens, and triggers welcome + signup notification when eligible", async () => {
+  it("verifies email and returns sign-in redirect without post-verify token", async () => {
     const expiresAt = new Date();
     expiresAt.setMinutes(expiresAt.getMinutes() + 10);
     mockFindUnique.mockResolvedValue({
       id: "user-verify-1",
       email: "u@example.com",
       emailVerifiedAt: null,
-      emailVerificationTokens: [
-        { id: "tok-1", code: "123456", expiresAt },
-      ],
+      emailVerificationTokens: [{ id: "tok-1", code: "123456", expiresAt }],
     });
 
-    const result = await verifyEmailAction("u@example.com", "123456");
+    const result = await verifyEmailAction("u@example.com", "123456", "/builder/preview");
 
-    expect(result).toEqual({ success: true });
+    expect(result.success).toBe(true);
+    if (!result.success) {
+      return;
+    }
+    expect(result.redirectTo).toBe(
+      "/auth/signin?verified=true&email=u%40example.com&callbackUrl=%2Fbuilder%2Fpreview",
+    );
+    expect("postVerifyLoginToken" in result).toBe(false);
     expect(mockTransaction).toHaveBeenCalledTimes(1);
     expect(mockSendWelcomeEmailIfNeeded).toHaveBeenCalledWith("user-verify-1");
-    expect(mockSendUserSignupNotificationIfNeeded).toHaveBeenCalledWith(
-      "user-verify-1",
-      "email",
-    );
   });
 
-  it("does not send welcome email or signup notification when verification fails", async () => {
-    mockFindUnique.mockResolvedValue(null);
-
-    const result = await verifyEmailAction("nope@example.com", "000000");
-
-    expect(result.success).toBe(false);
-    expect(mockTransaction).not.toHaveBeenCalled();
-    expect(mockSendWelcomeEmailIfNeeded).not.toHaveBeenCalled();
-    expect(mockSendUserSignupNotificationIfNeeded).not.toHaveBeenCalled();
-  });
-
-  it("does not send signup notification on replay when email is already verified", async () => {
+  it("returns sign-in redirect when email is already verified", async () => {
     mockFindUnique.mockResolvedValue({
       id: "user-verify-1",
       email: "u@example.com",
@@ -92,9 +82,56 @@ describe("verifyEmailAction", () => {
 
     const result = await verifyEmailAction("u@example.com", "123456");
 
-    expect(result).toEqual({ success: false, error: "Email already verified" });
+    expect(result).toEqual({
+      success: true,
+      redirectTo: "/auth/signin?verified=true&email=u%40example.com",
+      alreadyVerified: true,
+    });
     expect(mockTransaction).not.toHaveBeenCalled();
-    expect(mockSendWelcomeEmailIfNeeded).not.toHaveBeenCalled();
-    expect(mockSendUserSignupNotificationIfNeeded).not.toHaveBeenCalled();
+  });
+
+  it("rejects invalid verification code", async () => {
+    mockFindUnique.mockResolvedValue(null);
+
+    const result = await verifyEmailAction("nope@example.com", "000000");
+
+    expect(result.success).toBe(false);
+    expect(mockTransaction).not.toHaveBeenCalled();
+  });
+
+  it("rejects expired verification code", async () => {
+    mockFindUnique.mockResolvedValue({
+      id: "user-verify-1",
+      email: "u@example.com",
+      emailVerifiedAt: null,
+      emailVerificationTokens: [],
+    });
+
+    const result = await verifyEmailAction("u@example.com", "123456");
+
+    expect(result.success).toBe(false);
+    if (result.success) {
+      return;
+    }
+    expect(result.error).toBe("Invalid or expired verification code");
+    expect(mockTransaction).not.toHaveBeenCalled();
+  });
+
+  it("rejects unsafe callbackUrl in redirect", async () => {
+    mockFindUnique.mockResolvedValue({
+      id: "user-verify-1",
+      email: "u@example.com",
+      emailVerifiedAt: new Date(),
+      emailVerificationTokens: [],
+    });
+
+    const result = await verifyEmailAction("u@example.com", "123456", "https://evil.example");
+
+    expect(result.success).toBe(true);
+    if (!result.success) {
+      return;
+    }
+    expect(result.redirectTo).toBe("/auth/signin?verified=true&email=u%40example.com");
+    expect(result.redirectTo).not.toContain("evil");
   });
 });

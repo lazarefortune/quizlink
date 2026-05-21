@@ -97,11 +97,11 @@ export function VerificationCodeInput({
   };
 
   return (
-    <div className={cn("flex flex-col gap-2", className)}>
+    <div className={cn("flex w-full min-w-0 flex-col gap-2", className)}>
       <div
         role="group"
         aria-label={ariaLabel}
-        className="relative flex justify-center gap-2 sm:gap-3"
+        className="relative grid w-full grid-cols-6 gap-2 sm:gap-3"
         onPaste={(event) => {
           const target = event.target as HTMLElement;
           if (target.tagName === "INPUT") {
@@ -142,7 +142,7 @@ export function VerificationCodeInput({
             value={digit}
             maxLength={1}
             aria-label={`${ariaLabel}, digit ${index + 1} of ${length}`}
-            className="h-14 w-11 shrink-0 p-0 text-center text-2xl font-mono tracking-widest sm:w-12"
+            className="h-12 w-full min-w-0 p-0 text-center text-xl font-mono tracking-widest sm:h-14 sm:text-2xl"
             onChange={(event) => handleDigitChange(index, event.target.value)}
             onKeyDown={(event) => handleKeyDown(index, event)}
             onPaste={(event) => handlePaste(index, event)}

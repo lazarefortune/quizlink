@@ -52,11 +52,33 @@ export function buildVerifyEmailHref(
   return `/auth/verify-email?${params.toString()}`;
 }
 
-export function buildSignInHref(callbackUrl: string | null | undefined, verified = false): string {
+export function buildSignUpHref(callbackUrl: string | null | undefined): string {
+  const safeCallback = getSafeCallbackPath(callbackUrl);
+  if (safeCallback) {
+    return `/auth/signup?callbackUrl=${encodeURIComponent(safeCallback)}`;
+  }
+
+  return "/auth/signup";
+}
+
+export type BuildSignInHrefOptions = {
+  verified?: boolean;
+  email?: string | null;
+};
+
+export function buildSignInHref(
+  callbackUrl: string | null | undefined,
+  options: BuildSignInHrefOptions = {},
+): string {
   const params = new URLSearchParams();
 
-  if (verified) {
+  if (options.verified) {
     params.set("verified", "true");
+  }
+
+  const trimmedEmail = options.email?.trim();
+  if (trimmedEmail) {
+    params.set("email", trimmedEmail);
   }
 
   const safeCallback = getSafeCallbackPath(callbackUrl);

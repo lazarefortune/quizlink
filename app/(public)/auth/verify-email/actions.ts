@@ -4,11 +4,45 @@ import { prisma } from "@/lib/prisma";
 import { sendVerificationEmail } from "@/lib/email";
 import { sendWelcomeEmailIfNeeded } from "@/lib/sendWelcomeEmailIfNeeded";
 import { sendUserSignupNotificationIfNeeded } from "@/lib/sendUserSignupNotificationIfNeeded";
+import { buildSignInHref } from "@/lib/auth/safe-callback-url";
+
+export type VerifyEmailActionSuccess = {
+  success: true;
+  redirectTo: string;
+  alreadyVerified?: boolean;
+};
+
+export type VerifyEmailActionFailure = {
+  success: false;
+  error: string;
+};
+
+export type VerifyEmailActionResult = VerifyEmailActionSuccess | VerifyEmailActionFailure;
+
+export async function getVerifyEmailStatusAction(
+  email: string,
+): Promise<{ exists: boolean; isVerified: boolean }> {
+  if (!prisma) {
+    return { exists: false, isVerified: false };
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: { emailVerifiedAt: true },
+  });
+
+  if (!user) {
+    return { exists: false, isVerified: false };
+  }
+
+  return { exists: true, isVerified: Boolean(user.emailVerifiedAt) };
+}
 
 export async function verifyEmailAction(
   email: string,
-  code: string
-) {
+  code: string,
+  callbackUrl?: string | null,
+): Promise<VerifyEmailActionResult> {
   try {
     if (!prisma) {
       return {
@@ -17,7 +51,8 @@ export async function verifyEmailAction(
       };
     }
 
-    // Find user
+    const signInRedirect = buildSignInHref(callbackUrl, { verified: true, email });
+
     const user = await prisma.user.findUnique({
       where: { email },
       include: {
@@ -45,8 +80,9 @@ export async function verifyEmailAction(
 
     if (user.emailVerifiedAt) {
       return {
-        success: false,
-        error: "Email already verified",
+        success: true,
+        redirectTo: signInRedirect,
+        alreadyVerified: true,
       };
     }
 
@@ -57,7 +93,6 @@ export async function verifyEmailAction(
       };
     }
 
-    // Verify email and delete all verification tokens for this user
     await prisma.$transaction([
       prisma.user.update({
         where: { id: user.id },
@@ -75,6 +110,7 @@ export async function verifyEmailAction(
 
     return {
       success: true,
+      redirectTo: signInRedirect,
     };
   } catch (error) {
     console.error("Error verifying email:", error);
@@ -87,7 +123,7 @@ export async function verifyEmailAction(
 
 export async function resendVerificationCodeAction(
   email: string,
-  locale: "fr" | "en" = "fr"
+  locale: "fr" | "en" = "fr",
 ) {
   try {
     if (!prisma) {
@@ -97,31 +133,27 @@ export async function resendVerificationCodeAction(
       };
     }
 
-    // Find user
     const user = await prisma.user.findUnique({
       where: { email },
     });
 
     if (!user) {
-      // Don't leak user existence
       return {
-        success: true, // Return success even if user doesn't exist
+        success: true,
       };
     }
 
     if (user.emailVerifiedAt) {
       return {
-        success: false,
-        error: "Email already verified",
+        success: true,
+        alreadyVerified: true,
       };
     }
 
-    // Generate new code
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date();
     expiresAt.setMinutes(expiresAt.getMinutes() + 15);
 
-    // Delete old tokens and create new one
     await prisma.$transaction([
       prisma.emailVerificationToken.deleteMany({
         where: { userId: user.id },
@@ -129,14 +161,13 @@ export async function resendVerificationCodeAction(
       prisma.emailVerificationToken.create({
         data: {
           userId: user.id,
-          code,
+          code: verificationCode,
           expiresAt,
         },
       }),
     ]);
 
-    // Send email
-    await sendVerificationEmail(email, code, locale);
+    await sendVerificationEmail(email, verificationCode, locale);
 
     return {
       success: true,

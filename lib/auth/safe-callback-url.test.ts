@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildSignInHref,
+  buildSignUpHref,
   buildVerifyEmailHref,
   resolveSafeCallbackUrl,
 } from "./safe-callback-url";
@@ -37,9 +38,21 @@ describe("buildVerifyEmailHref", () => {
 });
 
 describe("buildSignInHref", () => {
-  it("includes verified flag and safe callbackUrl", () => {
-    expect(buildSignInHref("/dashboard", true)).toBe(
-      "/auth/signin?verified=true&callbackUrl=%2Fdashboard",
+  it("includes verified flag, email, and safe callbackUrl", () => {
+    expect(
+      buildSignInHref("/dashboard", { verified: true, email: "user@example.com" }),
+    ).toBe("/auth/signin?verified=true&email=user%40example.com&callbackUrl=%2Fdashboard");
+  });
+});
+
+describe("buildSignUpHref", () => {
+  it("includes safe callbackUrl", () => {
+    expect(buildSignUpHref("/builder/preview")).toBe(
+      "/auth/signup?callbackUrl=%2Fbuilder%2Fpreview",
     );
+  });
+
+  it("rejects unsafe callbackUrl", () => {
+    expect(buildSignUpHref("https://evil.example")).toBe("/auth/signup");
   });
 });

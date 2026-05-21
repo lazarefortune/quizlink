@@ -1,27 +1,31 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Cookie, User, LogOut, Settings, Shield } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useCookieConsent } from "@/components/cookie-consent/cookie-consent-context";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
-import Link from "next/link";
-import { useCookieConsent } from "@/components/cookie-consent/cookie-consent-context";
 
 export function UserMenu() {
   const { data: session, update: updateSession } = useSession();
   const router = useRouter();
   const { locale } = useLocale();
   const { openConsentPanel } = useCookieConsent();
-  const [isOpen, setIsOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
 
-  // Listen for session update events
   useEffect(() => {
     const handleSessionUpdate = async () => {
-      // Update session to get latest data from server
       if (updateSession) {
         try {
           await updateSession();
@@ -29,7 +33,6 @@ export function UserMenu() {
           console.error("Error updating session in UserMenu:", error);
         }
       }
-      // Force router refresh to get new session data
       router.refresh();
     };
 
@@ -38,23 +41,6 @@ export function UserMenu() {
       window.removeEventListener("session:update", handleSessionUpdate);
     };
   }, [router, updateSession]);
-
-  // Close menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isOpen]);
 
   if (!session?.user) {
     return (
@@ -80,74 +66,58 @@ export function UserMenu() {
   };
 
   return (
-    <div className="relative" ref={menuRef}>
-      <Button
-        variant="ghost"
-        size="default"
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2"
-      >
-        <User className="h-6 w-6" />
-        <span className="hidden sm:inline">{session.user.name || session.user.email}</span>
-      </Button>
-
-      {isOpen && (
-        <>
-          {/* Overlay */}
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setIsOpen(false)}
-          />
-          {/* Dropdown */}
-          <div className="absolute right-0 mt-2 w-56 rounded-md border bg-popover shadow-lg z-50" onClick={(e) => e.stopPropagation()}>
-            <div className="p-2">
-              <div className="px-3 py-2 text-sm font-medium border-b">
-                {session.user.name || session.user.email}
-              </div>
-              <div className="py-1">
-                <Link
-                  href="/account"
-                  onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent rounded-md transition-colors text-left"
-                >
-                  <Settings className="h-4 w-4" />
-                  {t(locale, "userMenu.settings")}
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => {
-                    openConsentPanel();
-                    setIsOpen(false);
-                  }}
-                  className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent rounded-md transition-colors text-left"
-                >
-                  <Cookie className="h-4 w-4" />
-                  {t(locale, "cookieConsent.footerLink")}
-                </button>
-                {session.user.role === "ADMIN" && (
-                  <Link
-                    href="/admin"
-                    onClick={() => setIsOpen(false)}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent rounded-md transition-colors text-left"
-                  >
-                    <Shield className="h-4 w-4" />
-                    {t(locale, "userMenu.admin")}
-                  </Link>
-                )}
-              </div>
-              <div className="border-t pt-1 mt-1">
-                <button
-                  onClick={handleSignOut}
-                  className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent rounded-md transition-colors text-left"
-                >
-                  <LogOut className="h-4 w-4" />
-                  {t(locale, "auth.signOut")}
-                </button>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          className="flex h-auto min-h-0 items-center gap-2 px-2 py-1.5"
+        >
+          <User className="h-6 w-6 shrink-0" />
+          <span className="hidden max-w-[140px] truncate sm:inline">
+            {session.user.name || session.user.email}
+          </span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" side="bottom" className="w-64 rounded-2xl p-2">
+        <DropdownMenuItem asChild>
+          <Link href="/account" className="flex cursor-pointer items-center gap-2">
+            <Settings className="h-5 w-5" />
+            <span className="font-fredoka text-base font-medium">
+              {t(locale, "userMenu.settings")}
+            </span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => openConsentPanel()}
+          className="flex cursor-pointer items-center gap-2"
+        >
+          <Cookie className="h-5 w-5" />
+          <span className="font-fredoka text-base font-medium">
+            {t(locale, "cookieConsent.footerLink")}
+          </span>
+        </DropdownMenuItem>
+        {session.user.role === "ADMIN" && (
+          <DropdownMenuItem asChild>
+            <Link href="/admin" className="flex cursor-pointer items-center gap-2">
+              <Shield className="h-5 w-5" />
+              <span className="font-fredoka text-base font-medium">
+                {t(locale, "userMenu.admin")}
+              </span>
+            </Link>
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={() => void handleSignOut()}
+          className="flex cursor-pointer items-center gap-2 text-destructive focus:text-destructive"
+        >
+          <LogOut className="h-5 w-5" />
+          <span className="font-fredoka text-base font-medium">
+            {t(locale, "auth.signOut")}
+          </span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

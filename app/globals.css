@@ -44,6 +44,8 @@
   --radius: 1rem;
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
+  /* Public site header inner bar (`PublicHeader` h-20) */
+  --public-header-height: 5rem;
   /* Mobile dashboard topbar (h-16 + safe area) — sticky builder tabs */
   --dashboard-mobile-topbar-offset: calc(4rem + env(safe-area-inset-top, 0px));
 
