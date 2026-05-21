@@ -16,7 +16,7 @@ import {
   AuthFormCardContent,
   AuthFormColumn,
   AuthFormHeader,
-  AuthFormMascot,
+  AuthFormLogo,
   AuthFormPage,
 } from "@/components/auth/auth-form-layout";
 import { ArrowLeft, ArrowRight, Mail, CheckCircle2 } from "lucide-react";
@@ -53,7 +53,7 @@ export default function ForgotPasswordPage() {
       <AuthFormColumn>
         <AuthFormCard>
           <AuthFormCardContent>
-            <AuthFormMascot locale={locale} />
+            <AuthFormLogo locale={locale} />
 
             {!isSuccess && (
               <AuthFormHeader

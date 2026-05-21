@@ -17,7 +17,7 @@ import {
   AuthFormCardContent,
   AuthFormColumn,
   AuthFormHeader,
-  AuthFormMascot,
+  AuthFormLogo,
   AuthFormPage,
 } from "@/components/auth/auth-form-layout";
 import {
@@ -107,7 +107,7 @@ function ResetPasswordForm() {
         <AuthFormColumn>
           <AuthFormCard>
             <AuthFormCardContent className="text-center">
-              <AuthFormMascot locale={locale} />
+              <AuthFormLogo locale={locale} />
               <motion.div
                 variants={authFormItemVariants}
                 className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10"
@@ -133,7 +133,7 @@ function ResetPasswordForm() {
         <AuthFormColumn>
           <AuthFormCard variant="playful">
             <AuthFormCardContent className="text-center">
-              <AuthFormMascot locale={locale} />
+              <AuthFormLogo locale={locale} />
               <motion.div
                 variants={authFormItemVariants}
                 className="mb-4 flex justify-center"
@@ -173,7 +173,7 @@ function ResetPasswordForm() {
       <AuthFormColumn>
         <AuthFormCard variant="playful">
           <AuthFormCardContent>
-            <AuthFormMascot locale={locale} />
+            <AuthFormLogo locale={locale} />
 
             <AuthFormHeader
               title={t(locale, "auth.resetPassword.title")}

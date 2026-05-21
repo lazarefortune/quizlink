@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -25,7 +24,9 @@ import {
 import { X } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
+import { QuizQuestionImage } from "@/components/quiz/quiz-question-image";
 import { getQuestionImageSrc } from "@/lib/question-image-src";
+import { usePrefetchQuestionImages } from "@/lib/quiz/usePrefetchQuestionImages";
 import { QuizRichText } from "@/components/quiz/quiz-rich-text";
 import { QuizQuestionTypeBadge } from "@/components/quiz/quiz-question-type-badge";
 import { QuizQuestionFloatingTimer } from "@/components/quiz/quiz-question-floating-timer";
@@ -180,6 +181,8 @@ export function AnonymousQuizPlayContent({
       block: "start",
     });
   }, [currentQuestionIndex, questions.length, prefersReducedMotion]);
+
+  usePrefetchQuestionImages(questions, currentQuestionIndex, { lookahead: 2 });
 
   const activeTimedAnswer = activeTimedQuestionId
     ? answers.find((answer) => answer.questionId === activeTimedQuestionId)
@@ -661,17 +664,7 @@ export function AnonymousQuizPlayContent({
           >
             <Card>
               <CardHeader className="p-5 sm:p-6">
-                {currentQuestionImageSrc ? (
-                  <div className="mb-4 relative w-full h-48 sm:h-64">
-                    <Image
-                      src={currentQuestionImageSrc}
-                      alt="Question"
-                      fill
-                      className="object-contain rounded-md border"
-                      unoptimized
-                    />
-                  </div>
-                ) : null}
+                <QuizQuestionImage src={currentQuestionImageSrc} />
                 <CardTitle className="text-xl font-medium mb-3">
                   <QuizRichText html={currentQuestion.label} />
                 </CardTitle>

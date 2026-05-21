@@ -25,7 +25,7 @@ import {
   AuthFormDivider,
   AuthFormFooter,
   AuthFormHeader,
-  AuthFormMascot,
+  AuthFormLogo,
   AuthFormPage,
 } from "@/components/auth/auth-form-layout";
 import { Eye, EyeOff, ArrowRight, Mail, Lock, User, Check } from "lucide-react";
@@ -100,7 +100,7 @@ function SignUpForm() {
       <AuthFormColumn>
         <AuthFormCard>
           <AuthFormCardContent>
-            <AuthFormMascot locale={locale} />
+            <AuthFormLogo locale={locale} />
 
             <AuthFormHeader
               title={t(locale, "auth.signUp.title")}

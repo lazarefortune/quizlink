@@ -25,7 +25,7 @@ import {
   AuthFormDivider,
   AuthFormFooter,
   AuthFormHeader,
-  AuthFormMascot,
+  AuthFormLogo,
   AuthFormPage,
 } from "@/components/auth/auth-form-layout";
 import { motion } from "framer-motion";
@@ -100,7 +100,7 @@ function SignInForm() {
       <AuthFormColumn>
         <AuthFormCard>
           <AuthFormCardContent>
-            <AuthFormMascot locale={locale} />
+            <AuthFormLogo locale={locale} />
 
             <AuthFormHeader
               title={t(locale, "auth.signIn.title")}

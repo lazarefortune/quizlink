@@ -88,19 +88,21 @@ export function AuthFormCardContent({
   );
 }
 
-type AuthFormMascotProps = {
+type AuthFormLogoProps = {
   locale: string;
   size?: "default" | "compact";
 };
 
-export function AuthFormMascot({ locale, size = "default" }: AuthFormMascotProps) {
-  const sizeClasses =
+export function AuthFormLogo({ locale, size = "default" }: AuthFormLogoProps) {
+  const imageClassName =
     size === "compact"
-      ? "relative h-14 w-14 drop-shadow-md sm:h-16 sm:w-16"
-      : "relative h-16 w-16 drop-shadow-md sm:h-20 sm:w-20 lg:h-24 lg:w-24";
+      ? "h-12 w-auto object-contain sm:h-14"
+      : "h-14 w-auto object-contain sm:h-16 lg:h-20";
 
   const imageSizes =
-    size === "compact" ? "(max-width: 640px) 56px, 64px" : "(max-width: 640px) 64px, 96px";
+    size === "compact"
+      ? "(max-width: 640px) 120px, 140px"
+      : "(max-width: 640px) 140px, 160px";
 
   return (
     <motion.div
@@ -112,21 +114,22 @@ export function AuthFormMascot({ locale, size = "default" }: AuthFormMascotProps
     >
       <Link
         href="/"
-        className="inline-block rounded-full transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2"
+        className="inline-flex rounded-xl transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2"
         aria-label={locale === "fr" ? "Retour à l'accueil" : "Back to home"}
       >
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
-          className={sizeClasses}
         >
           <Image
-            src="/mascotte.png"
-            alt="QuizLink mascotte"
-            fill
-            className="object-contain"
+            src="/logo-quizlink.png"
+            alt="QuizLink"
+            width={160}
+            height={64}
+            className={imageClassName}
             sizes={imageSizes}
+            priority
           />
         </motion.div>
       </Link>

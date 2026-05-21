@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,7 +23,9 @@ import {
 import { X } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
+import { QuizQuestionImage } from "@/components/quiz/quiz-question-image";
 import { getQuestionImageSrc } from "@/lib/question-image-src";
+import { usePrefetchQuestionImages } from "@/lib/quiz/usePrefetchQuestionImages";
 import { resolveQuizActionError } from "@/lib/quiz/resolveQuizActionError";
 import { resolveEffectiveShuffleSettings } from "@/lib/quiz/shuffleSettings";
 import {
@@ -249,6 +250,8 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
 
     setCurrentQuestionIndex(targetIndex);
   }, [activeTimedQuestionId, questions]);
+
+  usePrefetchQuestionImages(questions, currentQuestionIndex, { lookahead: 2 });
 
   // Prevent window close/refresh when quiz is in progress
   useEffect(() => {
@@ -571,17 +574,7 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
 
         <Card>
           <CardHeader className="p-5 sm:p-6">
-            {currentQuestionImageSrc ? (
-              <div className="mb-4 relative w-full h-48 sm:h-64">
-                <Image
-                  src={currentQuestionImageSrc}
-                  alt="Question"
-                  fill
-                  className="object-contain rounded-md border"
-                  unoptimized
-                />
-              </div>
-            ) : null}
+            <QuizQuestionImage src={currentQuestionImageSrc} />
             <div className="mb-2 flex flex-wrap items-center gap-2">
               <QuizQuestionTypeBadge type={currentQuestion.type} locale={locale} />
               {isLocked && !showCorrection && (

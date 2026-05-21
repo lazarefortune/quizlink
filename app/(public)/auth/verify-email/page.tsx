@@ -29,7 +29,7 @@ import {
   AuthFormCardContent,
   AuthFormColumn,
   AuthFormHeader,
-  AuthFormMascot,
+  AuthFormLogo,
   AuthFormPage,
 } from "@/components/auth/auth-form-layout";
 import { ArrowRight } from "lucide-react";
@@ -171,7 +171,7 @@ function VerifyEmailForm() {
       <AuthFormColumn>
         <AuthFormCard>
           <AuthFormCardContent>
-            <AuthFormMascot locale={locale} size="compact" />
+            <AuthFormLogo locale={locale} size="compact" />
 
             <AuthFormHeader
               align="center-mobile"
