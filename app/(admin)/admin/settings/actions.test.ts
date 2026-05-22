@@ -5,6 +5,11 @@ const mockAuth = vi.fn();
 const mockUpdateSupportNotificationSettings = vi.fn();
 const mockUpdateUserSignupNotificationSettings = vi.fn();
 const mockRevalidatePath = vi.fn();
+const mockSendAdminTestEmail = vi.fn();
+const mockCheckAdminTestEmailRateLimit = vi.fn();
+const mockRecordAdminTestEmailSend = vi.fn();
+const mockIsAdminTestEmailAllowedInEnvironment = vi.fn();
+const mockCanOverrideAdminTestEmailRecipient = vi.fn();
 
 vi.mock("@/lib/auth", () => ({
   auth: () => mockAuth(),
@@ -24,7 +29,24 @@ vi.mock("next/cache", () => ({
   revalidatePath: (...args: unknown[]) => mockRevalidatePath(...args),
 }));
 
+vi.mock("@/lib/email/send-admin-test-email", () => ({
+  sendAdminTestEmail: (...args: unknown[]) => mockSendAdminTestEmail(...args),
+}));
+
+vi.mock("@/lib/email/admin-test-email-rate-limit", () => ({
+  checkAdminTestEmailRateLimit: (...args: unknown[]) =>
+    mockCheckAdminTestEmailRateLimit(...args),
+  recordAdminTestEmailSend: (...args: unknown[]) =>
+    mockRecordAdminTestEmailSend(...args),
+}));
+
+vi.mock("@/lib/email/get-smtp-status", () => ({
+  isAdminTestEmailAllowedInEnvironment: () => mockIsAdminTestEmailAllowedInEnvironment(),
+  canOverrideAdminTestEmailRecipient: () => mockCanOverrideAdminTestEmailRecipient(),
+}));
+
 import {
+  sendAdminTestEmailAction,
   updateSupportNotificationSettingsAction,
   updateUserSignupNotificationSettingsAction,
 } from "./actions";
@@ -173,5 +195,86 @@ describe("updateUserSignupNotificationSettingsAction", () => {
 
     expect(result).toEqual({ success: false, error: "Failed to save settings" });
     expect(mockRevalidatePath).not.toHaveBeenCalled();
+  });
+});
+
+const validTestEmailPayload = {
+  template: "verification" as const,
+  locale: "fr" as const,
+};
+
+describe("sendAdminTestEmailAction", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockAuth.mockResolvedValue({
+      user: { id: "admin-1", role: "ADMIN", email: "admin@test.com" },
+    });
+    mockIsAdminTestEmailAllowedInEnvironment.mockReturnValue(true);
+    mockCanOverrideAdminTestEmailRecipient.mockReturnValue(false);
+    mockCheckAdminTestEmailRateLimit.mockReturnValue({ allowed: true });
+    mockSendAdminTestEmail.mockResolvedValue({ success: true });
+  });
+
+  it("returns unauthorized when there is no session user id", async () => {
+    mockAuth.mockResolvedValue({ user: null });
+
+    const result = await sendAdminTestEmailAction(validTestEmailPayload);
+
+    expect(result).toEqual({ success: false, error: "Unauthorized" });
+    expect(mockSendAdminTestEmail).not.toHaveBeenCalled();
+  });
+
+  it("returns unauthorized when role is not ADMIN", async () => {
+    mockAuth.mockResolvedValue({
+      user: { id: "user-1", role: "USER", email: "user@test.com" },
+    });
+
+    const result = await sendAdminTestEmailAction(validTestEmailPayload);
+
+    expect(result).toEqual({ success: false, error: "Unauthorized" });
+    expect(mockSendAdminTestEmail).not.toHaveBeenCalled();
+  });
+
+  it("sends test email to admin address and records rate limit", async () => {
+    const result = await sendAdminTestEmailAction(validTestEmailPayload);
+
+    expect(result).toEqual({ success: true });
+    expect(mockSendAdminTestEmail).toHaveBeenCalledWith({
+      template: "verification",
+      locale: "fr",
+      to: "admin@test.com",
+    });
+    expect(mockRecordAdminTestEmailSend).toHaveBeenCalledWith("admin-1");
+  });
+
+  it("uses override recipient in non-production", async () => {
+    mockCanOverrideAdminTestEmailRecipient.mockReturnValue(true);
+
+    const result = await sendAdminTestEmailAction({
+      ...validTestEmailPayload,
+      recipientEmail: "other@test.com",
+    });
+
+    expect(result).toEqual({ success: true });
+    expect(mockSendAdminTestEmail).toHaveBeenCalledWith({
+      template: "verification",
+      locale: "fr",
+      to: "other@test.com",
+    });
+  });
+
+  it("returns rate limit error when sending too soon", async () => {
+    mockCheckAdminTestEmailRateLimit.mockReturnValue({
+      allowed: false,
+      reason: "too_soon",
+    });
+
+    const result = await sendAdminTestEmailAction(validTestEmailPayload);
+
+    expect(result).toEqual({
+      success: false,
+      error: "Please wait before sending another test email",
+    });
+    expect(mockSendAdminTestEmail).not.toHaveBeenCalled();
   });
 });

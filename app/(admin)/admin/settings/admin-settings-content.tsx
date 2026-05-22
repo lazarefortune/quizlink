@@ -10,11 +10,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/toast";
+import type { SmtpStatus } from "@/lib/email/get-smtp-status";
 import { t } from "@/lib/i18n";
 import { useLocale } from "@/lib/i18n/use-locale";
 import type { SupportNotificationSettings } from "@/lib/settings/support-notification-settings";
 import type { UserSignupNotificationSettings } from "@/lib/settings/user-signup-notification-settings";
 
+import { AdminEmailTestCard } from "./admin-email-test-card";
 import {
   updateSupportNotificationSettingsAction,
   updateUserSignupNotificationSettingsAction,
@@ -25,11 +27,17 @@ const singleEmailSchema = z.string().trim().pipe(z.string().email());
 type AdminSettingsContentProps = {
   initialSupportNotifications: SupportNotificationSettings;
   initialUserSignupNotifications: UserSignupNotificationSettings;
+  adminEmail: string;
+  smtpStatus: SmtpStatus;
+  canOverrideRecipient: boolean;
 };
 
 export function AdminSettingsContent({
   initialSupportNotifications,
   initialUserSignupNotifications,
+  adminEmail,
+  smtpStatus,
+  canOverrideRecipient,
 }: AdminSettingsContentProps) {
   const { locale } = useLocale();
   const { showToast } = useToast();
@@ -459,6 +467,14 @@ export function AdminSettingsContent({
           </Button>
         </CardContent>
       </Card>
+
+      {adminEmail ? (
+        <AdminEmailTestCard
+          adminEmail={adminEmail}
+          smtpStatus={smtpStatus}
+          canOverrideRecipient={canOverrideRecipient}
+        />
+      ) : null}
     </div>
   );
 }

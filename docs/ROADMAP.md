@@ -1,5 +1,8 @@
 # QuizLink — Roadmap
 
+## Général
+- [ ] Eviter le downtime lors du déploiement
+
 ## Phase 1 — Builder & création
 
 - [ ] Améliorer l’admin des feedbacks et adapter les notifications emails de l'admin

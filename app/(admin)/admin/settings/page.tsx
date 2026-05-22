@@ -1,6 +1,10 @@
 import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth";
+import {
+  canOverrideAdminTestEmailRecipient,
+  getSmtpStatus,
+} from "@/lib/email/get-smtp-status";
 import { getSupportNotificationSettings } from "@/lib/settings/support-notification-settings";
 import { getUserSignupNotificationSettings } from "@/lib/settings/user-signup-notification-settings";
 
@@ -18,10 +22,17 @@ export default async function AdminSettingsPage() {
     getUserSignupNotificationSettings(),
   ]);
 
+  const adminEmail = session.user.email?.trim() ?? "";
+  const smtpStatus = getSmtpStatus();
+  const canOverrideRecipient = canOverrideAdminTestEmailRecipient();
+
   return (
     <AdminSettingsContent
       initialSupportNotifications={supportNotifications}
       initialUserSignupNotifications={userSignupNotifications}
+      adminEmail={adminEmail}
+      smtpStatus={smtpStatus}
+      canOverrideRecipient={canOverrideRecipient}
     />
   );
 }
