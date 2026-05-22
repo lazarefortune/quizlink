@@ -4,6 +4,10 @@ import type { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 import { abandonQuizAttemptById } from "@/lib/quiz/abandon-quiz-attempt";
+import {
+  clearAnonymousQuizAttemptCookie,
+  setAnonymousQuizAttemptCookie,
+} from "@/lib/quiz/quiz-attempt-cookie-server";
 import { isSelectionCorrect, correctOptionIdsFromDbOptions } from "@/lib/anonymous-quiz-scoring";
 import { getQuestionImageSrc } from "@/lib/question-image-src";
 import { resolveEffectiveQuizSettings } from "@/lib/quiz/resolveEffectiveQuizSettings";
@@ -15,7 +19,7 @@ import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
 // ---------------------------------------------------------------------------
 
 export type StartAttemptResult =
-  | { success: true; attemptId: string }
+  | { success: true; redirectTo: string }
   | { success: false; error: string };
 
 export type StartAttemptQuestionResult =
@@ -151,7 +155,10 @@ export async function startAnonymousQuizAttemptAction(
         updated_at = CURRENT_TIMESTAMP(3)
     `.catch((e: unknown) => console.error("startAnonymousQuizAttemptAction stats:", e));
 
-    return { success: true, attemptId: attempt.id };
+    const trimmedToken = token.trim();
+    await setAnonymousQuizAttemptCookie(trimmedToken, attempt.id);
+
+    return { success: true, redirectTo: `/quiz/${trimmedToken}/play` };
   } catch (e) {
     console.error("startAnonymousQuizAttemptAction:", e);
     return { success: false, error: "Failed to start attempt" };
@@ -623,6 +630,11 @@ export async function finishAnonymousQuizAttemptAction(
       };
     });
 
+    const linkToken = attempt.quizLink.token?.trim();
+    if (linkToken) {
+      await clearAnonymousQuizAttemptCookie(linkToken);
+    }
+
     return {
       success: true,
       score,
@@ -650,10 +662,25 @@ export async function abandonQuizAttemptAction(
   attemptId: string,
 ): Promise<AbandonAttemptResult> {
   try {
+    if (!prisma) {
+      return { success: false, error: "Database not initialized" };
+    }
+
+    const linkToken = await prisma.quizAttempt.findUnique({
+      where: { id: attemptId },
+      select: { quizLink: { select: { token: true } } },
+    });
+
     const result = await abandonQuizAttemptById(attemptId);
     if (!result.success) {
       return { success: false, error: result.error };
     }
+
+    const token = linkToken?.quizLink.token;
+    if (token) {
+      await clearAnonymousQuizAttemptCookie(token);
+    }
+
     return { success: true };
   } catch (e) {
     console.error("abandonQuizAttemptAction:", e);

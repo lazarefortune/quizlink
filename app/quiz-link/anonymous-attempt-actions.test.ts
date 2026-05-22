@@ -11,6 +11,18 @@ const mockCreate = vi.fn();
 const mockUpdate = vi.fn();
 const mockExecuteRaw = vi.fn();
 
+const mockCookieSet = vi.fn();
+const mockCookieGet = vi.fn();
+const mockCookieDelete = vi.fn();
+
+vi.mock("next/headers", () => ({
+  cookies: vi.fn(async () => ({
+    set: (...a: unknown[]) => mockCookieSet(...a),
+    get: (...a: unknown[]) => mockCookieGet(...a),
+    delete: (...a: unknown[]) => mockCookieDelete(...a),
+  })),
+}));
+
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     quizLink: { findUnique: (...a: unknown[]) => mockFindUnique(...a) },
@@ -83,6 +95,8 @@ const baseAttempt = {
   durationSeconds: null,
   score: null,
   quizLink: {
+    id: "link-1",
+    token: "tok",
     quiz: {
       status: "ACTIVE",
       settings: {},
@@ -103,7 +117,7 @@ describe("startAnonymousQuizAttemptAction", () => {
     mockExecuteRaw.mockResolvedValue(undefined);
   });
 
-  it("creates an attempt and returns attemptId", async () => {
+  it("creates an attempt, sets cookie, and returns clean play redirect", async () => {
     mockFindUnique.mockResolvedValue(baseQuizLink);
     mockCreate.mockResolvedValue({ id: "att-new" });
 
@@ -111,7 +125,12 @@ describe("startAnonymousQuizAttemptAction", () => {
 
     expect(result.success).toBe(true);
     if (!result.success) return;
-    expect(result.attemptId).toBe("att-new");
+    expect(result.redirectTo).toBe("/quiz/tok/play");
+    expect(mockCookieSet).toHaveBeenCalledWith(
+      "quizlink_attempt_tok",
+      "att-new",
+      expect.objectContaining({ httpOnly: true, sameSite: "lax" }),
+    );
     expect(mockCreate).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({

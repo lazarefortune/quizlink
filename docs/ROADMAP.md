@@ -31,6 +31,7 @@
 
 ## Phase 2 — Expérience joueur
 
+- [ ] Harmoniser le flow identifié avec le cookie/session d’attempt
 - [ ] Améliorer le design de la page résultat
 - [ ] Ajouter une animation de chargement avant le début du quiz
 - [ ] Conserver la progression du quiz si l’utilisateur actualise la page

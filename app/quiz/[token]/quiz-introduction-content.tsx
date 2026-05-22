@@ -107,7 +107,7 @@ export function QuizIntroductionContent({
           setIsLoading(false);
           return;
         }
-        router.push(`/quiz/${token}/play?attemptId=${attemptResult.attemptId}`);
+        router.push(attemptResult.redirectTo);
         setIsLoading(false);
         return;
       }

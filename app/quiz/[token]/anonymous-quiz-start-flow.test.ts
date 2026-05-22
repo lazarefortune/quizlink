@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 
 /**
  * Guards the anonymous play funnel: one QuizAttempt per "Commencer",
- * not a second create on /play mount (React Strict Mode safe).
+ * attemptId in httpOnly cookie (not URL).
  */
 describe("anonymous quiz start flow", () => {
   const introSource = readFileSync(
@@ -19,11 +19,20 @@ describe("anonymous quiz start flow", () => {
     join(process.cwd(), "app/quiz/[token]/play/page.tsx"),
     "utf8",
   );
+  const actionsSource = readFileSync(
+    join(process.cwd(), "app/quiz-link/anonymous-attempt-actions.ts"),
+    "utf8",
+  );
 
-  it("creates the attempt on Commencer and passes attemptId to play", () => {
+  it("creates the attempt on Commencer and redirects without attemptId in URL", () => {
     expect(introSource).toContain("startAnonymousQuizAttemptAction(token)");
-    expect(introSource).toContain("play?attemptId=${attemptResult.attemptId}");
+    expect(introSource).toContain("router.push(attemptResult.redirectTo)");
     expect(introSource).not.toContain("recordAnonymousQuizStart(token)");
+  });
+
+  it("start action sets httpOnly cookie server-side", () => {
+    expect(actionsSource).toContain("setAnonymousQuizAttemptCookie");
+    expect(actionsSource).toContain("redirectTo: `/quiz/${trimmedToken}/play`");
   });
 
   it("does not create a new attempt when the play page mounts", () => {
@@ -36,8 +45,15 @@ describe("anonymous quiz start flow", () => {
     expect(playSource).not.toContain("startAnonymousQuizAttemptAction");
   });
 
-  it("redirects anonymous /play without attemptId back to the intro", () => {
+  it("play page reads attemptId from cookie and redirects without cookie", () => {
+    expect(pageSource).toContain("getAnonymousQuizAttemptCookie(token)");
     expect(pageSource).toContain("redirect(`/quiz/${token}`)");
-    expect(pageSource).toContain("attemptId={attemptId}");
+    expect(pageSource).toContain("redirect(`/quiz/${token}/play`)");
+    expect(pageSource).toContain("validateAnonymousPlayAttempt");
+  });
+
+  it("legacy query attemptId redirects to clean play URL when valid", () => {
+    expect(pageSource).toContain("setAnonymousQuizAttemptCookie(token, legacyResolution.attemptId)");
+    expect(pageSource).toContain("redirect(`/quiz/${token}/play`)");
   });
 });
