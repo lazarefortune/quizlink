@@ -3,15 +3,10 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { QuizPlayHeader } from "@/components/quiz-play/quiz-play-header";
+import { QuizPlayLayout } from "@/components/quiz-play/quiz-play-layout";
+import { QuizPlayQuestionCard } from "@/components/quiz-play/quiz-play-question-card";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Alert } from "@/components/ui/alert";
 import {
   Dialog,
@@ -21,14 +16,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { X } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
-import { QuizQuestionImage } from "@/components/quiz/quiz-question-image";
 import { getQuestionImageSrc } from "@/lib/question-image-src";
 import { usePrefetchQuestionImages } from "@/lib/quiz/usePrefetchQuestionImages";
-import { QuizRichText } from "@/components/quiz/quiz-rich-text";
-import { QuizQuestionTypeBadge } from "@/components/quiz/quiz-question-type-badge";
 import { QuizQuestionFloatingTimer } from "@/components/quiz/quiz-question-floating-timer";
 import { resolveQuizActionError } from "@/lib/quiz/resolveQuizActionError";
 import { resolveEffectiveShuffleSettings } from "@/lib/quiz/shuffleSettings";
@@ -41,7 +32,6 @@ import {
   findQuestionIndexById,
 } from "@/lib/quiz/quizActiveTimedQuestion";
 import { useQuizQuestionTimer } from "@/lib/quiz/useQuizQuestionTimer";
-import { cn } from "@/lib/utils";
 import {
   validateAnonymousQuestionAnswer,
   validateAnonymousQuizAnswers,
@@ -585,8 +575,9 @@ export function AnonymousQuizPlayContent({
     showAnswerImmediately,
   });
 
-  const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
-  const isAnswered = currentAnswer && currentAnswer.selectedOptionIds.length > 0;
+  const isAnswered = Boolean(
+    currentAnswer && currentAnswer.selectedOptionIds.length > 0,
+  );
 
   const isOptionCorrect = (optionId: string) => {
     if (!showCorrection) return false;
@@ -603,42 +594,20 @@ export function AnonymousQuizPlayContent({
   };
 
   return (
-    <div
-      ref={quizContainerRef}
-      className={cn(
-        "min-h-screen bg-background px-4 py-6 pb-28 sm:p-8",
-        isFinishing && "pointer-events-none select-none",
-      )}
-    >
-      <div className="mx-auto w-full max-w-none space-y-6 md:max-w-3xl">
+    <>
+      <QuizPlayLayout
+        containerRef={quizContainerRef}
+        isInteractionBlocked={isFinishing}
+      >
         {error && <Alert variant="error">{error}</Alert>}
 
-        <header className="space-y-2">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-            <h1 className="h1 text-xl sm:text-2xl font-semibold break-words flex-1">{quizName}</h1>
-            <div className="flex flex-wrap items-center gap-2 shrink-0">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleQuit}
-                disabled={isFinishing}
-                className="text-muted-foreground hover:text-destructive"
-              >
-                <X className="h-4 w-4" />
-                {t(locale, "quiz.quit")}
-              </Button>
-              <Badge variant="outline">
-                {currentQuestionIndex + 1} / {questions.length}
-              </Badge>
-            </div>
-          </div>
-          <div className="w-full bg-muted rounded-full h-2">
-            <div
-              className="bg-blue h-2 rounded-full transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-        </header>
+        <QuizPlayHeader
+          quizName={quizName}
+          currentQuestionIndex={currentQuestionIndex}
+          totalQuestions={questions.length}
+          onQuit={handleQuit}
+          quitDisabled={isFinishing}
+        />
 
         {isTimeUp && (
           <Alert variant="error">
@@ -662,132 +631,34 @@ export function AnonymousQuizPlayContent({
             }
             transition={{ duration: prefersReducedMotion ? 0 : 0.26, ease: "easeOut" }}
           >
-            <Card>
-              <CardHeader className="p-5 sm:p-6">
-                <QuizQuestionImage src={currentQuestionImageSrc} />
-                <CardTitle className="text-xl font-medium mb-3">
-                  <QuizRichText html={currentQuestion.label} />
-                </CardTitle>
-                <div className="flex flex-wrap items-center gap-2">
-                  <QuizQuestionTypeBadge type={currentQuestion.type} locale={locale} />
-                  {isLocked && !showCorrection && (
-                    <Badge variant="secondary">
-                      {t(locale, "quiz.answerLocked")}
-                    </Badge>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3 p-5 pt-0 sm:p-6 sm:pt-0">
-                {currentQuestion.options.map((option) => {
-                  const selected = isOptionSelected(option.id);
-                  const correct = isOptionCorrect(option.id);
-                  const incorrect = isOptionIncorrect(option.id);
-                  const optionLetter = String.fromCharCode(
-                    65 + currentQuestion.options.indexOf(option)
-                  );
-
-                  let borderColor = "";
-                  let letterBgColor = "";
-                  let letterTextColor = "";
-
-                  if (showCorrection) {
-                    if (correct) {
-                      borderColor = "#22c55e";
-                      letterBgColor = "bg-green-500";
-                      letterTextColor = "text-white";
-                    } else if (incorrect) {
-                      borderColor = "#ef4444";
-                      letterBgColor = "bg-red-500";
-                      letterTextColor = "text-white";
-                    } else {
-                      letterBgColor = "bg-muted";
-                      letterTextColor = "text-muted-foreground";
-                    }
-                  } else if (selected) {
-                    borderColor = "hsl(var(--blue))";
-                    letterBgColor = "bg-blue";
-                    letterTextColor = "text-blue-foreground";
-                  } else {
-                    letterBgColor = "bg-muted";
-                    letterTextColor = "text-muted-foreground";
-                  }
-
-                  return (
-                    <button
-                      key={option.id}
-                      type="button"
-                      onClick={() => handleAnswerSelect(option.id)}
-                      disabled={isLocked}
-                      className={cn(
-                        "w-full text-left p-4 rounded-lg border-2 transition-all duration-200",
-                        !borderColor && "border-border",
-                        isLocked ? "cursor-not-allowed" : "cursor-pointer hover:shadow-sm",
-                        selected ? "border-b-4" : ""
-                      )}
-                      style={borderColor ? { borderColor } : undefined}
-                    >
-                      <div className="flex items-center gap-3 sm:gap-4">
-                        <div
-                          className={cn(
-                            "flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-md font-semibold text-sm shrink-0 transition-colors",
-                            letterBgColor,
-                            letterTextColor
-                          )}
-                        >
-                          {optionLetter}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <span className="text-base break-words">{option.label}</span>
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </CardContent>
-              {showAnswerImmediately &&
-                isVerified &&
-                currentAnswer?.isCorrect === false &&
-                currentAnswer.explanation?.trim() && (
-                  <div className="px-5 pb-4 sm:px-6">
-                    <Alert variant="info" className="border-blue/40 bg-blue/5">
-                      <span className="font-medium">{t(locale, "quiz.explanation")}</span>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {currentAnswer.explanation.trim()}
-                      </p>
-                    </Alert>
-                  </div>
-                )}
-              <CardFooter className="flex gap-4 p-5 pt-0 sm:p-6 sm:pt-0">
-                <Button
-                  variant="ghost"
-                  onClick={handlePrevious}
-                  disabled={currentQuestionIndex === 0 || isFinishing}
-                >
-                  {t(locale, "quiz.previous")}
-                </Button>
-                {showAnswerImmediately && !isLocked ? (
-                  <Button
-                    variant="blue"
-                    onClick={() => void handleVerify()}
-                    disabled={!isAnswered || isSubmitting || isFinishing}
-                    className="ml-auto"
-                  >
-                    {isSubmitting ? t(locale, "common.loading") : t(locale, "quiz.verify")}
-                  </Button>
-                ) : (
-                  <Button
-                    variant="blue"
-                    onClick={() => void handleNext()}
-                    disabled={(!isAnswered && !isLocked) || isFinishing}
-                    className="ml-auto"
-                  >
-                    {currentQuestionIndex === questions.length - 1
-                      ? t(locale, "quiz.finish")
-                      : t(locale, "quiz.continue")}
-                  </Button>
-                )}
-              </CardFooter>
-            </Card>
+            <QuizPlayQuestionCard
+              questionType={currentQuestion.type}
+              questionLabel={currentQuestion.label}
+              questionImageSrc={currentQuestionImageSrc}
+              options={currentQuestion.options}
+              isLocked={isLocked}
+              showCorrection={showCorrection}
+              showAnswerImmediately={showAnswerImmediately}
+              isVerified={isVerified}
+              isCorrect={currentAnswer?.isCorrect}
+              explanation={currentAnswer?.explanation ?? currentQuestion.explanation}
+              isOptionSelected={isOptionSelected}
+              isOptionCorrect={isOptionCorrect}
+              isOptionIncorrect={isOptionIncorrect}
+              onSelectOption={handleAnswerSelect}
+              onPrevious={handlePrevious}
+              onVerify={
+                showAnswerImmediately && !isLocked
+                  ? () => void handleVerify()
+                  : undefined
+              }
+              onNext={() => void handleNext()}
+              isFirstQuestion={currentQuestionIndex === 0}
+              isLastQuestion={currentQuestionIndex === questions.length - 1}
+              isAnswered={isAnswered}
+              isSubmitting={isSubmitting}
+              actionsDisabled={isFinishing}
+            />
           </motion.div>
         </AnimatePresence>
 
@@ -807,26 +678,27 @@ export function AnonymousQuizPlayContent({
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
+      </QuizPlayLayout>
+
       {timeLimit > 0 &&
         activeTimedQuestionId &&
         activeTimedTimeRemaining !== null &&
         !isFinishing && (
-        <QuizQuestionFloatingTimer
-          timeLeftSeconds={activeTimedTimeRemaining}
-          totalSeconds={timeLimit}
-          locale={locale}
-          viewedQuestionId={currentQuestion.id}
-          activeTimedQuestionId={activeTimedQuestionId}
-          onBackToCurrentQuestion={handleBackToActiveTimedQuestion}
-        />
-      )}
+          <QuizQuestionFloatingTimer
+            timeLeftSeconds={activeTimedTimeRemaining}
+            totalSeconds={timeLimit}
+            locale={locale}
+            viewedQuestionId={currentQuestion.id}
+            activeTimedQuestionId={activeTimedQuestionId}
+            onBackToCurrentQuestion={handleBackToActiveTimedQuestion}
+          />
+        )}
       {isFinishing && (
         <AnonymousQuizFinishingScreen
           stage={finishingStage}
           reducedMotion={Boolean(prefersReducedMotion)}
         />
       )}
-    </div>
+    </>
   );
 }

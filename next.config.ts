@@ -19,6 +19,15 @@ const nextConfig: NextConfig = {
       bodySizeLimit: QUIZ_SAVE_SERVER_ACTION_BODY_SIZE_LIMIT,
     },
   },
+  async redirects() {
+    return [
+      {
+        source: "/dashboard/quiz/:quizId/preview",
+        destination: "/preview/quiz/:quizId",
+        permanent: false,
+      },
+    ];
+  },
   async rewrites() {
     return [
       {

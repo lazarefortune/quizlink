@@ -44,6 +44,7 @@ import { track } from "@/lib/analytics/track";
 import { PARTICIPANT_INVITED } from "@/lib/analytics/events";
 import { buildCommonEventProps } from "@/lib/analytics/props";
 import { resolveQuizActionError } from "@/lib/quiz/resolveQuizActionError";
+import { buildQuizPreviewPath } from "@/lib/quiz/quiz-preview-routes";
 import { canQuizBePlayed } from "@/lib/quiz/quizStatusPolicy";
 import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
 import { cn } from "@/lib/utils";
@@ -132,6 +133,20 @@ export function QuizDetailHeader({
     }
   };
 
+  const previewButton = (
+    <Button variant="outline" size="sm" className="gap-2" asChild>
+      <Link
+        href={buildQuizPreviewPath(quizId)}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <Eye className="h-4 w-4" />
+        <span className="hidden sm:inline">{t(locale, "dashboard.previewQuiz")}</span>
+        <span className="sm:hidden">{t(locale, "dashboard.previewQuiz")}</span>
+      </Link>
+    </Button>
+  );
+
   const primaryAction =
     quizStatus === "DRAFT" ? (
       <Button variant="blue" size="sm" className="gap-2" asChild>
@@ -189,7 +204,7 @@ export function QuizDetailHeader({
               </h1>
             </div>
 
-            <div className="flex shrink-0 items-center gap-2 self-start">
+            <div className="flex flex-wrap items-center gap-2">
               {primaryAction}
               <Button
                 type="button"
@@ -198,7 +213,7 @@ export function QuizDetailHeader({
                 className="h-9 w-9 sm:hidden"
                 aria-label={t(locale, "dashboard.share")}
                 onClick={() => setShowShareDialog(true)}
-              >
+                >
                 <Share2 className="h-4 w-4" />
               </Button>
               <Button
@@ -207,10 +222,11 @@ export function QuizDetailHeader({
                 size="sm"
                 className="hidden gap-2 sm:inline-flex"
                 onClick={() => setShowShareDialog(true)}
-              >
+                >
                 <Share2 className="h-4 w-4" />
                 {t(locale, "dashboard.share")}
               </Button>
+              {previewButton}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button

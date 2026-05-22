@@ -17,5 +17,6 @@ describe("shouldHidePublicHeader", () => {
     expect(shouldHidePublicHeader("/dashboard")).toBe(true);
     expect(shouldHidePublicHeader("/builder/edit")).toBe(true);
     expect(shouldHidePublicHeader("/quiz/abc")).toBe(true);
+    expect(shouldHidePublicHeader("/preview/quiz/abc")).toBe(true);
   });
 });

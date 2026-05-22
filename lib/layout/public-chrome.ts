@@ -8,6 +8,7 @@ export const PUBLIC_HEADER_HIDE_PREFIXES = [
   "/admin",
   "/p/",
   "/quiz/",
+  "/preview/",
 ] as const;
 
 export function shouldHidePublicHeader(pathname: string | null | undefined): boolean {

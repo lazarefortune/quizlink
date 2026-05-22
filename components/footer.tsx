@@ -19,7 +19,9 @@ export function Footer() {
     pathname?.startsWith("/auth") ||
     pathname?.startsWith("/generate") ||
     pathname?.startsWith("/builder") ||
-    pathname?.startsWith("/account");
+    pathname?.startsWith("/account") ||
+    pathname?.startsWith("/preview/") ||
+    pathname?.startsWith("/quiz/");
   if (hideFooter) {
     return null;
   }

@@ -434,6 +434,13 @@ export const en = {
     correctAnswer: "Correct answer",
     timeSpent: "Time spent",
     explanation: "Explanation",
+    previewMode: "Preview mode",
+    previewNotSaved: "This test is not saved in the statistics.",
+    previewBackToQuiz: "Back to quiz",
+    previewEditQuiz: "Edit quiz",
+    previewEdit: "Edit",
+    previewAnswersHidden:
+      "Answer details are hidden with the current settings.",
     status: {
       draft: "Draft",
       active: "Active",
@@ -572,6 +579,13 @@ export const en = {
     backToTop: "Back to top",
     cancel: "Cancel",
     previewQuiz: "Preview",
+    preparingPreview: "Preparing preview…",
+    previewRequiresSaveError:
+      "Could not prepare preview. Check the quiz errors.",
+    previewReadyTitle: "Preview ready",
+    previewReadyDescription:
+      "Your quiz was saved. Open the preview in a new tab.",
+    previewOpenLink: "Open preview",
     previewComingSoon:
       "Preview coming soon. Save your quiz, then try it from your dashboard.",
     unsavedNavigation: {
@@ -965,6 +979,7 @@ export const en = {
     quizReadyTitle: "Your quiz is ready",
     quizReadyDescription: "\"{quizName}\" is ready. Copy the link and launch a first game.",
     playQuiz: "Play quiz",
+    previewQuiz: "Preview",
     viewResponses: "View responses",
     seeMyQuizzes: "See my quizzes",
     loadingShareLink: "Creating share link...",

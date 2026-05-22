@@ -434,6 +434,13 @@ export const fr = {
     correctAnswer: "Bonne réponse",
     timeSpent: "Temps passé",
     explanation: "Explication",
+    previewMode: "Mode aperçu",
+    previewNotSaved: "Ce test n'est pas enregistré dans les statistiques.",
+    previewBackToQuiz: "Retour au quiz",
+    previewEditQuiz: "Modifier le quiz",
+    previewEdit: "Modifier",
+    previewAnswersHidden:
+      "Le détail des réponses est masqué avec les paramètres actuels.",
     status: {
       draft: "Brouillon",
       active: "Actif",
@@ -574,6 +581,13 @@ export const fr = {
     backToTop: "Retour en haut",
     cancel: "Annuler",
     previewQuiz: "Aperçu",
+    preparingPreview: "Préparation de l'aperçu…",
+    previewRequiresSaveError:
+      "Impossible de préparer l'aperçu. Vérifie les erreurs du quiz.",
+    previewReadyTitle: "Aperçu prêt",
+    previewReadyDescription:
+      "Le quiz a été enregistré. Ouvre l'aperçu dans un nouvel onglet.",
+    previewOpenLink: "Ouvrir l'aperçu",
     previewComingSoon:
       "Aperçu bientôt disponible. Utilise « Sauvegarder », puis teste ton quiz depuis le tableau de bord.",
     unsavedNavigation: {
@@ -969,6 +983,7 @@ export const fr = {
     quizReadyTitle: "Ton quiz est prêt",
     quizReadyDescription: "\"{quizName}\" est prêt. Copie le lien et lance une première partie.",
     playQuiz: "Jouer le quiz",
+    previewQuiz: "Prévisualiser",
     viewResponses: "Voir les réponses",
     seeMyQuizzes: "Voir mes quiz",
     loadingShareLink: "Création du lien de partage...",

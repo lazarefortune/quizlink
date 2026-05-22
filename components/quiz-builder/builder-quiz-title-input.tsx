@@ -45,9 +45,11 @@ export type BuilderQuizTitleInputProps = {
   maxLength?: number;
   /**
    * `field` — design-system textarea (border, card bg) — mobile quiz name.
-   * `inline` — borderless until focus — desktop builder header.
+   * `inline` — borderless until focus — legacy desktop header.
    */
   variant?: "inline" | "field";
+  /** Shorter single-line field (desktop header with `field` styling). */
+  compact?: boolean;
   /**
    * Tags the textarea so the scroll-to-first-error helper can find it.
    * Set to "quiz-name" on both the desktop header and the mobile card.
@@ -63,9 +65,11 @@ export function BuilderQuizTitleInput({
   getNameError,
   maxLength = QUIZ_NAME_MAX_LENGTH,
   variant = "inline",
+  compact = false,
   errorTargetId = "quiz-name",
 }: BuilderQuizTitleInputProps) {
   const isFieldVariant = variant === "field";
+  const isCompactField = isFieldVariant && compact;
   const nameError = getNameError();
   const [isFocused, setIsFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -80,11 +84,18 @@ export function BuilderQuizTitleInput({
 
     const fitHeight = () => {
       const linePx = resolveLineHeightPx(el);
+      el.style.height = "auto";
+      const scrollHeight = el.scrollHeight;
+
+      if (isCompactField) {
+        const cap = isFocused ? maxFocusedHeightPx() : scrollHeight;
+        el.style.height = `${Math.max(linePx, Math.min(scrollHeight, cap))}px`;
+        return;
+      }
+
       const maxCollapsed = Math.round(linePx * COLLAPSED_MAX_LINES);
       const cap = isFocused ? maxFocusedHeightPx() : maxCollapsed;
       const minHeightPx = isFieldVariant ? 80 : linePx;
-      el.style.height = "auto";
-      const scrollHeight = el.scrollHeight;
       el.style.height = `${Math.max(minHeightPx, Math.min(scrollHeight, cap))}px`;
     };
 
@@ -92,13 +103,13 @@ export function BuilderQuizTitleInput({
 
     window.addEventListener("resize", fitHeight);
     return () => window.removeEventListener("resize", fitHeight);
-  }, [value, isFocused, isFieldVariant]);
+  }, [value, isFocused, isFieldVariant, isCompactField]);
 
   return (
     <div
       className={cn(
         "flex min-w-0 w-full max-w-full flex-col",
-        isFieldVariant ? "gap-2" : "flex-1 gap-0.5",
+        isFieldVariant ? (isCompactField ? "gap-1.5" : "gap-2") : "flex-1 gap-0.5",
       )}
     >
       <div className="flex items-baseline justify-between gap-2">
@@ -132,7 +143,7 @@ export function BuilderQuizTitleInput({
         aria-invalid={nameError !== null}
         data-builder-error-target={errorTargetId}
         title={value.trim().length > 0 ? value : undefined}
-        rows={isFieldVariant ? 3 : 1}
+        rows={isCompactField ? 1 : isFieldVariant ? 3 : 1}
         value={value}
         placeholder={placeholder}
         maxLength={maxLength}
@@ -146,7 +157,8 @@ export function BuilderQuizTitleInput({
             ? cn(
                 textareaFieldClassName,
                 "font-medium leading-snug",
-                isFocused ? "max-h-36 overflow-y-auto" : "overflow-y-hidden",
+                isCompactField && "min-h-[2.75rem] shrink-0 py-2",
+                isFocused ? "max-h-36 overflow-y-auto" : "overflow-hidden",
                 nameError &&
                   "border-destructive hover:border-destructive focus:border-destructive focus:ring-destructive/25",
               )

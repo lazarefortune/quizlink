@@ -1,29 +1,18 @@
 import { redirect } from "next/navigation";
 
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { resolveLegacyDashboardPreviewRedirect } from "@/lib/quiz/quiz-preview-routes";
 
 type PageProps = {
   params: Promise<{ quizId: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-/** Legacy preview route — redirects to the unified quiz page (Questions tab). */
-export default async function QuizPreviewPage({ params }: PageProps) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    redirect("/auth/signin");
-  }
-
+/** Legacy dashboard preview URL — redirects to immersive /preview/quiz/{quizId}. */
+export default async function LegacyDashboardQuizPreviewPage({
+  params,
+  searchParams,
+}: PageProps) {
   const { quizId } = await params;
-
-  const quiz = await prisma.quiz.findUnique({
-    where: { id: quizId },
-    select: { ownerId: true },
-  });
-
-  if (!quiz || quiz.ownerId !== session.user.id) {
-    redirect("/dashboard/quizzes");
-  }
-
-  redirect(`/dashboard/quiz/${quizId}?tab=questions`);
+  const query = await searchParams;
+  redirect(resolveLegacyDashboardPreviewRedirect(quizId, query));
 }
