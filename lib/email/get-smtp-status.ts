@@ -13,7 +13,7 @@ export function getSmtpStatus(): SmtpStatus {
     mode: isDevelopment ? "development" : "production",
     host: process.env.SMTP_HOST || "localhost",
     port: process.env.SMTP_PORT || "1025",
-    from: process.env.SMTP_FROM || "noreply@quizlink.fr",
+    from: process.env.SMTP_FROM || "contact@quizlink.fr",
     mailpitUrl: isDevelopment ? "http://localhost:8025" : null,
   };
 }

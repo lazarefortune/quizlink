@@ -21,7 +21,7 @@ describe("get-smtp-status", () => {
       mode: "development",
       host: "localhost",
       port: "1025",
-      from: "noreply@quizlink.fr",
+      from: "contact@quizlink.fr",
       mailpitUrl: "http://localhost:8025",
     });
   });

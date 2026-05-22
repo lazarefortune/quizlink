@@ -32,12 +32,18 @@ const getTransporter = () => {
 const transporter = getTransporter();
 
 const getFromEmail = () => {
-  return process.env.SMTP_FROM || "noreply@quizlink.fr";
+  const email = process.env.SMTP_FROM || "contact@quizlink.fr";
+  const name = process.env.SMTP_FROM_NAME;
+
+  return name ? `"${name}" <${email}>` : email;
 };
 
 /** From address for the welcome email (reply-friendly default when SMTP_FROM is unset). */
 const getWelcomeFromEmail = () => {
-  return process.env.SMTP_FROM || "contact@quizlink.fr";
+  const email = process.env.SMTP_FROM || "contact@quizlink.fr";
+  const name = process.env.SMTP_FROM_NAME;
+
+  return name ? `"${name}" <${email}>` : email;
 };
 
 function escapeHtmlForEmail(text: string): string {
