@@ -112,6 +112,7 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
   const answersRef = useRef<AnswerState[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showQuitConfirm, setShowQuitConfirm] = useState(false);
+  const [isQuitting, setIsQuitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
   const [isQuizFinished, setIsQuizFinished] = useState(false);
@@ -481,16 +482,22 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
   };
 
   const confirmQuit = async () => {
+    if (isQuitting) {
+      return;
+    }
+    setIsQuitting(true);
     try {
-      // Abandon the quiz attempt before marking as finished
-      await abandonQuizAttempt(attempt.id);
+      const result = await abandonQuizAttempt(attempt.id);
+      if (!result.success) {
+        console.warn("abandonQuizAttempt:", result.error);
+      }
     } catch (error) {
-      console.error("Error abandoning quiz:", error);
-      // Continue even if abandon fails
+      console.warn("Error abandoning quiz:", error);
     } finally {
-      // Mark as finished to allow navigation
       setIsQuizFinished(true);
+      setShowQuitConfirm(false);
       router.push("/");
+      setIsQuitting(false);
     }
   };
 
@@ -717,16 +724,24 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
         <Dialog open={showQuitConfirm} onOpenChange={setShowQuitConfirm}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>{t(locale, "quiz.quit")}</DialogTitle>
+              <DialogTitle>{t(locale, "quiz.quitConfirmTitle")}</DialogTitle>
               <DialogDescription>
-                {t(locale, "quiz.quitConfirm")}
+                {t(locale, "quiz.quitConfirmDescription")}
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
-              <Button variant="ghost" onClick={() => setShowQuitConfirm(false)}>
-                {t(locale, "common.cancel")}
+              <Button
+                variant="ghost"
+                onClick={() => setShowQuitConfirm(false)}
+                disabled={isQuitting}
+              >
+                {t(locale, "quiz.quitContinuePlaying")}
               </Button>
-              <Button variant="destructive" onClick={confirmQuit}>
+              <Button
+                variant="destructive"
+                onClick={() => void confirmQuit()}
+                disabled={isQuitting}
+              >
                 {t(locale, "quiz.quit")}
               </Button>
             </DialogFooter>

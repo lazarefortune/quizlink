@@ -93,32 +93,8 @@ export default async function QuizPlayPage({ params, searchParams }: PageProps) 
       mode === "anonymous" || quizLinkResult.quizLink.participantId === null;
 
     if (useAnonymousFlow) {
-      const anonymousData = await getAnonymousQuizPlayData(token);
-      if (!anonymousData.success) {
-        return (
-          <div className="min-h-screen bg-background flex items-center justify-center p-4">
-            <div className="max-w-md w-full text-center">
-              <h1 className="text-2xl font-bold mb-4">Accès impossible</h1>
-              <p className="text-muted-foreground">
-                {resolveQuizActionError(requestLocale, anonymousData.error)}
-              </p>
-            </div>
-          </div>
-        );
-      }
-
-      return (
-        <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center">Chargement...</div>}>
-          <AnonymousQuizPlayContent
-            token={token}
-            quizId={anonymousData.data.quizId}
-            quizName={anonymousData.data.quizName}
-            settings={anonymousData.data.settings}
-            allowMultipleAttempts={anonymousData.data.allowMultipleAttempts}
-            questions={anonymousData.data.questions}
-          />
-        </Suspense>
-      );
+      const { redirect } = await import("next/navigation");
+      redirect(`/quiz/${token}`);
     }
 
     return (
@@ -209,6 +185,51 @@ export default async function QuizPlayPage({ params, searchParams }: PageProps) 
           </p>
         </div>
       </div>
+    );
+  }
+
+  if (attempt.status === "ABANDONED") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="max-w-md w-full text-center">
+          <h1 className="text-2xl font-bold mb-4">Tentative abandonnée</h1>
+          <p className="text-muted-foreground">
+            Cette tentative a été abandonnée et ne peut plus être reprise.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const isAnonymousAttempt = attempt.quizLink.participantId === null;
+
+  if (isAnonymousAttempt) {
+    const anonymousData = await getAnonymousQuizPlayData(token);
+    if (!anonymousData.success) {
+      return (
+        <div className="min-h-screen bg-background flex items-center justify-center p-4">
+          <div className="max-w-md w-full text-center">
+            <h1 className="text-2xl font-bold mb-4">Accès impossible</h1>
+            <p className="text-muted-foreground">
+              {resolveQuizActionError(requestLocale, anonymousData.error)}
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center">Chargement...</div>}>
+        <AnonymousQuizPlayContent
+          token={token}
+          attemptId={attemptId}
+          quizId={anonymousData.data.quizId}
+          quizName={anonymousData.data.quizName}
+          settings={anonymousData.data.settings}
+          allowMultipleAttempts={anonymousData.data.allowMultipleAttempts}
+          questions={anonymousData.data.questions}
+        />
+      </Suspense>
     );
   }
 

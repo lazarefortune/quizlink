@@ -20,10 +20,8 @@ import { t } from "@/lib/i18n";
 import { formatQuizTimeRemainingHuman } from "@/lib/quiz/formatQuizTimeRemainingHuman";
 import { resolveQuizActionError } from "@/lib/quiz/resolveQuizActionError";
 import { startQuizAttempt } from "@/app/quiz-link/actions";
-import {
-  recordAnonymousLinkOpen,
-  recordAnonymousQuizStart,
-} from "@/app/quiz-link/anonymous-quiz-stats-actions";
+import { startAnonymousQuizAttemptAction } from "@/app/quiz-link/anonymous-attempt-actions";
+import { recordAnonymousLinkOpen } from "@/app/quiz-link/anonymous-quiz-stats-actions";
 
 type QuizLink = {
   id: string;
@@ -103,13 +101,13 @@ export function QuizIntroductionContent({
 
     try {
       if (isPublicLink) {
-        const statsResult = await recordAnonymousQuizStart(token);
-        if (!statsResult.success) {
-          setError(resolveQuizActionError(locale, statsResult.error));
+        const attemptResult = await startAnonymousQuizAttemptAction(token);
+        if (!attemptResult.success) {
+          setError(resolveQuizActionError(locale, attemptResult.error));
           setIsLoading(false);
           return;
         }
-        router.push(`/quiz/${token}/play`);
+        router.push(`/quiz/${token}/play?attemptId=${attemptResult.attemptId}`);
         setIsLoading(false);
         return;
       }

@@ -80,6 +80,13 @@ export function QuizQuestionAnalysisSection({
                         })}
                       </Badge>
                     ) : null}
+                    {insight.expiredCount > 0 ? (
+                      <Badge variant="destructive" className="tabular-nums">
+                        {t(locale, "dashboard.questionExpiredCount", {
+                          count: insight.expiredCount,
+                        })}
+                      </Badge>
+                    ) : null}
                   </>
                 ) : null}
               </div>

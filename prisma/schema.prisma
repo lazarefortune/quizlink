@@ -161,8 +161,9 @@ model Question {
   imageKey    String?      @map("image_key") @db.VarChar(512)
   explanation String?      @db.Text // Shown when user gets the question wrong
   order       Int // Order within the quiz
-  options     Option[]
-  answers     QuizAnswer[]
+  options         Option[]
+  answers         QuizAnswer[]
+  questionTimings QuizAttemptQuestion[]
 
   @@index([quizId])
   @@map("questions")
@@ -243,14 +244,19 @@ model QuizAttempt {
   quizLink      QuizLink     @relation(fields: [quizLinkId], references: [id], onDelete: Cascade)
   participantId String?      @map("participant_id")
   participant   Participant? @relation(fields: [participantId], references: [id], onDelete: Cascade)
-  startedAt     DateTime     @default(now()) @map("started_at")
-  finishedAt    DateTime?    @map("finished_at")
-  score         Float? // Score as percentage (0-100)
-  status        String       @default("IN_PROGRESS") // IN_PROGRESS | COMPLETED | ABANDONED
-  answers       QuizAnswer[]
+  startedAt       DateTime              @default(now()) @map("started_at")
+  finishedAt      DateTime?             @map("finished_at")
+  score           Float? // Score as percentage (0-100)
+  status          String                @default("IN_PROGRESS") // IN_PROGRESS | COMPLETED | ABANDONED
+  identityMode    String                @default("ANONYMOUS") @map("identity_mode") // ANONYMOUS
+  totalQuestions  Int?                  @map("total_questions")
+  durationSeconds Int?                  @map("duration_seconds")
+  answers         QuizAnswer[]
+  questionTimings QuizAttemptQuestion[]
 
   @@index([quizLinkId])
   @@index([participantId])
+  @@index([identityMode])
   @@map("quiz_attempts")
 }
 
@@ -264,10 +270,29 @@ model QuizAnswer {
   isCorrect         Boolean     @default(false) @map("is_correct")
   answeredAt        DateTime    @default(now()) @map("answered_at")
   timeSpent         Int?        @map("time_spent") // Time spent in seconds
+  expired           Boolean     @default(false)
 
   @@index([attemptId])
   @@index([questionId])
   @@map("quiz_answers")
+}
+
+model QuizAttemptQuestion {
+  id               String      @id @default(cuid())
+  attemptId        String      @map("attempt_id")
+  attempt          QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId       String      @map("question_id")
+  question         Question    @relation(fields: [questionId], references: [id], onDelete: Restrict)
+  startedAt        DateTime    @map("started_at")
+  deadlineAt       DateTime?   @map("deadline_at")
+  answeredAt       DateTime?   @map("answered_at")
+  timeSpentSeconds Int?        @map("time_spent_seconds")
+  expired          Boolean     @default(false)
+  createdAt        DateTime    @default(now()) @map("created_at")
+
+  @@unique([attemptId, questionId])
+  @@index([attemptId])
+  @@map("quiz_attempt_questions")
 }
 
 model CoinTransaction {

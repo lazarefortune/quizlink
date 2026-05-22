@@ -10,6 +10,7 @@ import { t } from "@/lib/i18n";
 import { useLocale } from "@/lib/i18n/use-locale";
 import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
 
+import { QuizAttemptsSection } from "./quiz-attempts-section";
 import { QuizDetailCharts } from "./quiz-detail-charts";
 import { QuizDetailKpiGrid } from "./quiz-detail-kpi-grid";
 import { QuizQuestionAnalysisSection } from "./quiz-question-analysis-section";
@@ -55,7 +56,7 @@ export function QuizResultsTab({
   if (hasNoResponses) {
     return (
       <div className="rounded-xl border border-dashed border-border bg-card px-6 py-10 text-center">
-        <h2 className="text-lg font-semibold">{t(locale, "dashboard.noResponsesEmptyTitle")}</h2>
+        <h2 className="text-lg font-semibold">{t(locale, "dashboard.noResponsesYet")}</h2>
         <p className="mt-2 text-sm text-muted-foreground">
           {t(locale, "dashboard.noResponsesEmptyDescription")}
         </p>
@@ -67,7 +68,7 @@ export function QuizResultsTab({
           onClick={onShare}
         >
           <Share2 className="h-4 w-4" />
-          {t(locale, "dashboard.shareQuizCta")}
+          {t(locale, "dashboard.shareQuiz")}
         </Button>
       </div>
     );
@@ -75,7 +76,11 @@ export function QuizResultsTab({
 
   return (
     <div className="space-y-8">
+      <div className="space-y-1">
+        <h2 className="text-xl font-semibold">{t(locale, "dashboard.responses")}</h2>
+      </div>
       <QuizDetailKpiGrid stats={stats} />
+      {stats.attempts.length > 0 ? <QuizAttemptsSection attempts={stats.attempts} /> : null}
       <QuizDetailCharts
         totalOpenCount={stats.totalOpenCount}
         totalStarted={stats.totalStarted}

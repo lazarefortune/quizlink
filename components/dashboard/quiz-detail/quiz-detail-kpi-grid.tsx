@@ -5,7 +5,6 @@ import { useLocale } from "@/lib/i18n/use-locale";
 import {
   computeQuizCompletionRatePercent,
   formatDurationShort,
-  pickPrimaryFourthKpi,
   type QuizDetailStatsInput,
 } from "@/lib/dashboard/quiz-detail-stats";
 
@@ -27,25 +26,12 @@ function KpiCard({ label, value }: { label: string; value: string }) {
 export function QuizDetailKpiGrid({ stats }: QuizDetailKpiGridProps) {
   const { locale } = useLocale();
   const completionRate = computeQuizCompletionRatePercent(stats);
-  const fourthKpi = pickPrimaryFourthKpi(stats);
-
-  const primaryFourthValue =
-    fourthKpi === "averageTime" && stats.globalAverageDurationSeconds != null
-      ? formatDurationShort(stats.globalAverageDurationSeconds)
-      : stats.globalBestScore != null
-        ? `${stats.globalBestScore.toFixed(1)}%`
-        : "-";
-
-  const primaryFourthLabel =
-    fourthKpi === "averageTime"
-      ? t(locale, "dashboard.averageTimeLabel")
-      : t(locale, "dashboard.bestScoreLabel");
 
   return (
     <div className="space-y-3">
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
-          label={t(locale, "dashboard.responsesCardTitle")}
+          label={t(locale, "dashboard.completedAttempts")}
           value={String(stats.totalResponses)}
         />
         <KpiCard
@@ -53,14 +39,21 @@ export function QuizDetailKpiGrid({ stats }: QuizDetailKpiGridProps) {
           value={`${completionRate.toFixed(1)}%`}
         />
         <KpiCard
-          label={t(locale, "dashboard.averageScoreGlobal")}
+          label={t(locale, "dashboard.averageScore")}
           value={
             stats.globalScoredCount > 0
               ? `${stats.globalScoreAverage.toFixed(1)}%`
               : "-"
           }
         />
-        <KpiCard label={primaryFourthLabel} value={primaryFourthValue} />
+        <KpiCard
+          label={t(locale, "dashboard.averageDuration")}
+          value={
+            stats.globalAverageDurationSeconds != null
+              ? formatDurationShort(stats.globalAverageDurationSeconds)
+              : "-"
+          }
+        />
       </section>
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">

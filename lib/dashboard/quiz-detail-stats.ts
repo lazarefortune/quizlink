@@ -8,6 +8,8 @@ export type QuizDetailAudienceSlice = {
   value: number;
 };
 
+import type { QuizDetailAttemptRow } from "@/lib/dashboard/creator-response-attempts";
+
 export type QuizDetailStatsInput = {
   totalResponses: number;
   totalStarted: number;
@@ -19,6 +21,8 @@ export type QuizDetailStatsInput = {
   globalBestScore: number | null;
   globalLowestScore: number | null;
   globalAverageDurationSeconds: number | null;
+  completionRatePercent: number;
+  attempts: QuizDetailAttemptRow[];
 };
 
 export function computeQuizCompletionRatePercent(stats: {

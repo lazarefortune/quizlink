@@ -3,6 +3,7 @@
 import type { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
+import { abandonQuizAttemptById } from "@/lib/quiz/abandon-quiz-attempt";
 import { playBlockedErrorCodeForQuizStatus } from "@/lib/quiz/quizActionErrorCodes";
 import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
 
@@ -251,21 +252,13 @@ export async function finishQuizAttempt(
  * Abandon a quiz attempt
  */
 export async function abandonQuizAttempt(
-  attemptId: string
+  attemptId: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    if (!prisma) {
-      return { success: false, error: "Database not initialized" };
+    const result = await abandonQuizAttemptById(attemptId);
+    if (!result.success) {
+      return { success: false, error: result.error };
     }
-
-    await prisma.quizAttempt.update({
-      where: { id: attemptId },
-      data: {
-        status: "ABANDONED",
-        finishedAt: new Date(),
-      },
-    });
-
     return { success: true };
   } catch (error) {
     console.error("Error abandoning quiz:", error);

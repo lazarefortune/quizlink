@@ -8,6 +8,14 @@ import {
   aggregateQuestionInsights,
   type QuestionInsight,
 } from "@/lib/dashboard/aggregate-question-insights";
+import {
+  buildCreatorResponseAttemptWhere,
+  computeCreatorResponseStats,
+  formatAnonymousParticipantLabel,
+  mapAttemptsToDetailRows,
+  buildAnonymousAttemptIndexMap,
+  type QuizDetailAttemptRow,
+} from "@/lib/dashboard/creator-response-attempts";
 import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
 
 type QuizSettings = {
@@ -71,17 +79,8 @@ type GetQuizStatsResponse =
           lastScore: number | null;
           lastAttemptDate: Date | null;
         }>;
-        attempts: Array<{
-          id: string;
-          participantName: string;
-          isAnonymous: boolean;
-          score: number | null;
-          duration: number | null;
-          status: string;
-          startedAt: Date;
-          finishedAt: Date | null;
-          questionsAnswered: number;
-        }>;
+        completionRatePercent: number;
+        attempts: QuizDetailAttemptRow[];
       };
     }
   | { success: false; error: string };
@@ -90,7 +89,7 @@ type GetQuizQuestionInsightsResponse =
   | { success: true; insights: QuestionInsight[] }
   | { success: false; error: string };
 
-type GetAttemptDetailsResponse =
+export type GetAttemptDetailsResponse =
   | {
       success: true;
       attempt: {
@@ -108,6 +107,7 @@ type GetAttemptDetailsResponse =
           correctOptionIds: string[];
           correctOptions: Array<{ id: string; label: string }>;
           isCorrect: boolean;
+          expired: boolean;
           timeSpent: number | null;
         }>;
         questionOrder?: Array<{ id: string; order: number }>;
@@ -356,42 +356,40 @@ export async function getQuizStats(
     const anonymousLowestScore =
       anonymousLowestCandidates.length > 0 ? Math.min(...anonymousLowestCandidates) : null;
 
-    const totalResponses = anonymousCompletedCount + identifiedCompletedCount;
-    const totalStarted = anonymousStartedCount + identifiedAttemptsCount;
+    const responseAttempts = await prisma.quizAttempt.findMany({
+      where: buildCreatorResponseAttemptWhere(quizId),
+      select: {
+        id: true,
+        participantId: true,
+        identityMode: true,
+        score: true,
+        status: true,
+        startedAt: true,
+        finishedAt: true,
+        durationSeconds: true,
+        totalQuestions: true,
+        participant: { select: { name: true } },
+        answers: { select: { id: true } },
+      },
+      orderBy: { startedAt: "desc" },
+    });
+
+    const responseStats = computeCreatorResponseStats(responseAttempts);
+    const attempts = mapAttemptsToDetailRows(responseAttempts);
+
+    const totalResponses = responseStats.completedCount;
+    // Prefer DB attempt rows (one per "Commencer"); legacy stats only if no rows yet.
+    const totalStarted =
+      responseStats.totalStarted > 0
+        ? responseStats.totalStarted
+        : Math.max(anonymousStartedCount, identifiedAttemptsCount);
     const totalOpenCount = anonymousOpenCount;
 
-    const combinedScoreCount = anonymousScoreCount + identifiedScoreCount;
-    const combinedScoreSum = anonymousScoreSum + identifiedScoreSum;
-    const globalScoreAverage =
-      combinedScoreCount > 0 ? combinedScoreSum / combinedScoreCount : 0;
-
-    const globalBestCandidates = [anonymousBestScore, identifiedBestScore].filter(
-      (v): v is number => v != null && Number.isFinite(v)
-    );
-    const globalBestScore =
-      globalBestCandidates.length > 0 ? Math.max(...globalBestCandidates) : null;
-
-    const globalLowestCandidates = [anonymousLowestScore, identifiedLowestScore].filter(
-      (v): v is number => v != null && Number.isFinite(v)
-    );
-    const globalLowestScore =
-      globalLowestCandidates.length > 0 ? Math.min(...globalLowestCandidates) : null;
-
-    const completedDurations = completedAttempts
-      .map((attempt) => {
-        if (!attempt.finishedAt || !attempt.startedAt) {
-          return null;
-        }
-        return Math.floor(
-          (attempt.finishedAt.getTime() - attempt.startedAt.getTime()) / 1000,
-        );
-      })
-      .filter((value): value is number => value != null && value > 0);
-    const globalAverageDurationSeconds =
-      completedDurations.length > 0
-        ? completedDurations.reduce((sum, value) => sum + value, 0) /
-          completedDurations.length
-        : null;
+    const globalScoreAverage = responseStats.averageScore;
+    const globalBestScore = responseStats.bestScore;
+    const globalLowestScore = responseStats.lowestScore;
+    const globalAverageDurationSeconds = responseStats.averageDurationSeconds;
+    const completionRatePercent = responseStats.completionRatePercent;
 
     // Calculate stats
     const totalInvitations = quizLinks.length;
@@ -408,10 +406,7 @@ export async function getQuizStats(
 
     const averageScore = globalScoreAverage;
 
-    const completionRate =
-      totalAttempts > 0
-        ? (identifiedCompletedCount / totalAttempts) * 100
-        : 0;
+    const completionRate = completionRatePercent;
 
     // Get participants with stats (creator stats: identified attempts only)
     const participantsMap = new Map<
@@ -460,34 +455,6 @@ export async function getQuizStats(
       };
     });
 
-    // Get attempts list (identified only; anonymous excluded from creator UI)
-    const attempts = identifiedAttempts
-      .map((attempt) => {
-        const duration =
-          attempt.finishedAt && attempt.startedAt
-            ? Math.floor(
-                (attempt.finishedAt.getTime() - attempt.startedAt.getTime()) /
-                  1000
-              )
-            : null;
-
-        return {
-          id: attempt.id,
-          participantName: attempt.participant?.name ?? "",
-          isAnonymous: false,
-          score: attempt.score,
-          duration,
-          status: attempt.status,
-          startedAt: attempt.startedAt,
-          finishedAt: attempt.finishedAt,
-          questionsAnswered: attempt.answers ? attempt.answers.length : 0,
-        };
-      })
-      .sort(
-        (a: { startedAt: Date }, b: { startedAt: Date }) =>
-          b.startedAt.getTime() - a.startedAt.getTime()
-      );
-
     const settings = (quiz.settings ?? {}) as QuizSettings;
 
     return {
@@ -501,13 +468,13 @@ export async function getQuizStats(
         averageScore,
         completionRate,
         totalQuestions: quiz._count.questions,
-        anonymousCompletedCount,
+        anonymousCompletedCount: responseStats.anonymousCompletedCount,
         anonymousStartedCount,
         anonymousOpenCount,
         anonymousScoreCount,
         anonymousBestScore,
         anonymousLowestScore,
-        identifiedCompletedCount,
+        identifiedCompletedCount: responseStats.identifiedCompletedCount,
         identifiedAttemptsCount,
         identifiedScoreCount,
         identifiedBestScore,
@@ -516,10 +483,11 @@ export async function getQuizStats(
         totalStarted,
         totalOpenCount,
         globalScoreAverage,
-        globalScoredCount: combinedScoreCount,
+        globalScoredCount: responseStats.scoredCount,
         globalBestScore,
         globalLowestScore,
         globalAverageDurationSeconds,
+        completionRatePercent,
         quizDetails: {
           visibility: quiz.visibility,
           status: quiz.status,
@@ -578,15 +546,14 @@ export async function getQuizQuestionInsights(
     const attempts = await prisma.quizAttempt.findMany({
       where: {
         status: "COMPLETED",
-        participantId: { not: null },
-        quizLink: { quizId },
-        ...creatorCountedAttemptWhere,
+        ...buildCreatorResponseAttemptWhere(quizId),
       },
       select: {
         answers: {
           select: {
             questionId: true,
             isCorrect: true,
+            expired: true,
             timeSpent: true,
             selectedOptionIds: true,
           },
@@ -605,6 +572,7 @@ export async function getQuizQuestionInsights(
         return {
           questionId: answer.questionId,
           isCorrect: answer.isCorrect,
+          expired: answer.expired,
           timeSpent: answer.timeSpent,
           selectedOptionIds,
         };
@@ -674,8 +642,19 @@ export async function getAttemptDetails(
       return { success: false, error: "Unauthorized" };
     }
 
-    if (!attempt.participantId) {
-      return { success: false, error: "Unauthorized" };
+    let participantName = attempt.participant?.name ?? "Participant anonyme";
+
+    if (attempt.identityMode === "ANONYMOUS") {
+      const anonymousAttempts = await prisma.quizAttempt.findMany({
+        where: {
+          quizLink: { quizId: attempt.quizLink.quizId },
+          identityMode: "ANONYMOUS",
+        },
+        select: { id: true, startedAt: true },
+        orderBy: { startedAt: "asc" },
+      });
+      const index = buildAnonymousAttemptIndexMap(anonymousAttempts).get(attempt.id);
+      participantName = formatAnonymousParticipantLabel(index ?? 0);
     }
 
     const answers = attempt.answers.map((answer) => {
@@ -714,18 +693,22 @@ export async function getAttemptDetails(
         correctOptionIds,
         correctOptions,
         isCorrect: answer.isCorrect,
+        expired: answer.expired,
         timeSpent: answer.timeSpent,
       };
     });
 
-    const quiz = attempt.quizLink.quiz as { ownerId: string; questions: Array<{ id: string; order: number }> };
+    const quiz = attempt.quizLink.quiz as {
+      ownerId: string;
+      questions: Array<{ id: string; order: number }>;
+    };
     const questionOrder = quiz.questions?.map((q) => ({ id: q.id, order: q.order })) ?? [];
 
     return {
       success: true,
       attempt: {
         id: attempt.id,
-        participantName: attempt.participant?.name ?? "",
+        participantName,
         score: attempt.score,
         status: attempt.status,
         startedAt: attempt.startedAt,
