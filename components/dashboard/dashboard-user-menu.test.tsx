@@ -3,8 +3,8 @@
 import type { ComponentPropsWithoutRef } from "react";
 
 import "@testing-library/jest-dom/vitest";
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 
 import { DashboardUserMenu } from "./dashboard-user-menu";
 
@@ -30,13 +30,16 @@ vi.mock("next-auth/react", () => ({
       },
     },
   }),
-  signOut: vi.fn(),
+  signOut: vi.fn().mockResolvedValue(undefined),
 }));
+
+const mockPush = vi.fn();
+const mockRefresh = vi.fn();
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
-    push: vi.fn(),
-    refresh: vi.fn(),
+    push: mockPush,
+    refresh: mockRefresh,
   }),
 }));
 
@@ -67,6 +70,10 @@ vi.mock("@/components/user-avatar/user-avatar-context", () => ({
 }));
 
 describe("DashboardUserMenu", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("renders sidebar trigger with user display name", () => {
     render(<DashboardUserMenu />);
 
@@ -99,5 +106,21 @@ describe("DashboardUserMenu", () => {
     expect(
       screen.queryByRole("menuitem", { name: "userMenu.admin" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("signs out when used outside BuilderNavigationGuardProvider", async () => {
+    const { signOut } = await import("next-auth/react");
+
+    render(<DashboardUserMenu hideAdminLink />);
+
+    fireEvent.click(screen.getByRole("menuitem", { name: "auth.signOut" }));
+
+    await vi.waitFor(() => {
+      expect(signOut).toHaveBeenCalledWith({ redirect: false });
+    });
+    await vi.waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith("/");
+    });
+    expect(mockRefresh).toHaveBeenCalled();
   });
 });

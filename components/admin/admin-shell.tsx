@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Menu, User, Settings, LogOut, UserRound } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -34,10 +35,12 @@ export function AdminShell({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { data: session } = useSession();
   const { locale } = useLocale();
+  const router = useRouter();
 
   const handleSignOut = async () => {
     await signOut({ redirect: false });
-    window.location.href = "/";
+    router.push("/");
+    router.refresh();
   };
 
   return (
@@ -93,7 +96,7 @@ export function AdminShell({
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={handleSignOut}
+                      onSelect={() => void handleSignOut()}
                       className="flex items-center font-bold text-base gap-2 cursor-pointer text-red-500"
                     >
                       <LogOut className="h-4 w-4" />
