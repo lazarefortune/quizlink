@@ -119,54 +119,39 @@ export function DashboardMobileNavSheet() {
             </Link>
           </SheetClose>
           <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-3 pb-4">
-            <div>
-              <p className="mb-2 px-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                Navigation
-              </p>
-              <nav className="flex flex-col gap-1" aria-label="Navigation">
-                {primaryNav.map((item) => (
-                  <DashboardMobileNavSheetLink
-                    key={item.href}
-                    href={item.href}
-                    icon={item.icon}
-                    label={item.label}
-                    isActive={item.isActive}
-                  />
-                ))}
-              </nav>
-            </div>
-
-            <Separator />
-
-            <div>
-              <p className="mb-2 px-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                {t(locale, "support.helpSection")}
-              </p>
-              <div className="flex flex-col gap-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOpen(false);
-                    openUserFeedback();
-                  }}
-                  className={dashboardSidebarNavItemClassName({})}
-                >
-                  <DashboardFeedbackNavIcon className={dashboardNavIconClassName} />
-                  {t(locale, "userFeedback.navLabel")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOpen(false);
-                    openSupportFeedback();
-                  }}
-                  className={dashboardSidebarNavItemClassName({})}
-                >
-                  <DashboardSupportNavIcon className={dashboardNavIconClassName} />
-                  {t(locale, "support.navLabel")}
-                </button>
-              </div>
-            </div>
+            <nav className="flex flex-col gap-1" aria-label="Navigation">
+              {primaryNav.map((item) => (
+                <DashboardMobileNavSheetLink
+                  key={item.href}
+                  href={item.href}
+                  icon={item.icon}
+                  label={item.label}
+                  isActive={item.isActive}
+                />
+              ))}
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  openUserFeedback();
+                }}
+                className={dashboardSidebarNavItemClassName({})}
+              >
+                <DashboardFeedbackNavIcon className={dashboardNavIconClassName} />
+                {t(locale, "userFeedback.navLabel")}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  openSupportFeedback();
+                }}
+                className={dashboardSidebarNavItemClassName({})}
+              >
+                <DashboardSupportNavIcon className={dashboardNavIconClassName} />
+                {t(locale, "support.navLabel")}
+              </button>
+            </nav>
 
             <Separator />
 
