@@ -21,7 +21,8 @@ import {
   QUIZ_UNLOCK_DURATION_DAYS,
 } from "./quizUnlockConstants";
 import { addDays } from "./quizLinkCampaign";
-import { UNLOCK_QUIZ_ERROR, unlockQuizWithCoins } from "./unlockQuizWithCoins";
+import { UNLOCK_QUIZ_ERROR } from "./quizUnlockConstants";
+import { unlockQuizWithCoins } from "./unlockQuizWithCoins";
 
 const quizId = "quiz-1";
 const userId = "user-1";

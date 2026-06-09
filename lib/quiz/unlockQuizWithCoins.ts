@@ -8,14 +8,8 @@ import { getQuizAccessState } from "./getQuizAccessState";
 import {
   QUIZ_UNLOCK_COIN_COST,
   QUIZ_UNLOCK_DURATION_DAYS,
+  UNLOCK_QUIZ_ERROR,
 } from "./quizUnlockConstants";
-
-export const UNLOCK_QUIZ_ERROR = {
-  UNAUTHORIZED: "UNAUTHORIZED",
-  QUIZ_NOT_FOUND: "QUIZ_NOT_FOUND",
-  INSUFFICIENT_COINS: "INSUFFICIENT_COINS",
-  DATABASE: "DATABASE_ERROR",
-} as const;
 
 export type UnlockQuizWithCoinsResult =
   | {

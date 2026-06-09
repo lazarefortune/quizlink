@@ -1,3 +1,10 @@
+export const UNLOCK_QUIZ_ERROR = {
+  UNAUTHORIZED: "UNAUTHORIZED",
+  QUIZ_NOT_FOUND: "QUIZ_NOT_FOUND",
+  INSUFFICIENT_COINS: "INSUFFICIENT_COINS",
+  DATABASE: "DATABASE_ERROR",
+} as const;
+
 /** Coin cost to unlock a single quiz for the owner (2 months full access). */
 export const QUIZ_UNLOCK_COIN_COST = 40;
 

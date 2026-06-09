@@ -3,10 +3,8 @@
 import { revalidatePath } from "next/cache";
 
 import { auth } from "@/lib/auth";
-import {
-  UNLOCK_QUIZ_ERROR,
-  unlockQuizWithCoins,
-} from "@/lib/quiz/unlockQuizWithCoins";
+import { UNLOCK_QUIZ_ERROR } from "@/lib/quiz/quizUnlockConstants";
+import { unlockQuizWithCoins } from "@/lib/quiz/unlockQuizWithCoins";
 
 export type UnlockQuizWithCoinsActionResponse =
   | {

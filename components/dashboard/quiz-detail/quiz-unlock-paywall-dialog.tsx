@@ -18,7 +18,7 @@ import {
 import { useToast } from "@/components/ui/toast";
 import { t } from "@/lib/i18n";
 import { useLocale } from "@/lib/i18n/use-locale";
-import { UNLOCK_QUIZ_ERROR } from "@/lib/quiz/unlockQuizWithCoins";
+import { UNLOCK_QUIZ_ERROR } from "@/lib/quiz/quizUnlockConstants";
 import { PRO_MONTHLY_PRICE_EUR } from "@/lib/subscription/proSubscriptionConstants";
 import { cn } from "@/lib/utils";
 
