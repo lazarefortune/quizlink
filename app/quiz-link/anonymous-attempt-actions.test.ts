@@ -9,11 +9,28 @@ const mockFindFirst = vi.fn();
 const mockFindMany = vi.fn();
 const mockCreate = vi.fn();
 const mockUpdate = vi.fn();
+const mockUpdateMany = vi.fn();
 const mockExecuteRaw = vi.fn();
 
 const mockCookieSet = vi.fn();
 const mockCookieGet = vi.fn();
 const mockCookieDelete = vi.fn();
+
+const mockIncrementQuizStartedAggregate = vi.fn();
+const mockIncrementQuizCompletedAggregate = vi.fn();
+const mockIncrementQuestionAnswerAggregates = vi.fn();
+const mockTransitionAttemptToCompleted = vi.fn();
+
+vi.mock("@/lib/quiz/quiz-response-aggregates", () => ({
+  incrementQuizStartedAggregate: (...args: unknown[]) =>
+    mockIncrementQuizStartedAggregate(...args),
+  incrementQuizCompletedAggregate: (...args: unknown[]) =>
+    mockIncrementQuizCompletedAggregate(...args),
+  incrementQuestionAnswerAggregates: (...args: unknown[]) =>
+    mockIncrementQuestionAnswerAggregates(...args),
+  transitionAttemptToCompleted: (...args: unknown[]) =>
+    mockTransitionAttemptToCompleted(...args),
+}));
 
 vi.mock("next/headers", () => ({
   cookies: vi.fn(async () => ({
@@ -25,7 +42,11 @@ vi.mock("next/headers", () => ({
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
-    quizLink: { findUnique: (...a: unknown[]) => mockFindUnique(...a) },
+    quizLink: {
+      findUnique: (...a: unknown[]) => mockFindUnique(...a),
+      updateMany: (...a: unknown[]) => mockUpdateMany(...a),
+      update: (...a: unknown[]) => mockUpdate(...a),
+    },
     quizAttempt: {
       findUnique: (...a: unknown[]) => mockFindUnique(...a),
       create: (...a: unknown[]) => mockCreate(...a),
@@ -55,6 +76,7 @@ import {
   finishAnonymousQuizAttemptAction,
 } from "./anonymous-attempt-actions";
 import { QUIZ_ACTION_ERROR_CODE } from "@/lib/quiz/quizActionErrorCodes";
+import { QUIZ_LINK_CAMPAIGN_ERROR } from "@/lib/quiz/quizLinkCampaign";
 
 // ---------------------------------------------------------------------------
 // Base fixtures
@@ -77,6 +99,10 @@ const baseQuizLink = {
   participantId: null,
   revokedAt: null,
   expiresAt: null,
+  responsesStartedAt: null,
+  acceptingResponsesUntil: null,
+  detailsVisibleUntil: null,
+  unlockedUntil: null,
   quiz: {
     id: "quiz-1",
     status: "ACTIVE",
@@ -98,6 +124,7 @@ const baseAttempt = {
     id: "link-1",
     token: "tok",
     quiz: {
+      id: "quiz-1",
       status: "ACTIVE",
       settings: {},
       questions: [baseQuestion],
@@ -115,6 +142,9 @@ describe("startAnonymousQuizAttemptAction", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     mockExecuteRaw.mockResolvedValue(undefined);
+    mockUpdateMany.mockResolvedValue({ count: 1 });
+    mockUpdate.mockResolvedValue({});
+    mockIncrementQuizStartedAggregate.mockResolvedValue(undefined);
   });
 
   it("creates an attempt, sets cookie, and returns clean play redirect", async () => {
@@ -126,6 +156,7 @@ describe("startAnonymousQuizAttemptAction", () => {
     expect(result.success).toBe(true);
     if (!result.success) return;
     expect(result.redirectTo).toBe("/quiz/tok/play");
+    expect(mockIncrementQuizStartedAggregate).toHaveBeenCalledWith("quiz-1");
     expect(mockCookieSet).toHaveBeenCalledWith(
       "quizlink_attempt_tok",
       "att-new",
@@ -153,6 +184,152 @@ describe("startAnonymousQuizAttemptAction", () => {
     mockFindUnique.mockResolvedValue({ ...baseQuizLink, participantId: "p1" });
     const result = await startAnonymousQuizAttemptAction("tok");
     expect(result.success).toBe(false);
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
+
+  it("initializes campaign on first attempt start", async () => {
+    mockFindUnique.mockResolvedValue(baseQuizLink);
+    mockCreate.mockResolvedValue({ id: "att-new" });
+
+    await startAnonymousQuizAttemptAction("tok");
+
+    expect(mockUpdateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "link-1", responsesStartedAt: null },
+        data: expect.objectContaining({
+          responsesStartedAt: expect.any(Date),
+          acceptingResponsesUntil: expect.any(Date),
+          detailsVisibleUntil: expect.any(Date),
+        }),
+      }),
+    );
+  });
+
+  it("does not reset campaign dates when responsesStartedAt is already set", async () => {
+    const started = new Date("2026-05-15T12:00:00Z");
+    const acceptingUntil = new Date("2026-12-31T12:00:00Z");
+    mockFindUnique.mockResolvedValue({
+      ...baseQuizLink,
+      responsesStartedAt: started,
+      acceptingResponsesUntil: acceptingUntil,
+      detailsVisibleUntil: acceptingUntil,
+    });
+    mockCreate.mockResolvedValue({ id: "att-2" });
+
+    await startAnonymousQuizAttemptAction("tok");
+
+    expect(mockUpdateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "link-1", responsesStartedAt: null },
+        data: expect.not.objectContaining({
+          responsesStartedAt: started,
+        }),
+      }),
+    );
+    expect(mockCreate).toHaveBeenCalled();
+  });
+
+  it("refuses start when acceptingResponsesUntil expired and not unlocked", async () => {
+    mockFindUnique.mockResolvedValue({
+      ...baseQuizLink,
+      responsesStartedAt: new Date("2026-05-01T12:00:00Z"),
+      acceptingResponsesUntil: new Date("2026-05-08T12:00:00Z"),
+      detailsVisibleUntil: new Date("2026-05-08T12:00:00Z"),
+      unlockedUntil: null,
+    });
+
+    const result = await startAnonymousQuizAttemptAction("tok");
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error).toBe(QUIZ_LINK_CAMPAIGN_ERROR.NO_LONGER_ACCEPTING_RESPONSES);
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
+
+  it("allows start when unlockedUntil is in the future despite expired campaign", async () => {
+    mockFindUnique.mockResolvedValue({
+      ...baseQuizLink,
+      responsesStartedAt: new Date("2026-05-01T12:00:00Z"),
+      acceptingResponsesUntil: new Date("2026-05-08T12:00:00Z"),
+      detailsVisibleUntil: new Date("2026-05-08T12:00:00Z"),
+      unlockedUntil: new Date("2026-12-01T12:00:00Z"),
+    });
+    mockCreate.mockResolvedValue({ id: "att-unlocked" });
+
+    const result = await startAnonymousQuizAttemptAction("tok");
+    expect(result.success).toBe(true);
+    expect(mockCreate).toHaveBeenCalled();
+  });
+
+  it("creates PSEUDONYM attempt with trimmed participant name", async () => {
+    mockFindUnique.mockResolvedValue({
+      ...baseQuizLink,
+      quiz: {
+        ...baseQuizLink.quiz,
+        settings: { participantIdentityMode: "PSEUDONYM" },
+      },
+    });
+    mockCreate.mockResolvedValue({ id: "att-pseudo" });
+
+    const result = await startAnonymousQuizAttemptAction("tok", {
+      participantName: "  Player One  ",
+    });
+
+    expect(result.success).toBe(true);
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          identityMode: "PSEUDONYM",
+          participantName: "Player One",
+          participantEmail: null,
+        }),
+      }),
+    );
+  });
+
+  it("creates NAME_EMAIL attempt with lowercase email", async () => {
+    mockFindUnique.mockResolvedValue({
+      ...baseQuizLink,
+      quiz: {
+        ...baseQuizLink.quiz,
+        settings: { participantIdentityMode: "NAME_EMAIL" },
+      },
+    });
+    mockCreate.mockResolvedValue({ id: "att-email" });
+
+    const result = await startAnonymousQuizAttemptAction("tok", {
+      participantName: "Ada",
+      participantEmail: "Ada@Example.COM",
+      hasConsent: true,
+    });
+
+    expect(result.success).toBe(true);
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          identityMode: "NAME_EMAIL",
+          participantName: "Ada",
+          participantEmail: "ada@example.com",
+        }),
+      }),
+    );
+  });
+
+  it("rejects NAME_EMAIL with invalid email", async () => {
+    mockFindUnique.mockResolvedValue({
+      ...baseQuizLink,
+      quiz: {
+        ...baseQuizLink.quiz,
+        settings: { participantIdentityMode: "NAME_EMAIL" },
+      },
+    });
+
+    const result = await startAnonymousQuizAttemptAction("tok", {
+      participantName: "Ada",
+      participantEmail: "not-email",
+      hasConsent: true,
+    });
+
+    expect(result).toEqual({ success: false, error: "participantEmailInvalid" });
     expect(mockCreate).not.toHaveBeenCalled();
   });
 
@@ -370,6 +547,9 @@ describe("finishAnonymousQuizAttemptAction", () => {
     mockExecuteRaw.mockResolvedValue(undefined);
     mockUpdate.mockResolvedValue({});
     mockCreate.mockResolvedValue({});
+    mockTransitionAttemptToCompleted.mockResolvedValue(true);
+    mockIncrementQuizCompletedAggregate.mockResolvedValue(undefined);
+    mockIncrementQuestionAnswerAggregates.mockResolvedValue(undefined);
   });
 
   it("calculates score server-side from stored answers", async () => {
@@ -468,5 +648,96 @@ describe("finishAnonymousQuizAttemptAction", () => {
     expect(result.showAnswersAtEnd).toBe(false);
     expect(result.details[0]?.correctOptionIds).toEqual([]); // stripped
     expect(result.details[0]?.explanation).toBeNull(); // stripped
+  });
+
+  it("updates quiz aggregates when attempt completes", async () => {
+    const fullAttempt = {
+      ...baseAttempt,
+      answers: [
+        {
+          questionId: "q1",
+          isCorrect: true,
+          expired: false,
+          timeSpent: 12,
+        },
+      ],
+      questionTimings: [],
+    };
+    mockFindUnique
+      .mockResolvedValueOnce(fullAttempt)
+      .mockResolvedValueOnce({
+        score: 100,
+        startedAt: fullAttempt.startedAt,
+        finishedAt: new Date(),
+        durationSeconds: 30,
+      });
+    mockFindMany
+      .mockResolvedValueOnce([
+        {
+          questionId: "q1",
+          isCorrect: true,
+          expired: false,
+          selectedOptionIds: ["o1"],
+          answeredAt: new Date(),
+          timeSpent: 12,
+        },
+      ])
+      .mockResolvedValueOnce([]);
+
+    await finishAnonymousQuizAttemptAction("att-1", []);
+
+    expect(mockTransitionAttemptToCompleted).toHaveBeenCalled();
+    expect(mockIncrementQuizCompletedAggregate).toHaveBeenCalledWith(
+      "quiz-1",
+      expect.objectContaining({
+        score: 100,
+        totalQuestions: 1,
+      }),
+    );
+    expect(mockIncrementQuestionAnswerAggregates).toHaveBeenCalledWith(
+      "quiz-1",
+      [
+        expect.objectContaining({
+          questionId: "q1",
+          isCorrect: true,
+          expired: false,
+          timeSpentSeconds: 12,
+        }),
+      ],
+    );
+  });
+
+  it("does not double-count aggregates when finish is retried", async () => {
+    mockTransitionAttemptToCompleted.mockResolvedValue(false);
+    const fullAttempt = {
+      ...baseAttempt,
+      answers: [{ questionId: "q1", isCorrect: true }],
+      questionTimings: [],
+    };
+    mockFindUnique
+      .mockResolvedValueOnce(fullAttempt)
+      .mockResolvedValueOnce({
+        score: 100,
+        startedAt: fullAttempt.startedAt,
+        finishedAt: new Date(),
+        durationSeconds: 30,
+      });
+    mockFindMany
+      .mockResolvedValueOnce([
+        {
+          questionId: "q1",
+          isCorrect: true,
+          expired: false,
+          selectedOptionIds: ["o1"],
+          answeredAt: new Date(),
+          timeSpent: null,
+        },
+      ])
+      .mockResolvedValueOnce([]);
+
+    await finishAnonymousQuizAttemptAction("att-1", []);
+
+    expect(mockIncrementQuizCompletedAggregate).not.toHaveBeenCalled();
+    expect(mockIncrementQuestionAnswerAggregates).not.toHaveBeenCalled();
   });
 });

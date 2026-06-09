@@ -1,8 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockFindUnique = vi.fn();
-const mockUpdate = vi.fn();
+const mockUpdateMany = vi.fn();
 const mockCookieDelete = vi.fn();
+const mockTransitionAttemptToAbandoned = vi.fn();
+const mockIncrementQuizAbandonedAggregate = vi.fn();
+const mockQuizLinkUpdate = vi.fn();
 
 vi.mock("next/headers", () => ({
   cookies: vi.fn(async () => ({
@@ -12,11 +15,21 @@ vi.mock("next/headers", () => ({
   })),
 }));
 
+vi.mock("@/lib/quiz/quiz-response-aggregates", () => ({
+  transitionAttemptToAbandoned: (...args: unknown[]) =>
+    mockTransitionAttemptToAbandoned(...args),
+  incrementQuizAbandonedAggregate: (...args: unknown[]) =>
+    mockIncrementQuizAbandonedAggregate(...args),
+}));
+
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     quizAttempt: {
       findUnique: (...args: unknown[]) => mockFindUnique(...args),
-      update: (...args: unknown[]) => mockUpdate(...args),
+      updateMany: (...args: unknown[]) => mockUpdateMany(...args),
+    },
+    quizLink: {
+      update: (...args: unknown[]) => mockQuizLinkUpdate(...args),
     },
   },
 }));
@@ -29,7 +42,9 @@ const startedAt = new Date("2026-05-20T10:00:00Z");
 describe("abandonQuizAttemptById", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockUpdate.mockResolvedValue({});
+    mockTransitionAttemptToAbandoned.mockResolvedValue(true);
+    mockIncrementQuizAbandonedAggregate.mockResolvedValue(undefined);
+    mockQuizLinkUpdate.mockResolvedValue({});
   });
 
   it("marks IN_PROGRESS attempt as ABANDONED with durationSeconds", async () => {
@@ -37,19 +52,21 @@ describe("abandonQuizAttemptById", () => {
       id: "att-1",
       status: "IN_PROGRESS",
       startedAt,
+      quizLinkId: "link-1",
+      quizLink: { quizId: "quiz-1" },
     });
 
     const result = await abandonQuizAttemptById("att-1");
 
     expect(result).toEqual({ success: true, alreadyFinalized: false });
-    expect(mockUpdate).toHaveBeenCalledWith({
-      where: { id: "att-1" },
-      data: expect.objectContaining({
-        status: "ABANDONED",
+    expect(mockTransitionAttemptToAbandoned).toHaveBeenCalledWith(
+      "att-1",
+      expect.objectContaining({
         finishedAt: expect.any(Date),
         durationSeconds: expect.any(Number),
       }),
-    });
+    );
+    expect(mockIncrementQuizAbandonedAggregate).toHaveBeenCalledWith("quiz-1");
   });
 
   it("is idempotent when attempt is already COMPLETED", async () => {
@@ -57,12 +74,15 @@ describe("abandonQuizAttemptById", () => {
       id: "att-1",
       status: "COMPLETED",
       startedAt,
+      quizLinkId: "link-1",
+      quizLink: { quizId: "quiz-1" },
     });
 
     const result = await abandonQuizAttemptById("att-1");
 
     expect(result).toEqual({ success: true, alreadyFinalized: true });
-    expect(mockUpdate).not.toHaveBeenCalled();
+    expect(mockTransitionAttemptToAbandoned).not.toHaveBeenCalled();
+    expect(mockIncrementQuizAbandonedAggregate).not.toHaveBeenCalled();
   });
 
   it("is idempotent when attempt is already ABANDONED", async () => {
@@ -70,12 +90,31 @@ describe("abandonQuizAttemptById", () => {
       id: "att-1",
       status: "ABANDONED",
       startedAt,
+      quizLinkId: "link-1",
+      quizLink: { quizId: "quiz-1" },
     });
 
     const result = await abandonQuizAttemptById("att-1");
 
     expect(result).toEqual({ success: true, alreadyFinalized: true });
-    expect(mockUpdate).not.toHaveBeenCalled();
+    expect(mockTransitionAttemptToAbandoned).not.toHaveBeenCalled();
+    expect(mockIncrementQuizAbandonedAggregate).not.toHaveBeenCalled();
+  });
+
+  it("does not double-count when transition fails", async () => {
+    mockFindUnique.mockResolvedValue({
+      id: "att-1",
+      status: "IN_PROGRESS",
+      startedAt,
+      quizLinkId: "link-1",
+      quizLink: { quizId: "quiz-1" },
+    });
+    mockTransitionAttemptToAbandoned.mockResolvedValue(false);
+
+    const result = await abandonQuizAttemptById("att-1");
+
+    expect(result).toEqual({ success: true, alreadyFinalized: true });
+    expect(mockIncrementQuizAbandonedAggregate).not.toHaveBeenCalled();
   });
 
   it("returns error when attempt is not found", async () => {
@@ -84,21 +123,23 @@ describe("abandonQuizAttemptById", () => {
     const result = await abandonQuizAttemptById("missing");
 
     expect(result).toEqual({ success: false, error: "Attempt not found" });
-    expect(mockUpdate).not.toHaveBeenCalled();
+    expect(mockTransitionAttemptToAbandoned).not.toHaveBeenCalled();
   });
 });
 
 describe("abandonQuizAttemptAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockUpdate.mockResolvedValue({});
+    mockTransitionAttemptToAbandoned.mockResolvedValue(true);
+    mockIncrementQuizAbandonedAggregate.mockResolvedValue(undefined);
+    mockQuizLinkUpdate.mockResolvedValue({});
   });
 
   it("delegates to abandonQuizAttemptById and clears cookie", async () => {
     mockFindUnique.mockImplementation((args: { select?: unknown }) => {
       if (args && typeof args === "object" && "select" in args) {
-        const select = args.select as { quizLink?: unknown };
-        if (select.quizLink) {
+        const select = args.select as { quizLink?: unknown; status?: unknown };
+        if (select.quizLink && !select.status) {
           return Promise.resolve({ quizLink: { token: "tok" } });
         }
       }
@@ -106,6 +147,8 @@ describe("abandonQuizAttemptAction", () => {
         id: "att-1",
         status: "IN_PROGRESS",
         startedAt,
+        quizLinkId: "link-1",
+        quizLink: { quizId: "quiz-1" },
       });
     });
 

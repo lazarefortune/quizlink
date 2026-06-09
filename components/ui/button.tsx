@@ -20,6 +20,8 @@ const buttonVariants = cva(
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline h-auto min-h-0 px-0 py-0 rounded-none bg-transparent shadow-none font-black uppercase",
         blue: "bg-blue text-blue-foreground btn-bouncy-blue",
+        white:
+          "border-2 border-[hsl(var(--white-button-border))] bg-[hsl(var(--white-button-bg))] text-[hsl(var(--white-button-fg))] btn-bouncy-white normal-case tracking-normal hover:bg-[hsl(var(--white-button-bg))] dark:border-[hsl(var(--white-button-border))] dark:bg-[hsl(var(--white-button-bg))] dark:text-[hsl(var(--white-button-fg))] dark:hover:bg-[hsl(var(--white-button-bg))]",
         hero: "bg-primary text-primary-foreground btn-bouncy-primary text-base normal-case",
       },
       size: {

@@ -9,6 +9,9 @@ import {
   playBlockedErrorCodeForQuizStatus,
   QUIZ_ACTION_ERROR_CODE,
 } from "@/lib/quiz/quizActionErrorCodes";
+import { getQuizLinkCampaignBlockError, isQuizLinkAcceptingNewResponses } from "@/lib/quiz/quizLinkCampaign";
+import { ensureQuizLinkCampaignStarted } from "@/lib/quiz/quizLinkCampaignPersistence";
+import { incrementQuizStartedAggregate } from "@/lib/quiz/quiz-response-aggregates";
 import { canQuizBePlayed, canQuizBeShared } from "@/lib/quiz/quizStatusPolicy";
 import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
 
@@ -32,11 +35,16 @@ type GetQuizLinkByTokenResponse =
         } | null;
         allowMultipleAttempts: boolean;
         expiresAt: Date | null;
+        responsesStartedAt: Date | null;
+        acceptingResponsesUntil: Date | null;
+        unlockedUntil: Date | null;
+        isAcceptingResponses: boolean;
         hasCompletedAttempt: boolean;
         quiz: {
           id: string;
           name: string;
           visibility: string;
+          ownerId: string | null;
           settings: Record<string, unknown>;
           questions: Array<{
             id: string;
@@ -333,6 +341,14 @@ export async function getQuizLinkByToken(
       );
     }
 
+    const campaignFields = {
+      responsesStartedAt: quizLink.responsesStartedAt,
+      acceptingResponsesUntil: quizLink.acceptingResponsesUntil,
+      detailsVisibleUntil: quizLink.detailsVisibleUntil,
+      unlockedUntil: quizLink.unlockedUntil,
+    };
+    const isAcceptingResponses = isQuizLinkAcceptingNewResponses(campaignFields);
+
     return {
       success: true,
       quizLink: {
@@ -352,11 +368,16 @@ export async function getQuizLinkByToken(
           : null,
         allowMultipleAttempts: quizLink.allowMultipleAttempts,
         expiresAt: quizLink.expiresAt,
+        responsesStartedAt: quizLink.responsesStartedAt,
+        acceptingResponsesUntil: quizLink.acceptingResponsesUntil,
+        unlockedUntil: quizLink.unlockedUntil,
+        isAcceptingResponses,
         hasCompletedAttempt,
         quiz: {
           id: quizLink.quiz.id,
           name: quizLink.quiz.name,
           visibility: quizLink.quiz.visibility,
+          ownerId: quizLink.quiz.ownerId,
           settings: quizLink.quiz.settings as Record<string, unknown>,
           questions: quizLink.quiz.questions.map((q: { id: string; type: string; label: string; image: string | null; imageKey: string | null; order: number; options: Array<{ id: string; label: string; isCorrect: boolean }> }) => ({
             id: q.id,
@@ -487,6 +508,12 @@ export async function startQuizAttempt(
       return { success: false, error: attemptBlocked };
     }
 
+    const now = new Date();
+    const campaignBlock = getQuizLinkCampaignBlockError(quizLink, now);
+    if (campaignBlock) {
+      return { success: false, error: campaignBlock };
+    }
+
     // For personalized links, verify participant exists
     if (participantId) {
       const participant = await prisma.participant.findUnique({
@@ -548,6 +575,10 @@ export async function startQuizAttempt(
         status: "IN_PROGRESS",
       } as Prisma.QuizAttemptCreateInput,
     });
+
+    await ensureQuizLinkCampaignStarted(quizLinkId, now);
+
+    await incrementQuizStartedAggregate(quizLink.quizId);
 
     return {
       success: true,

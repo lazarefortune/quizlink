@@ -7,6 +7,7 @@ import {
   getAttemptDetails,
   type GetAttemptDetailsResponse,
 } from "@/app/(app)/dashboard/quiz/[quizId]/actions";
+import { ATTEMPT_DETAILS_ERROR } from "@/lib/dashboard/creator-response-attempts";
 import {
   Dialog,
   DialogContent,
@@ -24,16 +25,19 @@ type QuizAttemptDetailDialogProps = {
   attemptId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  resolveError?: (error: string) => string;
 };
 
 export function QuizAttemptDetailDialog({
   attemptId,
   open,
   onOpenChange,
+  resolveError,
 }: QuizAttemptDetailDialogProps) {
   const { locale } = useLocale();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<string | null>(null);
   const [attempt, setAttempt] = useState<
     Extract<GetAttemptDetailsResponse, { success: true }>["attempt"] | null
   >(null);
@@ -46,12 +50,14 @@ export function QuizAttemptDetailDialog({
     let cancelled = false;
     setIsLoading(true);
     setError(null);
+    setErrorCode(null);
 
     getAttemptDetails(attemptId)
       .then((result) => {
         if (cancelled) return;
         if (!result.success) {
-          setError(result.error);
+          setErrorCode(result.error);
+          setError(resolveError ? resolveError(result.error) : result.error);
           setAttempt(null);
           return;
         }
@@ -96,13 +102,34 @@ export function QuizAttemptDetailDialog({
         ) : null}
 
         {error ? (
-          <p className="text-sm text-destructive">{error}</p>
+          <div className="space-y-1">
+            {errorCode === ATTEMPT_DETAILS_ERROR.PURGED ? (
+              <p className="text-sm font-medium text-foreground">
+                {t(locale, "dashboard.attemptDetailsPurged")}
+              </p>
+            ) : null}
+            <p
+              className={cn(
+                "text-sm",
+                errorCode === ATTEMPT_DETAILS_ERROR.PURGED
+                  ? "text-muted-foreground"
+                  : "text-destructive",
+              )}
+            >
+              {error}
+            </p>
+          </div>
         ) : null}
 
         {attempt ? (
           <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-2 text-sm">
-              <span className="font-medium text-foreground">{attempt.participantName}</span>
+              <div className="flex flex-col gap-0.5">
+                <span className="font-medium text-foreground">{attempt.participantName}</span>
+                {attempt.participantEmail ? (
+                  <span className="text-xs text-muted-foreground">{attempt.participantEmail}</span>
+                ) : null}
+              </div>
               {attempt.status === "COMPLETED" && attempt.score != null ? (
                 <Badge variant="outline" className="tabular-nums">
                   {attempt.score.toFixed(1)}%

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { resolveEffectiveQuizSettings } from "@/lib/quiz/resolveEffectiveQuizSettings";
 
 import { QuizCreationSuccessContent } from "./quiz-creation-success-content";
 
@@ -24,6 +25,7 @@ export default async function QuizCreationSuccessPage({ params }: PageProps) {
       name: true,
       ownerId: true,
       status: true,
+      settings: true,
       _count: { select: { questions: true } },
     },
   });
@@ -32,12 +34,15 @@ export default async function QuizCreationSuccessPage({ params }: PageProps) {
     redirect("/dashboard/quizzes");
   }
 
+  const { participantIdentityMode } = resolveEffectiveQuizSettings(quiz.settings);
+
   return (
     <QuizCreationSuccessContent
       quizId={quiz.id}
       quizName={quiz.name}
       questionCount={quiz._count.questions}
       quizStatus={quiz.status}
+      participantIdentityMode={participantIdentityMode}
     />
   );
 }

@@ -1,5 +1,7 @@
 import { Suspense } from "react";
 import { QuizResultsContent } from "../quiz-results-content";
+import { t } from "@/lib/i18n";
+import { getRequestLocale } from "@/lib/i18n/request-locale";
 import { prisma } from "@/lib/prisma";
 import { resolveEffectiveQuizSettings } from "@/lib/quiz/resolveEffectiveQuizSettings";
 
@@ -9,6 +11,7 @@ type PageProps = {
 
 export default async function QuizResultsPage({ params }: PageProps) {
   const { token, attemptId } = await params;
+  const requestLocale = await getRequestLocale();
 
   const attempt = await prisma.quizAttempt.findUnique({
     where: { id: attemptId },
@@ -75,9 +78,11 @@ export default async function QuizResultsPage({ params }: PageProps) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="max-w-md w-full text-center">
-          <h1 className="text-2xl font-bold mb-4">Tentative non trouvée</h1>
+          <h1 className="text-2xl font-bold mb-4">
+            {t(requestLocale, "quiz.playPage.gameNotFoundTitle")}
+          </h1>
           <p className="text-muted-foreground">
-            Cette tentative n&apos;existe pas ou a été supprimée.
+            {t(requestLocale, "quiz.playPage.gameNotFoundDescription")}
           </p>
         </div>
       </div>
@@ -90,7 +95,7 @@ export default async function QuizResultsPage({ params }: PageProps) {
         <div className="max-w-md w-full text-center">
           <h1 className="text-2xl font-bold mb-4">Accès non autorisé</h1>
           <p className="text-muted-foreground">
-            Cette tentative n&apos;appartient pas à ce quiz.
+            {t(requestLocale, "quiz.playPage.gameWrongQuiz")}
           </p>
         </div>
       </div>

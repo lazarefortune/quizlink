@@ -1,6 +1,20 @@
 import { prisma } from "@/lib/prisma";
 import { playBlockedErrorCodeForQuizStatus } from "@/lib/quiz/quizActionErrorCodes";
 import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
+import {
+  isParticipantIdentityMode,
+  type ParticipantIdentityMode,
+} from "@/types/participant-identity";
+
+const PUBLIC_PLAY_IDENTITY_MODES: ParticipantIdentityMode[] = [
+  "ANONYMOUS",
+  "PSEUDONYM",
+  "NAME_EMAIL",
+];
+
+function isPublicPlayIdentityMode(identityMode: string): identityMode is ParticipantIdentityMode {
+  return isParticipantIdentityMode(identityMode) && PUBLIC_PLAY_IDENTITY_MODES.includes(identityMode);
+}
 
 export type AnonymousPlayAttemptResolution =
   | { status: "in_progress"; attemptId: string }
@@ -53,7 +67,10 @@ export async function validateAnonymousPlayAttempt(
     return { status: "token_mismatch" };
   }
 
-  if (attempt.quizLink.participantId !== null || attempt.identityMode !== "ANONYMOUS") {
+  if (
+    attempt.quizLink.participantId !== null ||
+    !isPublicPlayIdentityMode(attempt.identityMode)
+  ) {
     return { status: "token_mismatch" };
   }
 

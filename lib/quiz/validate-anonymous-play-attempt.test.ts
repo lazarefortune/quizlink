@@ -57,4 +57,22 @@ describe("validateAnonymousPlayAttempt", () => {
     const result = await validateAnonymousPlayAttempt("tok", "missing");
     expect(result).toEqual({ status: "not_found" });
   });
+
+  it("accepts in-progress PSEUDONYM public attempt", async () => {
+    mockFindUnique.mockResolvedValue({
+      ...baseAttempt,
+      identityMode: "PSEUDONYM",
+    });
+    const result = await validateAnonymousPlayAttempt("tok", "att-1");
+    expect(result).toEqual({ status: "in_progress", attemptId: "att-1" });
+  });
+
+  it("rejects identified participant link attempts", async () => {
+    mockFindUnique.mockResolvedValue({
+      ...baseAttempt,
+      quizLink: { ...baseAttempt.quizLink, participantId: "p1" },
+    });
+    const result = await validateAnonymousPlayAttempt("tok", "att-1");
+    expect(result).toEqual({ status: "token_mismatch" });
+  });
 });

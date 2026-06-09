@@ -10,6 +10,38 @@ type ScrollBehaviorResult = {
 const HIDE_TRIGGER_PX = 60;
 const SHOW_TRIGGER_PX = 300;
 const DELTA_THRESHOLD = 6;
+const NEAR_BOTTOM_THRESHOLD_PX = 96;
+
+export function isNearScrollBottom(
+  root: HTMLElement,
+  thresholdPx: number = NEAR_BOTTOM_THRESHOLD_PX,
+): boolean {
+  return root.scrollTop + root.clientHeight >= root.scrollHeight - thresholdPx;
+}
+
+export function resolveHeaderVisibility({
+  delta,
+  currentY,
+  isNearBottom,
+}: {
+  delta: number;
+  currentY: number;
+  isNearBottom: boolean;
+}): boolean | null {
+  if (delta > DELTA_THRESHOLD && currentY > HIDE_TRIGGER_PX) {
+    return false;
+  }
+
+  if (isNearBottom) {
+    return null;
+  }
+
+  if (delta < -DELTA_THRESHOLD || currentY <= HIDE_TRIGGER_PX) {
+    return true;
+  }
+
+  return null;
+}
 
 export function useScrollBehavior(): ScrollBehaviorResult {
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
@@ -21,12 +53,17 @@ export function useScrollBehavior(): ScrollBehaviorResult {
       document.getElementById("dashboard-main-scroll");
 
     const handleScroll = (currentY: number) => {
+      const root = getScrollRoot();
       const delta = currentY - lastScrollY.current;
+      const isNearBottom = root ? isNearScrollBottom(root) : false;
+      const nextHeaderVisibility = resolveHeaderVisibility({
+        delta,
+        currentY,
+        isNearBottom,
+      });
 
-      if (delta > DELTA_THRESHOLD && currentY > HIDE_TRIGGER_PX) {
-        setIsHeaderVisible(false);
-      } else if (delta < -DELTA_THRESHOLD || currentY <= HIDE_TRIGGER_PX) {
-        setIsHeaderVisible(true);
+      if (nextHeaderVisibility !== null) {
+        setIsHeaderVisible(nextHeaderVisibility);
       }
 
       setIsScrolledDown(currentY > SHOW_TRIGGER_PX);

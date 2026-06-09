@@ -4,6 +4,7 @@ import Image from "next/image";
 
 import type { QuizContentQuestion } from "@/app/(app)/dashboard/quiz/[quizId]/actions";
 import type { QuestionInsight } from "@/lib/dashboard/aggregate-question-insights";
+import { PlayfulSectionTitle } from "@/components/ui/playful-section-title";
 import { Badge } from "@/components/ui/badge";
 import { QuizRichText } from "@/components/quiz/quiz-rich-text";
 import { t, type Locale } from "@/lib/i18n";
@@ -39,7 +40,9 @@ export function QuizQuestionAnalysisSection({
 
   return (
     <section className="space-y-4">
-      <h2 className="text-xl font-semibold">{t(locale, "dashboard.questionAnalysisTitle")}</h2>
+      <PlayfulSectionTitle className="text-xl font-semibold">
+        {t(locale, "dashboard.questionAnalysisTitle")}
+      </PlayfulSectionTitle>
       <div className="space-y-4">
         {questions.map((question, index) => {
           const insight = insightsById.get(question.id);

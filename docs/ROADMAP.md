@@ -2,6 +2,7 @@
 
 ## Général
 - [ ] Eviter le downtime lors du déploiement
+- [ ] Implémenter la déconnexion depuis l'espace admin
 
 ## Phase 1 — Builder & création
 

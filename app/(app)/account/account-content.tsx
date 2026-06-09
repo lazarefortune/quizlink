@@ -61,6 +61,8 @@ import {
   Headset,
   Star,
 } from "lucide-react";
+import { AccountProfileAvatarBanner } from "@/components/user-avatar/account-profile-avatar-banner";
+import { UserAvatarEditorDialog } from "@/components/user-avatar/user-avatar-editor-dialog";
 import { GoogleIcon } from "@/components/ui/google-icon";
 import { format } from "date-fns";
 import { fr as frLocale, enUS } from "date-fns/locale";
@@ -68,6 +70,8 @@ import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { useCookieConsent } from "@/components/cookie-consent/cookie-consent-context";
 import { useSupportFeedback } from "@/components/support/support-feedback-provider";
+import type { ActiveUserSubscriptionAccess } from "@/lib/quiz/getActiveUserSubscriptionAccess";
+import { ProSubscriptionSection } from "./pro-subscription-section";
 
 type UserData = {
   id: string;
@@ -81,10 +85,15 @@ type UserData = {
   notifyQuizResponses: boolean;
   notifyProductUpdates: boolean;
   notifyMarketing: boolean;
+  avatar: string | null;
+  avatarConfig: string | null;
+  avatarBackgroundColor: string;
 };
 
 type AccountContentProps = {
   user: UserData;
+  proAccess: ActiveUserSubscriptionAccess;
+  isProAvailable: boolean;
 };
 
 // --- Reusable row component ---
@@ -197,7 +206,11 @@ function NotificationSwitchRow({
   );
 }
 
-export function AccountContent({ user: initialUser }: AccountContentProps) {
+export function AccountContent({
+  user: initialUser,
+  proAccess,
+  isProAvailable,
+}: AccountContentProps) {
   const { openUserFeedback, openSupportFeedback } = useSupportFeedback();
   const { openConsentPanel } = useCookieConsent();
   const router = useRouter();
@@ -211,6 +224,7 @@ export function AccountContent({ user: initialUser }: AccountContentProps) {
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showAvatarDialog, setShowAvatarDialog] = useState(false);
 
   // Profile state
   const [name, setName] = useState(initialUser.name);
@@ -269,14 +283,6 @@ export function AccountContent({ user: initialUser }: AccountContentProps) {
   const memberSince = format(new Date(initialUser.createdAt), "MMMM yyyy", {
     locale: locale === "fr" ? frLocale : enUS,
   });
-
-  // Initials for avatar
-  const initials = initialUser.name
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
 
   // --- Handlers ---
   const handleUpdateProfile = async () => {
@@ -526,25 +532,30 @@ export function AccountContent({ user: initialUser }: AccountContentProps) {
   };
 
   return (
-    <div className="p-4 sm:p-5 md:p-6 lg:p-8 max-w-xl mx-auto">
+    <div className="mx-auto max-w-xl p-4 sm:p-5 md:p-6 lg:p-8">
       <div className="space-y-6 sm:space-y-8">
         {/* Profile header */}
-        <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-5">
-          <div className="flex h-16 w-16 sm:h-20 sm:w-20 shrink-0 items-center justify-center rounded-full bg-blue/10 text-blue text-xl sm:text-2xl font-bold">
-            {initials}
-          </div>
-          <div className="min-w-0 text-center sm:text-left">
-            <h1 className="h1 text-xl sm:text-2xl font-semibold tracking-tight truncate">
+        <div className="space-y-3 sm:space-y-4">
+          <AccountProfileAvatarBanner
+            avatar={initialUser.avatar}
+            backgroundColor={initialUser.avatarBackgroundColor}
+            name={initialUser.name}
+            email={initialUser.email}
+            editLabel={t(locale, "account.avatar.edit")}
+            onEdit={() => setShowAvatarDialog(true)}
+          />
+          <div className="min-w-0 px-0.5 text-center">
+            <h1 className="h1 truncate text-2xl font-bold tracking-tight sm:text-3xl">
               {initialUser.name}
             </h1>
-            <p className="mt-0.5 text-base font-medium text-muted-foreground">
+            <p className="mt-1 text-base font-medium text-muted-foreground">
               {locale === "fr" ? "Membre depuis" : "Member since"} {memberSince}
             </p>
           </div>
         </div>
 
         {/* Settings */}
-        <div className="max-w-xl space-y-5 sm:space-y-6">
+        <div className="space-y-5 sm:space-y-6">
           {/* Compte */}
           <div className="space-y-2">
             <h2 className="text-lg h2 font-semibold text-muted-foreground px-1 uppercase">
@@ -833,6 +844,13 @@ export function AccountContent({ user: initialUser }: AccountContentProps) {
       </div>
 
       {/* ==================== DIALOGS ==================== */}
+
+      <UserAvatarEditorDialog
+        open={showAvatarDialog}
+        onOpenChange={setShowAvatarDialog}
+        userId={initialUser.id}
+        initialAvatarConfig={initialUser.avatarConfig}
+      />
 
       {/* Profile Dialog (name only) */}
       <Dialog open={showProfileDialog} onOpenChange={setShowProfileDialog}>

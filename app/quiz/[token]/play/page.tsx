@@ -2,6 +2,7 @@ import { Suspense } from "react";
 
 import { getAnonymousQuizPlayData } from "@/app/quiz-link/anonymous-quiz-actions";
 import { getQuizLinkByToken } from "@/app/quiz-link/actions";
+import { t } from "@/lib/i18n";
 import { getRequestLocale } from "@/lib/i18n/request-locale";
 import { prisma } from "@/lib/prisma";
 import { playBlockedErrorCodeForQuizStatus } from "@/lib/quiz/quizActionErrorCodes";
@@ -97,7 +98,7 @@ export default async function QuizPlayPage({ params, searchParams }: PageProps) 
       if (legacyResolution.status === "token_mismatch") {
         return anonymousAttemptStatusScreen(
           "Accès non autorisé",
-          "Cette tentative n'appartient pas à ce quiz.",
+          t(requestLocale, "quiz.playPage.gameWrongQuiz"),
         );
       }
       if (legacyResolution.status === "blocked") {
@@ -114,8 +115,8 @@ export default async function QuizPlayPage({ params, searchParams }: PageProps) 
       }
       if (legacyResolution.status === "abandoned") {
         return anonymousAttemptStatusScreen(
-          "Tentative abandonnée",
-          "Cette tentative a été abandonnée et ne peut plus être reprise.",
+          t(requestLocale, "quiz.playPage.gameAbandonedTitle"),
+          t(requestLocale, "quiz.playPage.gameAbandonedDescription"),
         );
       }
     }
@@ -135,7 +136,7 @@ export default async function QuizPlayPage({ params, searchParams }: PageProps) 
     if (resolution.status === "token_mismatch") {
       return anonymousAttemptStatusScreen(
         "Accès non autorisé",
-        "Cette tentative n'appartient pas à ce quiz.",
+        t(requestLocale, "quiz.playPage.gameWrongQuiz"),
       );
     }
 
@@ -155,8 +156,8 @@ export default async function QuizPlayPage({ params, searchParams }: PageProps) 
 
     if (resolution.status === "abandoned") {
       return anonymousAttemptStatusScreen(
-        "Tentative abandonnée",
-        "Cette tentative a été abandonnée et ne peut plus être reprise.",
+        t(requestLocale, "quiz.playPage.gameAbandonedTitle"),
+        t(requestLocale, "quiz.playPage.gameAbandonedDescription"),
       );
     }
 
@@ -199,8 +200,8 @@ export default async function QuizPlayPage({ params, searchParams }: PageProps) 
 
   if (!attemptId) {
     return anonymousAttemptStatusScreen(
-      "Tentative non trouvée",
-      "L'identifiant de tentative est manquant.",
+      t(requestLocale, "quiz.playPage.gameNotFoundTitle"),
+      t(requestLocale, "quiz.playPage.gameNotFoundMissingId"),
     );
   }
 
@@ -229,15 +230,15 @@ export default async function QuizPlayPage({ params, searchParams }: PageProps) 
 
   if (!attempt) {
     return anonymousAttemptStatusScreen(
-      "Tentative non trouvée",
-      "Cette tentative n'existe pas ou a été supprimée.",
+      t(requestLocale, "quiz.playPage.gameNotFoundTitle"),
+      t(requestLocale, "quiz.playPage.gameNotFoundDescription"),
     );
   }
 
   if (attempt.quizLink.token !== token) {
     return anonymousAttemptStatusScreen(
       "Accès non autorisé",
-      "Cette tentative n'appartient pas à ce quiz.",
+      t(requestLocale, "quiz.playPage.gameWrongQuiz"),
     );
   }
 
@@ -260,8 +261,8 @@ export default async function QuizPlayPage({ params, searchParams }: PageProps) 
 
   if (attempt.status === "ABANDONED") {
     return anonymousAttemptStatusScreen(
-      "Tentative abandonnée",
-      "Cette tentative a été abandonnée et ne peut plus être reprise.",
+      t(requestLocale, "quiz.playPage.gameAbandonedTitle"),
+      t(requestLocale, "quiz.playPage.gameAbandonedDescription"),
     );
   }
 

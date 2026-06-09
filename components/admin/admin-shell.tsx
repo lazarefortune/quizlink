@@ -18,12 +18,19 @@ import {
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { ThemeSegmentedControl } from "@/components/admin/theme-segmented-control";
+import { UserAvatarProvider } from "@/components/user-avatar/user-avatar-context";
 
 type AdminShellProps = {
   children: React.ReactNode;
+  userAvatar?: string | null;
+  userAvatarBackgroundColor?: string;
 };
 
-export function AdminShell({ children }: AdminShellProps) {
+export function AdminShell({
+  children,
+  userAvatar = null,
+  userAvatarBackgroundColor,
+}: AdminShellProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { data: session } = useSession();
   const { locale } = useLocale();
@@ -34,6 +41,10 @@ export function AdminShell({ children }: AdminShellProps) {
   };
 
   return (
+    <UserAvatarProvider
+      avatar={userAvatar}
+      backgroundColor={userAvatarBackgroundColor}
+    >
     <div className="flex h-dvh min-h-0 flex-col overflow-hidden bg-card">
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <AdminSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
@@ -102,5 +113,6 @@ export function AdminShell({ children }: AdminShellProps) {
         </div>
       </div>
     </div>
+    </UserAvatarProvider>
   );
 }

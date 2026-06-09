@@ -25,7 +25,8 @@ describe("anonymous quiz start flow", () => {
   );
 
   it("creates the attempt on Commencer and redirects without attemptId in URL", () => {
-    expect(introSource).toContain("startAnonymousQuizAttemptAction(token)");
+    expect(introSource).toContain("startAnonymousQuizAttemptAction(token,");
+    expect(introSource).toContain("saveParticipantLocalProfile");
     expect(introSource).toContain("router.push(attemptResult.redirectTo)");
     expect(introSource).not.toContain("recordAnonymousQuizStart(token)");
   });

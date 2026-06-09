@@ -10,26 +10,29 @@ import {
   Coins,
   Sparkles,
   Plus,
-  Copy,
-  Play,
-  BarChart3,
-  MessageSquare,
-  Users,
-  Edit,
-  Eye,
 } from "lucide-react";
 
-import { getDashboardStats } from "@/app/(app)/dashboard/actions";
+import { QuizListCard, type QuizListCardData } from "@/components/dashboard/quiz-list-card";
+import { getDashboardStats, deleteQuiz } from "@/app/(app)/dashboard/actions";
 import { createOrGetQuizLink } from "@/app/quiz-link/actions";
 import { BuilderLocalDraftCard } from "@/components/builder/BuilderLocalDraftCard";
 import {
   CreateManualServerDraftButton,
   CreateManualServerDraftSurfaceButton,
 } from "@/components/dashboard/create-manual-server-draft-button";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/ui/toast";
-import { QuizStatusBadge } from "@/components/quiz/quiz-status-badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { PARTICIPANT_INVITED } from "@/lib/analytics/events";
 import { track } from "@/lib/analytics/track";
 import { buildCommonEventProps } from "@/lib/analytics/props";
@@ -40,12 +43,6 @@ import {
 import { t } from "@/lib/i18n";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { resolveQuizActionError } from "@/lib/quiz/resolveQuizActionError";
-import {
-  canQuizBePlayed,
-  canQuizBeShared,
-  canQuizShowResponseInsights,
-} from "@/lib/quiz/quizStatusPolicy";
-import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
 
 const noopSubscribe = (): (() => void) => () => {};
 
@@ -66,14 +63,7 @@ const fadeIn = {
 type DashboardStats = {
   coinBalance: number;
   quizCount: number;
-  recentQuizzes: Array<{
-    id: string;
-    name: string;
-    status: QuizLifecycleStatus;
-    publishedAt: string | null;
-    questionCount: number;
-    attemptCount: number;
-  }>;
+  recentQuizzes: QuizListCardData[];
   serverDraftQuizIds: string[];
 };
 
@@ -86,12 +76,8 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [playLoadingQuizId, setPlayLoadingQuizId] = useState<string | null>(null);
   const [copyLoadingQuizId, setCopyLoadingQuizId] = useState<string | null>(null);
-  const [copiedQuizId, setCopiedQuizId] = useState<string | null>(null);
-  const getResponseLabel = (count: number) =>
-    count <= 1
-      ? t(locale, "dashboard.responseSingular")
-      : t(locale, "dashboard.responsesPlural");
-
+  const [quizPendingDelete, setQuizPendingDelete] = useState<QuizListCardData | null>(null);
+  const [isDeletingQuiz, setIsDeletingQuiz] = useState(false);
   const welcomeGreetingKey = useSyncExternalStore(
     noopSubscribe,
     getWelcomeGreetingClientSnapshot,
@@ -169,8 +155,6 @@ export default function DashboardPage() {
         document.execCommand("copy");
         document.body.removeChild(textarea);
       }
-      setCopiedQuizId(quizId);
-      setTimeout(() => setCopiedQuizId(null), 2000);
       showToast(t(locale, "dashboard.linkCopied"), "success");
     } catch (error) {
       console.error("Error copying quiz link:", error);
@@ -198,6 +182,38 @@ export default function DashboardPage() {
       showToast(t(locale, "dashboard.shareError"), "error");
     } finally {
       setPlayLoadingQuizId(null);
+    }
+  };
+
+  const handleEdit = (quizId: string) => {
+    router.push(`/builder/${quizId}`);
+  };
+
+  const handleOpenQuizPreview = (quizId: string) => {
+    router.push(`/dashboard/quiz/${quizId}?tab=questions`);
+  };
+
+  const handleDeleteQuiz = async () => {
+    if (!quizPendingDelete) return;
+
+    setIsDeletingQuiz(true);
+    try {
+      const result = await deleteQuiz(quizPendingDelete.id);
+      if (result.success) {
+        showToast(t(locale, "dashboard.quizDeletedSuccess"), "success");
+        setQuizPendingDelete(null);
+        const refreshed = await getDashboardStats();
+        if (refreshed.success) {
+          setStats(refreshed.stats);
+        }
+      } else {
+        showToast(result.error || t(locale, "dashboard.deleteError"), "error");
+      }
+    } catch (error) {
+      console.error("Error deleting quiz:", error);
+      showToast(t(locale, "dashboard.deleteError"), "error");
+    } finally {
+      setIsDeletingQuiz(false);
     }
   };
 
@@ -391,158 +407,64 @@ export default function DashboardPage() {
               </Link>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 sm:gap-5">
-              {stats.recentQuizzes.map((quiz, index) => {
-                const isDraft = quiz.status === "DRAFT";
-                const isArchived = quiz.status === "ARCHIVED";
-                const titleHref = isDraft
-                  ? `/builder/${quiz.id}`
-                  : `/dashboard/quiz/${quiz.id}?tab=questions`;
-
-                return (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 2xl:grid-cols-4">
+              {stats.recentQuizzes.map((quiz, index) => (
                 <motion.div
                   key={quiz.id}
                   initial={fadeIn.initial}
                   animate={fadeIn.animate}
                   transition={fadeIn.transition(0.35 + index * 0.06)}
                 >
-                  <Card
-                    className="group flex h-full flex-col"
-                  >
-                    <CardContent className="flex flex-1 flex-col p-5">
-                      <Link
-                        href={titleHref}
-                        className="mb-4 block flex-1"
-                      >
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="line-clamp-2 flex-1 min-w-0 text-lg font-medium leading-snug text-foreground transition-colors hover:text-blue">
-                            {quiz.name}
-                          </h3>
-                          <QuizStatusBadge status={quiz.status} locale={locale} />
-                        </div>
-                      </Link>
-
-                      <div className="mb-4 flex items-center gap-4 text-sm text-muted-foreground">
-                        <span className="inline-flex items-center gap-1.5">
-                          <MessageSquare className="h-3.5 w-3.5" />
-                          {quiz.questionCount}{" "}
-                          {quiz.questionCount === 1
-                            ? t(locale, "dashboard.question")
-                            : t(locale, "dashboard.questions")}
-                        </span>
-                        {canQuizShowResponseInsights(quiz.status) ? (
-                          <span className="inline-flex items-center gap-1.5">
-                            <Users className="h-3.5 w-3.5" />
-                            {quiz.attemptCount} {getResponseLabel(quiz.attemptCount)}
-                          </span>
-                        ) : null}
-                      </div>
-
-                      <div className="mt-auto space-y-3 border-t border-border/60 pt-3">
-                        {canQuizBePlayed(quiz.status) ? (
-                          <Button
-                            variant="blue"
-                            size="sm"
-                            className="w-full gap-2"
-                            onClick={() => handlePlay(quiz.id)}
-                            disabled={playLoadingQuizId !== null}
-                          >
-                            <Play className="h-4 w-4" />
-                            {playLoadingQuizId === quiz.id
-                              ? t(locale, "common.loading")
-                              : t(locale, "dashboard.playQuiz")}
-                          </Button>
-                        ) : null}
-
-                        {isDraft ? (
-                          <>
-                            <Button
-                              variant="outlineBlue"
-                              size="sm"
-                              className="w-full gap-2"
-                              asChild
-                            >
-                              <Link href={`/builder/${quiz.id}`}>
-                                <Edit className="h-4 w-4" />
-                                {t(locale, "dashboard.continueInBuilder")}
-                              </Link>
-                            </Button>
-                            <p className="text-xs text-muted-foreground">
-                              {t(locale, "dashboard.draftFinishToShareHint")}
-                            </p>
-                          </>
-                        ) : null}
-
-                        {isArchived ? (
-                          <Button
-                            variant="blue"
-                            size="sm"
-                            className="w-full gap-2"
-                            asChild
-                          >
-                            <Link href={`/dashboard/quiz/${quiz.id}?tab=questions`}>
-                              <Eye className="h-4 w-4" />
-                              {t(locale, "dashboard.viewArchivedQuiz")}
-                            </Link>
-                          </Button>
-                        ) : null}
-
-                        {canQuizBeShared(quiz.status) ? (
-                          <Button
-                            variant={
-                              copiedQuizId === quiz.id ? "secondary" : "outline"
-                            }
-                            size="sm"
-                            className="w-full gap-2"
-                            onClick={() => handleCopyLink(quiz.id)}
-                            disabled={copyLoadingQuizId !== null}
-                          >
-                            <Copy className="h-4 w-4" />
-                            {copyLoadingQuizId === quiz.id ? (
-                              t(locale, "common.loading")
-                            ) : copiedQuizId === quiz.id ? (
-                              t(locale, "dashboard.linkCopied")
-                            ) : (
-                              <>
-                                <span className="sm:hidden">
-                                  {locale === "fr" ? "Lien" : "Link"}
-                                </span>
-                                <span className="hidden sm:inline">
-                                  {locale === "fr"
-                                    ? "Copier le lien"
-                                    : "Copy link"}
-                                </span>
-                              </>
-                            )}
-                          </Button>
-                        ) : null}
-
-                        {canQuizShowResponseInsights(quiz.status) ? (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="w-full"
-                            asChild
-                          >
-                            <Link
-                              href={`/dashboard/quiz/${quiz.id}?tab=results`}
-                              className="flex w-full items-center justify-center gap-2"
-                            >
-                              <BarChart3 className="h-4 w-4" />
-                              {t(locale, "dashboard.quizTabResults")}
-                            </Link>
-                          </Button>
-                        ) : null}
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <QuizListCard
+                    quiz={quiz}
+                    locale={locale}
+                    playLoadingQuizId={playLoadingQuizId}
+                    copyLoadingQuizId={copyLoadingQuizId}
+                    onPlay={handlePlay}
+                    onCopyLink={handleCopyLink}
+                    onEdit={handleEdit}
+                    onView={handleOpenQuizPreview}
+                    onDelete={() => setQuizPendingDelete(quiz)}
+                  />
                 </motion.div>
-                );
-              })}
+              ))}
             </div>
           </motion.div>
         )}
       </div>
+      <AlertDialog
+        open={quizPendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && !isDeletingQuiz) {
+            setQuizPendingDelete(null);
+          }
+        }}
+      >
+        <AlertDialogContent onOverlayClick={() => !isDeletingQuiz && setQuizPendingDelete(null)}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t(locale, "dashboard.deleteConfirmTitle")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t(locale, "dashboard.deleteConfirmDescription", {
+                name: quizPendingDelete?.name ?? "",
+              })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingQuiz}>
+              {t(locale, "common.cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteQuiz}
+              disabled={isDeletingQuiz}
+              className={buttonVariants({ variant: "destructive" })}
+            >
+              {isDeletingQuiz ? t(locale, "common.loading") : t(locale, "dashboard.delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

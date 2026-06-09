@@ -1,8 +1,42 @@
 import type { Prisma } from "@prisma/client";
 
+import { PARTICIPANT_IDENTITY_MODES } from "@/types/participant-identity";
+
+export const ATTEMPT_DETAILS_ERROR = {
+  LOCKED: "ATTEMPT_DETAILS_LOCKED",
+  PURGED: "ATTEMPT_DETAILS_PURGED",
+} as const;
+
+export function resolveAttemptDetailsPurged(
+  detailsPurgedAt: Date | null,
+  answerCount: number,
+): boolean {
+  return detailsPurgedAt != null && answerCount === 0;
+}
+
+/** Placeholder row ids — never real attempt ids. */
+export function buildLockedPlaceholderRowKeys(
+  lockedCount: number,
+  maxRows = 5,
+): string[] {
+  const rowCount = Math.min(lockedCount, maxRows);
+  return Array.from({ length: rowCount }, (_, index) => `locked-placeholder-${index}`);
+}
+
+export function computeLockedAttemptCount(
+  totalAttemptCount: number,
+  visibleAttemptCount: number,
+  isUnlocked: boolean,
+): number {
+  if (isUnlocked) {
+    return 0;
+  }
+  return Math.max(0, totalAttemptCount - visibleAttemptCount);
+}
+
 /**
  * Quiz attempts visible in the creator "Responses" section.
- * Includes anonymous public plays and identified participant plays.
+ * Includes public plays (anonymous / pseudonym / name+email) and identified participant plays.
  * Preview does not create QuizAttempt rows, so nothing to exclude here.
  */
 export function buildCreatorResponseAttemptWhere(
@@ -10,7 +44,13 @@ export function buildCreatorResponseAttemptWhere(
 ): Prisma.QuizAttemptWhereInput {
   return {
     quizLink: { quizId },
-    OR: [{ identityMode: "ANONYMOUS" }, { participantId: { not: null } }],
+    OR: [
+      {
+        participantId: null,
+        identityMode: { in: [...PARTICIPANT_IDENTITY_MODES] },
+      },
+      { participantId: { not: null } },
+    ],
   };
 }
 
@@ -18,6 +58,8 @@ export type CreatorResponseAttemptRecord = {
   id: string;
   participantId: string | null;
   identityMode: string;
+  participantName: string | null;
+  participantEmail: string | null;
   score: number | null;
   status: string;
   startedAt: Date;
@@ -25,12 +67,67 @@ export type CreatorResponseAttemptRecord = {
   durationSeconds: number | null;
   totalQuestions: number | null;
   participant: { name: string } | null;
-  answers: Array<{ id: string }>;
+  questionsAnswered: number;
+  quizLinkDetailsPurgedAt: Date | null;
 };
+
+export const creatorResponseAttemptListSelect = {
+  id: true,
+  participantId: true,
+  identityMode: true,
+  participantName: true,
+  participantEmail: true,
+  score: true,
+  status: true,
+  startedAt: true,
+  finishedAt: true,
+  durationSeconds: true,
+  totalQuestions: true,
+  participant: { select: { name: true } },
+  quizLink: { select: { detailsPurgedAt: true } },
+  _count: { select: { answers: true } },
+} as const;
+
+export function mapPrismaAttemptToCreatorRecord(
+  row: {
+    id: string;
+    participantId: string | null;
+    identityMode: string;
+    participantName: string | null;
+    participantEmail: string | null;
+    score: number | null;
+    status: string;
+    startedAt: Date;
+    finishedAt: Date | null;
+    durationSeconds: number | null;
+    totalQuestions: number | null;
+    participant: { name: string } | null;
+    quizLink: { detailsPurgedAt: Date | null };
+    _count: { answers: number };
+  },
+): CreatorResponseAttemptRecord {
+  return {
+    id: row.id,
+    participantId: row.participantId,
+    identityMode: row.identityMode,
+    participantName: row.participantName,
+    participantEmail: row.participantEmail,
+    score: row.score,
+    status: row.status,
+    startedAt: row.startedAt,
+    finishedAt: row.finishedAt,
+    durationSeconds: row.durationSeconds,
+    totalQuestions: row.totalQuestions,
+    participant: row.participant,
+    questionsAnswered: row._count.answers,
+    quizLinkDetailsPurgedAt: row.quizLink.detailsPurgedAt,
+  };
+}
 
 export type QuizDetailAttemptRow = {
   id: string;
   participantLabel: string;
+  participantEmailHint: string | null;
   anonymousNumber: number | null;
   isAnonymous: boolean;
   score: number | null;
@@ -40,6 +137,7 @@ export type QuizDetailAttemptRow = {
   finishedAt: Date | null;
   questionsAnswered: number;
   totalQuestions: number | null;
+  detailsPurged: boolean;
 };
 
 export function buildAnonymousAttemptIndexMap(
@@ -128,22 +226,42 @@ export function computeCreatorResponseStats(attempts: CreatorResponseAttemptReco
 
 export function mapAttemptsToDetailRows(
   attempts: CreatorResponseAttemptRecord[],
+  anonymousIndexMapInput?: Map<string, number>,
 ): QuizDetailAttemptRow[] {
   const anonymousAttempts = attempts.filter((a) => a.identityMode === "ANONYMOUS");
-  const anonymousIndexMap = buildAnonymousAttemptIndexMap(anonymousAttempts);
+  const anonymousIndexMap =
+    anonymousIndexMapInput ??
+    buildAnonymousAttemptIndexMap(
+      anonymousAttempts.map((attempt) => ({
+        id: attempt.id,
+        startedAt: attempt.startedAt,
+      })),
+    );
 
   return attempts
     .map((attempt) => {
       const isAnonymous = attempt.identityMode === "ANONYMOUS";
       const anonymousIndex = anonymousIndexMap.get(attempt.id);
       const anonymousNumber = isAnonymous ? (anonymousIndex ?? null) : null;
-      const participantLabel = isAnonymous
-        ? formatAnonymousParticipantLabel(anonymousIndex ?? 0)
-        : (attempt.participant?.name ?? "");
+
+      let participantLabel: string;
+      let participantEmailHint: string | null = null;
+
+      if (isAnonymous) {
+        participantLabel = formatAnonymousParticipantLabel(anonymousIndex ?? 0);
+      } else if (attempt.participantId != null) {
+        participantLabel = attempt.participant?.name ?? "";
+      } else if (attempt.identityMode === "NAME_EMAIL") {
+        participantLabel = attempt.participantName?.trim() || "—";
+        participantEmailHint = attempt.participantEmail?.trim() || null;
+      } else {
+        participantLabel = attempt.participantName?.trim() || "—";
+      }
 
       return {
         id: attempt.id,
         participantLabel,
+        participantEmailHint,
         anonymousNumber,
         isAnonymous,
         score: attempt.score,
@@ -151,8 +269,12 @@ export function mapAttemptsToDetailRows(
         status: attempt.status,
         startedAt: attempt.startedAt,
         finishedAt: attempt.finishedAt,
-        questionsAnswered: attempt.answers.length,
+        questionsAnswered: attempt.questionsAnswered,
         totalQuestions: attempt.totalQuestions,
+        detailsPurged: resolveAttemptDetailsPurged(
+          attempt.quizLinkDetailsPurgedAt,
+          attempt.questionsAnswered,
+        ),
       };
     })
     .sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime());

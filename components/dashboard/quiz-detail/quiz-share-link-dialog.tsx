@@ -27,6 +27,8 @@ type QuizShareLinkDialogProps = {
   quizStatus: QuizLifecycleStatus;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  isLinkExpired?: boolean;
+  onReactivate?: () => void;
 };
 
 export function QuizShareLinkDialog({
@@ -34,6 +36,8 @@ export function QuizShareLinkDialog({
   quizStatus,
   open,
   onOpenChange,
+  isLinkExpired = false,
+  onReactivate,
 }: QuizShareLinkDialogProps) {
   const { locale } = useLocale();
   const [shareLink, setShareLink] = useState("");
@@ -42,6 +46,7 @@ export function QuizShareLinkDialog({
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const isShareable = canQuizBeShared(quizStatus);
+  const canCopyLink = isShareable && !isLinkExpired;
 
   useEffect(() => {
     if (!open) {
@@ -50,7 +55,7 @@ export function QuizShareLinkDialog({
       setLinkCopied(false);
       return;
     }
-    if (!isShareable) {
+    if (!canCopyLink) {
       return;
     }
 
@@ -96,10 +101,10 @@ export function QuizShareLinkDialog({
     return () => {
       cancelled = true;
     };
-  }, [open, isShareable, quizId, locale]);
+  }, [open, canCopyLink, quizId, locale]);
 
   const handleCopyLink = async () => {
-    if (!shareLink) {
+    if (!shareLink || isLinkExpired) {
       return;
     }
     try {
@@ -119,21 +124,39 @@ export function QuizShareLinkDialog({
     setTimeout(() => setLinkCopied(false), 2000);
   };
 
+  const handleReactivate = () => {
+    onOpenChange(false);
+    onReactivate?.();
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>{t(locale, "dashboard.sharePlayLinkTitle")}</DialogTitle>
           <DialogDescription>
-            {isShareable
-              ? t(locale, "dashboard.sharePlayLinkDescription")
-              : t(locale, "dashboard.shareRequiresActiveQuiz")}
+            {isLinkExpired
+              ? t(locale, "dashboard.quizExpiration.expiredDescription")
+              : isShareable
+                ? t(locale, "dashboard.sharePlayLinkDescription")
+                : t(locale, "dashboard.shareRequiresActiveQuiz")}
           </DialogDescription>
         </DialogHeader>
         {!isShareable ? (
           <p className="text-sm text-muted-foreground">
             {t(locale, "dashboard.draftFinishToShareHint")}
           </p>
+        ) : isLinkExpired ? (
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              {t(locale, "dashboard.quizExpiration.expiredDescription")}
+            </p>
+            {onReactivate ? (
+              <Button type="button" variant="blue" className="w-full" onClick={handleReactivate}>
+                {t(locale, "dashboard.quizExpiration.reactivateToShare")}
+              </Button>
+            ) : null}
+          </div>
         ) : isLoadingLink ? (
           <p className="text-sm text-muted-foreground">{t(locale, "common.loading")}</p>
         ) : loadError ? (

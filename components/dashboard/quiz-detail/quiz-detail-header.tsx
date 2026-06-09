@@ -55,18 +55,29 @@ type QuizDetailHeaderProps = {
   quizId: string;
   quizName: string;
   quizStatus: QuizLifecycleStatus;
+  isLinkExpired?: boolean;
+  onShare?: () => void;
 };
 
 export function QuizDetailHeader({
   quizId,
   quizName,
   quizStatus,
+  isLinkExpired = false,
+  onShare,
 }: QuizDetailHeaderProps) {
   const router = useRouter();
   const { locale } = useLocale();
   const { showToast } = useToast();
   const [playLoading, setPlayLoading] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const openShareDialog = () => {
+    if (onShare) {
+      onShare();
+      return;
+    }
+    setShowShareDialog(true);
+  };
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
@@ -212,7 +223,7 @@ export function QuizDetailHeader({
                 size="icon"
                 className="h-9 w-9 sm:hidden"
                 aria-label={t(locale, "dashboard.share")}
-                onClick={() => setShowShareDialog(true)}
+                onClick={openShareDialog}
                 >
                 <Share2 className="h-4 w-4" />
               </Button>
@@ -221,7 +232,7 @@ export function QuizDetailHeader({
                 variant="outline"
                 size="sm"
                 className="hidden gap-2 sm:inline-flex"
-                onClick={() => setShowShareDialog(true)}
+                onClick={openShareDialog}
                 >
                 <Share2 className="h-4 w-4" />
                 {t(locale, "dashboard.share")}
@@ -298,12 +309,15 @@ export function QuizDetailHeader({
         </div>
       </header>
 
-      <QuizShareLinkDialog
-        quizId={quizId}
-        quizStatus={quizStatus}
-        open={showShareDialog}
-        onOpenChange={setShowShareDialog}
-      />
+      {!onShare ? (
+        <QuizShareLinkDialog
+          quizId={quizId}
+          quizStatus={quizStatus}
+          open={showShareDialog}
+          onOpenChange={setShowShareDialog}
+          isLinkExpired={isLinkExpired}
+        />
+      ) : null}
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>

@@ -18,10 +18,18 @@ import {
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { formatQuizTimeRemainingHuman } from "@/lib/quiz/formatQuizTimeRemainingHuman";
+import {
+  PublicQuizParticipantIntroFields,
+  hydrateParticipantFieldsFromLocalProfile,
+} from "@/components/quiz-play/public-quiz-participant-intro-fields";
+import { resolveEffectiveQuizSettings } from "@/lib/quiz/resolveEffectiveQuizSettings";
+import { resolvePublicQuizStartError } from "@/lib/quiz/resolveParticipantStartError";
 import { resolveQuizActionError } from "@/lib/quiz/resolveQuizActionError";
+import { saveParticipantLocalProfile } from "@/lib/quiz/participantLocalProfile";
 import { startQuizAttempt } from "@/app/quiz-link/actions";
 import { startAnonymousQuizAttemptAction } from "@/app/quiz-link/anonymous-attempt-actions";
 import { recordAnonymousLinkOpen } from "@/app/quiz-link/anonymous-quiz-stats-actions";
+import type { ParticipantIdentityMode } from "@/types/participant-identity";
 
 type QuizLink = {
   id: string;
@@ -36,11 +44,13 @@ type QuizLink = {
   } | null;
   allowMultipleAttempts: boolean;
   expiresAt: Date | null;
+  isAcceptingResponses?: boolean;
   hasCompletedAttempt: boolean;
   quiz: {
     id: string;
     name: string;
     visibility: string;
+    ownerId?: string | null;
     settings: Record<string, unknown>;
     questions: Array<{
       id: string;
@@ -61,19 +71,38 @@ type QuizLink = {
 type QuizIntroductionContentProps = {
   quizLink: QuizLink;
   token: string;
+  isLinkExpired?: boolean;
+  isOwner?: boolean;
 };
 
 export function QuizIntroductionContent({
   quizLink,
   token,
+  isLinkExpired = false,
+  isOwner = false,
 }: QuizIntroductionContentProps) {
   const router = useRouter();
   const { locale } = useLocale();
   const prefersReducedMotion = useReducedMotion();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [participantName, setParticipantName] = useState("");
+  const [participantEmail, setParticipantEmail] = useState("");
+  const [hasConsent, setHasConsent] = useState(false);
 
   const isPublicLink = quizLink.participantId === null;
+  const effectiveSettings = resolveEffectiveQuizSettings(quizLink.quiz.settings);
+  const participantIdentityMode: ParticipantIdentityMode =
+    effectiveSettings.participantIdentityMode;
+
+  useEffect(() => {
+    if (!isPublicLink) {
+      return;
+    }
+    const hydrated = hydrateParticipantFieldsFromLocalProfile();
+    setParticipantName(hydrated.participantName);
+    setParticipantEmail(hydrated.participantEmail);
+  }, [isPublicLink]);
 
   useEffect(() => {
     if (!isPublicLink) {
@@ -101,12 +130,27 @@ export function QuizIntroductionContent({
 
     try {
       if (isPublicLink) {
-        const attemptResult = await startAnonymousQuizAttemptAction(token);
+        const attemptResult = await startAnonymousQuizAttemptAction(token, {
+          participantName,
+          participantEmail,
+          hasConsent,
+        });
         if (!attemptResult.success) {
-          setError(resolveQuizActionError(locale, attemptResult.error));
+          setError(resolvePublicQuizStartError(locale, attemptResult.error));
           setIsLoading(false);
           return;
         }
+
+        if (
+          participantIdentityMode === "PSEUDONYM" ||
+          participantIdentityMode === "NAME_EMAIL"
+        ) {
+          saveParticipantLocalProfile({
+            name: participantName,
+            email: participantIdentityMode === "NAME_EMAIL" ? participantEmail : undefined,
+          });
+        }
+
         router.push(attemptResult.redirectTo);
         setIsLoading(false);
         return;
@@ -168,7 +212,7 @@ export function QuizIntroductionContent({
             </p>
           )}
 
-          {!isCompleted && (
+          {!isCompleted && !isLinkExpired && (
             <p className="text-sm font-medium text-muted-foreground">
               {t(locale, "quiz.readyToStart")}
             </p>
@@ -219,7 +263,26 @@ export function QuizIntroductionContent({
             </p>
           </div>
 
-          {isCompleted ? (
+          {isLinkExpired ? (
+            <div
+              className="space-y-4 rounded-2xl border border-destructive/30 bg-destructive/5 px-5 py-6 text-center"
+              data-testid="quiz-expired-intro"
+            >
+              <h2 className="text-lg font-semibold text-foreground">
+                {t(locale, "quiz.expired.title")}
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {t(locale, "quiz.expired.description")}
+              </p>
+              {isOwner ? (
+                <Button type="button" variant="blue" asChild>
+                  <Link href={`/dashboard/quiz/${quizLink.quizId}?reactivate=1`}>
+                    {t(locale, "quiz.expired.creatorCta")}
+                  </Link>
+                </Button>
+              ) : null}
+            </div>
+          ) : isCompleted ? (
             <div className="flex flex-col items-center gap-3 rounded-2xl border border-border/80 bg-muted/40 px-4 py-8 text-center">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-950/50">
                 <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
@@ -230,6 +293,24 @@ export function QuizIntroductionContent({
             </div>
           ) : (
             <div className="space-y-4">
+              {isPublicLink ? (
+                <PublicQuizParticipantIntroFields
+                  locale={locale}
+                  identityMode={participantIdentityMode}
+                  participantName={participantName}
+                  participantEmail={participantEmail}
+                  hasConsent={hasConsent}
+                  onParticipantNameChange={setParticipantName}
+                  onParticipantEmailChange={setParticipantEmail}
+                  onHasConsentChange={setHasConsent}
+                  onClearLocalProfile={() => {
+                    setParticipantName("");
+                    setParticipantEmail("");
+                    setHasConsent(false);
+                  }}
+                />
+              ) : null}
+
               {error && (
                 <Alert variant="error">
                   <AlertCircle className="h-4 w-4" />

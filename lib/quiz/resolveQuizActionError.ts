@@ -8,6 +8,8 @@ const ERROR_CODE_TO_I18N_KEY: Record<string, string> = {
   [QUIZ_ACTION_ERROR_CODE.SHARE_REQUIRES_ACTIVE]: "dashboard.shareRequiresActiveQuiz",
   [QUIZ_ACTION_ERROR_CODE.MAKE_PUBLIC_REQUIRES_ACTIVE]:
     "dashboard.finishQuizBeforePublic",
+  [QUIZ_ACTION_ERROR_CODE.NO_LONGER_ACCEPTING_RESPONSES]:
+    "quiz.errors.noLongerAcceptingResponses",
 };
 
 export function resolveQuizActionError(locale: Locale, error: string): string {

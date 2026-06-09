@@ -32,8 +32,10 @@ export function DashboardMobileScrollLayout({
         <div
           id="dashboard-main-scroll"
           className={cn(
-            "flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden overscroll-y-contain",
-            isBuilderRoute && "lg:overflow-hidden",
+            "min-h-0 flex-1 basis-0 overflow-y-auto overflow-x-hidden overscroll-y-contain",
+            "pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] lg:pb-0",
+            isBuilderRoute &&
+              "lg:flex lg:min-h-0 lg:flex-col lg:overflow-hidden",
           )}
         >
           {children}

@@ -11,7 +11,19 @@ import {
 import { isSelectionCorrect, correctOptionIdsFromDbOptions } from "@/lib/anonymous-quiz-scoring";
 import { getQuestionImageSrc } from "@/lib/question-image-src";
 import { resolveEffectiveQuizSettings } from "@/lib/quiz/resolveEffectiveQuizSettings";
+import { validateParticipantStartInput } from "@/lib/quiz/validate-participant-start-input";
 import { playBlockedErrorCodeForQuizStatus } from "@/lib/quiz/quizActionErrorCodes";
+import { getQuizLinkCampaignBlockError } from "@/lib/quiz/quizLinkCampaign";
+import {
+  ensureQuizLinkCampaignStarted,
+  touchQuizLinkLastResponseAt,
+} from "@/lib/quiz/quizLinkCampaignPersistence";
+import {
+  incrementQuestionAnswerAggregates,
+  incrementQuizCompletedAggregate,
+  incrementQuizStartedAggregate,
+  transitionAttemptToCompleted,
+} from "@/lib/quiz/quiz-response-aggregates";
 import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
 
 // ---------------------------------------------------------------------------
@@ -118,8 +130,15 @@ async function resolveEligibleAnonymousAttemptLink(token: string) {
  * Creates a new anonymous QuizAttempt for a public quiz link.
  * Also bumps QuizLinkAnonymousStats.startedCount.
  */
+export type StartAnonymousQuizAttemptInput = {
+  participantName?: string;
+  participantEmail?: string;
+  hasConsent?: boolean;
+};
+
 export async function startAnonymousQuizAttemptAction(
   token: string,
+  input?: StartAnonymousQuizAttemptInput,
 ): Promise<StartAttemptResult> {
   try {
     if (!prisma) return { success: false, error: "Database not initialized" };
@@ -128,19 +147,42 @@ export async function startAnonymousQuizAttemptAction(
     if (!resolved.ok) return { success: false, error: resolved.error };
 
     const { quizLink } = resolved;
+    const now = new Date();
+    const campaignBlock = getQuizLinkCampaignBlockError(quizLink, now);
+    if (campaignBlock) {
+      return { success: false, error: campaignBlock };
+    }
+
+    const settings = resolveEffectiveQuizSettings(quizLink.quiz.settings);
+    const validated = validateParticipantStartInput({
+      identityMode: settings.participantIdentityMode,
+      participantName: input?.participantName,
+      participantEmail: input?.participantEmail,
+      hasConsent: input?.hasConsent,
+    });
+
+    if (!validated.ok) {
+      return { success: false, error: validated.error };
+    }
+
     const totalQuestions = quizLink.quiz.questions.length;
 
     const attempt = await prisma.quizAttempt.create({
       data: {
         quizLink: { connect: { id: quizLink.id } },
         status: "IN_PROGRESS",
-        identityMode: "ANONYMOUS",
+        identityMode: validated.data.identityMode,
+        participantName: validated.data.participantName,
+        participantEmail: validated.data.participantEmail,
         totalQuestions,
       } as Prisma.QuizAttemptCreateInput,
     });
 
+    await ensureQuizLinkCampaignStarted(quizLink.id, now);
+
+    await incrementQuizStartedAggregate(quizLink.quizId);
+
     // Bump startedCount (best-effort, non-blocking)
-    const now = new Date();
     prisma.$executeRaw`
       INSERT INTO quiz_link_anonymous_stats (
         quiz_link_id, open_count, started_count, completed_count,
@@ -534,37 +576,57 @@ export async function finishAnonymousQuizAttemptAction(
         Math.round((finishedAt.getTime() - attempt.startedAt.getTime()) / 1000),
       );
 
-      await prisma.quizAttempt.update({
-        where: { id: attemptId },
-        data: {
-          status: "COMPLETED",
-          finishedAt,
-          score,
-          durationSeconds,
-        },
+      const transitioned = await transitionAttemptToCompleted(attemptId, {
+        finishedAt,
+        score,
+        durationSeconds,
+        totalQuestions,
       });
 
-      // Update QuizLinkAnonymousStats (best-effort)
-      prisma.$executeRaw`
-        INSERT INTO quiz_link_anonymous_stats (
-          quiz_link_id, open_count, started_count, completed_count,
-          score_sum, score_count, best_score, lowest_score,
-          last_completed_at, created_at, updated_at
-        ) VALUES (
-          ${attempt.quizLinkId}, 0, 0, 1,
-          ${score}, 1, ${score}, ${score},
-          ${finishedAt},
-          CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3)
-        )
-        ON DUPLICATE KEY UPDATE
-          completed_count = quiz_link_anonymous_stats.completed_count + 1,
-          score_count = quiz_link_anonymous_stats.score_count + 1,
-          score_sum = quiz_link_anonymous_stats.score_sum + ${score},
-          best_score = GREATEST(COALESCE(quiz_link_anonymous_stats.best_score, ${score}), ${score}),
-          lowest_score = LEAST(COALESCE(quiz_link_anonymous_stats.lowest_score, ${score}), ${score}),
-          last_completed_at = ${finishedAt},
-          updated_at = CURRENT_TIMESTAMP(3)
-      `.catch((e: unknown) => console.error("finishAnonymousQuizAttemptAction stats:", e));
+      if (transitioned) {
+        const quizId = attempt.quizLink.quiz.id;
+
+        await incrementQuizCompletedAggregate(quizId, {
+          score,
+          totalQuestions,
+          durationSeconds,
+        });
+
+        const aggregateAnswers = [...existingAnswersByQuestionId.values()].map((answer) => ({
+          questionId: answer.questionId,
+          isCorrect: answer.isCorrect,
+          expired: answer.expired,
+          timeSpentSeconds: answer.timeSpent,
+        }));
+
+        await incrementQuestionAnswerAggregates(quizId, aggregateAnswers);
+      }
+
+      if (transitioned) {
+        // Update QuizLinkAnonymousStats (best-effort)
+        prisma.$executeRaw`
+          INSERT INTO quiz_link_anonymous_stats (
+            quiz_link_id, open_count, started_count, completed_count,
+            score_sum, score_count, best_score, lowest_score,
+            last_completed_at, created_at, updated_at
+          ) VALUES (
+            ${attempt.quizLinkId}, 0, 0, 1,
+            ${score}, 1, ${score}, ${score},
+            ${finishedAt},
+            CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3)
+          )
+          ON DUPLICATE KEY UPDATE
+            completed_count = quiz_link_anonymous_stats.completed_count + 1,
+            score_count = quiz_link_anonymous_stats.score_count + 1,
+            score_sum = quiz_link_anonymous_stats.score_sum + ${score},
+            best_score = GREATEST(COALESCE(quiz_link_anonymous_stats.best_score, ${score}), ${score}),
+            lowest_score = LEAST(COALESCE(quiz_link_anonymous_stats.lowest_score, ${score}), ${score}),
+            last_completed_at = ${finishedAt},
+            updated_at = CURRENT_TIMESTAMP(3)
+        `.catch((e: unknown) => console.error("finishAnonymousQuizAttemptAction stats:", e));
+
+        await touchQuizLinkLastResponseAt(attempt.quizLinkId, finishedAt);
+      }
     }
 
     // Reload updated answers from DB for result building

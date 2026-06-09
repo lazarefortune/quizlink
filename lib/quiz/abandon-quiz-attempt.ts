@@ -1,4 +1,9 @@
 import { prisma } from "@/lib/prisma";
+import { touchQuizLinkLastResponseAt } from "@/lib/quiz/quizLinkCampaignPersistence";
+import {
+  incrementQuizAbandonedAggregate,
+  transitionAttemptToAbandoned,
+} from "@/lib/quiz/quiz-response-aggregates";
 
 export type AbandonQuizAttemptResult =
   | { success: true; alreadyFinalized: boolean }
@@ -31,7 +36,13 @@ export async function abandonQuizAttemptById(
 
   const attempt = await prisma.quizAttempt.findUnique({
     where: { id: trimmed },
-    select: { id: true, status: true, startedAt: true },
+    select: {
+      id: true,
+      status: true,
+      startedAt: true,
+      quizLinkId: true,
+      quizLink: { select: { quizId: true } },
+    },
   });
 
   if (!attempt) {
@@ -49,14 +60,17 @@ export async function abandonQuizAttemptById(
   const finishedAt = new Date();
   const durationSeconds = computeAbandonDurationSeconds(attempt.startedAt, finishedAt);
 
-  await prisma.quizAttempt.update({
-    where: { id: trimmed },
-    data: {
-      status: "ABANDONED",
-      finishedAt,
-      durationSeconds,
-    },
+  const transitioned = await transitionAttemptToAbandoned(trimmed, {
+    finishedAt,
+    durationSeconds,
   });
+
+  if (!transitioned) {
+    return { success: true, alreadyFinalized: true };
+  }
+
+  await incrementQuizAbandonedAggregate(attempt.quizLink.quizId);
+  await touchQuizLinkLastResponseAt(attempt.quizLinkId, finishedAt);
 
   return { success: true, alreadyFinalized: false };
 }

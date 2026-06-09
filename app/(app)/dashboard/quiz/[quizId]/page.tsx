@@ -1,8 +1,10 @@
 import { Suspense } from "react";
 import { QuizDetailContent } from "./quiz-detail-content";
 import { getQuizContent, getQuizQuestionInsights, getQuizStats } from "./actions";
+import { resolveEffectiveQuizSettings } from "@/lib/quiz/resolveEffectiveQuizSettings";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { getUserCoinBalance } from "@/lib/coins";
 import { prisma } from "@/lib/prisma";
 
 /** Anonymous stats update via server actions; avoid serving a stale RSC snapshot. */
@@ -49,13 +51,17 @@ export default async function QuizStatsPage({ params }: PageProps) {
     );
   }
 
-  const [contentResult, statsResult] = await Promise.all([
+  const [contentResult, statsResult, coinBalance] = await Promise.all([
     getQuizContent(quizId),
     getQuizStats(quizId),
+    getUserCoinBalance(session.user.id),
   ]);
 
+  const isResultsUnlocked =
+    statsResult.success && (statsResult.stats.campaign?.isUnlocked ?? false);
+
   const questionInsightsResult =
-    contentResult.success && contentResult.quiz.status === "ACTIVE"
+    contentResult.success && contentResult.quiz.status === "ACTIVE" && isResultsUnlocked
       ? await getQuizQuestionInsights(quizId)
       : { success: true as const, insights: [] };
 
@@ -98,6 +104,12 @@ export default async function QuizStatsPage({ params }: PageProps) {
         questionInsights={
           questionInsightsResult.success ? questionInsightsResult.insights : []
         }
+        participantIdentityMode={resolveEffectiveQuizSettings(
+          statsResult.stats.quizDetails.settings,
+        ).participantIdentityMode}
+        hasExistingResponses={statsResult.stats.totalAttemptCount > 0}
+        coinBalance={coinBalance}
+        isProAvailable={Boolean(process.env.STRIPE_PRO_PRICE_ID)}
       />
     </Suspense>
   );

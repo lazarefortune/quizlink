@@ -76,14 +76,20 @@
   --shadow-gaming-depth-purple: 0 4px 0 hsl(var(--purple-shadow));
   --shadow-gaming-depth-purple-pressed: 0 2px 0 hsl(var(--purple-shadow));
   /* Aliases for landing (raised colored blocks) */
-  --shadow-raised-primary: 0 4px 0 hsl(var(--primary-shadow));
-  --shadow-raised-destructive: 0 4px 0 hsl(var(--destructive-shadow));
-  --shadow-raised-highlight: 0 4px 0 hsl(35 100% 35%);
-  --shadow-raised-blue: 0 4px 0 hsl(var(--blue-shadow));
-  --shadow-raised-warning: 0 4px 0 hsl(38 95% 40%);
-  --shadow-raised-purple: 0 4px 0 hsl(var(--purple-shadow));
+  --shadow-raised-primary: 0 3px 0 hsl(var(--primary-shadow));
+  --shadow-raised-destructive: 0 3px 0 hsl(var(--destructive-shadow));
+  --shadow-raised-highlight: 0 3px 0 hsl(35 100% 35%);
+  --shadow-raised-blue: 0 3px 0 hsl(var(--blue-shadow));
+  --shadow-raised-warning: 0 3px 0 hsl(38 95% 40%);
+  --shadow-raised-purple: 0 3px 0 hsl(var(--purple-shadow));
   /* Neutral raised shadow (btn-bouncy default) */
-  --shadow-raised: 0 4px 0 hsl(0 0% 82%);
+  --shadow-raised: 0 3px 0 hsl(0 0% 82%);
+  /* Always-white CTA (OAuth, etc.) — unchanged in dark mode */
+  --white-button-bg: 0 0% 100%;
+  --white-button-fg: 0 0% 24%;
+  --white-button-border: 48 12% 78%;
+  --white-button-shadow: 48 10% 68%;
+  --shadow-raised-white: 0 4px 0 hsl(var(--white-button-shadow));
 }
 
 @media (min-width: 640px) {
@@ -175,6 +181,33 @@
   box-shadow: 0 6px 0 hsl(220 15% 6%), 0 12px 32px hsl(0 0% 0% / 0.5);
 }
 
+/* Quiz detail KPI icons — brighter fills in dark mode for low-contrast SVG accents */
+:root {
+  --kpi-game-soft: #ce82ff;
+  --kpi-game-solid: #9333ea;
+  --kpi-clock-soft: #1cb0f6;
+  --kpi-clock-solid: #0e5c82;
+  --participant-mode-anonymous-soft: #ce82ff;
+  --participant-mode-anonymous-solid: #9333ea;
+  --participant-mode-pseudonym-soft: #1cb0f6;
+  --participant-mode-pseudonym-solid: #0e5c82;
+  --participant-mode-name-email-soft: #ff9600;
+  --participant-mode-name-email-solid: #c06000;
+}
+
+.dark {
+  --kpi-game-soft: #e8c4ff;
+  --kpi-game-solid: #d896ff;
+  --kpi-clock-soft: #6dcefa;
+  --kpi-clock-solid: #b8e8ff;
+  --participant-mode-anonymous-soft: #e8c4ff;
+  --participant-mode-anonymous-solid: #d896ff;
+  --participant-mode-pseudonym-soft: #6dcefa;
+  --participant-mode-pseudonym-solid: #b8e8ff;
+  --participant-mode-name-email-soft: #ffc766;
+  --participant-mode-name-email-solid: #ff9600;
+}
+
 .btn-bouncy {
   box-shadow: var(--shadow-raised);
   transition: all 0.1s ease;
@@ -223,6 +256,19 @@
   filter: brightness(1.08);
 }
 .btn-bouncy-blue:active {
+  box-shadow: none;
+  transform: translateY(4px);
+}
+
+.btn-bouncy-white {
+  box-shadow: var(--shadow-raised-white);
+  transition: all 0.1s ease;
+  transform: translateY(0);
+}
+.btn-bouncy-white:hover {
+  filter: brightness(0.98);
+}
+.btn-bouncy-white:active {
   box-shadow: none;
   transform: translateY(4px);
 }

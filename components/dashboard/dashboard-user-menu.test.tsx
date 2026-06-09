@@ -14,7 +14,7 @@ vi.mock("@/components/ui/dropdown-menu", async (importOriginal) => {
   return {
     ...mod,
     DropdownMenu: (props: ComponentPropsWithoutRef<typeof DropdownMenuRoot>) => (
-      <DropdownMenuRoot defaultOpen {...props} />
+      <DropdownMenuRoot {...props} open />
     ),
   };
 });
@@ -44,8 +44,26 @@ vi.mock("@/lib/i18n/use-locale", () => ({
   useLocale: () => ({ locale: "en" }),
 }));
 
+vi.mock("@/lib/i18n/use-persist-locale-preference", () => ({
+  usePersistLocalePreference: () => ({
+    locale: "en",
+    setLocale: vi.fn(),
+  }),
+}));
+
+vi.mock("next-themes", () => ({
+  useTheme: () => ({ theme: "system", setTheme: vi.fn() }),
+}));
+
 vi.mock("@/lib/i18n", () => ({
   t: (_locale: string, key: string) => key,
+}));
+
+vi.mock("@/components/user-avatar/user-avatar-context", () => ({
+  useUserAvatar: () => ({
+    avatar: "<svg>avatar</svg>",
+    backgroundColor: "c8bfe8",
+  }),
 }));
 
 describe("DashboardUserMenu", () => {
@@ -64,6 +82,14 @@ describe("DashboardUserMenu", () => {
       "href",
       "/admin",
     );
+  });
+
+  it("shows theme and language preference controls", () => {
+    render(<DashboardUserMenu />);
+
+    expect(screen.getByText("userMenu.theme")).toBeInTheDocument();
+    expect(screen.getByText("userMenu.language")).toBeInTheDocument();
+    expect(screen.getByRole("radiogroup", { name: "Interface language" })).toBeInTheDocument();
   });
 
   it("hides admin link when hideAdminLink is true", () => {

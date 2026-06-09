@@ -5,6 +5,11 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { abandonQuizAttemptById } from "@/lib/quiz/abandon-quiz-attempt";
 import { playBlockedErrorCodeForQuizStatus } from "@/lib/quiz/quizActionErrorCodes";
+import {
+  incrementQuestionAnswerAggregates,
+  incrementQuizCompletedAggregate,
+  transitionAttemptToCompleted,
+} from "@/lib/quiz/quiz-response-aggregates";
 import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
 
 type SubmitAnswerResponse =
@@ -223,14 +228,31 @@ export async function finishQuizAttempt(
       (finishedAt.getTime() - new Date(attempt.startedAt).getTime()) / 1000
     );
 
-    await prisma.quizAttempt.update({
-      where: { id: attemptId },
-      data: {
-        status: "COMPLETED",
-        finishedAt,
-        score,
-      },
+    const transitioned = await transitionAttemptToCompleted(attemptId, {
+      finishedAt,
+      score,
+      durationSeconds: durationSec,
+      totalQuestions,
     });
+
+    if (transitioned) {
+      const quizId = attempt.quizLink.quizId;
+      await incrementQuizCompletedAggregate(quizId, {
+        score,
+        totalQuestions,
+        durationSeconds: durationSec,
+      });
+
+      await incrementQuestionAnswerAggregates(
+        quizId,
+        attempt.answers.map((answer) => ({
+          questionId: answer.questionId,
+          isCorrect: answer.isCorrect,
+          expired: answer.expired ?? false,
+          timeSpentSeconds: answer.timeSpent,
+        })),
+      );
+    }
 
     return {
       success: true,

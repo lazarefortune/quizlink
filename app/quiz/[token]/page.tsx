@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 
 import { getQuizLinkByToken } from "@/app/quiz-link/actions";
+import { auth } from "@/lib/auth";
 import { getRequestLocale } from "@/lib/i18n/request-locale";
 import { resolveQuizActionError } from "@/lib/quiz/resolveQuizActionError";
 
@@ -25,7 +26,10 @@ export default async function QuizIntroductionPage({ params }: PageProps) {
     );
   }
 
-  const result = await getQuizLinkByToken(token);
+  const [result, session] = await Promise.all([
+    getQuizLinkByToken(token),
+    auth(),
+  ]);
 
   if (!result.success) {
     return (
@@ -40,12 +44,19 @@ export default async function QuizIntroductionPage({ params }: PageProps) {
     );
   }
 
-  // Even for personalized links, show the introduction page
-  // The participant must click "Commencer le quiz" to start
+  const isOwner =
+    session?.user?.id != null &&
+    result.quizLink.quiz.ownerId != null &&
+    session.user.id === result.quizLink.quiz.ownerId;
 
   return (
     <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center">Chargement...</div>}>
-      <QuizIntroductionContent quizLink={result.quizLink} token={token} />
+      <QuizIntroductionContent
+        quizLink={result.quizLink}
+        token={token}
+        isLinkExpired={!result.quizLink.isAcceptingResponses}
+        isOwner={isOwner}
+      />
     </Suspense>
   );
 }
