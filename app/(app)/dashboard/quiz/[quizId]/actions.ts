@@ -1,6 +1,6 @@
 "use server";
 
-import type { Prisma, QuizLinkAnonymousStats } from "@prisma/client";
+import type { Prisma, QuizLinkAnonymousStats } from "@/generated/prisma/client";
 import { revalidatePath } from "next/cache";
 
 import { prisma } from "@/lib/prisma";

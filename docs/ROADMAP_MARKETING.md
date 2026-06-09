@@ -15,8 +15,8 @@ Positionnement recommandé :
 
 > Créer et partager reste gratuit.
 > Les statistiques globales restent gratuites.
-> Les réponses détaillées sont gratuites pendant une durée limitée.
-> Les coins servent à débloquer et conserver les réponses d’un quiz.
+> Les réponses détaillées sont gratuites pendant une durée limitée et limitées à 3 réponses.
+> Les coins servent à débloquer(prolonger un quiz) et donc conserver les réponses d’un quiz.
 
 ---
 
@@ -39,9 +39,9 @@ Positionnement recommandé :
 Modes de participation à prévoir progressivement :
 
 1. Réponses anonymes
-2. Nom ou pseudo
+2. Nom
 3. Nom + email
-4. Joueur connecté à un compte QuizLink
+4. Joueur connecté à un compte QuizLink (plus tard)
 
 En V1, l’email participant est déclaratif et non vérifié.
 

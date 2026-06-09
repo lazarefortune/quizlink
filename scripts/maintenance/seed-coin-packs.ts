@@ -4,9 +4,7 @@
  * Emplacement : `scripts/maintenance/`. Exécuter : `pnpm run seed:coin-packs`.
  */
 
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "../../lib/prisma";
 
 async function main() {
   console.log("🌱 Seeding coin packs...");

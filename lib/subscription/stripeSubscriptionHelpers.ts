@@ -1,4 +1,4 @@
-import type { SubscriptionStatus } from "@prisma/client";
+import type { SubscriptionStatus } from "@/generated/prisma/client";
 import type Stripe from "stripe";
 
 /** Stripe Unix timestamps are in seconds; Prisma Date uses milliseconds. */

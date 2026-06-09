@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@/generated/prisma/client";
 
 export const USER_LIFECYCLE_EVENT_TYPES = {
   SIGNUP: "SIGNUP",

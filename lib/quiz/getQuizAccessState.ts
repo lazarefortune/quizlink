@@ -1,4 +1,4 @@
-import type { Prisma, QuizUnlockType } from "@prisma/client";
+import type { Prisma, QuizUnlockType } from "@/generated/prisma/client";
 
 import { prisma } from "@/lib/prisma";
 

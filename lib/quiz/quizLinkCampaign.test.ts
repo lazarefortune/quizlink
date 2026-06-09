@@ -80,12 +80,15 @@ describe("quizLinkCampaign", () => {
   });
 
   it("buildQuizLinkCampaignUiSnapshot reflects active vs ended free period", () => {
-    const active = buildQuizLinkCampaignUiSnapshot({
-      responsesStartedAt: baseNow,
-      acceptingResponsesUntil: addDays(baseNow, 7),
-      detailsVisibleUntil: addDays(baseNow, 7),
-      unlockedUntil: null,
-    });
+    const active = buildQuizLinkCampaignUiSnapshot(
+      {
+        responsesStartedAt: baseNow,
+        acceptingResponsesUntil: addDays(baseNow, 7),
+        detailsVisibleUntil: addDays(baseNow, 7),
+        unlockedUntil: null,
+      },
+      baseNow,
+    );
     expect(active.isFreePeriodActive).toBe(true);
     expect(active.isAcceptingResponses).toBe(true);
     expect(active.unlockedBy).toBeNull();

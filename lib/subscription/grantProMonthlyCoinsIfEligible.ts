@@ -1,4 +1,4 @@
-import type { UserSubscription } from "@prisma/client";
+import type { UserSubscription } from "@/generated/prisma/client";
 import type Stripe from "stripe";
 
 import { grantProMonthlyCoinsForPeriod } from "./grantProMonthlyCoins";

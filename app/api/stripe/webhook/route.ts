@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import type Stripe from "stripe";
-import type { SubscriptionStatus } from "@prisma/client";
+import type { SubscriptionStatus } from "@/generated/prisma/client";
 
 import { stripe } from "@/lib/stripe/stripe-client";
 import { getCoinPack, isValidPackId } from "@/lib/stripe/coin-packs";
