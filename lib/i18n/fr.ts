@@ -1092,7 +1092,7 @@ export const fr = {
     sharePlayLinkDescription:
       "Partage ton quiz avec ce lien. Toute personne qui le reçoit peut jouer.",
     quizReadyTitle: "Ton quiz est prêt",
-    quizReadyDescription: "\"{quizName}\" est prêt. Copie le lien et lance une première partie.",
+    quizReadyDescription: "\"{quizName}\" est prêt.",
     playQuiz: "Jouer le quiz",
     previewQuiz: "Prévisualiser",
     viewResponses: "Voir les réponses",

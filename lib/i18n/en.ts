@@ -1088,7 +1088,7 @@ export const en = {
     sharePlayLinkDescription:
       "Share your quiz with this link. Anyone who gets it can play.",
     quizReadyTitle: "Your quiz is ready",
-    quizReadyDescription: "\"{quizName}\" is ready. Copy the link and launch a first game.",
+    quizReadyDescription: "\"{quizName}\" is ready.",
     playQuiz: "Play quiz",
     previewQuiz: "Preview",
     viewResponses: "View responses",

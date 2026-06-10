@@ -150,38 +150,77 @@ export default function DashboardQuizzesPage() {
   const [isDeletingQuiz, setIsDeletingQuiz] = useState(false);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const loadQuizzes = useCallback(async (p: number, search: string) => {
-    setIsLoading(true);
-    try {
-      const result = await getUserQuizzesPaginated(
-        p,
-        PAGE_SIZE,
-        search || undefined,
-      );
-      if (result.success) {
-        setQuizzes(result.quizzes);
-        setTotal(result.total);
-      } else {
-        console.error("Failed to load quizzes:", result.error);
+  const loadQuizzes = useCallback(
+    async (p: number, search: string, options?: { setLoading?: boolean }) => {
+      const shouldSetLoading = options?.setLoading ?? true;
+      if (shouldSetLoading) {
+        setIsLoading(true);
       }
-    } catch (error) {
-      console.error("Error loading quizzes:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+      try {
+        const result = await getUserQuizzesPaginated(
+          p,
+          PAGE_SIZE,
+          search || undefined,
+        );
+        if (result.success) {
+          setQuizzes(result.quizzes);
+          setTotal(result.total);
+        } else {
+          console.error("Failed to load quizzes:", result.error);
+        }
+      } catch (error) {
+        console.error("Error loading quizzes:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
-    loadQuizzes(page, searchQuery);
-  }, [page, searchQuery, loadQuizzes]);
+    let isCancelled = false;
+
+    async function fetchQuizzes() {
+      try {
+        const result = await getUserQuizzesPaginated(
+          page,
+          PAGE_SIZE,
+          searchQuery || undefined,
+        );
+        if (isCancelled) return;
+        if (result.success) {
+          setQuizzes(result.quizzes);
+          setTotal(result.total);
+        } else {
+          console.error("Failed to load quizzes:", result.error);
+        }
+      } catch (error) {
+        if (!isCancelled) {
+          console.error("Error loading quizzes:", error);
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void fetchQuizzes();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [page, searchQuery]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     setSearchQuery(searchInput.trim());
     setPage(1);
   };
 
   const handleClearSearch = () => {
+    setIsLoading(true);
     setSearchInput("");
     setSearchQuery("");
     setPage(1);
@@ -440,7 +479,10 @@ export default function DashboardQuizzesPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  onClick={() => {
+                    setIsLoading(true);
+                    setPage((p) => Math.max(1, p - 1));
+                  }}
                   disabled={page <= 1}
                   className="gap-1"
                 >
@@ -455,7 +497,10 @@ export default function DashboardQuizzesPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  onClick={() => {
+                    setIsLoading(true);
+                    setPage((p) => Math.min(totalPages, p + 1));
+                  }}
                   disabled={page >= totalPages}
                   className="gap-1"
                 >
