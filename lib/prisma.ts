@@ -1,4 +1,6 @@
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
+
+import { buildMariaDbDatabaseUrl } from "@/lib/buildMariaDbDatabaseUrl";
 import { PrismaClient } from "@/generated/prisma/client";
 
 const globalForPrisma = globalThis as unknown as {
@@ -12,7 +14,7 @@ function createPrismaClient(): PrismaClient {
     throw new Error("DATABASE_URL is not set");
   }
 
-  const adapter = new PrismaMariaDb(databaseUrl);
+  const adapter = new PrismaMariaDb(buildMariaDbDatabaseUrl(databaseUrl));
 
   return new PrismaClient({
     adapter,
@@ -26,10 +28,7 @@ function getPrismaClient(): PrismaClient {
   }
 
   const client = createPrismaClient();
-
-  if (process.env.NODE_ENV !== "production") {
-    globalForPrisma.prisma = client;
-  }
+  globalForPrisma.prisma = client;
 
   return client;
 }
