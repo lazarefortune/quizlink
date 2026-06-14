@@ -4,9 +4,11 @@ import Link from "next/link";
 import { ChevronDown, LogOut, Shield, User } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useState, type MouseEvent } from "react";
 
-import { ThemeSegmentedControl } from "@/components/admin/theme-segmented-control";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { DashboardUserPreferencesPanel } from "@/components/dashboard/dashboard-user-preferences-panel";
+import { UserAvatar } from "@/components/user-avatar/user-avatar";
+import { useUserAvatar } from "@/components/user-avatar/user-avatar-context";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -17,7 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
-import { getDisplayTitle, getUserInitials } from "@/lib/userProfileDisplay";
+import { getDisplayTitle } from "@/lib/userProfileDisplay";
 import { cn } from "@/lib/utils";
 import { useBuilderNavigationGuard } from "@/components/dashboard/builder-navigation-guard-context";
 
@@ -37,14 +39,21 @@ export function DashboardUserMenu({
   const { data: session } = useSession();
   const { locale } = useLocale();
   const router = useRouter();
+  const { avatar, backgroundColor } = useUserAvatar();
   const { interceptLinkClick, requestAction } = useBuilderNavigationGuard();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const username = session?.user?.name ?? "";
   const email = session?.user?.email ?? "";
-  const initials = getUserInitials(username, email);
   const title = getDisplayTitle(username, email);
 
+  const handleMenuLinkClick = (event: MouseEvent<HTMLAnchorElement>, href: string) => {
+    setMenuOpen(false);
+    interceptLinkClick(event, href);
+  };
+
   const handleSignOut = () => {
+    setMenuOpen(false);
     requestAction(async () => {
       await signOut({ redirect: false });
       router.push("/");
@@ -53,7 +62,7 @@ export function DashboardUserMenu({
   };
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
       <DropdownMenuTrigger asChild>
         <Button
           type="button"
@@ -65,11 +74,14 @@ export function DashboardUserMenu({
           )}
           aria-label={isCompact ? title : undefined}
         >
-          <Avatar className="h-11 w-11 shrink-0 border border-primary/25 bg-primary/10">
-            <AvatarFallback className="bg-primary/15 text-sm font-black uppercase tracking-wide text-primary">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
+          <UserAvatar
+            avatar={avatar}
+            backgroundColor={backgroundColor}
+            name={username}
+            email={email}
+            size="md"
+            className="h-11 w-11 border border-primary/25"
+          />
           {isCompact ? null : (
             <>
               <div className="min-w-0 flex-1 py-0.5">
@@ -93,21 +105,18 @@ export function DashboardUserMenu({
         side="top"
         className="w-64 rounded-2xl p-2"
       >
-        <div
-          className="px-2 py-2"
-          onPointerDown={(event) => event.stopPropagation()}
+        <DropdownMenuItem
+          onSelect={(event) => event.preventDefault()}
+          className="cursor-default rounded-xl p-0 focus:bg-transparent data-[highlighted]:bg-transparent"
         >
-          <p className="mb-2 text-base font-medium text-muted-foreground">
-            {locale === "fr" ? "Thème" : "Theme"}
-          </p>
-          <ThemeSegmentedControl locale={locale} />
-        </div>
+          <DashboardUserPreferencesPanel variant="dropdown" className="w-full" />
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         {session?.user?.role === "ADMIN" && !hideAdminLink && (
           <DropdownMenuItem asChild>
             <Link
               href="/admin"
-              onClick={(event) => interceptLinkClick(event, "/admin")}
+              onClick={(event) => handleMenuLinkClick(event, "/admin")}
               className="flex cursor-pointer items-center gap-2"
             >
               <Shield className="h-5 w-5" />
@@ -120,7 +129,7 @@ export function DashboardUserMenu({
         <DropdownMenuItem asChild>
           <Link
             href="/account"
-            onClick={(event) => interceptLinkClick(event, "/account")}
+            onClick={(event) => handleMenuLinkClick(event, "/account")}
             className="flex cursor-pointer items-center gap-2"
           >
             <User className="h-5 w-5" />
@@ -131,7 +140,7 @@ export function DashboardUserMenu({
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          onClick={handleSignOut}
+          onSelect={handleSignOut}
           className="flex cursor-pointer items-center gap-2 text-destructive focus:text-destructive"
         >
           <LogOut className="h-5 w-5" />

@@ -1,10 +1,16 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
 
 import { auth } from "@/lib/auth";
 import { creatorCountedAttemptWhere } from "@/lib/creator-quiz-attempt-filter";
+import { batchResolveQuizCompletedCounts } from "@/lib/quiz/batchResolveQuizCompletedCounts";
+import { batchResolveQuizQuotaStatusForOwner } from "@/lib/quiz/batchResolveQuizQuotaStatusForOwner";
+import {
+  serializeQuizResponseQuotaStatus,
+  type SerializedQuizResponseQuotaStatus,
+} from "@/lib/quiz/quizResponseQuotaStatus";
 import { FINALIZE_DRAFT_QUIZ_ERROR_CODE } from "@/lib/builder/finalizeDraftQuizErrors";
 import {
   SAVE_MODIFIED_QUIZ_AS_DRAFT_COPY_ERROR,
@@ -638,6 +644,7 @@ export type UserQuizListItem = {
   questionCount: number;
   attemptCount: number;
   createdAt: string;
+  quotaStatus?: SerializedQuizResponseQuotaStatus;
 };
 
 const DEFAULT_PAGE_SIZE = 12;
@@ -699,78 +706,39 @@ export async function getUserQuizzesPaginated(
     ]);
 
     const quizIds = quizzes.map((q) => q.id);
-    const [linksWithCounts, anonymousStatsRows] = await Promise.all([
-      prisma.quizLink.findMany({
-        where: { quizId: { in: quizIds } },
-        select: {
-          quizId: true,
-          _count: {
-            select: {
-              attempts: {
-                where: {
-                  ...creatorCountedAttemptWhere,
-                  status: "COMPLETED",
-                },
-              },
-            },
-          },
-        },
-      }),
-      prisma.quizLinkAnonymousStats.findMany({
-        where: {
-          quizLink: {
-            quizId: { in: quizIds },
-          },
-        },
-        select: {
-          completedCount: true,
-          quizLink: {
-            select: {
-              quizId: true,
-            },
-          },
-        },
-      }),
+    const [responseCountByQuizId, quotaStatusByQuizId] = await Promise.all([
+      batchResolveQuizCompletedCounts(quizIds),
+      batchResolveQuizQuotaStatusForOwner(session.user.id, quizIds),
     ]);
-
-    const anonymousResponseCountByQuizId = new Map<string, number>();
-    for (const row of anonymousStatsRows) {
-      const quizId = row.quizLink.quizId;
-      const current = anonymousResponseCountByQuizId.get(quizId) ?? 0;
-      anonymousResponseCountByQuizId.set(quizId, current + row.completedCount);
-    }
-
-    const responseCountByQuizId = new Map<string, number>();
-    for (const link of linksWithCounts) {
-      const current = responseCountByQuizId.get(link.quizId) ?? 0;
-      responseCountByQuizId.set(link.quizId, current + link._count.attempts);
-    }
-
-    for (const [quizId, anonymousResponses] of anonymousResponseCountByQuizId.entries()) {
-      const current = responseCountByQuizId.get(quizId) ?? 0;
-      responseCountByQuizId.set(quizId, current + anonymousResponses);
-    }
 
     return {
       success: true,
-      quizzes: quizzes.map((q) => ({
-        id: q.id,
-        name: q.name,
-        visibility: q.visibility as "PRIVATE" | "PUBLIC",
-        status: q.status,
-        publishedAt:
-          q.publishedAt instanceof Date
-            ? q.publishedAt.toISOString()
-            : q.publishedAt
-              ? new Date(q.publishedAt).toISOString()
-              : null,
-        questionCount: q._count.questions,
-        attemptCount: responseCountByQuizId.get(q.id) ?? 0,
-        createdAt:
-          q.createdAt instanceof Date
-            ? q.createdAt.toISOString()
-            : new Date(q.createdAt).toISOString(),
-      })),
+      quizzes: quizzes.map((q) => {
+        const attemptCount = responseCountByQuizId.get(q.id) ?? 0;
+        const quotaStatus = quotaStatusByQuizId.get(q.id);
+        return {
+          id: q.id,
+          name: q.name,
+          visibility: q.visibility as "PRIVATE" | "PUBLIC",
+          status: q.status,
+          publishedAt:
+            q.publishedAt instanceof Date
+              ? q.publishedAt.toISOString()
+              : q.publishedAt
+                ? new Date(q.publishedAt).toISOString()
+                : null,
+          questionCount: q._count.questions,
+          attemptCount,
+          createdAt:
+            q.createdAt instanceof Date
+              ? q.createdAt.toISOString()
+              : new Date(q.createdAt).toISOString(),
+          quotaStatus:
+            q.status === "ACTIVE" && quotaStatus
+              ? serializeQuizResponseQuotaStatus(quotaStatus)
+              : undefined,
+        };
+      }),
       total,
     };
   } catch (error) {

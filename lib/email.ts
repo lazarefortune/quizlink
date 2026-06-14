@@ -93,6 +93,7 @@ export async function sendWelcomeEmail({
         <p>Je suis ravi de t'accueillir ici.</p>
         <p>J'ai créé QuizLink pour rendre la création de quiz plus simple, plus rapide et plus agréable, que ce soit pour réviser, animer un cours, tester des connaissances ou partager une activité.</p>
         <p>Ton compte est prêt et tu as actuellement <strong>${coinBalance}</strong> coins pour tester la génération de quiz avec l'IA.</p>
+        <p>Sur chaque quiz, tu as 20 réponses gratuites pour commencer. Débloque un quiz avec 40 coins quand tu veux aller plus loin.</p>
         <p>Le plus simple maintenant : crée ton premier quiz, partage le lien, et regarde les réponses arriver.</p>
         <div style="text-align: center; margin: 30px 0;">
           <a href="${createUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Créer mon premier quiz</a>
@@ -117,6 +118,7 @@ export async function sendWelcomeEmail({
         <p>I'm really glad to have you here.</p>
         <p>I built QuizLink to make quiz creation simpler, faster and more enjoyable — whether you're studying, running a class, testing knowledge, or sharing an activity.</p>
         <p>Your account is ready, and you currently have <strong>${coinBalance}</strong> coin${coinBalance === 1 ? "" : "s"} to try AI-powered quiz generation.</p>
+        <p>Each quiz includes 20 free responses to get started. Unlock a quiz with 40 coins when you want to go further.</p>
         <p>The simplest next step: create your first quiz, share the link, and watch the responses come in.</p>
         <div style="text-align: center; margin: 30px 0;">
           <a href="${createUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Create my first quiz</a>

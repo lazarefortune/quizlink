@@ -1,3 +1,4 @@
+import { AvatarSvgDisplay } from "@/components/user-avatar/avatar-svg-display";
 import { cn } from "@/lib/utils";
 
 type ParticipantAvatarProps = {
@@ -27,15 +28,12 @@ export function ParticipantAvatar({
     return (
       <div
         className={cn(
-          "rounded-full overflow-hidden shrink-0 bg-muted flex items-center justify-center",
+          "flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted",
           sizeClass,
           className
         )}
       >
-        <div
-          className="w-full h-full"
-          dangerouslySetInnerHTML={{ __html: avatar }}
-        />
+        <AvatarSvgDisplay svg={avatar} className="h-full w-full" />
       </div>
     );
   }

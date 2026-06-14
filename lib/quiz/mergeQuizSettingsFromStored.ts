@@ -1,4 +1,5 @@
 import { DEFAULT_MANUAL_QUIZ_BUILDER_SETTINGS } from "@/lib/builder/defaultManualQuizSettings";
+import { isParticipantIdentityMode } from "@/types/participant-identity";
 import type { QuizSettings } from "@/types/quiz-builder";
 
 function readTimeLimitFromStored(raw: Record<string, unknown>): number | null {
@@ -32,7 +33,12 @@ export function mergeQuizSettingsFromStored(stored: unknown): QuizSettings {
       ? raw.autoSaveEnabled
       : DEFAULT_MANUAL_QUIZ_BUILDER_SETTINGS.autoSaveEnabled;
 
+  const participantIdentityMode = isParticipantIdentityMode(raw.participantIdentityMode)
+    ? raw.participantIdentityMode
+    : DEFAULT_MANUAL_QUIZ_BUILDER_SETTINGS.participantIdentityMode;
+
   return {
+    participantIdentityMode,
     showAnswerImmediately:
       typeof raw.showAnswerImmediately === "boolean"
         ? raw.showAnswerImmediately

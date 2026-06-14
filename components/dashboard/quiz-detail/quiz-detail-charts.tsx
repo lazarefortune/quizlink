@@ -12,6 +12,7 @@ import {
   YAxis,
 } from "recharts";
 
+import { PlayfulSectionTitle } from "@/components/ui/playful-section-title";
 import { t } from "@/lib/i18n";
 import { useLocale } from "@/lib/i18n/use-locale";
 import {
@@ -77,9 +78,9 @@ export function QuizDetailCharts({
   return (
     <section className="grid gap-4 lg:grid-cols-2">
       <div className="rounded-xl border border-border bg-card p-4">
-        <h3 className="mb-4 text-sm font-semibold">
+        <PlayfulSectionTitle as="h3" className="mb-4 text-lg font-semibold">
           {t(locale, "dashboard.funnelChartTitle")}
-        </h3>
+        </PlayfulSectionTitle>
         <div className="h-56 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={funnelData} layout="vertical" margin={{ left: 8, right: 8 }}>
@@ -98,9 +99,9 @@ export function QuizDetailCharts({
 
       {audienceData.length > 0 ? (
         <div className="rounded-xl border border-border bg-card p-4">
-          <h3 className="mb-4 text-sm font-semibold">
+          <PlayfulSectionTitle as="h3" className="mb-4 text-lg font-semibold">
             {t(locale, "dashboard.audienceChartTitle")}
-          </h3>
+          </PlayfulSectionTitle>
           <div className="h-56 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>

@@ -1,7 +1,7 @@
 "use server";
 
 import crypto from "crypto";
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -9,6 +9,12 @@ import {
   playBlockedErrorCodeForQuizStatus,
   QUIZ_ACTION_ERROR_CODE,
 } from "@/lib/quiz/quizActionErrorCodes";
+import { ensureQuizLinkResponseActivityStarted } from "@/lib/quiz/quizLinkActivityPersistence";
+import {
+  getQuizPlayBlockErrorCode,
+  resolveQuizPlayAccess,
+} from "@/lib/quiz/resolveQuizPlayAccess";
+import { incrementQuizStartedAggregate } from "@/lib/quiz/quiz-response-aggregates";
 import { canQuizBePlayed, canQuizBeShared } from "@/lib/quiz/quizStatusPolicy";
 import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
 
@@ -32,11 +38,14 @@ type GetQuizLinkByTokenResponse =
         } | null;
         allowMultipleAttempts: boolean;
         expiresAt: Date | null;
+        responsesStartedAt: Date | null;
+        isAcceptingResponses: boolean;
         hasCompletedAttempt: boolean;
         quiz: {
           id: string;
           name: string;
           visibility: string;
+          ownerId: string | null;
           settings: Record<string, unknown>;
           questions: Array<{
             id: string;
@@ -333,6 +342,12 @@ export async function getQuizLinkByToken(
       );
     }
 
+    const playAccess = await resolveQuizPlayAccess({
+      quizId: quizLink.quizId,
+      ownerId: quizLink.quiz.ownerId,
+    });
+    const isAcceptingResponses = playAccess.canAcceptResponses;
+
     return {
       success: true,
       quizLink: {
@@ -352,11 +367,14 @@ export async function getQuizLinkByToken(
           : null,
         allowMultipleAttempts: quizLink.allowMultipleAttempts,
         expiresAt: quizLink.expiresAt,
+        responsesStartedAt: quizLink.responsesStartedAt,
+        isAcceptingResponses,
         hasCompletedAttempt,
         quiz: {
           id: quizLink.quiz.id,
           name: quizLink.quiz.name,
           visibility: quizLink.quiz.visibility,
+          ownerId: quizLink.quiz.ownerId,
           settings: quizLink.quiz.settings as Record<string, unknown>,
           questions: quizLink.quiz.questions.map((q: { id: string; type: string; label: string; image: string | null; imageKey: string | null; order: number; options: Array<{ id: string; label: string; isCorrect: boolean }> }) => ({
             id: q.id,
@@ -462,7 +480,7 @@ export async function startQuizAttempt(
     const quizLink = await prisma.quizLink.findUnique({
       where: { id: quizLinkId },
       include: {
-        quiz: { select: { status: true } },
+        quiz: { select: { id: true, status: true, ownerId: true } },
         attempts: {
           where: {
             status: { in: ["IN_PROGRESS", "COMPLETED"] },
@@ -486,6 +504,19 @@ export async function startQuizAttempt(
     if (attemptBlocked) {
       return { success: false, error: attemptBlocked };
     }
+
+    const now = new Date();
+    const playAccess = await resolveQuizPlayAccess({
+      quizId: quizLink.quizId,
+      ownerId: quizLink.quiz.ownerId,
+      now,
+    });
+    const playBlock = getQuizPlayBlockErrorCode(playAccess);
+    if (playBlock) {
+      return { success: false, error: playBlock };
+    }
+
+    // TODO: add stricter transactional quota guard if high-volume quiz usage requires it.
 
     // For personalized links, verify participant exists
     if (participantId) {
@@ -548,6 +579,10 @@ export async function startQuizAttempt(
         status: "IN_PROGRESS",
       } as Prisma.QuizAttemptCreateInput,
     });
+
+    await ensureQuizLinkResponseActivityStarted(quizLinkId, now);
+
+    await incrementQuizStartedAggregate(quizLink.quizId);
 
     return {
       success: true,

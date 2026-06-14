@@ -18,12 +18,14 @@ describe("aggregateQuestionInsights", () => {
         {
           questionId: "q1",
           isCorrect: true,
+          expired: false,
           timeSpent: 10,
           selectedOptionIds: ["a"],
         },
         {
           questionId: "q1",
           isCorrect: false,
+          expired: true,
           timeSpent: 30,
           selectedOptionIds: ["b"],
         },
@@ -34,6 +36,7 @@ describe("aggregateQuestionInsights", () => {
     expect(insights[0]?.responseCount).toBe(2);
     expect(insights[0]?.successRate).toBe(50);
     expect(insights[0]?.averageTimeSeconds).toBe(20);
+    expect(insights[0]?.expiredCount).toBe(1);
     expect(insights[0]?.optionDistribution).toEqual([
       { optionId: "a", label: "A", isCorrect: true, count: 1, percentage: 50 },
       { optionId: "b", label: "B", isCorrect: false, count: 1, percentage: 50 },
@@ -51,6 +54,7 @@ describe("aggregateQuestionInsights", () => {
       responseCount: 0,
       successRate: null,
       averageTimeSeconds: null,
+      expiredCount: 0,
       optionDistribution: [
         { optionId: "a", label: "A", isCorrect: true, count: 0, percentage: 0 },
       ],

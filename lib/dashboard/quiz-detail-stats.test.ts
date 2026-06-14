@@ -4,7 +4,6 @@ import {
   buildQuizAudienceSlices,
   buildQuizFunnelSteps,
   computeQuizCompletionRatePercent,
-  pickPrimaryFourthKpi,
   shouldShowQuizDetailCharts,
 } from "./quiz-detail-stats";
 
@@ -40,35 +39,5 @@ describe("quiz-detail-stats", () => {
       ),
     ).toBe(true);
   });
-
-  it("prefers average time for the fourth primary KPI when available", () => {
-    expect(
-      pickPrimaryFourthKpi({
-        totalResponses: 1,
-        totalStarted: 1,
-        totalOpenCount: 1,
-        anonymousCompletedCount: 0,
-        identifiedCompletedCount: 1,
-        globalScoredCount: 1,
-        globalScoreAverage: 80,
-        globalBestScore: 90,
-        globalLowestScore: 50,
-        globalAverageDurationSeconds: 42,
-      }),
-    ).toBe("averageTime");
-    expect(
-      pickPrimaryFourthKpi({
-        totalResponses: 1,
-        totalStarted: 1,
-        totalOpenCount: 1,
-        anonymousCompletedCount: 0,
-        identifiedCompletedCount: 1,
-        globalScoredCount: 1,
-        globalScoreAverage: 80,
-        globalBestScore: 90,
-        globalLowestScore: 50,
-        globalAverageDurationSeconds: null,
-      }),
-    ).toBe("bestScore");
-  });
 });
+

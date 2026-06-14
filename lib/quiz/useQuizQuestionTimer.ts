@@ -19,6 +19,12 @@ export type UseQuizQuestionTimerOptions = {
   onBackgroundExpire?: (questionId: string) => void;
   // Called when the active timed question hits 0 or is revisited after its deadline.
   onExpire: (questionId: string) => void;
+  /**
+   * Optional server-provided deadlines (ms since epoch) keyed by questionId.
+   * When present for a question, overrides the locally-calculated deadline so
+   * the client timer is anchored to the server start time (anti-cheat).
+   */
+  serverDeadlines?: Record<string, number>;
 };
 
 export type UseQuizQuestionTimerResult = {
@@ -37,22 +43,30 @@ function ensureQuestionTimerEntry(
   questionId: string,
   totalSeconds: number,
   now: number,
+  serverDeadlineAtMs?: number,
 ): PerQuestionTimerEntry | null {
-  const deadline = createQuestionTimerDeadline(totalSeconds, now);
-  if (!deadline) {
-    return null;
-  }
-
   const existing = stateByQuestionRef.current[questionId];
   if (existing) {
     return existing;
   }
 
-  const entry: PerQuestionTimerEntry = {
-    startedAt: deadline.startedAt,
-    deadlineAt: deadline.deadlineAt,
-    expired: false,
-  };
+  let startedAt: number;
+  let deadlineAt: number;
+
+  if (serverDeadlineAtMs != null && serverDeadlineAtMs > 0) {
+    // Use server-provided deadline so the client timer matches server reality
+    deadlineAt = serverDeadlineAtMs;
+    startedAt = deadlineAt - totalSeconds * 1000;
+  } else {
+    const deadline = createQuestionTimerDeadline(totalSeconds, now);
+    if (!deadline) {
+      return null;
+    }
+    startedAt = deadline.startedAt;
+    deadlineAt = deadline.deadlineAt;
+  }
+
+  const entry: PerQuestionTimerEntry = { startedAt, deadlineAt, expired: false };
   stateByQuestionRef.current[questionId] = entry;
   return entry;
 }
@@ -65,6 +79,7 @@ export function useQuizQuestionTimer({
   isActiveTimedQuestionLocked,
   onBackgroundExpire,
   onExpire,
+  serverDeadlines,
 }: UseQuizQuestionTimerOptions): UseQuizQuestionTimerResult {
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const [isTimeUp, setIsTimeUp] = useState(false);
@@ -134,6 +149,7 @@ export function useQuizQuestionTimer({
       activeTimedQuestionId,
       totalSeconds,
       Date.now(),
+      serverDeadlines?.[activeTimedQuestionId],
     );
     if (!entry) {
       setTimeRemaining(null);

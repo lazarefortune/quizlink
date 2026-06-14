@@ -78,7 +78,7 @@ export function AdminMobileTopbar() {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={handleSignOut}
+              onSelect={() => void handleSignOut()}
               className="flex items-center gap-2 cursor-pointer text-red-500"
             >
               <LogOut className="h-4 w-4" />

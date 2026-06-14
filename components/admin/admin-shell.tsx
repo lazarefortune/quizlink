@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Menu, User, Settings, LogOut, UserRound } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -18,22 +19,35 @@ import {
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { ThemeSegmentedControl } from "@/components/admin/theme-segmented-control";
+import { UserAvatarProvider } from "@/components/user-avatar/user-avatar-context";
 
 type AdminShellProps = {
   children: React.ReactNode;
+  userAvatar?: string | null;
+  userAvatarBackgroundColor?: string;
 };
 
-export function AdminShell({ children }: AdminShellProps) {
+export function AdminShell({
+  children,
+  userAvatar = null,
+  userAvatarBackgroundColor,
+}: AdminShellProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { data: session } = useSession();
   const { locale } = useLocale();
+  const router = useRouter();
 
   const handleSignOut = async () => {
     await signOut({ redirect: false });
-    window.location.href = "/";
+    router.push("/");
+    router.refresh();
   };
 
   return (
+    <UserAvatarProvider
+      avatar={userAvatar}
+      backgroundColor={userAvatarBackgroundColor}
+    >
     <div className="flex h-dvh min-h-0 flex-col overflow-hidden bg-card">
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <AdminSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
@@ -82,7 +96,7 @@ export function AdminShell({ children }: AdminShellProps) {
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={handleSignOut}
+                      onSelect={() => void handleSignOut()}
                       className="flex items-center font-bold text-base gap-2 cursor-pointer text-red-500"
                     >
                       <LogOut className="h-4 w-4" />
@@ -102,5 +116,6 @@ export function AdminShell({ children }: AdminShellProps) {
         </div>
       </div>
     </div>
+    </UserAvatarProvider>
   );
 }

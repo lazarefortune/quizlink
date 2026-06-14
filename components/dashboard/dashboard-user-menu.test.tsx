@@ -3,8 +3,8 @@
 import type { ComponentPropsWithoutRef } from "react";
 
 import "@testing-library/jest-dom/vitest";
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 
 import { DashboardUserMenu } from "./dashboard-user-menu";
 
@@ -14,7 +14,7 @@ vi.mock("@/components/ui/dropdown-menu", async (importOriginal) => {
   return {
     ...mod,
     DropdownMenu: (props: ComponentPropsWithoutRef<typeof DropdownMenuRoot>) => (
-      <DropdownMenuRoot defaultOpen {...props} />
+      <DropdownMenuRoot {...props} open />
     ),
   };
 });
@@ -30,13 +30,16 @@ vi.mock("next-auth/react", () => ({
       },
     },
   }),
-  signOut: vi.fn(),
+  signOut: vi.fn().mockResolvedValue(undefined),
 }));
+
+const mockPush = vi.fn();
+const mockRefresh = vi.fn();
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
-    push: vi.fn(),
-    refresh: vi.fn(),
+    push: mockPush,
+    refresh: mockRefresh,
   }),
 }));
 
@@ -44,11 +47,33 @@ vi.mock("@/lib/i18n/use-locale", () => ({
   useLocale: () => ({ locale: "en" }),
 }));
 
+vi.mock("@/lib/i18n/use-persist-locale-preference", () => ({
+  usePersistLocalePreference: () => ({
+    locale: "en",
+    setLocale: vi.fn(),
+  }),
+}));
+
+vi.mock("next-themes", () => ({
+  useTheme: () => ({ theme: "system", setTheme: vi.fn() }),
+}));
+
 vi.mock("@/lib/i18n", () => ({
   t: (_locale: string, key: string) => key,
 }));
 
+vi.mock("@/components/user-avatar/user-avatar-context", () => ({
+  useUserAvatar: () => ({
+    avatar: "<svg>avatar</svg>",
+    backgroundColor: "c8bfe8",
+  }),
+}));
+
 describe("DashboardUserMenu", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("renders sidebar trigger with user display name", () => {
     render(<DashboardUserMenu />);
 
@@ -66,6 +91,14 @@ describe("DashboardUserMenu", () => {
     );
   });
 
+  it("shows theme and language preference controls", () => {
+    render(<DashboardUserMenu />);
+
+    expect(screen.getByText("userMenu.theme")).toBeInTheDocument();
+    expect(screen.getByText("userMenu.language")).toBeInTheDocument();
+    expect(screen.getByRole("radiogroup", { name: "Interface language" })).toBeInTheDocument();
+  });
+
   it("hides admin link when hideAdminLink is true", () => {
     render(<DashboardUserMenu hideAdminLink />);
 
@@ -73,5 +106,21 @@ describe("DashboardUserMenu", () => {
     expect(
       screen.queryByRole("menuitem", { name: "userMenu.admin" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("signs out when used outside BuilderNavigationGuardProvider", async () => {
+    const { signOut } = await import("next-auth/react");
+
+    render(<DashboardUserMenu hideAdminLink />);
+
+    fireEvent.click(screen.getByRole("menuitem", { name: "auth.signOut" }));
+
+    await vi.waitFor(() => {
+      expect(signOut).toHaveBeenCalledWith({ redirect: false });
+    });
+    await vi.waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith("/");
+    });
+    expect(mockRefresh).toHaveBeenCalled();
   });
 });

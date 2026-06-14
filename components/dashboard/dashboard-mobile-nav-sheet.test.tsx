@@ -32,6 +32,13 @@ vi.mock("@/lib/i18n/use-locale", () => ({
   useLocale: () => ({ locale: "en" }),
 }));
 
+vi.mock("@/lib/i18n/use-persist-locale-preference", () => ({
+  usePersistLocalePreference: () => ({
+    locale: "en",
+    setLocale: vi.fn(),
+  }),
+}));
+
 vi.mock("@/lib/i18n", () => ({
   t: (_locale: string, key: string) => key,
 }));

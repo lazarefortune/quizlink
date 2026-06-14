@@ -7,6 +7,11 @@ import { sendEmailChangeCode } from "@/lib/email";
 import { revalidatePath } from "next/cache";
 import { recordUserLifecycleEvent, USER_LIFECYCLE_EVENT_TYPES } from "@/lib/userLifecycleEvents";
 import { z } from "zod";
+import { generateUserAvatar } from "@/lib/user-avatar/generateUserAvatar";
+import {
+  serializeUserAvatarConfig,
+  userAvatarConfigSchema,
+} from "@/lib/user-avatar/userAvatarConfigSchema";
 
 function generateVerificationCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -39,6 +44,12 @@ type DeleteAccountResponse = {
 
 type UpdateNotificationPreferencesResponse = {
   success: boolean;
+  error?: string;
+};
+
+type UpdateUserAvatarResponse = {
+  success: boolean;
+  avatar?: string;
   error?: string;
 };
 
@@ -87,6 +98,88 @@ export async function updateNotificationPreferencesAction(
       success: false,
       error:
         error instanceof Error ? error.message : "Failed to update notification preferences",
+    };
+  }
+}
+
+const preferredLanguageSchema = z.enum(["fr", "en"]);
+
+/**
+ * Update only the user's preferred interface language (e.g. from dashboard menu).
+ */
+export async function updatePreferredLanguage(
+  preferredLanguage: unknown,
+): Promise<UpdateProfileResponse> {
+  try {
+    if (!prisma) {
+      return { success: false, error: "Database not initialized" };
+    }
+
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const parsed = preferredLanguageSchema.safeParse(preferredLanguage);
+    if (!parsed.success) {
+      return { success: false, error: "Invalid language" };
+    }
+
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: { preferredLanguage: parsed.data },
+    });
+
+    revalidatePath("/account");
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating preferred language:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Failed to update preferred language",
+    };
+  }
+}
+
+export async function updateUserAvatarAction(
+  input: unknown,
+): Promise<UpdateUserAvatarResponse> {
+  try {
+    if (!prisma) {
+      return { success: false, error: "Database not initialized" };
+    }
+
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const parsed = userAvatarConfigSchema.safeParse(input);
+    if (!parsed.success) {
+      return { success: false, error: "Invalid avatar configuration" };
+    }
+
+    const avatar = generateUserAvatar(parsed.data);
+    const avatarConfig = serializeUserAvatarConfig(parsed.data);
+
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: {
+        avatar,
+        avatarConfig,
+      },
+    });
+
+    revalidatePath("/account");
+    revalidatePath("/dashboard");
+
+    return { success: true, avatar };
+  } catch (error) {
+    console.error("Error updating user avatar:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to update avatar",
     };
   }
 }

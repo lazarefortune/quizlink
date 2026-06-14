@@ -2,15 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { type LucideIcon } from "lucide-react";
+import type { ComponentType } from "react";
 
 import { useBuilderNavigationGuard } from "@/components/dashboard/builder-navigation-guard-context";
+import { dashboardNavIconClassName } from "@/components/dashboard/dashboard-nav-icons";
+import { dashboardSidebarNavItemClassName } from "@/components/dashboard/dashboard-sidebar-nav-styles";
 import { cn } from "@/lib/utils";
 
 type NavItemProps = {
   href: string;
   label: string;
-  icon: LucideIcon;
+  icon: ComponentType<{ className?: string }>;
   onClick?: () => void;
   className?: string;
   /** Desktop icon-only rail; keeps labels for screen readers */
@@ -42,17 +44,13 @@ export function NavItem({
         onClick?.();
       }}
       className={cn(
-        "flex items-center border-2 rounded-xl py-2.5 text-lg font-medium transition-all",
-        isCompact ? "justify-center gap-0 px-2" : "gap-3 px-3",
-        isActive
-          ? "bg-primary text-primary-foreground border-primary"
-          : "text-muted-foreground border-transparent hover:bg-muted hover:text-foreground",
+        dashboardSidebarNavItemClassName({ isActive, isCompact }),
         className,
       )}
       title={isCompact ? label : undefined}
       aria-label={isCompact ? label : undefined}
     >
-      <Icon className="h-5 w-5 shrink-0" />
+      <Icon className={dashboardNavIconClassName} />
       {isCompact ? null : label}
     </Link>
   );

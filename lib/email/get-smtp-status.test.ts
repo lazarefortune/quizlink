@@ -13,9 +13,15 @@ describe("get-smtp-status", () => {
     process.env = { ...originalEnv };
   });
 
+  function setNodeEnv(value: string) {
+    // TS marks `process.env` as readonly in Node types.
+    (process.env as unknown as Record<string, string | undefined>).NODE_ENV =
+      value;
+  }
+
   it("returns development defaults when SMTP_HOST is unset", () => {
     delete process.env.SMTP_HOST;
-    process.env.NODE_ENV = "production";
+    setNodeEnv("production");
 
     expect(getSmtpStatus()).toEqual({
       mode: "development",
@@ -27,7 +33,7 @@ describe("get-smtp-status", () => {
   });
 
   it("returns production mode when SMTP_HOST is set in production", () => {
-    process.env.NODE_ENV = "production";
+    setNodeEnv("production");
     process.env.SMTP_HOST = "smtp.example.com";
     process.env.SMTP_PORT = "465";
     process.env.SMTP_FROM = "noreply@custom.test";
@@ -42,7 +48,7 @@ describe("get-smtp-status", () => {
   });
 
   it("allows admin tests unless explicitly disabled in production", () => {
-    process.env.NODE_ENV = "production";
+    setNodeEnv("production");
     delete process.env.ALLOW_ADMIN_EMAIL_TEST;
 
     expect(isAdminTestEmailAllowedInEnvironment()).toBe(true);
@@ -52,10 +58,10 @@ describe("get-smtp-status", () => {
   });
 
   it("disallows recipient override in production", () => {
-    process.env.NODE_ENV = "production";
+    setNodeEnv("production");
     expect(canOverrideAdminTestEmailRecipient()).toBe(false);
 
-    process.env.NODE_ENV = "development";
+    setNodeEnv("development");
     expect(canOverrideAdminTestEmailRecipient()).toBe(true);
   });
 });

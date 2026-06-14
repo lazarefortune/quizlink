@@ -8,6 +8,10 @@ export type QuizDetailAudienceSlice = {
   value: number;
 };
 
+import type { QuizDetailAttemptRow } from "@/lib/dashboard/creator-response-attempts";
+import type { QuizLinkResultAccessSnapshot } from "@/lib/quiz/quizLinkResultAccess";
+import type { QuizResponseQuotaStatus } from "@/lib/quiz/quizResponseQuotaStatus";
+
 export type QuizDetailStatsInput = {
   totalResponses: number;
   totalStarted: number;
@@ -19,6 +23,20 @@ export type QuizDetailStatsInput = {
   globalBestScore: number | null;
   globalLowestScore: number | null;
   globalAverageDurationSeconds: number | null;
+  completionRatePercent: number;
+  /** All creator-visible attempts (for preview copy). */
+  totalAttemptCount: number;
+  /** Attempts hidden in free tier (count only — no row payload). */
+  lockedAttemptCount: number;
+  /** Attempts whose detailed answers were purged after expiration. */
+  purgedAttemptCount: number;
+  /** True when at least one link or attempt has purged detailed data. */
+  hasPurgedDetails: boolean;
+  /** True when the public link detailed data was fully purged after expiration. */
+  detailsFullyPurged: boolean;
+  attempts: QuizDetailAttemptRow[];
+  resultAccess: QuizLinkResultAccessSnapshot | null;
+  quotaStatus: QuizResponseQuotaStatus | null;
 };
 
 export function computeQuizCompletionRatePercent(stats: {

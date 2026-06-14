@@ -9,12 +9,16 @@ import {
 import { SupportFeedbackProvider } from "@/components/support/support-feedback-provider";
 import { cn } from "@/lib/utils";
 
+import { UserAvatarProvider } from "@/components/user-avatar/user-avatar-context";
+
 import { DashboardMobileScrollLayout } from "./dashboard-mobile-scroll-layout";
 import { Sidebar } from "./sidebar";
 
 type DashboardShellProps = {
   children: React.ReactNode;
   needsLegalConsent?: boolean;
+  userAvatar?: string | null;
+  userAvatarBackgroundColor?: string;
 };
 
 function DashboardShellInner({
@@ -51,14 +55,21 @@ function DashboardShellInner({
 export function DashboardShell({
   children,
   needsLegalConsent = false,
+  userAvatar = null,
+  userAvatarBackgroundColor,
 }: DashboardShellProps) {
   return (
     <SupportFeedbackProvider>
       <BuilderNavigationGuardProvider>
         <DashboardSidebarLayoutProvider>
-          <DashboardShellInner needsLegalConsent={needsLegalConsent}>
-            {children}
-          </DashboardShellInner>
+          <UserAvatarProvider
+            avatar={userAvatar}
+            backgroundColor={userAvatarBackgroundColor}
+          >
+            <DashboardShellInner needsLegalConsent={needsLegalConsent}>
+              {children}
+            </DashboardShellInner>
+          </UserAvatarProvider>
         </DashboardSidebarLayoutProvider>
       </BuilderNavigationGuardProvider>
     </SupportFeedbackProvider>

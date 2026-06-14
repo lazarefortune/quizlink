@@ -1,11 +1,16 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
 
 import { auth } from "@/lib/auth";
 import { deductCoins } from "@/lib/coins";
 import { creatorCountedAttemptWhere } from "@/lib/creator-quiz-attempt-filter";
+import { batchResolveQuizCompletedCounts } from "@/lib/quiz/batchResolveQuizCompletedCounts";
+import { batchResolveQuizQuotaStatusForOwner } from "@/lib/quiz/batchResolveQuizQuotaStatusForOwner";
+import {
+  serializeQuizResponseQuotaStatus,
+} from "@/lib/quiz/quizResponseQuotaStatus";
 import { prisma } from "@/lib/prisma";
 import {
   copyQuestionImageStorageObject,
@@ -96,31 +101,10 @@ export async function getDashboardStats() {
       ]);
 
     const recentQuizIds = recentQuizzes.map((quiz) => quiz.id);
-    const anonymousStatsRows =
-      recentQuizIds.length > 0
-        ? await prisma.quizLinkAnonymousStats.findMany({
-            where: {
-              quizLink: {
-                quizId: { in: recentQuizIds },
-              },
-            },
-            select: {
-              completedCount: true,
-              quizLink: {
-                select: {
-                  quizId: true,
-                },
-              },
-            },
-          })
-        : [];
-
-    const anonymousResponseCountByQuizId = new Map<string, number>();
-    for (const row of anonymousStatsRows) {
-      const quizId = row.quizLink.quizId;
-      const current = anonymousResponseCountByQuizId.get(quizId) ?? 0;
-      anonymousResponseCountByQuizId.set(quizId, current + row.completedCount);
-    }
+    const [completedCountByQuizId, quotaStatusByQuizId] = await Promise.all([
+      batchResolveQuizCompletedCounts(recentQuizIds),
+      batchResolveQuizQuotaStatusForOwner(userId, recentQuizIds),
+    ]);
 
     const completedAttempts = await prisma.quizAttempt.count({
       where: {
@@ -147,22 +131,28 @@ export async function getDashboardStats() {
         completedAttempts,
         averageScore: averageScore !== null ? Math.round(averageScore) : null,
         completionRate,
-        recentQuizzes: recentQuizzes.map((q) => ({
-          id: q.id,
-          name: q.name,
-          status: q.status as QuizLifecycleStatus,
-          publishedAt:
-            q.publishedAt instanceof Date
-              ? q.publishedAt.toISOString()
-              : q.publishedAt
-                ? new Date(q.publishedAt).toISOString()
-                : null,
-          updatedAt: q.updatedAt.toISOString(),
-          questionCount: q._count.questions,
-          attemptCount:
-            q.links.reduce((sum, l) => sum + l._count.attempts, 0) +
-            (anonymousResponseCountByQuizId.get(q.id) ?? 0),
-        })),
+        recentQuizzes: recentQuizzes.map((q) => {
+          const attemptCount = completedCountByQuizId.get(q.id) ?? 0;
+          const quotaStatus = quotaStatusByQuizId.get(q.id);
+          return {
+            id: q.id,
+            name: q.name,
+            status: q.status as QuizLifecycleStatus,
+            publishedAt:
+              q.publishedAt instanceof Date
+                ? q.publishedAt.toISOString()
+                : q.publishedAt
+                  ? new Date(q.publishedAt).toISOString()
+                  : null,
+            updatedAt: q.updatedAt.toISOString(),
+            questionCount: q._count.questions,
+            attemptCount,
+            quotaStatus:
+              q.status === "ACTIVE" && quotaStatus
+                ? serializeQuizResponseQuotaStatus(quotaStatus)
+                : undefined,
+          };
+        }),
         serverDraftQuizIds: serverDraftQuizzes.map((q) => q.id),
       },
     };

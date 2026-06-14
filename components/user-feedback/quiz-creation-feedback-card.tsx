@@ -4,6 +4,7 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 
 import { submitQuizCreationReviewAction } from "@/app/feedback/actions";
+import { DashboardFeedbackNavIcon } from "@/components/dashboard/dashboard-nav-icons";
 import { StarRating } from "@/components/user-feedback/star-rating";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -88,16 +89,20 @@ export function QuizCreationFeedbackCard({
   return (
     <div
       className={cn(
-        "rounded-xl border border-border/60 bg-muted/20 px-4 py-4 sm:px-5",
+        "rounded-xl border border-border/60 bg-card shadow-sm px-4 py-4 sm:px-5",
         className,
       )}
     >
-      <p className="text-xl font-semibold text-foreground">
-        {t(locale, "userFeedback.creation.title")}
-      </p>
-      <p className="mt-1 text-base text-muted-foreground">
-        {t(locale, "userFeedback.creation.subtitle")}
-      </p>
+      <div className="flex items-start gap-3">
+        <div className="min-w-0">
+          <p className="text-2xl font-semibold text-zinc-700 dark:text-zinc-300">
+            {t(locale, "userFeedback.creation.title")}
+          </p>
+          <p className="mt-1 text-base text-zinc-500 dark:text-zinc-400">
+            {t(locale, "userFeedback.creation.subtitle")}
+          </p>
+        </div>
+      </div>
 
       <div className="mt-4">
         <StarRating
@@ -111,7 +116,7 @@ export function QuizCreationFeedbackCard({
       {rating !== null ? (
         <div className="mt-4 space-y-3">
           <div className="space-y-2">
-            <Label htmlFor="quiz-creation-feedback-message" className="text-sm">
+            <Label htmlFor="quiz-creation-feedback-message" className="text-base text-zinc-700 dark:text-zinc-300">
               {t(locale, "userFeedback.creation.messageLabel")}
             </Label>
             <Textarea
@@ -126,7 +131,7 @@ export function QuizCreationFeedbackCard({
           </div>
 
           {error ? (
-            <p className="text-sm text-destructive" role="alert">
+            <p className="text-base text-destructive" role="alert">
               {error}
             </p>
           ) : null}
