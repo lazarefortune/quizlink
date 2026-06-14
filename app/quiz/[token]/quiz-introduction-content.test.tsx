@@ -23,6 +23,8 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
 
+import { t } from "@/lib/i18n";
+
 import { QuizIntroductionContent } from "./quiz-introduction-content";
 
 const baseQuizLink = {
@@ -37,7 +39,7 @@ const baseQuizLink = {
   hasCompletedAttempt: false,
   quiz: {
     id: "quiz-1",
-    name: "Quiz expiré",
+    name: "Quiz quota",
     visibility: "PUBLIC",
     ownerId: "owner-1",
     settings: {},
@@ -45,8 +47,8 @@ const baseQuizLink = {
   },
 };
 
-describe("QuizIntroductionContent expired link", () => {
-  it("does not show start button when link expired", () => {
+describe("QuizIntroductionContent free limit reached", () => {
+  it("does not show start button when free quota is reached", () => {
     render(
       <QuizIntroductionContent
         quizLink={baseQuizLink}
@@ -56,10 +58,9 @@ describe("QuizIntroductionContent expired link", () => {
       />,
     );
 
-    expect(screen.getByTestId("quiz-expired-intro")).toBeTruthy();
-    expect(
-      screen.getByText("Ce quiz n’accepte plus de nouvelles réponses."),
-    ).toBeTruthy();
+    expect(screen.getByTestId("quiz-limit-reached-intro")).toBeTruthy();
+    expect(screen.getByText(t("fr", "quiz.limitReached.title"))).toBeTruthy();
+    expect(screen.getByText(t("fr", "quiz.limitReached.description"))).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Commencer le quiz" })).toBeNull();
   });
 
@@ -73,6 +74,6 @@ describe("QuizIntroductionContent expired link", () => {
       />,
     );
 
-    expect(screen.getByText("Réactiver depuis le dashboard")).toBeTruthy();
+    expect(screen.getByText(t("fr", "quiz.limitReached.creatorCta"))).toBeTruthy();
   });
 });

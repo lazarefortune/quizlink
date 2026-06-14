@@ -1,6 +1,6 @@
 /**
  * Audit / purge des `QuizAnswer` et données personnelles associées aux quiz links
- * expirés (délai de grâce).
+ * dont la limite gratuite est atteinte (rétention quota + délai de grâce).
  *
  * Usage :
  *   npx tsx scripts/dry-run-purge-expired-quiz-details.ts --dry-run [--quizId=xxx] [--verbose]
@@ -15,11 +15,18 @@
  * Apply ne supprime jamais QuizAttempt ni les agrégats.
  */
 
+import "./load-env-bootstrap";
+
 import { pathToFileURL } from "node:url";
 
 import { prisma } from "../lib/prisma";
+import { batchResolveQuizCompletedCounts } from "../lib/quiz/batchResolveQuizCompletedCounts";
 import {
   computeExpiredQuizDetailsPurgeEligibility,
+  createEmptyExpiredQuizDetailsPurgePlanSummary,
+  DEFAULT_PURGE_FREE_LIMIT,
+  incrementPurgePlanSkipCounter,
+  resolveQuizLinkLastActivityAt,
   type ExpiredQuizDetailsPurgePlanEntry,
   type ExpiredQuizDetailsPurgePlanSummary,
   type QuizDetailsPurgeCounts,
@@ -29,7 +36,10 @@ import {
   findEligibleAttemptIdsForQuizLink,
   purgeQuizLinkDetailedResponses,
 } from "../lib/quiz/purgeExpiredQuizDetails";
-import { QUIZ_DETAILS_PURGE_GRACE_DAYS } from "../lib/quiz/quizUnlockConstants";
+import {
+  FREE_QUIZ_RESPONSE_LIMIT,
+  QUIZ_DETAILS_PURGE_GRACE_DAYS,
+} from "../lib/quiz/quizUnlockConstants";
 
 const DEFAULT_BATCH_SIZE = 100;
 
@@ -199,7 +209,7 @@ async function quizUnlockActiveForOwner(params: {
     where: {
       quizId: params.quizId,
       userId: params.ownerId,
-      expiresAt: { gt: params.now },
+      OR: [{ expiresAt: null }, { expiresAt: { gt: params.now } }],
     },
     select: { id: true },
   });
@@ -209,43 +219,62 @@ async function quizUnlockActiveForOwner(params: {
   return isActive;
 }
 
+async function batchResolveQuizLinkAttemptActivity(
+  quizLinkIds: string[],
+): Promise<Map<string, { latestAttemptFinishedAt: Date | null; latestAttemptStartedAt: Date | null }>> {
+  const result = new Map<
+    string,
+    { latestAttemptFinishedAt: Date | null; latestAttemptStartedAt: Date | null }
+  >();
+
+  if (quizLinkIds.length === 0) {
+    return result;
+  }
+
+  const grouped = await prisma.quizAttempt.groupBy({
+    by: ["quizLinkId"],
+    where: { quizLinkId: { in: quizLinkIds } },
+    _max: {
+      finishedAt: true,
+      startedAt: true,
+    },
+  });
+
+  for (const row of grouped) {
+    result.set(row.quizLinkId, {
+      latestAttemptFinishedAt: row._max.finishedAt,
+      latestAttemptStartedAt: row._max.startedAt,
+    });
+  }
+
+  return result;
+}
+
 export async function buildExpiredQuizDetailsPurgePlan(
   options: Pick<PurgeExpiredQuizDetailsOptions, "quizId" | "batchSize">,
   now = new Date(),
 ): Promise<ExpiredQuizDetailsPurgePlanSummary> {
   const graceDays = QUIZ_DETAILS_PURGE_GRACE_DAYS;
+  const freeLimit = DEFAULT_PURGE_FREE_LIMIT;
   const proCache = new Map<string, boolean>();
   const unlockCache = new Map<string, boolean>();
-
   const quizIdsSeen = new Set<string>();
-  const eligibleEntries: ExpiredQuizDetailsPurgePlanEntry[] = [];
 
-  let linksScanned = 0;
-  let linksEligible = 0;
-  let linksSkippedPro = 0;
-  let linksSkippedUnlock = 0;
-  let linksSkippedNotExpired = 0;
-  let attemptsEligible = 0;
-  let answersEligible = 0;
-  let participantNamesEligible = 0;
-  let participantEmailsEligible = 0;
-  let attemptsAlreadyPurgedOrNoAnswers = 0;
+  const summary = createEmptyExpiredQuizDetailsPurgePlanSummary();
+  const eligibleEntries: ExpiredQuizDetailsPurgePlanEntry[] = [];
 
   let cursorId: string | undefined;
 
   while (true) {
     const links = await prisma.quizLink.findMany({
       where: {
-        detailsPurgedAt: null,
-        acceptingResponsesUntil: { not: null },
         ...(options.quizId ? { quizId: options.quizId } : {}),
       },
       select: {
         id: true,
         quizId: true,
-        acceptingResponsesUntil: true,
+        lastResponseAt: true,
         detailsPurgedAt: true,
-        unlockedUntil: true,
         quiz: {
           select: {
             name: true,
@@ -260,49 +289,38 @@ export async function buildExpiredQuizDetailsPurgePlan(
 
     if (links.length === 0) break;
 
+    const linkIds = links.map((link) => link.id);
+    const quizIds = [...new Set(links.map((link) => link.quizId))];
+    const [completedCountByQuizId, attemptActivityByLinkId] = await Promise.all([
+      batchResolveQuizCompletedCounts(quizIds),
+      batchResolveQuizLinkAttemptActivity(linkIds),
+    ]);
+
     for (const link of links) {
       const quizTitle = link.quiz?.name ?? null;
       const ownerId = link.quiz?.ownerId ?? null;
       const quizId = link.quizId;
       quizIdsSeen.add(quizId);
-
-      linksScanned += 1;
+      summary.linksScanned += 1;
 
       if (ownerId == null) {
-        linksSkippedNotExpired += 1;
+        summary.linksSkippedSafety += 1;
         continue;
       }
 
-      const acceptingResponsesUntil = link.acceptingResponsesUntil;
-      if (acceptingResponsesUntil == null) {
-        linksSkippedNotExpired += 1;
-        continue;
-      }
-
-      const purgeEligibleAt = new Date(
-        acceptingResponsesUntil.getTime() + graceDays * 24 * 60 * 60 * 1000,
-      );
-
-      if (purgeEligibleAt >= now) {
-        linksSkippedNotExpired += 1;
-        continue;
-      }
-
-      if (link.unlockedUntil != null && link.unlockedUntil > now) {
-        linksSkippedUnlock += 1;
-        continue;
-      }
+      const completedResponses = completedCountByQuizId.get(quizId) ?? 0;
+      const attemptActivity = attemptActivityByLinkId.get(link.id);
+      const lastActivityAt = resolveQuizLinkLastActivityAt({
+        lastResponseAt: link.lastResponseAt,
+        latestAttemptFinishedAt: attemptActivity?.latestAttemptFinishedAt ?? null,
+        latestAttemptStartedAt: attemptActivity?.latestAttemptStartedAt ?? null,
+      });
 
       let ownerProActive = proCache.get(ownerId);
       if (ownerProActive == null) {
         const access = await getActiveUserSubscriptionAccess(ownerId);
         ownerProActive = access.isActive;
         proCache.set(ownerId, ownerProActive);
-      }
-
-      if (ownerProActive) {
-        linksSkippedPro += 1;
-        continue;
       }
 
       const quizUnlockActive = await quizUnlockActiveForOwner({
@@ -312,11 +330,6 @@ export async function buildExpiredQuizDetailsPurgePlan(
         cached: unlockCache,
       });
 
-      if (quizUnlockActive) {
-        linksSkippedUnlock += 1;
-        continue;
-      }
-
       const counts = await countQuizLinkDetailsCounts(link.id);
 
       const eligibility = computeExpiredQuizDetailsPurgeEligibility({
@@ -324,9 +337,10 @@ export async function buildExpiredQuizDetailsPurgePlan(
         quizTitle,
         ownerId,
         quizLinkId: link.id,
-        acceptingResponsesUntil,
+        completedResponses,
+        freeLimit,
+        lastActivityAt,
         detailsPurgedAt: link.detailsPurgedAt,
-        unlockedUntil: link.unlockedUntil,
         now,
         graceDays,
         ownerProActive,
@@ -334,24 +348,27 @@ export async function buildExpiredQuizDetailsPurgePlan(
         counts,
       });
 
-      attemptsAlreadyPurgedOrNoAnswers += counts.attemptsAlreadyPurgedOrNoAnswers;
+      summary.attemptsAlreadyPurgedOrNoAnswers += counts.attemptsAlreadyPurgedOrNoAnswers;
 
       if (!eligibility.eligible) {
+        incrementPurgePlanSkipCounter(summary, eligibility.skipReason);
         continue;
       }
 
-      linksEligible += 1;
-      attemptsEligible += counts.attemptsEligible;
-      answersEligible += counts.answersEligible;
-      participantNamesEligible += counts.participantNamesEligible;
-      participantEmailsEligible += counts.participantEmailsEligible;
+      summary.linksEligible += 1;
+      summary.attemptsEligible += counts.attemptsEligible;
+      summary.answersEligible += counts.answersEligible;
+      summary.participantNamesEligible += counts.participantNamesEligible;
+      summary.participantEmailsEligible += counts.participantEmailsEligible;
 
       eligibleEntries.push({
         quizId,
         quizTitle,
         ownerId,
         quizLinkId: link.id,
-        acceptingResponsesUntil,
+        completedResponses,
+        freeLimit,
+        lastActivityAt: lastActivityAt!,
         purgeEligibleAt: eligibility.purgeEligibleAt,
         counts,
       });
@@ -361,23 +378,11 @@ export async function buildExpiredQuizDetailsPurgePlan(
     if (links.length < options.batchSize) break;
   }
 
-  const quizzesEligible = new Set(eligibleEntries.map((entry) => entry.quizId)).size;
+  summary.quizzesScanned = quizIdsSeen.size;
+  summary.quizzesEligible = new Set(eligibleEntries.map((entry) => entry.quizId)).size;
+  summary.eligibleEntries = eligibleEntries;
 
-  return {
-    quizzesScanned: quizIdsSeen.size,
-    quizzesEligible,
-    linksScanned,
-    linksEligible,
-    linksSkippedPro,
-    linksSkippedUnlock,
-    linksSkippedNotExpired,
-    attemptsEligible,
-    answersEligible,
-    participantNamesEligible,
-    participantEmailsEligible,
-    attemptsAlreadyPurgedOrNoAnswers,
-    eligibleEntries,
-  };
+  return summary;
 }
 
 function printPlanSummary(
@@ -387,25 +392,28 @@ function printPlanSummary(
 ): void {
   const modeLabel =
     options.mode === "dry-run"
-      ? "DRY RUN (aucune ecriture)"
+      ? "DRY-RUN (aucune ecriture)"
       : "APPLY (ecriture active)";
 
-  console.log(`Purge quiz details (expired links)`);
+  console.log("Dry-run purge quiz details");
   console.log(`Mode : ${modeLabel}`);
+  console.log("Rule : quota-based retention");
   console.log(`Date : ${now.toISOString()}`);
   console.log(`Grace period : ${QUIZ_DETAILS_PURGE_GRACE_DAYS} jours`);
+  console.log(`Free limit : ${FREE_QUIZ_RESPONSE_LIMIT} réponses`);
   console.log(`BatchSize : ${options.batchSize}`);
   if (options.mode === "apply") {
     console.log(
-      `WARNING: cette operation va supprimer les reponses detaillees et anonymiser les infos participant des liens eligibles.`,
+      "WARNING: cette operation va supprimer les reponses detaillees et anonymiser les infos participant des liens eligibles.",
     );
   }
 
-  console.log(`\nScannés :`);
+  console.log("\nScannés :");
   console.log(`- Quiz : ${plan.quizzesScanned}`);
   console.log(`- Liens : ${plan.linksScanned}`);
-  console.log(`\nÉligibles :`);
+  console.log("\nÉligibles :");
   console.log(`- Quiz : ${plan.quizzesEligible}`);
+  console.log(`- Liens : ${plan.linksEligible}`);
   console.log(`- Parties : ${plan.attemptsEligible}`);
   console.log(`- Réponses détaillées : ${plan.answersEligible}`);
   console.log(`- Noms participants : ${plan.participantNamesEligible}`);
@@ -413,22 +421,27 @@ function printPlanSummary(
   console.log(
     `\nDéjà purgées / sans réponses : ${plan.attemptsAlreadyPurgedOrNoAnswers}`,
   );
-  console.log(`\nIgnorés :`);
+  console.log("\nIgnorés :");
+  console.log(`- Limite gratuite non atteinte : ${plan.linksSkippedFreeLimitNotReached}`);
+  console.log(`- Période de grâce active : ${plan.linksSkippedWithinGracePeriod}`);
+  console.log(`- Sans activité : ${plan.linksSkippedNoRecentActivity}`);
   console.log(`- Pro actif : ${plan.linksSkippedPro}`);
   console.log(`- Déblocage actif : ${plan.linksSkippedUnlock}`);
-  console.log(`- Pas encore expiré / skip sécurité : ${plan.linksSkippedNotExpired}`);
+  console.log(`- Déjà purgé : ${plan.linksSkippedAlreadyPurged}`);
+  console.log(`- Rien à purger : ${plan.linksSkippedNothingToPurge}`);
+  console.log(`- Skip sécurité : ${plan.linksSkippedSafety}`);
 }
 
 function printVerbosePlanEntries(
   plan: ExpiredQuizDetailsPurgePlanSummary,
 ): void {
-  console.log(`\nDétails (verbose) — liens éligibles:`);
+  console.log("\nDétails (verbose) — liens éligibles:");
   for (const entry of plan.eligibleEntries) {
     console.log(
       `- quizId=${entry.quizId} | "${entry.quizTitle ?? "—"}" | quizLinkId=${entry.quizLinkId}`,
     );
     console.log(
-      `  acceptingResponsesUntil=${entry.acceptingResponsesUntil.toISOString()} | purgeEligibleAt=${entry.purgeEligibleAt.toISOString()}`,
+      `  completedResponses=${entry.completedResponses}/${entry.freeLimit} | lastActivityAt=${entry.lastActivityAt.toISOString()} | purgeEligibleAt=${entry.purgeEligibleAt.toISOString()}`,
     );
     console.log(
       `  attempts=${entry.counts.attemptsEligible} | answers=${entry.counts.answersEligible} | names=${entry.counts.participantNamesEligible} | emails=${entry.counts.participantEmailsEligible}`,
@@ -490,19 +503,19 @@ export async function runPurgeExpiredQuizDetails(
 
   if (options.mode === "dry-run") {
     console.log(
-      `\nDry-run terminé. Aucune donnée modifiée. Relancez avec --apply --quizId=xxx pour purger un quiz.`,
+      "\nDry-run terminé. Aucune donnée modifiée. Relancez avec --apply --quizId=xxx pour purger un quiz.",
     );
     return;
   }
 
-  console.log(`\nApplication de la purge...`);
+  console.log("\nApplication de la purge...");
   const applySummary = await applyExpiredQuizDetailsPurgePlan(
     plan,
     now,
     options.verbose,
   );
 
-  console.log(`\nRésumé apply :`);
+  console.log("\nRésumé apply :");
   console.log(`- Liens purgés : ${applySummary.linksPurged}`);
   console.log(`- Parties anonymisées : ${applySummary.attemptsAnonymized}`);
   console.log(`- Réponses détaillées supprimées : ${applySummary.answersDeleted}`);

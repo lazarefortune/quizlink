@@ -5,6 +5,7 @@ import {
   parseUserAvatarConfig,
   serializeUserAvatarConfig,
   userAvatarConfigSchema,
+  type UserAvatarConfig,
 } from "./userAvatarConfigSchema";
 
 describe("userAvatarConfigSchema", () => {
@@ -97,7 +98,7 @@ describe("userAvatarConfigSchema", () => {
 
 describe("serializeUserAvatarConfig / deserializeUserAvatarConfig", () => {
   it("round-trips a valid config", () => {
-    const config = {
+    const config: UserAvatarConfig = {
       seed: "user-42",
       backgroundColor: "ddd6f3",
       options: { mouth: ["variant0201"] },

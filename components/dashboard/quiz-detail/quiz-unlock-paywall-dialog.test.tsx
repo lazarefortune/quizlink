@@ -1,9 +1,7 @@
 /* @vitest-environment jsdom */
 
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-
-import { t } from "@/lib/i18n";
 import { PRO_MONTHLY_PRICE_EUR } from "@/lib/subscription/proSubscriptionConstants";
 
 const unlockActionMock = vi.fn();
@@ -42,6 +40,8 @@ vi.mock("@/app/(app)/account/pro-subscription/actions", () => ({
   createProSubscriptionCheckoutAction: (...args: unknown[]) =>
     createProCheckoutMock(...args),
 }));
+
+import { t } from "@/lib/i18n";
 
 import {
   QuizUnlockPaywallDialog,
@@ -84,21 +84,29 @@ describe("QuizUnlockPaywallDialog", () => {
     vi.restoreAllMocks();
   });
 
-  it("shows a simple two-option layout with coin and subscription prices", () => {
+  it("shows quota unlock layout with coin and subscription prices", () => {
     renderDialog({ isProAvailable: true });
 
-    expect(screen.getByTestId("quiz-unlock-paywall-dialog")).toBeTruthy();
+    const dialog = screen.getByTestId("quiz-unlock-paywall-dialog");
+    expect(dialog).toBeTruthy();
     expect(
-      screen.getByRole("heading", { name: t("fr", "dashboard.unlockDialog.simpleTitle") }),
+      within(dialog).getByRole("heading", {
+        level: 2,
+        name: t("fr", "dashboard.unlockDialog.title"),
+      }),
     ).toBeTruthy();
-    expect(screen.getByText(t("fr", "dashboard.unlockPaywall.singleQuizLabel"))).toBeTruthy();
-    expect(screen.getByText(t("fr", "dashboard.unlockPaywall.allQuizzesTitle"))).toBeTruthy();
+    expect(
+      screen.getByText(t("fr", "dashboard.unlockDialog.coinOptionDescription")),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(t("fr", "dashboard.unlockDialog.proOptionDescription")),
+    ).toBeTruthy();
     expect(screen.getByText("40 coins")).toBeTruthy();
     expect(screen.getByText(`${PRO_MONTHLY_PRICE_EUR}€`)).toBeTruthy();
     expect(screen.getByText(t("fr", "account.subscription.perMonth"))).toBeTruthy();
-    expect(
-      screen.queryByText(t("fr", "dashboard.unlockDialog.benefitAllGames")),
-    ).toBeNull();
+    expect(screen.queryByText(/prolonger/i)).toBeNull();
+    expect(screen.queryByText(/réactiver/i)).toBeNull();
+    expect(screen.queryByText(/2 mois/i)).toBeNull();
   });
 
   it("shows disabled Pro soon button when isProAvailable is false", () => {
@@ -115,7 +123,7 @@ describe("QuizUnlockPaywallDialog", () => {
 
     const proButton = screen.getByTestId("quiz-unlock-pro-checkout");
     expect(proButton).toHaveProperty("disabled", false);
-    expect(proButton.textContent).toContain(t("fr", "dashboard.unlockDialog.upgradeToPro"));
+    expect(proButton.textContent).toContain(t("fr", "dashboard.unlockDialog.unlockAllWithPro"));
     expect(screen.queryByText(t("fr", "dashboard.soonBadge"))).toBeNull();
   });
 
@@ -130,7 +138,7 @@ describe("QuizUnlockPaywallDialog", () => {
     const { onUnlockWithCoins } = renderDialog({ coinBalance: 50, isProAvailable: true });
 
     const unlockButton = screen.getByRole("button", {
-      name: t("fr", "dashboard.unlockPaywall.unlockButton"),
+      name: t("fr", "dashboard.quizQuota.unlockQuiz"),
     });
     expect(unlockButton).not.toHaveProperty("disabled", true);
     fireEvent.click(unlockButton);

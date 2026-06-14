@@ -16,12 +16,13 @@ vi.mock("@/lib/analytics/track", () => ({
 }));
 
 import { createOrGetQuizLink } from "@/app/quiz-link/actions";
+import { t } from "@/lib/i18n";
 
 import { QuizShareLinkDialog } from "./quiz-share-link-dialog";
 
 describe("QuizShareLinkDialog", () => {
-  it("shows reactivate action instead of copy when link is expired", async () => {
-    const onReactivate = vi.fn();
+  it("shows unlock action instead of copy when free quota is reached", async () => {
+    const onUnlock = vi.fn();
 
     render(
       <QuizShareLinkDialog
@@ -29,19 +30,26 @@ describe("QuizShareLinkDialog", () => {
         quizStatus="ACTIVE"
         open
         onOpenChange={() => undefined}
-        isLinkExpired
-        onReactivate={onReactivate}
+        canAcceptResponses={false}
+        onUnlock={onUnlock}
       />,
     );
 
-    expect(screen.getByText("Réactiver pour partager")).toBeTruthy();
+    expect(
+      screen.getByRole("button", {
+        name: t("fr", "dashboard.quizQuota.unlockToShare"),
+      }),
+    ).toBeTruthy();
+    expect(screen.getByText(t("fr", "dashboard.quizQuota.limitReached"))).toBeTruthy();
     expect(screen.queryByText("Copier le lien")).toBeNull();
 
-    fireEvent.click(screen.getByRole("button", { name: "Réactiver pour partager" }));
-    expect(onReactivate).toHaveBeenCalledTimes(1);
+    fireEvent.click(
+      screen.getByRole("button", { name: t("fr", "dashboard.quizQuota.unlockToShare") }),
+    );
+    expect(onUnlock).toHaveBeenCalledTimes(1);
   });
 
-  it("loads and copies link when not expired", async () => {
+  it("loads and copies link when responses are accepted", async () => {
     vi.mocked(createOrGetQuizLink).mockResolvedValue({
       success: true,
       quizLink: { id: "link-1", token: "abc123" },
@@ -54,7 +62,7 @@ describe("QuizShareLinkDialog", () => {
         quizStatus="ACTIVE"
         open
         onOpenChange={() => undefined}
-        isLinkExpired={false}
+        canAcceptResponses
       />,
     );
 

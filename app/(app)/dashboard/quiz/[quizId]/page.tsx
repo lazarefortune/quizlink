@@ -58,7 +58,7 @@ export default async function QuizStatsPage({ params }: PageProps) {
   ]);
 
   const isResultsUnlocked =
-    statsResult.success && (statsResult.stats.campaign?.isUnlocked ?? false);
+    statsResult.success && (statsResult.stats.quotaStatus?.isUnlocked ?? false);
 
   const questionInsightsResult =
     contentResult.success && contentResult.quiz.status === "ACTIVE" && isResultsUnlocked

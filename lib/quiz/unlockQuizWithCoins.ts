@@ -2,21 +2,16 @@ import { QuizUnlockSource, QuizUnlockType } from "@/generated/prisma/client";
 
 import { prisma } from "@/lib/prisma";
 
-import { applyQuizUnlockToQuizLinks } from "./applyQuizUnlockToQuizLinks";
-import { addDays } from "./quizLinkCampaign";
 import { getQuizAccessState } from "./getQuizAccessState";
-import {
-  QUIZ_UNLOCK_COIN_COST,
-  QUIZ_UNLOCK_DURATION_DAYS,
-  UNLOCK_QUIZ_ERROR,
-} from "./quizUnlockConstants";
+import { QUIZ_UNLOCK_COIN_COST, UNLOCK_QUIZ_ERROR } from "./quizUnlockConstants";
 
 export type UnlockQuizWithCoinsResult =
   | {
       success: true;
       alreadyUnlocked: boolean;
       newBalance: number;
-      expiresAt: Date;
+      /** `null` = permanent coin unlock. */
+      expiresAt: Date | null;
     }
   | { success: false; error: string };
 
@@ -51,11 +46,10 @@ export async function unlockQuizWithCoins(
       success: true,
       alreadyUnlocked: true,
       newBalance: user?.coinBalance ?? 0,
-      expiresAt: preCheck.expiresAt ?? new Date(),
+      expiresAt: preCheck.expiresAt,
     };
   }
 
-  const expiresAt = addDays(new Date(), QUIZ_UNLOCK_DURATION_DAYS);
   const reason = `Quiz unlock: ${quizId}`;
 
   try {
@@ -73,6 +67,7 @@ export async function unlockQuizWithCoins(
         return {
           alreadyUnlocked: true as const,
           newBalance: user?.coinBalance ?? 0,
+          expiresAt: inTxAccess.expiresAt,
         };
       }
 
@@ -114,20 +109,22 @@ export async function unlockQuizWithCoins(
           type: QuizUnlockType.SINGLE_QUIZ,
           source: QuizUnlockSource.COINS,
           coinsSpent: QUIZ_UNLOCK_COIN_COST,
-          expiresAt,
+          expiresAt: null,
         },
       });
 
-      await applyQuizUnlockToQuizLinks({ quizId, expiresAt, db: tx });
-
-      return { alreadyUnlocked: false as const, newBalance };
+      return {
+        alreadyUnlocked: false as const,
+        newBalance,
+        expiresAt: null as Date | null,
+      };
     });
 
     return {
       success: true,
       alreadyUnlocked: result.alreadyUnlocked,
       newBalance: result.newBalance,
-      expiresAt,
+      expiresAt: result.expiresAt,
     };
   } catch (error) {
     if (error instanceof Error) {

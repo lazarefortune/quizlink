@@ -44,10 +44,10 @@ describe("generateUserAvatar", () => {
   });
 
   it("generates different SVG for different seeds", () => {
-    const baseOptions = {
+    const baseOptions: UserAvatarConfig["options"] = {
       hair: ["short01"],
       eyes: ["variant01"],
-    } as const;
+    };
 
     const first = generateUserAvatar({
       seed: "seed-a",

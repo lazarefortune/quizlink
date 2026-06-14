@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { touchQuizLinkLastResponseAt } from "@/lib/quiz/quizLinkCampaignPersistence";
+import { touchQuizLinkLastResponseAt } from "@/lib/quiz/quizLinkActivityPersistence";
 import {
   incrementQuizAbandonedAggregate,
   transitionAttemptToAbandoned,

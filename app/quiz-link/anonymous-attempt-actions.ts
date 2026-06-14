@@ -12,12 +12,15 @@ import { isSelectionCorrect, correctOptionIdsFromDbOptions } from "@/lib/anonymo
 import { getQuestionImageSrc } from "@/lib/question-image-src";
 import { resolveEffectiveQuizSettings } from "@/lib/quiz/resolveEffectiveQuizSettings";
 import { validateParticipantStartInput } from "@/lib/quiz/validate-participant-start-input";
-import { playBlockedErrorCodeForQuizStatus } from "@/lib/quiz/quizActionErrorCodes";
-import { getQuizLinkCampaignBlockError } from "@/lib/quiz/quizLinkCampaign";
+import { playBlockedErrorCodeForQuizStatus, QUIZ_ACTION_ERROR_CODE } from "@/lib/quiz/quizActionErrorCodes";
 import {
-  ensureQuizLinkCampaignStarted,
+  getQuizPlayBlockErrorCode,
+  resolveQuizPlayAccess,
+} from "@/lib/quiz/resolveQuizPlayAccess";
+import {
+  ensureQuizLinkResponseActivityStarted,
   touchQuizLinkLastResponseAt,
-} from "@/lib/quiz/quizLinkCampaignPersistence";
+} from "@/lib/quiz/quizLinkActivityPersistence";
 import {
   incrementQuestionAnswerAggregates,
   incrementQuizCompletedAggregate,
@@ -97,7 +100,11 @@ async function resolveEligibleAnonymousAttemptLink(token: string) {
     where: { token: trimmed },
     include: {
       quiz: {
-        include: {
+        select: {
+          id: true,
+          ownerId: true,
+          status: true,
+          settings: true,
           questions: {
             include: { options: true },
             orderBy: { order: "asc" },
@@ -148,10 +155,17 @@ export async function startAnonymousQuizAttemptAction(
 
     const { quizLink } = resolved;
     const now = new Date();
-    const campaignBlock = getQuizLinkCampaignBlockError(quizLink, now);
-    if (campaignBlock) {
-      return { success: false, error: campaignBlock };
+    const playAccess = await resolveQuizPlayAccess({
+      quizId: quizLink.quizId,
+      ownerId: quizLink.quiz.ownerId,
+      now,
+    });
+    const playBlock = getQuizPlayBlockErrorCode(playAccess);
+    if (playBlock) {
+      return { success: false, error: playBlock };
     }
+
+    // TODO: add stricter transactional quota guard if high-volume quiz usage requires it.
 
     const settings = resolveEffectiveQuizSettings(quizLink.quiz.settings);
     const validated = validateParticipantStartInput({
@@ -178,7 +192,7 @@ export async function startAnonymousQuizAttemptAction(
       } as Prisma.QuizAttemptCreateInput,
     });
 
-    await ensureQuizLinkCampaignStarted(quizLink.id, now);
+    await ensureQuizLinkResponseActivityStarted(quizLink.id, now);
 
     await incrementQuizStartedAggregate(quizLink.quizId);
 

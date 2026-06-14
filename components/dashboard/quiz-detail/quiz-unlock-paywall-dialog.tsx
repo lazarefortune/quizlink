@@ -22,8 +22,6 @@ import { UNLOCK_QUIZ_ERROR } from "@/lib/quiz/quizUnlockConstants";
 import { PRO_MONTHLY_PRICE_EUR } from "@/lib/subscription/proSubscriptionConstants";
 import { cn } from "@/lib/utils";
 
-export type QuizUnlockPaywallContext = "default" | "extend" | "reactivate";
-
 export type QuizUnlockPaywallDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -36,7 +34,6 @@ export type QuizUnlockPaywallDialogProps = {
   isProAvailable?: boolean;
   isStartingProCheckout?: boolean;
   onStartProCheckout?: () => Promise<void> | void;
-  context?: QuizUnlockPaywallContext;
 };
 
 export type QuizDetailPaywallControls = {
@@ -91,33 +88,18 @@ export function QuizUnlockPaywallDialog({
   isProAvailable = false,
   isStartingProCheckout = false,
   onStartProCheckout,
-  context = "default",
 }: QuizUnlockPaywallDialogProps) {
   const { locale } = useLocale();
   const hasEnoughCoins = coinBalance >= unlockCost;
   const missingCoins = Math.max(0, unlockCost - coinBalance);
 
-  const dialogTitle =
-    context === "default"
-      ? t(locale, "dashboard.unlockDialog.simpleTitle")
-      : t(locale, "dashboard.unlockDialog.extendTitle");
+  const dialogTitle = t(locale, "dashboard.unlockDialog.title");
+  const dialogDescription = t(locale, "dashboard.unlockDialog.description");
 
-  const dialogDescription =
-    context === "reactivate"
-      ? t(locale, "dashboard.unlockDialog.extendDescriptionExpired")
-      : context === "extend"
-        ? t(locale, "dashboard.unlockDialog.extendDescriptionActive")
-        : null;
-
-  const coinUnlockLabel =
-    context === "reactivate"
-      ? t(locale, "dashboard.unlockDialog.reactivateCoinOption")
-      : context === "extend"
-        ? t(locale, "dashboard.unlockDialog.extendCoinOption")
-        : t(locale, "dashboard.unlockPaywall.unlockButton");
+  const coinUnlockLabel = t(locale, "dashboard.quizQuota.unlockQuiz");
 
   const proButtonLabel = isProAvailable
-    ? t(locale, "dashboard.unlockDialog.upgradeToPro")
+    ? t(locale, "dashboard.unlockDialog.unlockAllWithPro")
     : t(locale, "dashboard.unlockDialog.proSoon");
 
   return (
@@ -128,20 +110,21 @@ export function QuizUnlockPaywallDialog({
       >
         <DialogHeader className="pr-8 text-left">
           <DialogTitle>{dialogTitle}</DialogTitle>
-          {dialogDescription ? (
-            <DialogDescription className="text-pretty">{dialogDescription}</DialogDescription>
-          ) : null}
+          <DialogDescription className="text-pretty">{dialogDescription}</DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-3">
           <PaywallOption
-            title={t(locale, "dashboard.unlockPaywall.singleQuizLabel")}
+            title={t(locale, "dashboard.unlockDialog.coinOptionTitle")}
             price={
               <span className="text-2xl font-bold tabular-nums text-primary sm:text-3xl">
                 {unlockCost} coins
               </span>
             }
           >
+            <p className="text-sm text-muted-foreground">
+              {t(locale, "dashboard.unlockDialog.coinOptionDescription")}
+            </p>
             {hasEnoughCoins ? (
               <Button
                 type="button"
@@ -170,7 +153,7 @@ export function QuizUnlockPaywallDialog({
           </PaywallOption>
 
           <PaywallOption
-            title={t(locale, "dashboard.unlockPaywall.allQuizzesTitle")}
+            title={t(locale, "dashboard.unlockDialog.proOptionTitle")}
             muted={!isProAvailable}
             price={
               isProAvailable ? (
@@ -185,6 +168,9 @@ export function QuizUnlockPaywallDialog({
             }
             priceSuffix={isProAvailable ? t(locale, "account.subscription.perMonth") : undefined}
           >
+            <p className="text-sm text-muted-foreground">
+              {t(locale, "dashboard.unlockDialog.proOptionDescription")}
+            </p>
             <Button
               type="button"
               variant={isProAvailable ? "primary" : "outline"}

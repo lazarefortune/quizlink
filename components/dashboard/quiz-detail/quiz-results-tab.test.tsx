@@ -76,16 +76,21 @@ const baseStats: QuizDetailStatsInput = {
       detailsPurged: false,
     },
   ],
-  campaign: {
+  resultAccess: {
     responsesStartedAt: new Date("2026-05-15T12:00:00Z"),
-    acceptingResponsesUntil: new Date("2026-12-31T12:00:00Z"),
-    detailsVisibleUntil: new Date("2026-12-31T12:00:00Z"),
-    unlockedUntil: null,
-    isFreePeriodActive: true,
-    isAcceptingResponses: true,
     isUnlocked: false,
     unlockedBy: null,
     detailedPreviewLimit: 3,
+  },
+  quotaStatus: {
+    completedResponses: 5,
+    freeLimit: 20,
+    remainingFreeResponses: 15,
+    hasReachedFreeLimit: false,
+    isUnlocked: false,
+    unlockedBy: null,
+    label: "FREE_AVAILABLE",
+    canAcceptResponses: true,
   },
 };
 
@@ -141,11 +146,12 @@ describe("QuizResultsTab", () => {
         stats={{
           ...baseStats,
           lockedAttemptCount: 0,
-          campaign: {
-            ...baseStats.campaign!,
+          quotaStatus: {
+            ...baseStats.quotaStatus!,
             isUnlocked: true,
-            unlockedBy: "QUIZ_UNLOCK",
-            unlockedUntil: new Date("2026-12-31T12:00:00Z"),
+            unlockedBy: "COINS",
+            label: "UNLOCKED",
+            canAcceptResponses: true,
           },
         }}
         questions={[]}
@@ -167,11 +173,12 @@ describe("QuizResultsTab", () => {
         stats={{
           ...baseStats,
           lockedAttemptCount: 0,
-          campaign: {
-            ...baseStats.campaign!,
+          quotaStatus: {
+            ...baseStats.quotaStatus!,
             isUnlocked: true,
-            unlockedBy: "QUIZ_UNLOCK",
-            unlockedUntil: new Date("2026-12-31T12:00:00Z"),
+            unlockedBy: "COINS",
+            label: "UNLOCKED",
+            canAcceptResponses: true,
           },
         }}
         questions={[
@@ -232,7 +239,7 @@ describe("QuizResultsTab", () => {
     expect(screen.getByText("Statistiques globales")).toBeTruthy();
     expect(
       screen.getByText(
-        "Les réponses détaillées ont été supprimées après expiration. Seules les statistiques globales restent disponibles.",
+        "Les réponses détaillées ont été supprimées lors de la purge automatique. Seules les statistiques globales restent disponibles.",
       ),
     ).toBeTruthy();
     expect(screen.queryByTestId("locked-advanced-stats-card")).toBeNull();

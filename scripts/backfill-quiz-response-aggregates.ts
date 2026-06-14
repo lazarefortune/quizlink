@@ -11,6 +11,8 @@
  *   pnpm tsx scripts/backfill-quiz-response-aggregates.ts --dry-run --quizId=quiz_abc
  *   pnpm tsx scripts/backfill-quiz-response-aggregates.ts --apply --batchSize=50
  */
+import "./load-env-bootstrap";
+
 import { pathToFileURL } from "node:url";
 
 import type { Prisma } from "@/generated/prisma/client";

@@ -26,6 +26,7 @@ vi.mock("@/components/ui/playful-section-title", () => ({
 }));
 
 import { LockedAdvancedStatsCard } from "./locked-advanced-stats-card";
+import { t } from "@/lib/i18n";
 
 describe("LockedAdvancedStatsCard", () => {
   it("renders teaser copy and unlock CTA without data props", () => {
@@ -38,7 +39,9 @@ describe("LockedAdvancedStatsCard", () => {
     expect(screen.getByText("Export CSV bientôt")).toBeTruthy();
     expect(screen.getByTestId("locked-advanced-stats-preview")).toBeTruthy();
     expect(screen.getByTestId("locked-advanced-stats-blur-layer")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Débloquer les statistiques" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: t("fr", "dashboard.unlockDialog.unlockStats") }),
+    );
     expect(onUnlockClick).toHaveBeenCalled();
   });
 

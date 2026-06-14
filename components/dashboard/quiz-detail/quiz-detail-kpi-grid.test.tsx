@@ -64,7 +64,17 @@ const baseStats: QuizDetailStatsInput = {
   hasPurgedDetails: false,
   detailsFullyPurged: false,
   attempts: [],
-  campaign: null,
+  resultAccess: null,
+  quotaStatus: {
+    completedResponses: 10,
+    freeLimit: 20,
+    remainingFreeResponses: 10,
+    hasReachedFreeLimit: false,
+    isUnlocked: false,
+    unlockedBy: null,
+    label: "FREE_AVAILABLE",
+    canAcceptResponses: true,
+  },
 };
 
 describe("QuizDetailKpiGrid", () => {

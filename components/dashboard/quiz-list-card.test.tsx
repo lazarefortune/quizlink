@@ -7,6 +7,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { QuizListCard, type QuizListCardData } from "@/components/dashboard/quiz-list-card";
+import { t } from "@/lib/i18n";
 
 vi.mock("next/link", () => ({
   default: ({
@@ -56,6 +57,68 @@ describe("QuizListCard", () => {
     fireEvent.click(screen.getByRole("menuitem", { name: "Copier le lien" }));
 
     expect(onCopyLink).toHaveBeenCalledWith("quiz-1");
+  });
+
+  it("shows quota badge with free progress", () => {
+    render(
+      <QuizListCard
+        quiz={{
+          ...activeQuiz,
+          attemptCount: 12,
+          quotaStatus: {
+            completedResponses: 12,
+            freeLimit: 20,
+            remainingFreeResponses: 8,
+            hasReachedFreeLimit: false,
+            isUnlocked: false,
+            unlockedBy: null,
+            label: "FREE_AVAILABLE",
+            canAcceptResponses: true,
+          },
+        }}
+        locale="fr"
+        playLoadingQuizId={null}
+        onPlay={vi.fn()}
+        onCopyLink={vi.fn()}
+        onEdit={vi.fn()}
+        onView={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("12/20 réponses")).toBeTruthy();
+  });
+
+  it("shows limit reached badge with unlock link", () => {
+    render(
+      <QuizListCard
+        quiz={{
+          ...activeQuiz,
+          attemptCount: 20,
+          quotaStatus: {
+            completedResponses: 20,
+            freeLimit: 20,
+            remainingFreeResponses: 0,
+            hasReachedFreeLimit: true,
+            isUnlocked: false,
+            unlockedBy: null,
+            label: "FREE_LIMIT_REACHED",
+            canAcceptResponses: false,
+          },
+        }}
+        locale="fr"
+        playLoadingQuizId={null}
+        onPlay={vi.fn()}
+        onCopyLink={vi.fn()}
+        onEdit={vi.fn()}
+        onView={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText(t("fr", "dashboard.quizQuota.limitReached"))).toBeTruthy();
+    const unlockCta = screen.getByText(t("fr", "dashboard.quizQuota.unlock"));
+    expect(unlockCta.closest("a")?.getAttribute("href")).toBe(
+      "/dashboard/quiz/quiz-1?unlock=1",
+    );
   });
 
   it("does not show copy link action for draft quizzes", () => {

@@ -6,8 +6,11 @@ import type { Prisma } from "@/generated/prisma/client";
 import { auth } from "@/lib/auth";
 import { creatorCountedAttemptWhere } from "@/lib/creator-quiz-attempt-filter";
 import { batchResolveQuizCompletedCounts } from "@/lib/quiz/batchResolveQuizCompletedCounts";
-import { batchResolveQuizExpirationStatusForOwner } from "@/lib/quiz/batchResolveQuizExpirationStatusForOwner";
-import type { QuizLinkExpirationStatusType } from "@/lib/quiz/quizLinkExpirationStatus";
+import { batchResolveQuizQuotaStatusForOwner } from "@/lib/quiz/batchResolveQuizQuotaStatusForOwner";
+import {
+  serializeQuizResponseQuotaStatus,
+  type SerializedQuizResponseQuotaStatus,
+} from "@/lib/quiz/quizResponseQuotaStatus";
 import { FINALIZE_DRAFT_QUIZ_ERROR_CODE } from "@/lib/builder/finalizeDraftQuizErrors";
 import {
   SAVE_MODIFIED_QUIZ_AS_DRAFT_COPY_ERROR,
@@ -632,18 +635,6 @@ export async function getUserQuizzes() {
   }
 }
 
-export type UserQuizListExpiration = {
-  status: QuizLinkExpirationStatusType;
-  acceptingResponsesUntil: string | null;
-  isExpired: boolean;
-  hasStarted: boolean;
-  isUnlocked: boolean;
-  titleKey: string;
-  descriptionKey: string;
-  listLabelKey: string;
-  daysRemaining?: number;
-};
-
 export type UserQuizListItem = {
   id: string;
   name: string;
@@ -653,7 +644,7 @@ export type UserQuizListItem = {
   questionCount: number;
   attemptCount: number;
   createdAt: string;
-  expiration?: UserQuizListExpiration;
+  quotaStatus?: SerializedQuizResponseQuotaStatus;
 };
 
 const DEFAULT_PAGE_SIZE = 12;
@@ -715,15 +706,16 @@ export async function getUserQuizzesPaginated(
     ]);
 
     const quizIds = quizzes.map((q) => q.id);
-    const [responseCountByQuizId, expirationByQuizId] = await Promise.all([
+    const [responseCountByQuizId, quotaStatusByQuizId] = await Promise.all([
       batchResolveQuizCompletedCounts(quizIds),
-      batchResolveQuizExpirationStatusForOwner(session.user.id, quizIds),
+      batchResolveQuizQuotaStatusForOwner(session.user.id, quizIds),
     ]);
 
     return {
       success: true,
       quizzes: quizzes.map((q) => {
-        const expiration = expirationByQuizId.get(q.id);
+        const attemptCount = responseCountByQuizId.get(q.id) ?? 0;
+        const quotaStatus = quotaStatusByQuizId.get(q.id);
         return {
           id: q.id,
           name: q.name,
@@ -736,25 +728,14 @@ export async function getUserQuizzesPaginated(
                 ? new Date(q.publishedAt).toISOString()
                 : null,
           questionCount: q._count.questions,
-          attemptCount: responseCountByQuizId.get(q.id) ?? 0,
+          attemptCount,
           createdAt:
             q.createdAt instanceof Date
               ? q.createdAt.toISOString()
               : new Date(q.createdAt).toISOString(),
-          expiration:
-            q.status === "ACTIVE" && expiration
-              ? {
-                  status: expiration.status,
-                  acceptingResponsesUntil:
-                    expiration.acceptingResponsesUntil?.toISOString() ?? null,
-                  isExpired: expiration.isExpired,
-                  hasStarted: expiration.hasStarted,
-                  isUnlocked: expiration.isUnlocked,
-                  titleKey: expiration.titleKey,
-                  descriptionKey: expiration.descriptionKey,
-                  listLabelKey: expiration.listLabelKey,
-                  daysRemaining: expiration.daysRemaining,
-                }
+          quotaStatus:
+            q.status === "ACTIVE" && quotaStatus
+              ? serializeQuizResponseQuotaStatus(quotaStatus)
               : undefined,
         };
       }),

@@ -20,6 +20,13 @@ const mockIncrementQuizStartedAggregate = vi.fn();
 const mockIncrementQuizCompletedAggregate = vi.fn();
 const mockIncrementQuestionAnswerAggregates = vi.fn();
 const mockTransitionAttemptToCompleted = vi.fn();
+const mockResolveQuizPlayAccess = vi.fn();
+
+vi.mock("@/lib/quiz/resolveQuizPlayAccess", () => ({
+  resolveQuizPlayAccess: (...args: unknown[]) => mockResolveQuizPlayAccess(...args),
+  getQuizPlayBlockErrorCode: (access: { canAcceptResponses: boolean }) =>
+    access.canAcceptResponses ? null : "QUIZ_FREE_RESPONSE_LIMIT_REACHED",
+}));
 
 vi.mock("@/lib/quiz/quiz-response-aggregates", () => ({
   incrementQuizStartedAggregate: (...args: unknown[]) =>
@@ -76,7 +83,29 @@ import {
   finishAnonymousQuizAttemptAction,
 } from "./anonymous-attempt-actions";
 import { QUIZ_ACTION_ERROR_CODE } from "@/lib/quiz/quizActionErrorCodes";
-import { QUIZ_LINK_CAMPAIGN_ERROR } from "@/lib/quiz/quizLinkCampaign";
+
+function quotaPlayAccess(overrides: {
+  canAcceptResponses: boolean;
+  completedResponses?: number;
+  isProActive?: boolean;
+  isQuizUnlockedWithCoins?: boolean;
+}) {
+  const isProActive = overrides.isProActive ?? false;
+  const isQuizUnlockedWithCoins = overrides.isQuizUnlockedWithCoins ?? false;
+  const isUnlocked = isProActive || isQuizUnlockedWithCoins;
+  return {
+    completedResponses: overrides.completedResponses ?? 0,
+    freeLimit: 20,
+    remainingFreeResponses: overrides.canAcceptResponses ? 1 : 0,
+    hasReachedFreeLimit: !overrides.canAcceptResponses && !isUnlocked,
+    isProActive,
+    isQuizUnlockedWithCoins,
+    isUnlocked,
+    canAcceptResponses: overrides.canAcceptResponses,
+    canViewAllDetails: isUnlocked,
+    canViewAdvancedStats: isUnlocked,
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Base fixtures
@@ -100,11 +129,9 @@ const baseQuizLink = {
   revokedAt: null,
   expiresAt: null,
   responsesStartedAt: null,
-  acceptingResponsesUntil: null,
-  detailsVisibleUntil: null,
-  unlockedUntil: null,
   quiz: {
     id: "quiz-1",
+    ownerId: "owner-1",
     status: "ACTIVE",
     settings: {},
     questions: [baseQuestion],
@@ -145,6 +172,9 @@ describe("startAnonymousQuizAttemptAction", () => {
     mockUpdateMany.mockResolvedValue({ count: 1 });
     mockUpdate.mockResolvedValue({});
     mockIncrementQuizStartedAggregate.mockResolvedValue(undefined);
+    mockResolveQuizPlayAccess.mockResolvedValue(
+      quotaPlayAccess({ canAcceptResponses: true, completedResponses: 0 }),
+    );
   });
 
   it("creates an attempt, sets cookie, and returns clean play redirect", async () => {
@@ -187,32 +217,31 @@ describe("startAnonymousQuizAttemptAction", () => {
     expect(mockCreate).not.toHaveBeenCalled();
   });
 
-  it("initializes campaign on first attempt start", async () => {
+  it("initializes response activity on first attempt start", async () => {
     mockFindUnique.mockResolvedValue(baseQuizLink);
     mockCreate.mockResolvedValue({ id: "att-new" });
 
     await startAnonymousQuizAttemptAction("tok");
 
-    expect(mockUpdateMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { id: "link-1", responsesStartedAt: null },
-        data: expect.objectContaining({
-          responsesStartedAt: expect.any(Date),
-          acceptingResponsesUntil: expect.any(Date),
-          detailsVisibleUntil: expect.any(Date),
-        }),
-      }),
+    expect(mockUpdateMany).toHaveBeenCalledWith({
+      where: { id: "link-1", responsesStartedAt: null },
+      data: {
+        responsesStartedAt: expect.any(Date),
+      },
+    });
+    expect(mockUpdateMany.mock.calls[0]?.[0]?.data).not.toHaveProperty(
+      "acceptingResponsesUntil",
+    );
+    expect(mockUpdateMany.mock.calls[0]?.[0]?.data).not.toHaveProperty(
+      "detailsVisibleUntil",
     );
   });
 
-  it("does not reset campaign dates when responsesStartedAt is already set", async () => {
+  it("does not reset responsesStartedAt when already set", async () => {
     const started = new Date("2026-05-15T12:00:00Z");
-    const acceptingUntil = new Date("2026-12-31T12:00:00Z");
     mockFindUnique.mockResolvedValue({
       ...baseQuizLink,
       responsesStartedAt: started,
-      acceptingResponsesUntil: acceptingUntil,
-      detailsVisibleUntil: acceptingUntil,
     });
     mockCreate.mockResolvedValue({ id: "att-2" });
 
@@ -229,31 +258,57 @@ describe("startAnonymousQuizAttemptAction", () => {
     expect(mockCreate).toHaveBeenCalled();
   });
 
-  it("refuses start when acceptingResponsesUntil expired and not unlocked", async () => {
-    mockFindUnique.mockResolvedValue({
-      ...baseQuizLink,
-      responsesStartedAt: new Date("2026-05-01T12:00:00Z"),
-      acceptingResponsesUntil: new Date("2026-05-08T12:00:00Z"),
-      detailsVisibleUntil: new Date("2026-05-08T12:00:00Z"),
-      unlockedUntil: null,
-    });
+  it("refuses start when free response quota is reached", async () => {
+    mockFindUnique.mockResolvedValue(baseQuizLink);
+    mockResolveQuizPlayAccess.mockResolvedValue(
+      quotaPlayAccess({ canAcceptResponses: false, completedResponses: 20 }),
+    );
 
     const result = await startAnonymousQuizAttemptAction("tok");
     expect(result.success).toBe(false);
     if (result.success) return;
-    expect(result.error).toBe(QUIZ_LINK_CAMPAIGN_ERROR.NO_LONGER_ACCEPTING_RESPONSES);
+    expect(result.error).toBe(QUIZ_ACTION_ERROR_CODE.FREE_RESPONSE_LIMIT_REACHED);
     expect(mockCreate).not.toHaveBeenCalled();
   });
 
-  it("allows start when unlockedUntil is in the future despite expired campaign", async () => {
-    mockFindUnique.mockResolvedValue({
-      ...baseQuizLink,
-      responsesStartedAt: new Date("2026-05-01T12:00:00Z"),
-      acceptingResponsesUntil: new Date("2026-05-08T12:00:00Z"),
-      detailsVisibleUntil: new Date("2026-05-08T12:00:00Z"),
-      unlockedUntil: new Date("2026-12-01T12:00:00Z"),
-    });
+  it("allows start at 20 completed when coin-unlocked", async () => {
+    mockFindUnique.mockResolvedValue(baseQuizLink);
+    mockResolveQuizPlayAccess.mockResolvedValue(
+      quotaPlayAccess({
+        canAcceptResponses: true,
+        completedResponses: 20,
+        isQuizUnlockedWithCoins: true,
+      }),
+    );
     mockCreate.mockResolvedValue({ id: "att-unlocked" });
+
+    const result = await startAnonymousQuizAttemptAction("tok");
+    expect(result.success).toBe(true);
+    expect(mockCreate).toHaveBeenCalled();
+  });
+
+  it("allows start at 20 completed when Pro is active", async () => {
+    mockFindUnique.mockResolvedValue(baseQuizLink);
+    mockResolveQuizPlayAccess.mockResolvedValue(
+      quotaPlayAccess({
+        canAcceptResponses: true,
+        completedResponses: 20,
+        isProActive: true,
+      }),
+    );
+    mockCreate.mockResolvedValue({ id: "att-pro" });
+
+    const result = await startAnonymousQuizAttemptAction("tok");
+    expect(result.success).toBe(true);
+    expect(mockCreate).toHaveBeenCalled();
+  });
+
+  it("allows start at 19 completed responses", async () => {
+    mockFindUnique.mockResolvedValue(baseQuizLink);
+    mockResolveQuizPlayAccess.mockResolvedValue(
+      quotaPlayAccess({ canAcceptResponses: true, completedResponses: 19 }),
+    );
+    mockCreate.mockResolvedValue({ id: "att-19" });
 
     const result = await startAnonymousQuizAttemptAction("tok");
     expect(result.success).toBe(true);

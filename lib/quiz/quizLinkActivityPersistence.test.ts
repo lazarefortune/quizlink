@@ -13,9 +13,9 @@ vi.mock("@/lib/prisma", () => ({
 }));
 
 import {
-  ensureQuizLinkCampaignStarted,
+  ensureQuizLinkResponseActivityStarted,
   touchQuizLinkLastResponseAt,
-} from "./quizLinkCampaignPersistence";
+} from "./quizLinkActivityPersistence";
 
 const now = new Date("2026-05-22T12:00:00Z");
 
@@ -25,19 +25,21 @@ beforeEach(() => {
   mockUpdate.mockResolvedValue({});
 });
 
-describe("quizLinkCampaignPersistence", () => {
-  it("ensureQuizLinkCampaignStarted only updates links without responsesStartedAt", async () => {
-    await ensureQuizLinkCampaignStarted("link-1", now);
+describe("quizLinkActivityPersistence", () => {
+  it("ensureQuizLinkResponseActivityStarted only sets responsesStartedAt", async () => {
+    await ensureQuizLinkResponseActivityStarted("link-1", now);
 
-    expect(mockUpdateMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { id: "link-1", responsesStartedAt: null },
-        data: expect.objectContaining({
-          responsesStartedAt: now,
-          acceptingResponsesUntil: expect.any(Date),
-          detailsVisibleUntil: expect.any(Date),
-        }),
-      }),
+    expect(mockUpdateMany).toHaveBeenCalledWith({
+      where: { id: "link-1", responsesStartedAt: null },
+      data: {
+        responsesStartedAt: now,
+      },
+    });
+    expect(mockUpdateMany.mock.calls[0]?.[0]?.data).not.toHaveProperty(
+      "acceptingResponsesUntil",
+    );
+    expect(mockUpdateMany.mock.calls[0]?.[0]?.data).not.toHaveProperty(
+      "detailsVisibleUntil",
     );
   });
 

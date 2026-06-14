@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { Copy, Edit, Eye, MoreHorizontal, Play, Trash2 } from "lucide-react";
 
-import type { UserQuizListExpiration } from "@/app/(app)/builder/actions";
-import { QuizExpirationBadge } from "@/components/dashboard/quiz-expiration-badge";
+import { QuizQuotaBadge } from "@/components/dashboard/quiz-quota-badge";
 import { QuizCardStats } from "@/components/dashboard/quiz-card-stats-icons";
 import { QuizStatusBadge } from "@/components/quiz/quiz-status-badge";
 import { Button } from "@/components/ui/button";
@@ -16,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { t, type Locale } from "@/lib/i18n";
-import { deserializeQuizLinkExpirationStatus } from "@/lib/quiz/deserializeQuizLinkExpirationStatus";
+import type { QuizResponseQuotaStatus } from "@/lib/quiz/quizResponseQuotaStatus";
 import {
   canQuizBePlayed,
   canQuizBeShared,
@@ -30,7 +29,7 @@ export type QuizListCardData = {
   status: QuizLifecycleStatus;
   questionCount: number;
   attemptCount: number;
-  expiration?: UserQuizListExpiration;
+  quotaStatus?: QuizResponseQuotaStatus;
 };
 
 type QuizListCardProps = {
@@ -113,10 +112,16 @@ export function QuizListCard({
           className="mb-4"
         />
 
-        {quiz.expiration ? (
-          <QuizExpirationBadge
-            expiration={deserializeQuizLinkExpirationStatus(quiz.expiration)}
+        {quiz.quotaStatus ? (
+          <QuizQuotaBadge
+            quotaStatus={quiz.quotaStatus}
+            locale={locale}
             className="mb-3"
+            unlockHref={
+              quiz.quotaStatus.label === "FREE_LIMIT_REACHED"
+                ? `/dashboard/quiz/${quiz.id}?unlock=1`
+                : undefined
+            }
           />
         ) : null}
 

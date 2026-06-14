@@ -1,5 +1,7 @@
 # Roadmap d’implémentation — Participants, réponses, preview et monétisation QuizLink
 
+> **État actuel :** le modèle quota est implémenté. Voir [quiz-quota-model.md](quiz-quota-model.md) pour les règles métier définitives. Les phases ci-dessous conservent l’historique de conception ; les sections marquées « obsolète » ou réécrites reflètent l’ancien modèle (campagne 7 jours, expiration de lien, déblocage temporaire).
+
 ## Objectif produit
 
 Construire une version évolutive de QuizLink où :
@@ -13,10 +15,19 @@ Construire une version évolutive de QuizLink où :
 
 Positionnement recommandé :
 
+```txt
+Crée ton quiz gratuitement.
+Reçois tes 20 premières réponses.
+Débloque le quiz quand tu veux aller plus loin.
+```
+
+En détail :
+
 > Créer et partager reste gratuit.
 > Les statistiques globales restent gratuites.
-> Les réponses détaillées sont gratuites pendant une durée limitée et limitées à 3 réponses.
-> Les coins servent à débloquer(prolonger un quiz) et donc conserver les réponses d’un quiz.
+> Jusqu’à 20 réponses terminées par quiz, avec 3 parties détaillées visibles.
+> Les coins (40) servent à débloquer un quiz définitivement.
+> Pro débloque tous les quiz tant que l’abonnement est actif.
 
 ---
 
@@ -54,9 +65,11 @@ En V1, l’email participant est déclaratif et non vérifié.
 
 ### Conservation des données
 
-- Les détails d’une réponse expirent selon la date de soumission de la tentative, pas selon la date de création du quiz.
-- Les statistiques globales restent disponibles plus longtemps.
-- Les détails individuels peuvent être masqués puis supprimés si le quiz n’est pas débloqué.
+- Les statistiques globales restent disponibles grâce aux agrégats.
+- Pour maîtriser le stockage et protéger les données personnelles, les réponses détaillées des quiz gratuits inactifs peuvent être nettoyées après une période de conservation (purge interne).
+- La purge ne supprime pas le quiz, ni les stats globales, ni les agrégats ; elle peut supprimer les réponses détaillées et les informations participant.
+- Elle ne concerne pas les quiz Pro ou débloqués avec coins.
+- `QuizLink.expiresAt` concerne l’expiration technique d’un lien d’invitation participant — séparé du modèle quota.
 
 ---
 
@@ -77,7 +90,7 @@ Un mode preview doit :
 - ne pas incrémenter les statistiques ;
 - ne pas compter dans les ouvertures, commencés, terminés ;
 - ne pas apparaître dans les réponses détaillées ;
-- ne pas déclencher d’expiration de lien ou de conservation de réponses.
+- ne pas compter dans le quota gratuit de réponses ;
 
 ## UX recommandée
 
@@ -144,6 +157,8 @@ Elle doit utiliser les données du quiz côté propriétaire.
 ## Objectif
 
 Enregistrer les réponses aux quiz de manière propre, sobre et évolutive.
+
+> **Note :** les champs `detailsVisibleUntil`, `detailsPurgeAt`, `detailsUnlockedUntil` et les dates de campagne sur `QuizLink` ont été supprimés. Le modèle actuel repose sur le quota (20 réponses terminées) et la purge interne (`detailsPurgedAt`, `lastResponseAt`).
 
 ## Modèle recommandé
 
@@ -295,62 +310,64 @@ Ces stats ne doivent jamais inclure :
 
 ---
 
-# Phase 3 — Réponses détaillées temporaires
+# Phase 3 — Accès aux réponses détaillées (modèle quota)
 
 ## Objectif
 
 Créer un levier de valeur tout en gardant une expérience gratuite utile.
 
-## Règle recommandée
+## Règle actuelle (implémentée)
 
-Pour chaque tentative :
+Pour un quiz gratuit :
 
 ```txt
-J0 à J+7 : détails visibles gratuitement.
-J+7 à J+30 : détails masqués mais récupérables si le quiz est débloqué.
-Après J+30 : détails supprimés ou anonymisés si le quiz n’est pas débloqué.
+Jusqu’à 20 réponses terminées reçues.
+3 parties détaillées visibles gratuitement.
+Stats simples toujours visibles.
+Au-delà : parties masquées, limite atteinte pour les nouvelles réponses.
 ```
+
+Les parties `ABANDONED` ne comptent pas dans la limite gratuite.
 
 ## Détails visibles gratuitement
 
-Pendant 7 jours, le créateur peut voir :
+Le créateur peut voir gratuitement :
 
 ```txt
-score individuel
-réponses question par question
-bonnes / mauvaises réponses
-durée
-nom ou pseudo si collecté
-email si collecté
+stats globales (score moyen, taux de complétion, etc.)
+3 parties détaillées (score, réponses question par question, durée)
 ```
 
-## Après J+7
+## Au-delà de la limite gratuite
 
-Masquer les détails individuels, mais conserver les stats globales.
+Masquer les parties au-delà des 3 premières, et bloquer les nouvelles réponses à 20 parties terminées.
 
 UX possible :
 
 ```txt
-Certaines réponses détaillées ont expiré.
-Débloque ce quiz pour consulter et conserver l’historique complet.
+Limite gratuite atteinte.
+Débloque ce quiz pour continuer à recevoir des réponses et voir toutes les parties détaillées.
 ```
 
-## Après J+30
+## Purge interne (quiz gratuits inactifs)
 
-Si le quiz n’est pas débloqué :
+Les statistiques globales restent disponibles grâce aux agrégats. Pour maîtriser le stockage et protéger les données personnelles, les réponses détaillées des quiz gratuits inactifs peuvent être nettoyées après une période de conservation.
+
+Si le quiz n’est pas débloqué ni couvert par Pro :
 
 - supprimer les `QuizAttemptAnswer` ;
 - anonymiser ou supprimer `participantName` ;
 - anonymiser ou supprimer `participantEmail` ;
-- conserver `QuizAttempt` avec score, date, durée, statut.
+- conserver `QuizAttempt` avec score, date, durée, statut ;
+- conserver les agrégats de stats globales.
 
 ## Tests manuels
 
-- Créer une tentative avec `detailsVisibleUntil` expiré.
-- Vérifier que le détail est masqué.
-- Vérifier que les stats globales restent visibles.
-- Simuler `detailsPurgeAt` dépassé.
-- Vérifier que les détails sont supprimés/anonymisés.
+- Créer 3 réponses terminées : vérifier l’accès détaillé gratuit.
+- Créer une 4e réponse : vérifier le masquage des parties au-delà de 3.
+- Atteindre 20 réponses : vérifier que le quiz n’accepte plus de nouvelles réponses.
+- Débloquer avec 40 coins : vérifier l’accès à toutes les parties et les stats avancées.
+- Simuler une purge : vérifier que les stats globales restent visibles.
 
 ---
 
@@ -358,65 +375,56 @@ Si le quiz n’est pas débloqué :
 
 ## Objectif
 
-Utiliser le système de coins pour débloquer les réponses détaillées d’un quiz.
+Utiliser le système de coins pour débloquer définitivement un quiz.
 
-## Décision recommandée
+## Décision actuelle (implémentée)
 
 ```txt
-Débloquer un quiz : 40 coins.
+Débloquer un quiz : 40 coins — déblocage définitif.
 ```
 
 Le déblocage inclut :
 
 ```txt
-réponses détaillées complètes
-participants si collectés
-conservation 1 an
-lien actif 1 an
+continuer à recevoir des réponses sans limite
+toutes les parties détaillées visibles
+stats avancées
 export CSV plus tard
 ```
 
-## Modèle recommandé
+## Modèle
 
-Créer une table d’historique plutôt que de tout stocker sur `Quiz`.
-
-### QuizUnlock
+Table `QuizUnlock` :
 
 ```txt
 id
 quizId
 userId
-unlockType
+type
+source
 coinsSpent
-unlockedAt
-expiresAt
+startsAt
+expiresAt (null = permanent pour un déblocage coins)
 createdAt
-```
-
-`unlockType` :
-
-```txt
-DETAILED_RESULTS
+updatedAt
 ```
 
 ## Effet du déblocage
 
-Quand un quiz est débloqué :
+Quand un quiz est débloqué avec des coins :
 
 ```txt
-resultsUnlockedUntil = now + 1 an
+QuizUnlock.expiresAt = null (permanent)
 ```
 
-ou via `QuizUnlock.expiresAt`.
-
-Toute nouvelle tentative reçue pendant cette période doit avoir ses détails conservés jusqu’à cette date.
+Toutes les parties détaillées et les stats avancées restent accessibles.
 
 ## UX recommandée
 
 Si l’utilisateur a assez de coins :
 
 ```txt
-Débloquer les réponses détaillées — 40 coins
+Débloquer ce quiz — 40 coins
 ```
 
 Si l’utilisateur n’a pas assez de coins :
@@ -429,82 +437,84 @@ Acheter des coins
 Après déblocage :
 
 ```txt
-Réponses détaillées débloquées jusqu’au 21 mai 2027.
+Quiz débloqué.
 ```
 
 ## Tests manuels
 
 - Débloquer un quiz avec assez de coins.
 - Vérifier que les coins sont décrémentés une seule fois.
-- Vérifier que les réponses détaillées sont visibles.
-- Vérifier que la date de conservation longue est appliquée.
+- Vérifier que toutes les parties détaillées sont visibles.
+- Vérifier l’accès aux stats avancées.
 - Tester le cas coins insuffisants.
 
 ---
 
-# Phase 5 — Expiration des liens de quiz
+# Phase 5 — Limite gratuite de réponses (quota)
+
+> Remplace l’ancienne « Phase 5 — Expiration des liens de quiz » (obsolète).
 
 ## Objectif
 
-Éviter que des vieux liens continuent à générer des réponses indéfiniment, tout en créant une future opportunité de monétisation.
+Limiter la réception de réponses sur les quiz gratuits tout en créant un levier de monétisation clair.
 
-## Règle recommandée
+## Règle actuelle (implémentée)
 
 Pour les quiz gratuits :
 
 ```txt
-Lien actif 30 jours après la dernière activité.
+Jusqu’à 20 réponses terminées par quiz.
+À 20 réponses : le quiz n’accepte plus de nouvelles réponses tant qu’il n’est pas débloqué.
 ```
 
-Activité = nouvelle tentative réelle, pas preview.
+Seules les parties `COMPLETED` comptent. Les parties `ABANDONED` ne comptent pas.
 
-Pour un quiz débloqué :
+Pour un quiz débloqué (coins ou Pro) :
 
 ```txt
-Lien actif pendant 1 an.
+Réception de réponses illimitée.
 ```
 
 ## UX côté créateur
 
 ```txt
-Lien actif encore 27 jours.
+12 / 20 réponses gratuites utilisées.
 ```
 
-Si expiré :
+Si limite atteinte :
 
 ```txt
-Ce lien ne reçoit plus de nouvelles réponses.
-Débloque ce quiz pour le réactiver et conserver l’historique.
+Limite gratuite atteinte.
+Débloque ce quiz pour continuer à recevoir des réponses.
 ```
 
 ## UX côté joueur
 
-Si un joueur ouvre un lien expiré :
+Si un joueur tente de jouer un quiz dont la limite est atteinte :
 
 ```txt
-Ce quiz n’accepte plus de réponses.
-Demande au créateur de le réactiver.
+Ce quiz n’accepte plus de nouvelles réponses pour le moment.
+Demande au créateur de le débloquer.
 ```
 
 ## Monétisation
 
-Ne pas faire payer la réactivation seule en V1.
-
-À terme :
-
 ```txt
-Réactiver le lien 30 jours : 10 coins.
+Débloquer ce quiz : 40 coins (définitif).
+Ou QuizLink Pro : tous les quiz débloqués tant que l’abonnement est actif.
 ```
 
-Mais au début, le déblocage du quiz doit inclure la prolongation du lien.
+## Note sur `QuizLink.expiresAt`
+
+`QuizLink.expiresAt` concerne l’expiration technique d’un lien d’invitation participant. Ce champ est séparé du modèle business quota et ne doit pas être confondu avec la limite de 20 réponses.
 
 ## Tests manuels
 
-- Ouvrir un lien actif.
-- Simuler un lien expiré.
-- Vérifier que le joueur ne peut pas commencer.
-- Débloquer le quiz.
-- Vérifier que le lien redevient actif.
+- Recevoir des réponses jusqu’à 20 parties terminées.
+- Vérifier le blocage des nouvelles réponses.
+- Débloquer le quiz avec 40 coins.
+- Vérifier que le quiz accepte à nouveau des réponses.
+- Vérifier le comportement avec Pro actif.
 
 ---
 
@@ -628,19 +638,19 @@ Explication si disponible
 
 ## Paywall
 
-Si le quiz n’est pas débloqué et que les détails sont expirés :
+Si le quiz n’est pas débloqué et que la limite gratuite est atteinte ou que les parties sont masquées :
 
 ```txt
-Réponses détaillées masquées.
-Débloque ce quiz avec 40 coins pour consulter l’historique complet.
+Limite gratuite atteinte.
+Débloque ce quiz avec 40 coins pour continuer à recevoir des réponses et voir toutes les parties détaillées.
 ```
 
 ## Tests manuels
 
-- Voir une tentative récente gratuite.
-- Voir une tentative expirée masquée.
+- Voir les 3 premières parties détaillées gratuitement.
+- Voir une partie masquée au-delà de la limite d’aperçu.
 - Débloquer le quiz.
-- Voir toutes les tentatives détaillées.
+- Voir toutes les tentatives détaillées et les stats avancées.
 
 ---
 
@@ -713,10 +723,9 @@ Permettre l’achat de coins via Stripe.
 
 ```txt
 Générer un quiz avec l’IA
-Débloquer les réponses détaillées
-Conserver un historique
+Débloquer un quiz définitivement (40 coins)
+Rapport IA par participant
 Exporter les résultats plus tard
-Réactiver un lien plus tard
 ```
 
 ## UX
@@ -751,16 +760,19 @@ Garder le système contrôlable et éviter la surcharge BDD.
 
 ## À prévoir
 
-### Job de nettoyage
+### Job de nettoyage (purge interne)
 
 Règles :
 
 ```txt
-Si detailsPurgeAt < now
+Si quiz gratuit inactif (quota + inactivité)
 et quiz non débloqué
+et non couvert par Pro
 et detailsPurgedAt est null
 alors supprimer/anonymiser les détails.
 ```
+
+Les statistiques globales et les agrégats sont conservés.
 
 ### Logs / monitoring
 
@@ -769,9 +781,9 @@ Suivre :
 ```txt
 nombre de tentatives créées
 nombre de réponses détaillées stockées
-nombre de détails expirés
 nombre de détails purgés
 nombre de quiz débloqués
+quiz ayant atteint la limite gratuite
 coins dépensés
 conversion paywall
 ```
@@ -783,9 +795,8 @@ Afficher :
 ```txt
 quiz débloqués
 coins dépensés
-réponses expirées
 réponses purgées
-liens expirés
+quiz en limite gratuite
 ```
 
 ---
@@ -794,35 +805,32 @@ liens expirés
 
 ## Court terme
 
-- [ ] Créer un vrai mode preview non comptabilisé
-- [ ] Créer `QuizAttempt`
-- [ ] Créer `QuizAttemptAnswer`
-- [ ] Enregistrer les réponses anonymes détaillées par défaut
-- [ ] Exclure les previews des stats
-- [ ] Afficher les stats globales gratuites
-- [ ] Afficher les détails récents gratuitement
+- [x] Créer un vrai mode preview non comptabilisé
+- [x] Créer `QuizAttempt`
+- [x] Créer `QuizAttemptAnswer`
+- [x] Enregistrer les réponses anonymes détaillées par défaut
+- [x] Exclure les previews des stats
+- [x] Afficher les stats globales gratuites
+- [x] Afficher 3 parties détaillées gratuitement
 
 ## Moyen terme
 
-- [ ] Ajouter expiration des détails par tentative
-- [ ] Masquer les détails expirés
-- [ ] Ajouter déblocage par coins
-- [ ] Ajouter table `QuizUnlock`
-- [ ] Ajouter paywall réponses détaillées
-- [ ] Ajouter conservation longue 1 an
-- [ ] Ajouter modes anonymes / pseudo / nom+email
+- [x] Modèle quota (20 réponses terminées, 3 parties visibles)
+- [x] Masquer les parties au-delà de l’aperçu gratuit
+- [x] Ajouter déblocage par coins (40 coins, définitif)
+- [x] Ajouter table `QuizUnlock`
+- [x] Ajouter paywall quota / déblocage
+- [x] Ajouter modes anonymes / pseudo / nom+email
+- [ ] Export CSV
 
 ## Plus tard
 
-- [ ] Expiration des liens par inactivité
-- [ ] Réactivation via déblocage du quiz
+- [x] Packs de coins Stripe
+- [x] Offre Pro / abonnement
+- [x] Jobs de purge automatisés (quota + inactivité)
 - [ ] Page “Mes quiz joués”
 - [ ] Incitation à créer un compte après le résultat
-- [ ] Packs de coins Stripe
-- [ ] Export CSV
-- [ ] Offre Pro / abonnement
 - [ ] Admin avancé
-- [ ] Jobs de purge automatisés
 
 ---
 
@@ -833,7 +841,7 @@ liens expirés
 - Ne pas faire payer trop tôt.
 - Ne pas cacher les modes de participation dans un drawer peu visible.
 - Ne pas confondre preview et vraie participation.
-- Ne pas rendre la mécanique d’expiration trop anxiogène.
+- Ne pas rendre la mécanique de limite gratuite trop anxiogène.
 
 ## BDD
 
@@ -847,7 +855,7 @@ liens expirés
 - Informer clairement les joueurs.
 - Nom/email visibles par le créateur uniquement si explicitement collectés.
 - Ne pas vérifier les emails participants en V1.
-- Supprimer/anonymiser les détails expirés.
+- Supprimer/anonymiser les détails purgés (quiz gratuits inactifs non débloqués).
 - Éviter de promettre un anonymat juridique absolu si des données techniques existent.
 
 ---
@@ -855,10 +863,14 @@ liens expirés
 # Formule produit finale
 
 ```txt
+Crée ton quiz gratuitement.
+Reçois tes 20 premières réponses.
+Débloque le quiz quand tu veux aller plus loin.
+
 Créer et partager un quiz reste gratuit.
-Les réponses sont enregistrées automatiquement.
 Les statistiques globales restent gratuites.
-Les réponses détaillées sont visibles gratuitement pendant une durée limitée.
-Les coins permettent de débloquer et conserver les réponses d’un quiz.
+3 parties détaillées visibles gratuitement par quiz.
+40 coins pour débloquer un quiz définitivement.
+Pro débloque tous les quiz tant que l’abonnement est actif.
 La preview permet au créateur de tester sans polluer les statistiques.
 ```

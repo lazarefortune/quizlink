@@ -16,12 +16,7 @@ vi.mock("./getQuizAccessState", () => ({
   getQuizAccessState: (...args: unknown[]) => mockGetQuizAccessState(...args),
 }));
 
-import {
-  QUIZ_UNLOCK_COIN_COST,
-  QUIZ_UNLOCK_DURATION_DAYS,
-} from "./quizUnlockConstants";
-import { addDays } from "./quizLinkCampaign";
-import { UNLOCK_QUIZ_ERROR } from "./quizUnlockConstants";
+import { QUIZ_UNLOCK_COIN_COST, UNLOCK_QUIZ_ERROR } from "./quizUnlockConstants";
 import { unlockQuizWithCoins } from "./unlockQuizWithCoins";
 
 const quizId = "quiz-1";
@@ -49,7 +44,7 @@ describe("unlockQuizWithCoins", () => {
     mockGetQuizAccessState.mockResolvedValue({
       isUnlocked: true,
       unlockedBy: "QUIZ_UNLOCK",
-      expiresAt: new Date("2027-01-01"),
+      expiresAt: null,
       activeQuizUnlockId: "u1",
     });
     const { prisma } = await import("@/lib/prisma");
@@ -61,10 +56,11 @@ describe("unlockQuizWithCoins", () => {
     expect(result.success).toBe(true);
     if (!result.success) return;
     expect(result.alreadyUnlocked).toBe(true);
+    expect(result.expiresAt).toBeNull();
     expect(mockTransaction).not.toHaveBeenCalled();
   });
 
-  it("debits coins and creates unlock in transaction", async () => {
+  it("debits coins and creates permanent unlock in transaction", async () => {
     const txMocks = {
       $queryRaw: vi.fn().mockResolvedValue([{ coinBalance: 50 }]),
       user: { update: vi.fn(), findUnique: vi.fn().mockResolvedValue({ coinBalance: 10 }) },
@@ -96,6 +92,7 @@ describe("unlockQuizWithCoins", () => {
     if (!result.success) return;
     expect(result.alreadyUnlocked).toBe(false);
     expect(result.newBalance).toBe(50 - QUIZ_UNLOCK_COIN_COST);
+    expect(result.expiresAt).toBeNull();
 
     expect(txMocks.user.update).toHaveBeenCalledWith({
       where: { id: userId },
@@ -107,27 +104,11 @@ describe("unlockQuizWithCoins", () => {
           quizId,
           userId,
           coinsSpent: QUIZ_UNLOCK_COIN_COST,
+          expiresAt: null,
         }),
       }),
     );
-    expect(txMocks.quizLink.updateMany).toHaveBeenCalledWith({
-      where: { quizId },
-      data: {
-        unlockedUntil: expect.any(Date),
-        acceptingResponsesUntil: expect.any(Date),
-        detailsVisibleUntil: expect.any(Date),
-      },
-    });
-
-    const createCall = txMocks.quizUnlock.create.mock.calls[0]?.[0] as {
-      data: { expiresAt: Date };
-    };
-    const expiresAt = createCall.data.expiresAt;
-    const expectedMin = addDays(new Date(), QUIZ_UNLOCK_DURATION_DAYS - 1);
-    const expectedMax = addDays(new Date(), QUIZ_UNLOCK_DURATION_DAYS + 1);
-    expect(expiresAt.getTime()).toBeGreaterThanOrEqual(expectedMin.getTime());
-    expect(expiresAt.getTime()).toBeLessThanOrEqual(expectedMax.getTime());
-    expect(result.expiresAt).toEqual(expiresAt);
+    expect(txMocks.quizLink.updateMany).not.toHaveBeenCalled();
   });
 
   it("returns insufficient coins when balance too low", async () => {

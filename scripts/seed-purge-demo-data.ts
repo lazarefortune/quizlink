@@ -1,5 +1,5 @@
 /**
- * [DEV / STAGING] Seed de démonstration pour tester purge, expiration, paywall et parties purgées.
+ * [DEV / STAGING] Seed de démonstration pour tester la purge quota interne.
  *
  * Usage :
  *   npx tsx scripts/seed-purge-demo-data.ts --ownerEmail=test@example.com
@@ -7,6 +7,8 @@
  *
  * Ne jamais lancer automatiquement. Bloqué en production sauf ALLOW_PURGE_DEMO_SEED=1.
  */
+
+import "./load-env-bootstrap";
 
 import { pathToFileURL } from "node:url";
 
@@ -22,7 +24,9 @@ import {
 import {
   addDays,
   assertSeedPurgeDemoEnvironmentAllowed,
-  buildSeedCampaignDates,
+  buildAttemptSpecsForPurgeScenario,
+  buildSeedLinkDates,
+  buildSeedLastResponseAt,
   buildSeedLinkTokenForQuiz,
   buildSeedQuizTitle,
   deriveProOwnerEmail,
@@ -272,7 +276,7 @@ async function createSeedQuestions(quizId: string): Promise<CreatedQuestion[]> {
 }
 
 type AttemptSeedSpec = {
-  status: "COMPLETED" | "ABANDONED" | "IN_PROGRESS";
+  status: "COMPLETED" | "ABANDONED";
   score: number | null;
   durationSeconds: number | null;
   participantName: string | null;
@@ -282,82 +286,51 @@ type AttemptSeedSpec = {
   partialAnswerCount: number;
 };
 
-function buildAttemptSpecs(scenario: SeedPurgeDemoScenarioKey): AttemptSeedSpec[] {
-  const useAnonymous = scenario === "ALREADY_PURGED";
+async function createAttemptAnswers(params: {
+  attemptId: string;
+  questions: CreatedQuestion[];
+  spec: AttemptSeedSpec;
+  startedAt: Date;
+}): Promise<void> {
+  const answerCount = params.spec.answerAllQuestions
+    ? params.questions.length
+    : params.spec.partialAnswerCount;
 
-  const completedScores = [40, 60, 80, 100];
-  const specs: AttemptSeedSpec[] = completedScores.map((score, index) => ({
-    status: "COMPLETED",
-    score,
-    durationSeconds: 90 + index * 30,
-    participantName: useAnonymous ? null : `Demo Joueur ${index + 1}`,
-    participantEmail: useAnonymous ? null : `demo${index + 1}@purge-demo.local`,
-    identityMode: useAnonymous ? "ANONYMOUS" : "NAME_EMAIL",
-    answerAllQuestions: !useAnonymous,
-    partialAnswerCount: 0,
-  }));
+  for (let answerIndex = 0; answerIndex < answerCount; answerIndex += 1) {
+    const question = params.questions[answerIndex]!;
+    const correctOption = question.options.find((option) => option.isCorrect);
+    const incorrectOption = question.options.find((option) => !option.isCorrect);
+    const pickCorrect = params.spec.status === "COMPLETED" && answerIndex % 2 === 0;
+    const selectedOptionId = pickCorrect
+      ? (correctOption?.id ?? question.options[0]!.id)
+      : (incorrectOption?.id ?? question.options[0]!.id);
 
-  specs.push(
-    {
-      status: "COMPLETED",
-      score: 70,
-      durationSeconds: 180,
-      participantName: useAnonymous ? null : "Demo Joueur 5",
-      participantEmail: useAnonymous ? null : "demo5@purge-demo.local",
-      identityMode: useAnonymous ? "ANONYMOUS" : "NAME_EMAIL",
-      answerAllQuestions: !useAnonymous,
-      partialAnswerCount: 0,
-    },
-    {
-      status: "ABANDONED",
-      score: null,
-      durationSeconds: 45,
-      participantName: useAnonymous ? null : "Demo Abandon 1",
-      participantEmail: useAnonymous ? null : "abandon1@purge-demo.local",
-      identityMode: useAnonymous ? "ANONYMOUS" : "NAME_EMAIL",
-      answerAllQuestions: false,
-      partialAnswerCount: useAnonymous ? 0 : 2,
-    },
-    {
-      status: "ABANDONED",
-      score: null,
-      durationSeconds: 30,
-      participantName: useAnonymous ? null : "Demo Abandon 2",
-      participantEmail: useAnonymous ? null : "abandon2@purge-demo.local",
-      identityMode: useAnonymous ? "ANONYMOUS" : "NAME_EMAIL",
-      answerAllQuestions: false,
-      partialAnswerCount: useAnonymous ? 0 : 1,
-    },
-    {
-      status: "IN_PROGRESS",
-      score: null,
-      durationSeconds: null,
-      participantName: useAnonymous ? null : "Demo En cours",
-      participantEmail: useAnonymous ? null : "progress@purge-demo.local",
-      identityMode: useAnonymous ? "ANONYMOUS" : "NAME_EMAIL",
-      answerAllQuestions: false,
-      partialAnswerCount: 0,
-    },
-  );
-
-  return specs;
+    await prisma.quizAnswer.create({
+      data: {
+        attemptId: params.attemptId,
+        questionId: question.id,
+        selectedOptionIds: [selectedOptionId],
+        isCorrect: pickCorrect,
+        expired: false,
+        timeSpent: 10 + answerIndex * 3,
+        answeredAt: new Date(params.startedAt.getTime() + (answerIndex + 1) * 15_000),
+      },
+    });
+  }
 }
 
 async function createSeedAttempts(params: {
   quizLinkId: string;
   questions: CreatedQuestion[];
-  scenario: SeedPurgeDemoScenarioKey;
-  campaignStartedAt: Date;
+  scenario: SeedPurgeDemoScenarioDefinition;
+  responsesStartedAt: Date;
 }): Promise<void> {
-  const specs = buildAttemptSpecs(params.scenario);
+  const specs = buildAttemptSpecsForPurgeScenario(params.scenario);
 
   for (let index = 0; index < specs.length; index += 1) {
     const spec = specs[index]!;
-    const startedAt = addDays(params.campaignStartedAt, index);
-    const finishedAt =
-      spec.status === "IN_PROGRESS"
-        ? null
-        : new Date(startedAt.getTime() + (spec.durationSeconds ?? 60) * 1000);
+    const startedAt = addDays(params.responsesStartedAt, index);
+    const finishedAt = new Date(startedAt.getTime() + (spec.durationSeconds ?? 60) * 1000);
 
     const attempt = await prisma.quizAttempt.create({
       data: {
@@ -375,35 +348,16 @@ async function createSeedAttempts(params: {
       select: { id: true },
     });
 
-    if (params.scenario === "ALREADY_PURGED") {
+    if (params.scenario.skipAnswerDetails) {
       continue;
     }
 
-    const answerCount = spec.answerAllQuestions
-      ? params.questions.length
-      : spec.partialAnswerCount;
-
-    for (let answerIndex = 0; answerIndex < answerCount; answerIndex += 1) {
-      const question = params.questions[answerIndex]!;
-      const correctOption = question.options.find((option) => option.isCorrect);
-      const incorrectOption = question.options.find((option) => !option.isCorrect);
-      const pickCorrect = spec.status === "COMPLETED" && answerIndex % 2 === 0;
-      const selectedOptionId = pickCorrect
-        ? (correctOption?.id ?? question.options[0]!.id)
-        : (incorrectOption?.id ?? question.options[0]!.id);
-
-      await prisma.quizAnswer.create({
-        data: {
-          attemptId: attempt.id,
-          questionId: question.id,
-          selectedOptionIds: [selectedOptionId],
-          isCorrect: pickCorrect,
-          expired: false,
-          timeSpent: 10 + answerIndex * 3,
-          answeredAt: new Date(startedAt.getTime() + (answerIndex + 1) * 15_000),
-        },
-      });
-    }
+    await createAttemptAnswers({
+      attemptId: attempt.id,
+      questions: params.questions,
+      spec,
+      startedAt,
+    });
   }
 }
 
@@ -469,17 +423,16 @@ async function backfillAggregatesForQuiz(quizId: string): Promise<void> {
   await applyQuizAggregatesBackfill(built);
 }
 
-async function createCoinsUnlock(params: {
+async function createPermanentCoinsUnlock(params: {
   quizId: string;
   userId: string;
   now: Date;
-  expiresAt: Date;
 }): Promise<void> {
   const existing = await prisma.quizUnlock.findFirst({
     where: {
       quizId: params.quizId,
       userId: params.userId,
-      expiresAt: { gt: params.now },
+      source: "COINS",
     },
     select: { id: true },
   });
@@ -487,7 +440,10 @@ async function createCoinsUnlock(params: {
   if (existing) {
     await prisma.quizUnlock.update({
       where: { id: existing.id },
-      data: { expiresAt: params.expiresAt },
+      data: {
+        expiresAt: null,
+        startsAt: params.now,
+      },
     });
     return;
   }
@@ -500,8 +456,36 @@ async function createCoinsUnlock(params: {
       source: "COINS",
       coinsSpent: 40,
       startsAt: params.now,
-      expiresAt: params.expiresAt,
+      expiresAt: null,
     },
+  });
+}
+
+async function purgeQuizDetails(params: {
+  quizId: string;
+  quizLinkId: string;
+  now: Date;
+}): Promise<void> {
+  await prisma.$transaction(async (tx) => {
+    await tx.quizAnswer.deleteMany({
+      where: { attempt: { quizLink: { quizId: params.quizId } } },
+    });
+    await tx.quizAttemptQuestion.deleteMany({
+      where: { attempt: { quizLink: { quizId: params.quizId } } },
+    });
+    await tx.quizAttempt.updateMany({
+      where: { quizLinkId: params.quizLinkId },
+      data: {
+        participantName: null,
+        participantEmail: null,
+      },
+    });
+    await tx.quizLink.update({
+      where: { id: params.quizLinkId },
+      data: {
+        detailsPurgedAt: addDays(params.now, -1),
+      },
+    });
   });
 }
 
@@ -525,10 +509,12 @@ async function createSeedQuiz(params: {
     }
   }
 
-  const campaign = buildSeedCampaignDates(params.now, params.scenario.key);
+  const linkDates = buildSeedLinkDates(params.now);
   const title = buildSeedQuizTitle(params.scenario.titleSuffix);
-
-  const identityMode = params.scenario.key === "ALREADY_PURGED" ? "ANONYMOUS" : "NAME_EMAIL";
+  const lastResponseAt = buildSeedLastResponseAt(
+    params.now,
+    params.scenario.lastResponseAgeDays,
+  );
 
   const quiz = await prisma.quiz.create({
     data: {
@@ -536,9 +522,9 @@ async function createSeedQuiz(params: {
       name: title,
       visibility: "PRIVATE",
       status: "ACTIVE",
-      publishedAt: campaign.responsesStartedAt,
+      publishedAt: linkDates.responsesStartedAt,
       settings: {
-        participantIdentityMode: identityMode,
+        participantIdentityMode: "NAME_EMAIL",
         showAnswerImmediately: false,
         showAnswersAtEnd: true,
         randomizeQuestions: false,
@@ -558,12 +544,9 @@ async function createSeedQuiz(params: {
       token,
       participantId: null,
       allowMultipleAttempts: true,
-      responsesStartedAt: campaign.responsesStartedAt,
-      acceptingResponsesUntil: campaign.acceptingResponsesUntil,
-      detailsVisibleUntil: campaign.detailsVisibleUntil,
-      detailsPurgedAt: campaign.detailsPurgedAt,
-      unlockedUntil: campaign.unlockedUntil,
-      lastResponseAt: addDays(campaign.responsesStartedAt, 3),
+      responsesStartedAt: linkDates.responsesStartedAt,
+      detailsPurgedAt: null,
+      lastResponseAt,
     },
     select: { id: true },
   });
@@ -573,20 +556,27 @@ async function createSeedQuiz(params: {
   await createSeedAttempts({
     quizLinkId: quizLink.id,
     questions,
-    scenario: params.scenario.key,
-    campaignStartedAt: campaign.responsesStartedAt,
+    scenario: params.scenario,
+    responsesStartedAt: linkDates.responsesStartedAt,
   });
 
-  if (params.scenario.key === "COINS_UNLOCKED") {
-    await createCoinsUnlock({
+  if (params.scenario.withCoinUnlock) {
+    await createPermanentCoinsUnlock({
       quizId: quiz.id,
       userId: params.ownerId,
       now: params.now,
-      expiresAt: campaign.unlockedUntil ?? addDays(params.now, 30),
     });
   }
 
   await backfillAggregatesForQuiz(quiz.id);
+
+  if (params.scenario.alreadyPurged) {
+    await purgeQuizDetails({
+      quizId: quiz.id,
+      quizLinkId: quizLink.id,
+      now: params.now,
+    });
+  }
 
   if (params.verbose) {
     console.log(`  ✓ ${title} (${quiz.id})`);
@@ -644,7 +634,7 @@ export async function runSeedPurgeDemoData(
   const createdQuizzes: CreatedSeedQuiz[] = [];
 
   if (options.verbose) {
-    console.log("Création des quiz seed...");
+    console.log("Création des quiz seed purge quota...");
   }
 
   for (const scenario of scenarios) {
@@ -673,10 +663,10 @@ export async function runSeedPurgeDemoData(
 
 function printSeedSummary(summary: SeedPurgeDemoRunSummary): void {
   const purgeableQuiz = summary.createdQuizzes.find(
-    (quiz) => quiz.scenarioKey === "PURGEABLE",
+    (quiz) => quiz.scenarioKey === "QUOTA_PURGEABLE",
   );
 
-  console.log("\nSeed purge demo créé :\n");
+  console.log("\nSeed purge demo (quota) créé :\n");
 
   console.log("Owner normal :");
   console.log(`- email : ${summary.normalOwner.email}`);

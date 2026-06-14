@@ -71,7 +71,6 @@ import { buttonVariants } from "@/components/ui/button";
 import { useCookieConsent } from "@/components/cookie-consent/cookie-consent-context";
 import { useSupportFeedback } from "@/components/support/support-feedback-provider";
 import type { ActiveUserSubscriptionAccess } from "@/lib/quiz/getActiveUserSubscriptionAccess";
-import { ProSubscriptionSection } from "./pro-subscription-section";
 
 type UserData = {
   id: string;

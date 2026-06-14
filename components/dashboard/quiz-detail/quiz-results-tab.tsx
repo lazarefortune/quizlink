@@ -36,7 +36,7 @@ export function QuizResultsTab({
 }: QuizResultsTabProps) {
   const { locale } = useLocale();
   const hasNoResponses = stats.totalResponses === 0;
-  const isUnlocked = stats.campaign?.isUnlocked ?? false;
+  const isUnlocked = stats.quotaStatus?.isUnlocked ?? false;
   const detailsFullyPurged = stats.detailsFullyPurged;
   const showDetailedInsights = isUnlocked && !detailsFullyPurged;
 
@@ -120,7 +120,7 @@ export function QuizResultsTab({
           attempts={stats.attempts}
           totalAttemptCount={stats.totalAttemptCount}
           lockedAttemptCount={stats.lockedAttemptCount}
-          detailedPreviewLimit={stats.campaign?.detailedPreviewLimit ?? 3}
+          detailedPreviewLimit={stats.resultAccess?.detailedPreviewLimit ?? 3}
           isUnlocked={isUnlocked}
           onUnlockClick={onOpenPaywall}
         />

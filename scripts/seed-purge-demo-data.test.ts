@@ -2,14 +2,18 @@ import { describe, expect, it } from "vitest";
 
 import {
   addDays,
-  buildSeedCampaignDates,
+  buildAttemptSpecsForPurgeScenario,
+  buildSeedLinkDates,
+  buildSeedLastResponseAt,
   buildSeedLinkTokenForQuiz,
   buildSeedQuizTitle,
   deriveProOwnerEmail,
+  findSeedPurgeScenario,
   generateSeedLinkToken,
   isSeedPurgeDemoQuizTitle,
   parseSeedPurgeDemoOptions,
   resolveSeedScenarios,
+  SEED_PURGE_DEMO_SCENARIOS,
   SEED_PURGE_DEMO_TITLE_PREFIX,
 } from "../lib/seed/seedPurgeDemoData";
 
@@ -49,10 +53,10 @@ describe("parseSeedPurgeDemoOptions", () => {
 
 describe("seed purge demo helpers", () => {
   it("builds prefixed quiz titles", () => {
-    expect(buildSeedQuizTitle("Purgeable")).toBe(
-      `${SEED_PURGE_DEMO_TITLE_PREFIX} Purgeable`,
+    expect(buildSeedQuizTitle("Quota purgeable")).toBe(
+      `${SEED_PURGE_DEMO_TITLE_PREFIX} Quota purgeable`,
     );
-    expect(isSeedPurgeDemoQuizTitle(`${SEED_PURGE_DEMO_TITLE_PREFIX} Purgeable`)).toBe(
+    expect(isSeedPurgeDemoQuizTitle(`${SEED_PURGE_DEMO_TITLE_PREFIX} Quota purgeable`)).toBe(
       true,
     );
     expect(isSeedPurgeDemoQuizTitle("Mon quiz")).toBe(false);
@@ -62,50 +66,55 @@ describe("seed purge demo helpers", () => {
     expect(deriveProOwnerEmail("lazare@test.com")).toBe("pro-lazare@test.com");
   });
 
-  it("computes relative campaign dates for purgeable quiz", () => {
-    const dates = buildSeedCampaignDates(now, "PURGEABLE");
+  it("defines quota purge scenarios", () => {
+    const keys = SEED_PURGE_DEMO_SCENARIOS.map((scenario) => scenario.key);
+    expect(keys).toEqual([
+      "QUOTA_NOT_REACHED",
+      "QUOTA_GRACE_ACTIVE",
+      "QUOTA_PURGEABLE",
+      "ALREADY_PURGED",
+      "COINS_UNLOCKED",
+      "PRO_OWNER",
+    ]);
+  });
 
+  it("builds lastResponseAt from age in days", () => {
+    const purgeable = findSeedPurgeScenario("QUOTA_PURGEABLE");
+    const lastResponseAt = buildSeedLastResponseAt(now, purgeable.lastResponseAgeDays);
+    expect(lastResponseAt.getTime()).toBe(addDays(now, -45).getTime());
+  });
+
+  it("builds link dates for purge seeds", () => {
+    const dates = buildSeedLinkDates(now);
     expect(dates.detailsPurgedAt).toBeNull();
-    expect(dates.unlockedUntil).toBeNull();
-    expect(dates.acceptingResponsesUntil.getTime()).toBeLessThan(now.getTime());
-
-    const daysSinceExpiry = Math.floor(
-      (now.getTime() - dates.acceptingResponsesUntil.getTime()) / (24 * 60 * 60 * 1000),
-    );
-    expect(daysSinceExpiry).toBe(38);
+    expect(dates.responsesStartedAt.getTime()).toBeLessThan(now.getTime());
   });
 
-  it("computes grace-active quiz as expired but not purgeable yet", () => {
-    const dates = buildSeedCampaignDates(now, "GRACE_ACTIVE");
-    expect(dates.acceptingResponsesUntil.getTime()).toBeLessThan(now.getTime());
-
-    const daysSinceExpiry = Math.floor(
-      (now.getTime() - dates.acceptingResponsesUntil.getTime()) / (24 * 60 * 60 * 1000),
-    );
-    expect(daysSinceExpiry).toBe(3);
-    expect(dates.detailsPurgedAt).toBeNull();
+  it("builds 20 completed attempts for purgeable scenario", () => {
+    const scenario = findSeedPurgeScenario("QUOTA_PURGEABLE");
+    const specs = buildAttemptSpecsForPurgeScenario(scenario);
+    expect(specs.filter((spec) => spec.status === "COMPLETED")).toHaveLength(20);
   });
 
-  it("marks already purged quiz with detailsPurgedAt", () => {
-    const dates = buildSeedCampaignDates(now, "ALREADY_PURGED");
-    expect(dates.detailsPurgedAt).not.toBeNull();
-    expect(dates.detailsPurgedAt!.getTime()).toBeLessThan(now.getTime());
+  it("builds 12 completed attempts for not reached scenario", () => {
+    const scenario = findSeedPurgeScenario("QUOTA_NOT_REACHED");
+    const specs = buildAttemptSpecsForPurgeScenario(scenario);
+    expect(specs.filter((spec) => spec.status === "COMPLETED")).toHaveLength(12);
   });
 
-  it("extends coins-unlocked quiz into the future", () => {
-    const dates = buildSeedCampaignDates(now, "COINS_UNLOCKED");
-    expect(dates.unlockedUntil!.getTime()).toBeGreaterThan(now.getTime());
-    expect(dates.acceptingResponsesUntil.getTime()).toBe(dates.unlockedUntil!.getTime());
+  it("marks coins-unlocked scenario with permanent unlock flag", () => {
+    const scenario = findSeedPurgeScenario("COINS_UNLOCKED");
+    expect(scenario.withCoinUnlock).toBe(true);
+    expect(scenario.targetCompletedCount).toBe(25);
   });
 
   it("generates deterministic unique link tokens", () => {
-    const tokenA = generateSeedLinkToken("owner:FREE_ACTIVE");
-    const tokenB = generateSeedLinkToken("owner:PURGEABLE");
+    const tokenA = generateSeedLinkToken("owner:QUOTA_PURGEABLE");
+    const tokenB = generateSeedLinkToken("owner:QUOTA_NOT_REACHED");
 
     expect(tokenA).toHaveLength(12);
     expect(tokenB).toHaveLength(12);
     expect(tokenA).not.toBe(tokenB);
-    expect(generateSeedLinkToken("owner:FREE_ACTIVE")).toBe(tokenA);
   });
 
   it("builds link tokens from quiz id for run isolation", () => {
@@ -127,9 +136,9 @@ describe("seed purge demo helpers", () => {
 
 describe("isSeedPurgeDemoQuizTitle reset safety", () => {
   it("only matches prefixed seed titles", () => {
-    expect(isSeedPurgeDemoQuizTitle(`${SEED_PURGE_DEMO_TITLE_PREFIX} Gratuit actif`)).toBe(
-      true,
-    );
+    expect(
+      isSeedPurgeDemoQuizTitle(`${SEED_PURGE_DEMO_TITLE_PREFIX} Quota purgeable`),
+    ).toBe(true);
     expect(isSeedPurgeDemoQuizTitle("[SEED PURGE DEMO]")).toBe(true);
     expect(isSeedPurgeDemoQuizTitle("Quiz marketing Q2")).toBe(false);
   });

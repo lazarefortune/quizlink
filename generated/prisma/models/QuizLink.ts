@@ -35,10 +35,7 @@ export type QuizLinkMinAggregateOutputType = {
   revokedAt: Date | null
   responsesStartedAt: Date | null
   lastResponseAt: Date | null
-  acceptingResponsesUntil: Date | null
-  detailsVisibleUntil: Date | null
   detailsPurgedAt: Date | null
-  unlockedUntil: Date | null
 }
 
 export type QuizLinkMaxAggregateOutputType = {
@@ -52,10 +49,7 @@ export type QuizLinkMaxAggregateOutputType = {
   revokedAt: Date | null
   responsesStartedAt: Date | null
   lastResponseAt: Date | null
-  acceptingResponsesUntil: Date | null
-  detailsVisibleUntil: Date | null
   detailsPurgedAt: Date | null
-  unlockedUntil: Date | null
 }
 
 export type QuizLinkCountAggregateOutputType = {
@@ -69,10 +63,7 @@ export type QuizLinkCountAggregateOutputType = {
   revokedAt: number
   responsesStartedAt: number
   lastResponseAt: number
-  acceptingResponsesUntil: number
-  detailsVisibleUntil: number
   detailsPurgedAt: number
-  unlockedUntil: number
   _all: number
 }
 
@@ -88,10 +79,7 @@ export type QuizLinkMinAggregateInputType = {
   revokedAt?: true
   responsesStartedAt?: true
   lastResponseAt?: true
-  acceptingResponsesUntil?: true
-  detailsVisibleUntil?: true
   detailsPurgedAt?: true
-  unlockedUntil?: true
 }
 
 export type QuizLinkMaxAggregateInputType = {
@@ -105,10 +93,7 @@ export type QuizLinkMaxAggregateInputType = {
   revokedAt?: true
   responsesStartedAt?: true
   lastResponseAt?: true
-  acceptingResponsesUntil?: true
-  detailsVisibleUntil?: true
   detailsPurgedAt?: true
-  unlockedUntil?: true
 }
 
 export type QuizLinkCountAggregateInputType = {
@@ -122,10 +107,7 @@ export type QuizLinkCountAggregateInputType = {
   revokedAt?: true
   responsesStartedAt?: true
   lastResponseAt?: true
-  acceptingResponsesUntil?: true
-  detailsVisibleUntil?: true
   detailsPurgedAt?: true
-  unlockedUntil?: true
   _all?: true
 }
 
@@ -212,10 +194,7 @@ export type QuizLinkGroupByOutputType = {
   revokedAt: Date | null
   responsesStartedAt: Date | null
   lastResponseAt: Date | null
-  acceptingResponsesUntil: Date | null
-  detailsVisibleUntil: Date | null
   detailsPurgedAt: Date | null
-  unlockedUntil: Date | null
   _count: QuizLinkCountAggregateOutputType | null
   _min: QuizLinkMinAggregateOutputType | null
   _max: QuizLinkMaxAggregateOutputType | null
@@ -250,10 +229,7 @@ export type QuizLinkWhereInput = {
   revokedAt?: Prisma.DateTimeNullableFilter<"QuizLink"> | Date | string | null
   responsesStartedAt?: Prisma.DateTimeNullableFilter<"QuizLink"> | Date | string | null
   lastResponseAt?: Prisma.DateTimeNullableFilter<"QuizLink"> | Date | string | null
-  acceptingResponsesUntil?: Prisma.DateTimeNullableFilter<"QuizLink"> | Date | string | null
-  detailsVisibleUntil?: Prisma.DateTimeNullableFilter<"QuizLink"> | Date | string | null
   detailsPurgedAt?: Prisma.DateTimeNullableFilter<"QuizLink"> | Date | string | null
-  unlockedUntil?: Prisma.DateTimeNullableFilter<"QuizLink"> | Date | string | null
   quiz?: Prisma.XOR<Prisma.QuizScalarRelationFilter, Prisma.QuizWhereInput>
   participant?: Prisma.XOR<Prisma.ParticipantNullableScalarRelationFilter, Prisma.ParticipantWhereInput> | null
   attempts?: Prisma.QuizAttemptListRelationFilter
@@ -271,10 +247,7 @@ export type QuizLinkOrderByWithRelationInput = {
   revokedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   responsesStartedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   lastResponseAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  acceptingResponsesUntil?: Prisma.SortOrderInput | Prisma.SortOrder
-  detailsVisibleUntil?: Prisma.SortOrderInput | Prisma.SortOrder
   detailsPurgedAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  unlockedUntil?: Prisma.SortOrderInput | Prisma.SortOrder
   quiz?: Prisma.QuizOrderByWithRelationInput
   participant?: Prisma.ParticipantOrderByWithRelationInput
   attempts?: Prisma.QuizAttemptOrderByRelationAggregateInput
@@ -296,10 +269,7 @@ export type QuizLinkWhereUniqueInput = Prisma.AtLeast<{
   revokedAt?: Prisma.DateTimeNullableFilter<"QuizLink"> | Date | string | null
   responsesStartedAt?: Prisma.DateTimeNullableFilter<"QuizLink"> | Date | string | null
   lastResponseAt?: Prisma.DateTimeNullableFilter<"QuizLink"> | Date | string | null
-  acceptingResponsesUntil?: Prisma.DateTimeNullableFilter<"QuizLink"> | Date | string | null
-  detailsVisibleUntil?: Prisma.DateTimeNullableFilter<"QuizLink"> | Date | string | null
   detailsPurgedAt?: Prisma.DateTimeNullableFilter<"QuizLink"> | Date | string | null
-  unlockedUntil?: Prisma.DateTimeNullableFilter<"QuizLink"> | Date | string | null
   quiz?: Prisma.XOR<Prisma.QuizScalarRelationFilter, Prisma.QuizWhereInput>
   participant?: Prisma.XOR<Prisma.ParticipantNullableScalarRelationFilter, Prisma.ParticipantWhereInput> | null
   attempts?: Prisma.QuizAttemptListRelationFilter
@@ -317,10 +287,7 @@ export type QuizLinkOrderByWithAggregationInput = {
   revokedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   responsesStartedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   lastResponseAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  acceptingResponsesUntil?: Prisma.SortOrderInput | Prisma.SortOrder
-  detailsVisibleUntil?: Prisma.SortOrderInput | Prisma.SortOrder
   detailsPurgedAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  unlockedUntil?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.QuizLinkCountOrderByAggregateInput
   _max?: Prisma.QuizLinkMaxOrderByAggregateInput
   _min?: Prisma.QuizLinkMinOrderByAggregateInput
@@ -340,10 +307,7 @@ export type QuizLinkScalarWhereWithAggregatesInput = {
   revokedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"QuizLink"> | Date | string | null
   responsesStartedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"QuizLink"> | Date | string | null
   lastResponseAt?: Prisma.DateTimeNullableWithAggregatesFilter<"QuizLink"> | Date | string | null
-  acceptingResponsesUntil?: Prisma.DateTimeNullableWithAggregatesFilter<"QuizLink"> | Date | string | null
-  detailsVisibleUntil?: Prisma.DateTimeNullableWithAggregatesFilter<"QuizLink"> | Date | string | null
   detailsPurgedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"QuizLink"> | Date | string | null
-  unlockedUntil?: Prisma.DateTimeNullableWithAggregatesFilter<"QuizLink"> | Date | string | null
 }
 
 export type QuizLinkCreateInput = {
@@ -355,10 +319,7 @@ export type QuizLinkCreateInput = {
   revokedAt?: Date | string | null
   responsesStartedAt?: Date | string | null
   lastResponseAt?: Date | string | null
-  acceptingResponsesUntil?: Date | string | null
-  detailsVisibleUntil?: Date | string | null
   detailsPurgedAt?: Date | string | null
-  unlockedUntil?: Date | string | null
   quiz: Prisma.QuizCreateNestedOneWithoutLinksInput
   participant?: Prisma.ParticipantCreateNestedOneWithoutLinksInput
   attempts?: Prisma.QuizAttemptCreateNestedManyWithoutQuizLinkInput
@@ -376,10 +337,7 @@ export type QuizLinkUncheckedCreateInput = {
   revokedAt?: Date | string | null
   responsesStartedAt?: Date | string | null
   lastResponseAt?: Date | string | null
-  acceptingResponsesUntil?: Date | string | null
-  detailsVisibleUntil?: Date | string | null
   detailsPurgedAt?: Date | string | null
-  unlockedUntil?: Date | string | null
   attempts?: Prisma.QuizAttemptUncheckedCreateNestedManyWithoutQuizLinkInput
   anonymousStats?: Prisma.QuizLinkAnonymousStatsUncheckedCreateNestedOneWithoutQuizLinkInput
 }
@@ -393,10 +351,7 @@ export type QuizLinkUpdateInput = {
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   responsesStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  acceptingResponsesUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  detailsVisibleUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   detailsPurgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  unlockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   quiz?: Prisma.QuizUpdateOneRequiredWithoutLinksNestedInput
   participant?: Prisma.ParticipantUpdateOneWithoutLinksNestedInput
   attempts?: Prisma.QuizAttemptUpdateManyWithoutQuizLinkNestedInput
@@ -414,10 +369,7 @@ export type QuizLinkUncheckedUpdateInput = {
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   responsesStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  acceptingResponsesUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  detailsVisibleUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   detailsPurgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  unlockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   attempts?: Prisma.QuizAttemptUncheckedUpdateManyWithoutQuizLinkNestedInput
   anonymousStats?: Prisma.QuizLinkAnonymousStatsUncheckedUpdateOneWithoutQuizLinkNestedInput
 }
@@ -433,10 +385,7 @@ export type QuizLinkCreateManyInput = {
   revokedAt?: Date | string | null
   responsesStartedAt?: Date | string | null
   lastResponseAt?: Date | string | null
-  acceptingResponsesUntil?: Date | string | null
-  detailsVisibleUntil?: Date | string | null
   detailsPurgedAt?: Date | string | null
-  unlockedUntil?: Date | string | null
 }
 
 export type QuizLinkUpdateManyMutationInput = {
@@ -448,10 +397,7 @@ export type QuizLinkUpdateManyMutationInput = {
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   responsesStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  acceptingResponsesUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  detailsVisibleUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   detailsPurgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  unlockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type QuizLinkUncheckedUpdateManyInput = {
@@ -465,10 +411,7 @@ export type QuizLinkUncheckedUpdateManyInput = {
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   responsesStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  acceptingResponsesUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  detailsVisibleUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   detailsPurgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  unlockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type QuizLinkListRelationFilter = {
@@ -498,10 +441,7 @@ export type QuizLinkCountOrderByAggregateInput = {
   revokedAt?: Prisma.SortOrder
   responsesStartedAt?: Prisma.SortOrder
   lastResponseAt?: Prisma.SortOrder
-  acceptingResponsesUntil?: Prisma.SortOrder
-  detailsVisibleUntil?: Prisma.SortOrder
   detailsPurgedAt?: Prisma.SortOrder
-  unlockedUntil?: Prisma.SortOrder
 }
 
 export type QuizLinkMaxOrderByAggregateInput = {
@@ -515,10 +455,7 @@ export type QuizLinkMaxOrderByAggregateInput = {
   revokedAt?: Prisma.SortOrder
   responsesStartedAt?: Prisma.SortOrder
   lastResponseAt?: Prisma.SortOrder
-  acceptingResponsesUntil?: Prisma.SortOrder
-  detailsVisibleUntil?: Prisma.SortOrder
   detailsPurgedAt?: Prisma.SortOrder
-  unlockedUntil?: Prisma.SortOrder
 }
 
 export type QuizLinkMinOrderByAggregateInput = {
@@ -532,10 +469,7 @@ export type QuizLinkMinOrderByAggregateInput = {
   revokedAt?: Prisma.SortOrder
   responsesStartedAt?: Prisma.SortOrder
   lastResponseAt?: Prisma.SortOrder
-  acceptingResponsesUntil?: Prisma.SortOrder
-  detailsVisibleUntil?: Prisma.SortOrder
   detailsPurgedAt?: Prisma.SortOrder
-  unlockedUntil?: Prisma.SortOrder
 }
 
 export type QuizLinkScalarRelationFilter = {
@@ -664,10 +598,7 @@ export type QuizLinkCreateWithoutQuizInput = {
   revokedAt?: Date | string | null
   responsesStartedAt?: Date | string | null
   lastResponseAt?: Date | string | null
-  acceptingResponsesUntil?: Date | string | null
-  detailsVisibleUntil?: Date | string | null
   detailsPurgedAt?: Date | string | null
-  unlockedUntil?: Date | string | null
   participant?: Prisma.ParticipantCreateNestedOneWithoutLinksInput
   attempts?: Prisma.QuizAttemptCreateNestedManyWithoutQuizLinkInput
   anonymousStats?: Prisma.QuizLinkAnonymousStatsCreateNestedOneWithoutQuizLinkInput
@@ -683,10 +614,7 @@ export type QuizLinkUncheckedCreateWithoutQuizInput = {
   revokedAt?: Date | string | null
   responsesStartedAt?: Date | string | null
   lastResponseAt?: Date | string | null
-  acceptingResponsesUntil?: Date | string | null
-  detailsVisibleUntil?: Date | string | null
   detailsPurgedAt?: Date | string | null
-  unlockedUntil?: Date | string | null
   attempts?: Prisma.QuizAttemptUncheckedCreateNestedManyWithoutQuizLinkInput
   anonymousStats?: Prisma.QuizLinkAnonymousStatsUncheckedCreateNestedOneWithoutQuizLinkInput
 }
@@ -731,10 +659,7 @@ export type QuizLinkScalarWhereInput = {
   revokedAt?: Prisma.DateTimeNullableFilter<"QuizLink"> | Date | string | null
   responsesStartedAt?: Prisma.DateTimeNullableFilter<"QuizLink"> | Date | string | null
   lastResponseAt?: Prisma.DateTimeNullableFilter<"QuizLink"> | Date | string | null
-  acceptingResponsesUntil?: Prisma.DateTimeNullableFilter<"QuizLink"> | Date | string | null
-  detailsVisibleUntil?: Prisma.DateTimeNullableFilter<"QuizLink"> | Date | string | null
   detailsPurgedAt?: Prisma.DateTimeNullableFilter<"QuizLink"> | Date | string | null
-  unlockedUntil?: Prisma.DateTimeNullableFilter<"QuizLink"> | Date | string | null
 }
 
 export type QuizLinkCreateWithoutParticipantInput = {
@@ -746,10 +671,7 @@ export type QuizLinkCreateWithoutParticipantInput = {
   revokedAt?: Date | string | null
   responsesStartedAt?: Date | string | null
   lastResponseAt?: Date | string | null
-  acceptingResponsesUntil?: Date | string | null
-  detailsVisibleUntil?: Date | string | null
   detailsPurgedAt?: Date | string | null
-  unlockedUntil?: Date | string | null
   quiz: Prisma.QuizCreateNestedOneWithoutLinksInput
   attempts?: Prisma.QuizAttemptCreateNestedManyWithoutQuizLinkInput
   anonymousStats?: Prisma.QuizLinkAnonymousStatsCreateNestedOneWithoutQuizLinkInput
@@ -765,10 +687,7 @@ export type QuizLinkUncheckedCreateWithoutParticipantInput = {
   revokedAt?: Date | string | null
   responsesStartedAt?: Date | string | null
   lastResponseAt?: Date | string | null
-  acceptingResponsesUntil?: Date | string | null
-  detailsVisibleUntil?: Date | string | null
   detailsPurgedAt?: Date | string | null
-  unlockedUntil?: Date | string | null
   attempts?: Prisma.QuizAttemptUncheckedCreateNestedManyWithoutQuizLinkInput
   anonymousStats?: Prisma.QuizLinkAnonymousStatsUncheckedCreateNestedOneWithoutQuizLinkInput
 }
@@ -808,10 +727,7 @@ export type QuizLinkCreateWithoutAnonymousStatsInput = {
   revokedAt?: Date | string | null
   responsesStartedAt?: Date | string | null
   lastResponseAt?: Date | string | null
-  acceptingResponsesUntil?: Date | string | null
-  detailsVisibleUntil?: Date | string | null
   detailsPurgedAt?: Date | string | null
-  unlockedUntil?: Date | string | null
   quiz: Prisma.QuizCreateNestedOneWithoutLinksInput
   participant?: Prisma.ParticipantCreateNestedOneWithoutLinksInput
   attempts?: Prisma.QuizAttemptCreateNestedManyWithoutQuizLinkInput
@@ -828,10 +744,7 @@ export type QuizLinkUncheckedCreateWithoutAnonymousStatsInput = {
   revokedAt?: Date | string | null
   responsesStartedAt?: Date | string | null
   lastResponseAt?: Date | string | null
-  acceptingResponsesUntil?: Date | string | null
-  detailsVisibleUntil?: Date | string | null
   detailsPurgedAt?: Date | string | null
-  unlockedUntil?: Date | string | null
   attempts?: Prisma.QuizAttemptUncheckedCreateNestedManyWithoutQuizLinkInput
 }
 
@@ -860,10 +773,7 @@ export type QuizLinkUpdateWithoutAnonymousStatsInput = {
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   responsesStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  acceptingResponsesUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  detailsVisibleUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   detailsPurgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  unlockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   quiz?: Prisma.QuizUpdateOneRequiredWithoutLinksNestedInput
   participant?: Prisma.ParticipantUpdateOneWithoutLinksNestedInput
   attempts?: Prisma.QuizAttemptUpdateManyWithoutQuizLinkNestedInput
@@ -880,10 +790,7 @@ export type QuizLinkUncheckedUpdateWithoutAnonymousStatsInput = {
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   responsesStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  acceptingResponsesUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  detailsVisibleUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   detailsPurgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  unlockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   attempts?: Prisma.QuizAttemptUncheckedUpdateManyWithoutQuizLinkNestedInput
 }
 
@@ -896,10 +803,7 @@ export type QuizLinkCreateWithoutAttemptsInput = {
   revokedAt?: Date | string | null
   responsesStartedAt?: Date | string | null
   lastResponseAt?: Date | string | null
-  acceptingResponsesUntil?: Date | string | null
-  detailsVisibleUntil?: Date | string | null
   detailsPurgedAt?: Date | string | null
-  unlockedUntil?: Date | string | null
   quiz: Prisma.QuizCreateNestedOneWithoutLinksInput
   participant?: Prisma.ParticipantCreateNestedOneWithoutLinksInput
   anonymousStats?: Prisma.QuizLinkAnonymousStatsCreateNestedOneWithoutQuizLinkInput
@@ -916,10 +820,7 @@ export type QuizLinkUncheckedCreateWithoutAttemptsInput = {
   revokedAt?: Date | string | null
   responsesStartedAt?: Date | string | null
   lastResponseAt?: Date | string | null
-  acceptingResponsesUntil?: Date | string | null
-  detailsVisibleUntil?: Date | string | null
   detailsPurgedAt?: Date | string | null
-  unlockedUntil?: Date | string | null
   anonymousStats?: Prisma.QuizLinkAnonymousStatsUncheckedCreateNestedOneWithoutQuizLinkInput
 }
 
@@ -948,10 +849,7 @@ export type QuizLinkUpdateWithoutAttemptsInput = {
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   responsesStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  acceptingResponsesUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  detailsVisibleUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   detailsPurgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  unlockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   quiz?: Prisma.QuizUpdateOneRequiredWithoutLinksNestedInput
   participant?: Prisma.ParticipantUpdateOneWithoutLinksNestedInput
   anonymousStats?: Prisma.QuizLinkAnonymousStatsUpdateOneWithoutQuizLinkNestedInput
@@ -968,10 +866,7 @@ export type QuizLinkUncheckedUpdateWithoutAttemptsInput = {
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   responsesStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  acceptingResponsesUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  detailsVisibleUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   detailsPurgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  unlockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   anonymousStats?: Prisma.QuizLinkAnonymousStatsUncheckedUpdateOneWithoutQuizLinkNestedInput
 }
 
@@ -985,10 +880,7 @@ export type QuizLinkCreateManyQuizInput = {
   revokedAt?: Date | string | null
   responsesStartedAt?: Date | string | null
   lastResponseAt?: Date | string | null
-  acceptingResponsesUntil?: Date | string | null
-  detailsVisibleUntil?: Date | string | null
   detailsPurgedAt?: Date | string | null
-  unlockedUntil?: Date | string | null
 }
 
 export type QuizLinkUpdateWithoutQuizInput = {
@@ -1000,10 +892,7 @@ export type QuizLinkUpdateWithoutQuizInput = {
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   responsesStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  acceptingResponsesUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  detailsVisibleUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   detailsPurgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  unlockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   participant?: Prisma.ParticipantUpdateOneWithoutLinksNestedInput
   attempts?: Prisma.QuizAttemptUpdateManyWithoutQuizLinkNestedInput
   anonymousStats?: Prisma.QuizLinkAnonymousStatsUpdateOneWithoutQuizLinkNestedInput
@@ -1019,10 +908,7 @@ export type QuizLinkUncheckedUpdateWithoutQuizInput = {
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   responsesStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  acceptingResponsesUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  detailsVisibleUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   detailsPurgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  unlockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   attempts?: Prisma.QuizAttemptUncheckedUpdateManyWithoutQuizLinkNestedInput
   anonymousStats?: Prisma.QuizLinkAnonymousStatsUncheckedUpdateOneWithoutQuizLinkNestedInput
 }
@@ -1037,10 +923,7 @@ export type QuizLinkUncheckedUpdateManyWithoutQuizInput = {
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   responsesStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  acceptingResponsesUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  detailsVisibleUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   detailsPurgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  unlockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type QuizLinkCreateManyParticipantInput = {
@@ -1053,10 +936,7 @@ export type QuizLinkCreateManyParticipantInput = {
   revokedAt?: Date | string | null
   responsesStartedAt?: Date | string | null
   lastResponseAt?: Date | string | null
-  acceptingResponsesUntil?: Date | string | null
-  detailsVisibleUntil?: Date | string | null
   detailsPurgedAt?: Date | string | null
-  unlockedUntil?: Date | string | null
 }
 
 export type QuizLinkUpdateWithoutParticipantInput = {
@@ -1068,10 +948,7 @@ export type QuizLinkUpdateWithoutParticipantInput = {
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   responsesStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  acceptingResponsesUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  detailsVisibleUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   detailsPurgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  unlockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   quiz?: Prisma.QuizUpdateOneRequiredWithoutLinksNestedInput
   attempts?: Prisma.QuizAttemptUpdateManyWithoutQuizLinkNestedInput
   anonymousStats?: Prisma.QuizLinkAnonymousStatsUpdateOneWithoutQuizLinkNestedInput
@@ -1087,10 +964,7 @@ export type QuizLinkUncheckedUpdateWithoutParticipantInput = {
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   responsesStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  acceptingResponsesUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  detailsVisibleUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   detailsPurgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  unlockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   attempts?: Prisma.QuizAttemptUncheckedUpdateManyWithoutQuizLinkNestedInput
   anonymousStats?: Prisma.QuizLinkAnonymousStatsUncheckedUpdateOneWithoutQuizLinkNestedInput
 }
@@ -1105,10 +979,7 @@ export type QuizLinkUncheckedUpdateManyWithoutParticipantInput = {
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   responsesStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastResponseAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  acceptingResponsesUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  detailsVisibleUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   detailsPurgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  unlockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 
@@ -1153,10 +1024,7 @@ export type QuizLinkSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   revokedAt?: boolean
   responsesStartedAt?: boolean
   lastResponseAt?: boolean
-  acceptingResponsesUntil?: boolean
-  detailsVisibleUntil?: boolean
   detailsPurgedAt?: boolean
-  unlockedUntil?: boolean
   quiz?: boolean | Prisma.QuizDefaultArgs<ExtArgs>
   participant?: boolean | Prisma.QuizLink$participantArgs<ExtArgs>
   attempts?: boolean | Prisma.QuizLink$attemptsArgs<ExtArgs>
@@ -1177,13 +1045,10 @@ export type QuizLinkSelectScalar = {
   revokedAt?: boolean
   responsesStartedAt?: boolean
   lastResponseAt?: boolean
-  acceptingResponsesUntil?: boolean
-  detailsVisibleUntil?: boolean
   detailsPurgedAt?: boolean
-  unlockedUntil?: boolean
 }
 
-export type QuizLinkOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "quizId" | "token" | "participantId" | "allowMultipleAttempts" | "createdAt" | "expiresAt" | "revokedAt" | "responsesStartedAt" | "lastResponseAt" | "acceptingResponsesUntil" | "detailsVisibleUntil" | "detailsPurgedAt" | "unlockedUntil", ExtArgs["result"]["quizLink"]>
+export type QuizLinkOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "quizId" | "token" | "participantId" | "allowMultipleAttempts" | "createdAt" | "expiresAt" | "revokedAt" | "responsesStartedAt" | "lastResponseAt" | "detailsPurgedAt", ExtArgs["result"]["quizLink"]>
 export type QuizLinkInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   quiz?: boolean | Prisma.QuizDefaultArgs<ExtArgs>
   participant?: boolean | Prisma.QuizLink$participantArgs<ExtArgs>
@@ -1211,10 +1076,7 @@ export type $QuizLinkPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     revokedAt: Date | null
     responsesStartedAt: Date | null
     lastResponseAt: Date | null
-    acceptingResponsesUntil: Date | null
-    detailsVisibleUntil: Date | null
     detailsPurgedAt: Date | null
-    unlockedUntil: Date | null
   }, ExtArgs["result"]["quizLink"]>
   composites: {}
 }
@@ -1598,10 +1460,7 @@ export interface QuizLinkFieldRefs {
   readonly revokedAt: Prisma.FieldRef<"QuizLink", 'DateTime'>
   readonly responsesStartedAt: Prisma.FieldRef<"QuizLink", 'DateTime'>
   readonly lastResponseAt: Prisma.FieldRef<"QuizLink", 'DateTime'>
-  readonly acceptingResponsesUntil: Prisma.FieldRef<"QuizLink", 'DateTime'>
-  readonly detailsVisibleUntil: Prisma.FieldRef<"QuizLink", 'DateTime'>
   readonly detailsPurgedAt: Prisma.FieldRef<"QuizLink", 'DateTime'>
-  readonly unlockedUntil: Prisma.FieldRef<"QuizLink", 'DateTime'>
 }
     
 

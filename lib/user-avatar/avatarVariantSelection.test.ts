@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { User } from "lucide-react";
 
 import type { AvatarEditorVariantCategory } from "./avatarEditorCategories";
 import {
@@ -12,7 +13,7 @@ const sideburnCategory: AvatarEditorVariantCategory = {
   id: "sideburn",
   optionKey: "sideburn",
   options: ["variant01"],
-  icon: () => null,
+  icon: User,
   labelKey: "account.avatar.categories.sideburn",
   allowDisable: true,
   disableStrategy: "emptyArray",
@@ -23,7 +24,7 @@ const cheekCategory: AvatarEditorVariantCategory = {
   id: "cheek",
   optionKey: "cheek",
   options: ["variant01"],
-  icon: () => null,
+  icon: User,
   labelKey: "account.avatar.categories.cheek",
   allowDisable: true,
   disableStrategy: "cheekProbability",

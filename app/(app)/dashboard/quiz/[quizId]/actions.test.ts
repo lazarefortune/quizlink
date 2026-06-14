@@ -73,9 +73,6 @@ beforeEach(() => {
   mockQuizLinkFindMany.mockResolvedValue([]);
   mockQuizLinkFindFirst.mockResolvedValue({
     responsesStartedAt: null,
-    acceptingResponsesUntil: null,
-    detailsVisibleUntil: null,
-    unlockedUntil: null,
     detailsPurgedAt: null,
   });
   mockQuizAttemptCount.mockResolvedValue(0);
@@ -308,9 +305,6 @@ describe("quiz detail actions – responses", () => {
   it("getAttemptDetails rejects attempt outside free preview window", async () => {
     mockQuizLinkFindFirst.mockResolvedValue({
       responsesStartedAt: new Date("2026-05-01T12:00:00Z"),
-      acceptingResponsesUntil: new Date("2026-05-08T12:00:00Z"),
-      detailsVisibleUntil: new Date("2026-05-08T12:00:00Z"),
-      unlockedUntil: null,
     });
     mockQuizAttemptFindUnique.mockResolvedValue({
       id: "att-hidden",

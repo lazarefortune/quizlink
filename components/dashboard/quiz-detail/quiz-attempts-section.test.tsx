@@ -55,8 +55,11 @@ vi.mock("framer-motion", () => {
           animate?: unknown;
           transition?: unknown;
         }) {
-          const Tag = prop === "tr" ? "tr" : "div";
-          return <Tag {...props}>{children}</Tag>;
+          if (prop === "tr") {
+            const trProps = props as React.ComponentProps<"tr">;
+            return <tr {...trProps}>{children}</tr>;
+          }
+          return <div {...props}>{children}</div>;
         };
       },
     },
@@ -73,6 +76,7 @@ vi.mock("./quiz-attempt-detail-dialog", () => ({
 }));
 
 import { QuizAttemptsSection } from "./quiz-attempts-section";
+import { t } from "@/lib/i18n";
 
 const visibleAttempt = {
   id: "att-real",
@@ -123,7 +127,9 @@ describe("QuizAttemptsSection", () => {
     expect(screen.getByTestId("locked-attempts-blur-layer")).toBeTruthy();
     expect(screen.getByText("5 parties masquées")).toBeTruthy();
     expect(screen.getByText("Débloque le quiz pour voir cette partie.")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Débloquer les réponses" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: t("fr", "dashboard.unlockDialog.unlockResponses") }),
+    );
     expect(onUnlockClick).toHaveBeenCalled();
     expect(screen.getByText("90.0%")).toBeTruthy();
     expect(screen.queryByText("att-hidden")).toBeNull();

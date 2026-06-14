@@ -1,11 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import type { QuizContentQuestion } from "./actions";
 import { ParticipantIdentityModeSummaryCard } from "@/components/dashboard/participant-identity-mode-summary-card";
-import { QuizExpirationStatusCard } from "@/components/dashboard/quiz-detail/quiz-expiration-status-card";
 import { QuizDetailHeader } from "@/components/dashboard/quiz-detail/quiz-detail-header";
 import { QuizQuestionsTab } from "@/components/dashboard/quiz-detail/quiz-questions-tab";
 import { MessageCircleQuestionMark, Users } from "lucide-react";
@@ -14,7 +13,6 @@ import { QuizShareLinkDialog } from "@/components/dashboard/quiz-detail/quiz-sha
 import {
   QuizUnlockPaywallDialog,
   useQuizUnlockPaywallDialog,
-  type QuizUnlockPaywallContext,
 } from "@/components/dashboard/quiz-detail/quiz-unlock-paywall-dialog";
 import { BuilderBackToTopButton } from "@/components/quiz-builder/builder-back-to-top-button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -23,7 +21,6 @@ import { parseQuizDetailTab, type QuizDetailTab } from "@/lib/dashboard/parse-qu
 import type { QuizDetailStatsInput } from "@/lib/dashboard/quiz-detail-stats";
 import { t } from "@/lib/i18n";
 import { useLocale } from "@/lib/i18n/use-locale";
-import { resolveQuizLinkExpirationStatusFromCampaign } from "@/lib/quiz/quizLinkExpirationStatus";
 import { QUIZ_UNLOCK_COIN_COST } from "@/lib/quiz/quizUnlockConstants";
 import type { ParticipantIdentityMode } from "@/types/participant-identity";
 import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
@@ -61,10 +58,7 @@ export function QuizDetailContent({
 
   const activeTab = parseQuizDetailTab(searchParams.get("tab"));
 
-  const expiration = useMemo(
-    () => resolveQuizLinkExpirationStatusFromCampaign(stats.campaign),
-    [stats.campaign],
-  );
+  const quotaStatus = stats.quotaStatus;
 
   const paywall = useQuizUnlockPaywallDialog({
     quizId,
@@ -77,20 +71,13 @@ export function QuizDetailContent({
     paywall.setOpen(true);
   }, [paywall]);
 
-  const paywallContext: QuizUnlockPaywallContext =
-    expiration.status === "EXPIRED"
-      ? "reactivate"
-      : expiration.status === "ACTIVE"
-        ? "extend"
-        : "default";
-
   const freePreviewLimit = 3;
   const visibleGamesCount = Math.min(stats.attempts.length, freePreviewLimit);
   const canOpenUnlockPaywall =
-    quizStatus === "ACTIVE" && !(stats.campaign?.isUnlocked ?? false);
+    quizStatus === "ACTIVE" && !(quotaStatus?.isUnlocked ?? false);
 
   useEffect(() => {
-    if (searchParams.get("reactivate") === "1" && canOpenUnlockPaywall) {
+    if (searchParams.get("unlock") === "1" && canOpenUnlockPaywall) {
       paywall.setOpen(true);
     }
   }, [searchParams, canOpenUnlockPaywall, paywall]);
@@ -106,28 +93,17 @@ export function QuizDetailContent({
 
   return (
     <div className="relative min-h-screen bg-background p-4 md:p-6 lg:p-8">
-      <div className="mx-auto max-w-5xl space-y-6">
+      <div className="space-y-6">
         <QuizDetailHeader
           quizId={quizId}
           quizName={quizName}
           quizStatus={quizStatus}
-          isLinkExpired={expiration.isExpired}
+          questionCount={questions.length}
+          responseCount={stats.totalResponses}
+          quotaStatus={quizStatus === "ACTIVE" && quotaStatus != null ? quotaStatus : undefined}
+          onUnlock={canOpenUnlockPaywall ? openPaywall : undefined}
           onShare={() => setShowShareDialog(true)}
         />
-
-        {quizStatus === "ACTIVE" ? (
-          <QuizExpirationStatusCard
-            expiration={expiration}
-            onExtend={
-              canOpenUnlockPaywall && expiration.status === "ACTIVE"
-                ? openPaywall
-                : undefined
-            }
-            onReactivate={
-              canOpenUnlockPaywall && expiration.isExpired ? openPaywall : undefined
-            }
-          />
-        ) : null}
 
         <ParticipantIdentityModeSummaryCard
           quizId={quizId}
@@ -183,8 +159,8 @@ export function QuizDetailContent({
         quizStatus={quizStatus}
         open={showShareDialog}
         onOpenChange={setShowShareDialog}
-        isLinkExpired={expiration.isExpired}
-        onReactivate={canOpenUnlockPaywall ? openPaywall : undefined}
+        canAcceptResponses={quotaStatus?.canAcceptResponses ?? true}
+        onUnlock={canOpenUnlockPaywall ? openPaywall : undefined}
       />
 
       {canOpenUnlockPaywall ? (
@@ -200,7 +176,6 @@ export function QuizDetailContent({
           isProAvailable={isProAvailable}
           isStartingProCheckout={paywall.isStartingProCheckout}
           onStartProCheckout={paywall.handleStartProCheckout}
-          context={paywallContext}
         />
       ) : null}
 

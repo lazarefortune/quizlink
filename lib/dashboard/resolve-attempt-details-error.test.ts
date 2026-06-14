@@ -15,10 +15,10 @@ describe("resolveAttemptDetailsError", () => {
 
   it("maps purged error to localized long description", () => {
     expect(resolveAttemptDetailsError("fr", ATTEMPT_DETAILS_ERROR.PURGED)).toBe(
-      "Les statistiques globales restent conservées, mais les réponses détaillées ont été supprimées après expiration.",
+      "Les statistiques globales restent conservées, mais les réponses détaillées ont été supprimées lors de la purge automatique.",
     );
     expect(resolveAttemptDetailsError("en", ATTEMPT_DETAILS_ERROR.PURGED)).toBe(
-      "Global statistics are still kept, but detailed answers were deleted after expiration.",
+      "Global statistics are still kept, but detailed answers were deleted during automatic purge.",
     );
   });
 

@@ -7,7 +7,10 @@ import { auth } from "@/lib/auth";
 import { deductCoins } from "@/lib/coins";
 import { creatorCountedAttemptWhere } from "@/lib/creator-quiz-attempt-filter";
 import { batchResolveQuizCompletedCounts } from "@/lib/quiz/batchResolveQuizCompletedCounts";
-import { batchResolveQuizExpirationStatusForOwner } from "@/lib/quiz/batchResolveQuizExpirationStatusForOwner";
+import { batchResolveQuizQuotaStatusForOwner } from "@/lib/quiz/batchResolveQuizQuotaStatusForOwner";
+import {
+  serializeQuizResponseQuotaStatus,
+} from "@/lib/quiz/quizResponseQuotaStatus";
 import { prisma } from "@/lib/prisma";
 import {
   copyQuestionImageStorageObject,
@@ -98,9 +101,9 @@ export async function getDashboardStats() {
       ]);
 
     const recentQuizIds = recentQuizzes.map((quiz) => quiz.id);
-    const [completedCountByQuizId, expirationByQuizId] = await Promise.all([
+    const [completedCountByQuizId, quotaStatusByQuizId] = await Promise.all([
       batchResolveQuizCompletedCounts(recentQuizIds),
-      batchResolveQuizExpirationStatusForOwner(userId, recentQuizIds),
+      batchResolveQuizQuotaStatusForOwner(userId, recentQuizIds),
     ]);
 
     const completedAttempts = await prisma.quizAttempt.count({
@@ -129,7 +132,8 @@ export async function getDashboardStats() {
         averageScore: averageScore !== null ? Math.round(averageScore) : null,
         completionRate,
         recentQuizzes: recentQuizzes.map((q) => {
-          const expiration = expirationByQuizId.get(q.id);
+          const attemptCount = completedCountByQuizId.get(q.id) ?? 0;
+          const quotaStatus = quotaStatusByQuizId.get(q.id);
           return {
             id: q.id,
             name: q.name,
@@ -142,21 +146,10 @@ export async function getDashboardStats() {
                   : null,
             updatedAt: q.updatedAt.toISOString(),
             questionCount: q._count.questions,
-            attemptCount: completedCountByQuizId.get(q.id) ?? 0,
-            expiration:
-              q.status === "ACTIVE" && expiration
-                ? {
-                    status: expiration.status,
-                    acceptingResponsesUntil:
-                      expiration.acceptingResponsesUntil?.toISOString() ?? null,
-                    isExpired: expiration.isExpired,
-                    hasStarted: expiration.hasStarted,
-                    isUnlocked: expiration.isUnlocked,
-                    titleKey: expiration.titleKey,
-                    descriptionKey: expiration.descriptionKey,
-                    listLabelKey: expiration.listLabelKey,
-                    daysRemaining: expiration.daysRemaining,
-                  }
+            attemptCount,
+            quotaStatus:
+              q.status === "ACTIVE" && quotaStatus
+                ? serializeQuizResponseQuotaStatus(quotaStatus)
                 : undefined,
           };
         }),

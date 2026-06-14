@@ -219,21 +219,15 @@ model QuizLink {
   createdAt               DateTime      @default(now()) @map("created_at")
   expiresAt               DateTime?     @map("expires_at")
   revokedAt               DateTime?     @map("revoked_at")
-  responsesStartedAt      DateTime?     @map("responses_started_at")
-  lastResponseAt          DateTime?     @map("last_response_at")
-  acceptingResponsesUntil DateTime?     @map("accepting_responses_until")
-  detailsVisibleUntil     DateTime?     @map("details_visible_until")
-  detailsPurgedAt         DateTime?     @map("details_purged_at")
-  unlockedUntil           DateTime?     @map("unlocked_until")
-  attempts                QuizAttempt[]
-  anonymousStats          QuizLinkAnonymousStats?
+  responsesStartedAt DateTime? @map("responses_started_at")
+  lastResponseAt     DateTime? @map("last_response_at")
+  detailsPurgedAt    DateTime? @map("details_purged_at")
+  attempts           QuizAttempt[]
+  anonymousStats     QuizLinkAnonymousStats?
 
   @@index([quizId])
   @@index([token])
   @@index([participantId])
-  @@index([acceptingResponsesUntil])
-  @@index([detailsVisibleUntil])
-  @@index([unlockedUntil])
   @@map("quiz_links")
 }
 
@@ -341,7 +335,7 @@ model QuizUnlock {
   source     QuizUnlockSource
   coinsSpent Int?             @map("coins_spent")
   startsAt   DateTime         @default(now()) @map("starts_at")
-  expiresAt  DateTime         @map("expires_at")
+  expiresAt  DateTime?        @map("expires_at")
   createdAt  DateTime         @default(now()) @map("created_at")
   updatedAt  DateTime         @updatedAt @map("updated_at")
   quiz       Quiz             @relation(fields: [quizId], references: [id], onDelete: Cascade)

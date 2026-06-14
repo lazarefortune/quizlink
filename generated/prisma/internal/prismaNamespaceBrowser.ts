@@ -248,10 +248,7 @@ export const QuizLinkScalarFieldEnum = {
   revokedAt: 'revokedAt',
   responsesStartedAt: 'responsesStartedAt',
   lastResponseAt: 'lastResponseAt',
-  acceptingResponsesUntil: 'acceptingResponsesUntil',
-  detailsVisibleUntil: 'detailsVisibleUntil',
-  detailsPurgedAt: 'detailsPurgedAt',
-  unlockedUntil: 'unlockedUntil'
+  detailsPurgedAt: 'detailsPurgedAt'
 } as const
 
 export type QuizLinkScalarFieldEnum = (typeof QuizLinkScalarFieldEnum)[keyof typeof QuizLinkScalarFieldEnum]

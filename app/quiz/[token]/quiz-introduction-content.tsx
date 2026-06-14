@@ -266,18 +266,18 @@ export function QuizIntroductionContent({
           {isLinkExpired ? (
             <div
               className="space-y-4 rounded-2xl border border-destructive/30 bg-destructive/5 px-5 py-6 text-center"
-              data-testid="quiz-expired-intro"
+              data-testid="quiz-limit-reached-intro"
             >
               <h2 className="text-lg font-semibold text-foreground">
-                {t(locale, "quiz.expired.title")}
+                {t(locale, "quiz.limitReached.title")}
               </h2>
               <p className="text-sm text-muted-foreground">
-                {t(locale, "quiz.expired.description")}
+                {t(locale, "quiz.limitReached.description")}
               </p>
               {isOwner ? (
                 <Button type="button" variant="blue" asChild>
-                  <Link href={`/dashboard/quiz/${quizLink.quizId}?reactivate=1`}>
-                    {t(locale, "quiz.expired.creatorCta")}
+                  <Link href={`/dashboard/quiz/${quizLink.quizId}?unlock=1`}>
+                    {t(locale, "quiz.limitReached.creatorCta")}
                   </Link>
                 </Button>
               ) : null}

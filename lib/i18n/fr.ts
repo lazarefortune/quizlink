@@ -337,7 +337,7 @@ export const fr = {
     },
     coins: {
       title: "Boutique de coins",
-      subtitle: "Recharge tes coins et débloque des fonctionnalités Pro",
+      subtitle: "Recharge tes coins pour débloquer un quiz ou utiliser l'IA.",
       currentBalance: "Solde actuel",
       coins: "coins",
       transactionHistory: "Historique des transactions",
@@ -347,8 +347,8 @@ export const fr = {
       reason: "Raison",
       noTransactions: "Aucune transaction pour le moment",
       shopTitle: "Recharger mes coins",
-      shopSubtitle: "Choisis un pack pour continuer à créer",
-      lowBalanceMessage: "Ton solde est bas ! Recharge pour continuer à utiliser l'IA.",
+      shopSubtitle: "40 coins pour débloquer un quiz définitivement.",
+      lowBalanceMessage: "Ton solde est bas ! Recharge pour continuer à utiliser l'IA ou débloquer un quiz.",
       backToShop: "Retour à la boutique",
       history: "Historique",
       historyDescription: "Historique des transactions",
@@ -357,14 +357,16 @@ export const fr = {
       invoicesDescription: "Tes factures seront disponibles ici après l'intégration.",
       ourOffers: "Boutique de coins",
       proTitle: "Abonnement",
-      proSubscriptionDescription: "L'abonnement mensuel est idéal pour les joueurs réguliers.",
+      proSubscriptionDescription:
+        "Idéal si tu crées plusieurs quiz — tous tes quiz débloqués tant que Pro est actif.",
       popularBadge: "Top choix !",
       packBenefitAiGenerations: "{count} générations de quiz avec l'IA",
-      packBenefitQuizUnlocks: "{count} quiz à débloquer",
+      packBenefitQuizUnlocks: "{count} déblocage(s) de quiz",
     },
     subscription: {
       proTitle: "QuizLink Pro",
-      proDescription: "Débloque tous tes quiz et reçois des coins chaque mois.",
+      proDescription:
+        "Tous tes quiz sont débloqués tant que ton abonnement Pro est actif.",
       monthlyCoins: "{coins} coins inclus chaque mois",
       monthlyCoinsIncluded: "{coins} coins inclus chaque mois",
       proActive: "QuizLink Pro actif",
@@ -378,7 +380,7 @@ export const fr = {
       refreshStatus: "Actualiser",
       successTitle: "Bienvenue dans QuizLink Pro 🎉",
       successDescription:
-        "Ton abonnement est actif. Tous tes quiz sont maintenant débloqués.",
+        "Ton abonnement est actif. Tous tes quiz sont débloqués tant que Pro est actif.",
       activatingTitle: "Activation de QuizLink Pro en cours",
       activatingDescription:
         "Ton paiement a bien été reçu. L’activation peut prendre quelques secondes.",
@@ -387,8 +389,8 @@ export const fr = {
       portalError: "Impossible d’ouvrir la gestion de l’abonnement.",
       activeBadge: "Actif",
       perMonth: "/ mois",
-      allQuizzesUnlocked: "Tous tes quiz débloqués",
-      advancedStatsAvailable: "Statistiques avancées disponibles",
+      allQuizzesUnlocked: "Débloquer tous mes quiz",
+      advancedStatsAvailable: "Stats avancées sur tous tes quiz",
       proSuccessLoading: "Activation de QuizLink Pro…",
       invalidSession: "Impossible de vérifier ce paiement Pro.",
       backToAccount: "Retour au compte",
@@ -516,12 +518,14 @@ export const fr = {
     },
     errors: {
       noLongerAcceptingResponses: "Ce quiz n’accepte plus de nouvelles réponses.",
+      freeResponseLimitReached:
+        "Ce quiz a atteint sa limite gratuite de réponses.",
     },
-    expired: {
-      title: "Ce quiz n’accepte plus de nouvelles réponses.",
+    limitReached: {
+      title: "Ce quiz n’accepte plus de nouvelles réponses",
       description:
-        "Le lien a expiré. Demande au créateur de le réactiver si tu veux participer.",
-      creatorCta: "Réactiver depuis le dashboard",
+        "La limite gratuite de réponses a été atteinte. Demande au créateur de débloquer le quiz pour continuer.",
+      creatorCta: "Débloquer depuis le dashboard",
     },
     intro: {
       errors: {
@@ -815,7 +819,7 @@ export const fr = {
       titleMid: " en quelques ",
       titleHighlight2: "clics",
       titleAfter: " 🎉",
-      subtitle: "Crée tes quiz à la main ou laisse l'IA faire la magie. Partage-les et défie tes potes !",
+      subtitle: "Crée ton quiz gratuitement. Reçois tes 20 premières réponses. Débloque le quiz quand tu veux aller plus loin.",
       createButton: "C'est parti !",
       exploreButton: "Explorer les quiz",
       lovedBy: "Adoré par",
@@ -861,8 +865,9 @@ export const fr = {
         description: "Lance des sessions en live avec tes amis ou ta classe !",
       },
       statistics: {
-        title: "Résultats détaillés",
-        description: "Qui a scoré le plus ? Des stats fun et complètes.",
+        title: "Suivi des réponses",
+        description:
+          "Stats simples gratuites, puis stats avancées quand tu débloques un quiz.",
       },
       fun: {
         title: "Rapide et fun",
@@ -928,8 +933,10 @@ export const fr = {
     },
     finalCta: {
       title: "Prêt à jouer ?",
-      subtitle: "Rejoins des milliers de joueurs et crée ton premier quiz maintenant !",
-      description: "Crée des quiz manuellement avec un contrôle total, ou laisse l'IA les générer à partir de ton contenu. Partage instantanément et personnalise tout.",
+      subtitle:
+        "Crée ton quiz gratuitement, reçois tes 20 premières réponses, puis débloque quand tu veux aller plus loin.",
+      description:
+        "Crée des quiz manuellement ou avec l'IA, partage un lien et suis les réponses — gratuitement jusqu'à 20 parties terminées par quiz.",
       button: "Commencer gratuitement",
     },
     howItWorks: {
@@ -974,11 +981,13 @@ export const fr = {
       subtitle: "Un outil d'évaluation professionnel, pas un simple générateur de quiz",
       noDisposable: {
         title: "Pas de quiz jetables",
-        description: "Chaque quiz est conçu pour être réutilisé, partagé et analysé. Tes données sont précieuses et persistent.",
+        description:
+          "Chaque quiz peut recevoir 20 réponses gratuites. Débloque-le pour continuer à recevoir des réponses et analyser en profondeur.",
       },
       realResults: {
         title: "Vrais résultats",
-        description: "Obtiens des statistiques détaillées, suis les participants individuellement et analyse les performances réelles.",
+        description:
+          "Stats simples incluses et 3 parties détaillées visibles — débloque pour voir toutes les parties et les stats avancées.",
       },
       humanTracking: {
         title: "Suivi humain des participants",
@@ -1029,7 +1038,7 @@ export const fr = {
       account: "Mon compte",
       admin: "Admin",
       shop: "Boutique",
-      coinsHint: "Génère des quiz avec l’IA",
+      coinsHint: "IA et déblocage de quiz",
     },
     welcome: {
       titleGreeting: "Bonjour, ",
@@ -1050,7 +1059,8 @@ export const fr = {
       ctaCreateWithAi: "Créer avec l’IA",
       ctaCreateManually: "Créer manuellement",
       ctaSeeMyQuizzes: "Voir mes quiz",
-      coinsDescription: "Les coins servent à générer des quiz avec l’IA.",
+      coinsDescription:
+        "Les coins servent à générer des quiz avec l'IA et à débloquer un quiz (40 coins).",
       manageCoins: "Gérer mes coins",
       recentQuizzesTitle: "Mes derniers quiz",
       seeAll: "Voir tout",
@@ -1195,7 +1205,7 @@ export const fr = {
     kpiWorstScore: "plus faible score",
     resultsSummaryTitle: "Statistiques globales",
     resultsDetailsPurgedNotice:
-      "Les réponses détaillées ont été supprimées après expiration. Seules les statistiques globales restent disponibles.",
+      "Les réponses détaillées ont été supprimées lors de la purge automatique. Seules les statistiques globales restent disponibles.",
     showMoreStats: "Voir plus de stats",
     showLessStats: "Voir moins de stats",
     visibleResponsesPreview:
@@ -1218,7 +1228,7 @@ export const fr = {
     attemptDetailsPurgedDescription:
       "Les réponses détaillées de cette partie ne sont plus disponibles.",
     attemptDetailsPurgedLongDescription:
-      "Les statistiques globales restent conservées, mais les réponses détaillées ont été supprimées après expiration.",
+      "Les statistiques globales restent conservées, mais les réponses détaillées ont été supprimées lors de la purge automatique.",
     attemptDetailsUnavailable: "Indisponible",
     lockedAdvancedStats: {
       title: "Statistiques avancées",
@@ -1233,114 +1243,38 @@ export const fr = {
       unlockSoon: "Débloquer les réponses",
     },
     unlockDialog: {
-      simpleTitle: "Que veux-tu débloquer ?",
-      title: "Choisis l'option qui te convient",
+      title: "Débloquer ce quiz",
       description:
-        "Ton quiz a reçu {total} réponses. Tu peux consulter {visible} parties gratuitement.",
-      chooseOption: "Choisis l’option adaptée à ton usage.",
-      singleBadge: "Usage ponctuel",
-      singleDescription: "Idéal si tu veux analyser ce quiz uniquement.",
-      singleScopeLabel: "Ce quiz uniquement",
-      singleScopeHint:
-        "Tous les avantages ci-dessous s’appliquent uniquement à « {quizName} ».",
-      singleScopeHintGeneric:
-        "Tous les avantages ci-dessous s’appliquent uniquement à ce quiz.",
-      proBadge: "Usage régulier",
-      proDescription: "Idéal si tu crées plusieurs quiz.",
-      proScopeLabel: "Tous vos quiz",
+        "Débloque ce quiz pour continuer à recevoir des réponses, consulter toutes les parties et accéder aux stats avancées.",
+      coinOptionTitle: "Débloquer ce quiz",
+      coinOptionDescription: "Déblocage définitif de ce quiz.",
+      proOptionTitle: "QuizLink Pro",
+      proOptionDescription:
+        "Tous tes quiz sont débloqués tant que ton abonnement Pro est actif.",
+      unlockAllWithPro: "Débloquer tous mes quiz avec Pro",
       proScopeHint: "Accès complet tant que Pro est actif",
-      benefitAllGames: "Voir toutes les parties de ce quiz",
-      benefitAvailableResponses:
-        "Consulter les réponses encore disponibles et prolonger la conservation",
-      benefitAllAnswers: "Accéder à toutes les réponses détaillées de ce quiz",
-      benefitAdvancedStats: "Débloquer les statistiques avancées de ce quiz",
-      benefitOneYearHistory: "Conserver l’historique de ce quiz pendant 2 mois",
-      benefitExtendCollection: "Recevoir des réponses pendant 2 mois",
-      benefitAllQuizzes: "Tous tes quiz débloqués avec Pro",
       benefitViewAllResponses: "Consulter toutes les réponses",
-      benefitExportSoon: "Exporter les résultats bientôt",
-      benefitSaveTime: "Gagner du temps sur tes analyses",
-      unlockResponses: "Débloquer les réponses",
-      unlockStats: "Débloquer les statistiques",
+      unlockResponses: "Débloquer ce quiz",
+      unlockStats: "Accéder aux stats avancées",
       buyCoins: "Acheter des coins",
-      upgradeToPro: "Passer à Pro",
-      benefitMonthlyCoins: "{coins} coins inclus chaque mois",
       proSoon: "Pro bientôt disponible",
-      extendTitle: "Prolonger ce quiz",
-      extendDescriptionActive:
-        "Prolonge ton quiz pour garder l’accès complet plus longtemps.",
-      extendDescriptionExpired:
-        "Ton quiz ne reçoit plus de réponses. Prolonge-le pour continuer à collecter les participations.",
-      reactivateCoinOption: "Réactiver ce quiz pendant 2 mois",
-      extendCoinOption: "Prolonger avec 40 coins",
-      proKeepActiveOption: "Garder tous tes quiz actifs avec Pro",
     },
     unlockPaywall: {
-      title: "Débloque tes quiz",
-      description:
-        "Ton quiz a reçu {total} réponses. Tu peux consulter {visible} parties gratuitement.",
-      benefitAllGames: "Voir toutes les parties",
-      benefitAdvancedStats: "Accéder aux statistiques avancées",
-      benefitOneYearHistory: "Conserver l’historique pendant 2 mois",
-      benefitExtendCollection: "Recevoir des réponses pendant 2 mois",
-      benefitExportSoon: "Export CSV bientôt",
-      singleQuizTitle: "Débloquer ce quiz",
-      singleQuizLabel: "Débloque ce quiz",
-      allQuizzesTitle: "Débloquer tous les quiz",
-      unlockButton: "Débloquer",
-      singleQuizSubtitle: "Idéal pour un quiz ponctuel.",
-      proTitle: "QuizLink Pro",
-      proSubtitle: "Idéal si tu crées plusieurs quiz.",
-      unlockWithCoins: "Débloquer avec {coins} coins",
       missingCoins: "Il te manque {coins} coins",
-      buyCoinsSoon: "Acheter des coins bientôt",
-      proComingSoon: "Pro bientôt disponible",
       success: "Quiz débloqué.",
       error: "Impossible de débloquer ce quiz.",
       alreadyUnlocked: "Ce quiz est déjà débloqué.",
-      purgedDetailsNotice:
-        "Certaines anciennes réponses peuvent ne plus être disponibles si elles ont déjà expiré.",
-      unlockedBySubscription: "Débloqué avec QuizLink Pro.",
-      unlockedUntil: "Débloqué jusqu’au {date}.",
     },
-    quizExpiration: {
-      notStartedTitle: "Lien prêt à partager",
-      notStartedDescription:
-        "La période gratuite commencera à la première réponse.",
-      activeTitle: "Lien actif",
-      activeDescription: "Ce quiz peut recevoir des réponses jusqu’au {date}.",
-      expiredTitle: "Lien expiré",
-      expiredDescription: "Ce quiz ne reçoit plus de nouvelles réponses.",
-      unlockedTitle: "Lien prolongé",
-      unlockedDescription: "Ce quiz peut recevoir des réponses jusqu’au {date}.",
-      proTitle: "Actif avec QuizLink Pro",
-      proDescription:
-        "Ce quiz reste actif tant que ton abonnement Pro est actif.",
-      extend: "Prolonger",
-      reactivate: "Réactiver le quiz",
-      reactivateToShare: "Réactiver pour partager",
-      managePro: "Gérer Pro",
-      daysRemaining: "{count} jour(s) restant(s)",
-      listNotStarted: "Pas encore partagé",
-      listActive: "Actif jusqu’au {date}",
-      listExpired: "Lien expiré",
-      listUnlocked: "Prolongé jusqu’au {date}",
-      listProActive: "Actif avec Pro",
-    },
-    campaign: {
-      acceptingUntil: "Ce quiz accepte des réponses jusqu’au {date}.",
-      freeActiveSummary:
-        "Ce quiz accepte des réponses jusqu’au {date}. Tu peux consulter {limit} parties en détail gratuitement.",
-      detailsVisibleUntil:
-        "Les parties consultables en détail sont visibles gratuitement jusqu’au {date}.",
-      freePeriodEnded:
-        "La période gratuite est terminée. Les statistiques globales restent disponibles.",
-      detailsPurgedSummary:
-        "Les réponses détaillées ont été supprimées après expiration. Les statistiques globales restent disponibles.",
-      detailsPreviewCount:
-        "Tu peux consulter {visible} partie(s) en détail sur {total} réponses reçues.",
-      allDetailsVisible: "Toutes les parties sont visibles.",
-      unlockComingSoon: "Bientôt : débloquer toutes les réponses",
+    quizQuota: {
+      freeProgress: "{count}/{limit} réponses",
+      limitReached: "Limite atteinte",
+      unlocked: "Quiz débloqué",
+      pro: "Pro",
+      proUnlocked: "Débloqué avec QuizLink Pro",
+      unlockToShare: "Débloquer pour partager",
+      unlockQuiz: "Débloquer ce quiz",
+      unlock: "Débloquer",
+      freeResponsesUsed: "{count} / {limit} réponses gratuites utilisées",
     },
     latestAttempts: "Détails des parties",
     anonymousParticipant: "Participant anonyme #{number}",
@@ -1488,7 +1422,6 @@ export const fr = {
     yourAnswerLabel: "Ta réponse",
     correctAnswerLabel: "Bonne réponse",
     timeSpentLabel: "Temps passé",
-    selectExpirationDate: "Sélectionner une date et heure d'expiration",
     portalPublic: "Portail public",
     portalPublicDescription: "Le participant peut voir ses quiz et sa progression via un lien public (style Duolingo).",
     portalEnabled: "Portail public activé",
@@ -1500,20 +1433,23 @@ export const fr = {
   // Pricing
   pricing: {
     title: "Tarifs simples et transparents",
-    subtitle: "Les coins débloquent les fonctionnalités premium de QuizLink.",
+    subtitle:
+      "Crée gratuitement, débloque un quiz avec 40 coins, ou passe à Pro pour tous tes quiz.",
     coins: "coins",
     coinsUseCasesTitle: "Ce que permettent tes coins",
-    coinsUseCasesSubtitle: "Chaque action consomme des coins. Plus tu en as, plus tu peux créer.",
+    coinsUseCasesSubtitle:
+      "Les coins servent à débloquer un quiz ou utiliser l'IA.",
     coinsUseCaseGeneration: "Génération de quiz avec l'IA",
+    coinsUseCaseUnlock: "Débloquer un quiz (40 coins)",
     coinsUseCaseReport: "Rapport IA par participant",
     coinsUseCaseReportDetail: "Forces, faiblesses, plan 7 jours",
-    coinsUseCaseParticipants: "Participants illimités et liens personnalisés",
-    coinsUseCaseManual: "Création manuelle illimitée",
+    coinsUseCaseParticipants: "Liens personnalisés pour tes participants",
+    coinsUseCaseManual: "Création manuelle de quiz",
     coinsPerUse: "coins / utilisation",
     free: "Gratuit",
     generations: "générations",
     aiGenerations: "générations IA",
-    unlimitedManual: "Création manuelle illimitée",
+    unlimitedManual: "Création manuelle de quiz",
     popular: "Populaire",
     comingSoon: "Bientôt disponible",
     paymentNote: "Les paiements seront disponibles prochainement. Pour l'instant, les coins sont crédités manuellement par les administrateurs.",

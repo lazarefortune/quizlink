@@ -31,6 +31,26 @@ function mapUnlockTypeToUnlockedBy(type: QuizUnlockType): QuizUnlockedBy {
   return "QUIZ_UNLOCK";
 }
 
+/** Active when permanent (`null`) or not yet expired. */
+export function isActiveQuizUnlockExpiresAt(
+  expiresAt: Date | null,
+  now: Date,
+): boolean {
+  return expiresAt == null || expiresAt > now;
+}
+
+export function buildActiveQuizUnlockWhere(
+  quizId: string,
+  userId: string,
+  now: Date,
+): Prisma.QuizUnlockWhereInput {
+  return {
+    quizId,
+    userId,
+    OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+  };
+}
+
 export async function getQuizAccessState({
   quizId,
   userId,
@@ -58,12 +78,8 @@ export async function getQuizAccessState({
   }
 
   const activeUnlock = await client.quizUnlock.findFirst({
-    where: {
-      quizId,
-      userId,
-      expiresAt: { gt: now },
-    },
-    orderBy: { expiresAt: "desc" },
+    where: buildActiveQuizUnlockWhere(quizId, userId, now),
+    orderBy: [{ expiresAt: "desc" }, { createdAt: "desc" }],
     select: {
       id: true,
       type: true,

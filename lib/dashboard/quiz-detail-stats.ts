@@ -9,7 +9,8 @@ export type QuizDetailAudienceSlice = {
 };
 
 import type { QuizDetailAttemptRow } from "@/lib/dashboard/creator-response-attempts";
-import type { QuizLinkCampaignUiSnapshot } from "@/lib/quiz/quizLinkCampaign";
+import type { QuizLinkResultAccessSnapshot } from "@/lib/quiz/quizLinkResultAccess";
+import type { QuizResponseQuotaStatus } from "@/lib/quiz/quizResponseQuotaStatus";
 
 export type QuizDetailStatsInput = {
   totalResponses: number;
@@ -34,7 +35,8 @@ export type QuizDetailStatsInput = {
   /** True when the public link detailed data was fully purged after expiration. */
   detailsFullyPurged: boolean;
   attempts: QuizDetailAttemptRow[];
-  campaign: QuizLinkCampaignUiSnapshot | null;
+  resultAccess: QuizLinkResultAccessSnapshot | null;
+  quotaStatus: QuizResponseQuotaStatus | null;
 };
 
 export function computeQuizCompletionRatePercent(stats: {

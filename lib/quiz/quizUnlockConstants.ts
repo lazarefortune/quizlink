@@ -5,17 +5,13 @@ export const UNLOCK_QUIZ_ERROR = {
   DATABASE: "DATABASE_ERROR",
 } as const;
 
-/** Coin cost to unlock a single quiz for the owner (2 months full access). */
+/** Coin cost to permanently unlock a single quiz for the owner. */
 export const QUIZ_UNLOCK_COIN_COST = 40;
 
-/** How long a coin-based single-quiz unlock lasts (days). */
-export const QUIZ_UNLOCK_DURATION_DAYS = 60;
-
-/** Calendar months equivalent for coin unlock (documentation / future helpers). */
-export const QUIZ_UNLOCK_DURATION_MONTHS = 2;
+/** Max completed responses accepted for free before paywall (COMPLETED only). */
+export const FREE_QUIZ_RESPONSE_LIMIT = 20;
 
 /**
- * Grace period after campaign expiration before detailed attempt data may be purged.
- * Purge job not implemented yet — constant only.
+ * Grace period after quota limit is reached before detailed attempt data may be purged.
  */
 export const QUIZ_DETAILS_PURGE_GRACE_DAYS = 30;

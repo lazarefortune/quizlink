@@ -1,24 +1,19 @@
 import { prisma } from "@/lib/prisma";
 
-import { getQuizLinkCampaignDates } from "./quizLinkCampaign";
-
 /**
- * Starts the 7-day campaign on first real attempt (idempotent).
- * Does not update lastResponseAt — use touchQuizLinkLastResponseAt on finish/abandon.
+ * Marks the first response activity on a quiz link (idempotent).
+ * Does not write quota-unrelated expiration fields.
  */
-export async function ensureQuizLinkCampaignStarted(
+export async function ensureQuizLinkResponseActivityStarted(
   quizLinkId: string,
   now: Date = new Date(),
 ): Promise<void> {
   if (!prisma) return;
 
-  const dates = getQuizLinkCampaignDates(now);
   await prisma.quizLink.updateMany({
     where: { id: quizLinkId, responsesStartedAt: null },
     data: {
-      responsesStartedAt: dates.responsesStartedAt,
-      acceptingResponsesUntil: dates.acceptingResponsesUntil,
-      detailsVisibleUntil: dates.detailsVisibleUntil,
+      responsesStartedAt: now,
     },
   });
 }

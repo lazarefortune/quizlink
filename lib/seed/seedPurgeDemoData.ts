@@ -3,9 +3,9 @@ import crypto from "node:crypto";
 export const SEED_PURGE_DEMO_TITLE_PREFIX = "[SEED PURGE DEMO]";
 
 export type SeedPurgeDemoScenarioKey =
-  | "FREE_ACTIVE"
-  | "GRACE_ACTIVE"
-  | "PURGEABLE"
+  | "QUOTA_NOT_REACHED"
+  | "QUOTA_GRACE_ACTIVE"
+  | "QUOTA_PURGEABLE"
   | "ALREADY_PURGED"
   | "COINS_UNLOCKED"
   | "PRO_OWNER";
@@ -17,28 +17,86 @@ export type SeedPurgeDemoOptions = {
   verbose: boolean;
 };
 
-export type SeedCampaignDates = {
+export type SeedLinkDates = {
   responsesStartedAt: Date;
-  acceptingResponsesUntil: Date;
-  detailsVisibleUntil: Date;
   detailsPurgedAt: Date | null;
-  unlockedUntil: Date | null;
 };
 
 export type SeedPurgeDemoScenarioDefinition = {
   key: SeedPurgeDemoScenarioKey;
   titleSuffix: string;
   owner: "normal" | "pro";
+  targetCompletedCount: number;
+  abandonedCount: number;
+  lastResponseAgeDays: number;
+  withCoinUnlock?: boolean;
+  alreadyPurged?: boolean;
+  skipAnswerDetails?: boolean;
 };
 
 export const SEED_PURGE_DEMO_SCENARIOS: readonly SeedPurgeDemoScenarioDefinition[] = [
-  { key: "FREE_ACTIVE", titleSuffix: "Gratuit actif", owner: "normal" },
-  { key: "GRACE_ACTIVE", titleSuffix: "Grâce active", owner: "normal" },
-  { key: "PURGEABLE", titleSuffix: "Purgeable", owner: "normal" },
-  { key: "ALREADY_PURGED", titleSuffix: "Déjà purgé", owner: "normal" },
-  { key: "COINS_UNLOCKED", titleSuffix: "Débloqué coins", owner: "normal" },
-  { key: "PRO_OWNER", titleSuffix: "Owner Pro", owner: "pro" },
+  {
+    key: "QUOTA_NOT_REACHED",
+    titleSuffix: "Quota not reached",
+    owner: "normal",
+    targetCompletedCount: 12,
+    abandonedCount: 0,
+    lastResponseAgeDays: 45,
+  },
+  {
+    key: "QUOTA_GRACE_ACTIVE",
+    titleSuffix: "Quota grace active",
+    owner: "normal",
+    targetCompletedCount: 20,
+    abandonedCount: 0,
+    lastResponseAgeDays: 5,
+  },
+  {
+    key: "QUOTA_PURGEABLE",
+    titleSuffix: "Quota purgeable",
+    owner: "normal",
+    targetCompletedCount: 20,
+    abandonedCount: 0,
+    lastResponseAgeDays: 45,
+  },
+  {
+    key: "ALREADY_PURGED",
+    titleSuffix: "Already purged",
+    owner: "normal",
+    targetCompletedCount: 20,
+    abandonedCount: 0,
+    lastResponseAgeDays: 45,
+    alreadyPurged: true,
+  },
+  {
+    key: "COINS_UNLOCKED",
+    titleSuffix: "Coins unlocked skip",
+    owner: "normal",
+    targetCompletedCount: 25,
+    abandonedCount: 0,
+    lastResponseAgeDays: 45,
+    withCoinUnlock: true,
+  },
+  {
+    key: "PRO_OWNER",
+    titleSuffix: "Pro active skip",
+    owner: "pro",
+    targetCompletedCount: 25,
+    abandonedCount: 0,
+    lastResponseAgeDays: 45,
+  },
 ] as const;
+
+export type AttemptSeedSpec = {
+  status: "COMPLETED" | "ABANDONED";
+  score: number | null;
+  durationSeconds: number | null;
+  participantName: string | null;
+  participantEmail: string | null;
+  identityMode: "ANONYMOUS" | "NAME_EMAIL";
+  answerAllQuestions: boolean;
+  partialAnswerCount: number;
+};
 
 export function addDays(date: Date, days: number): Date {
   return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
@@ -62,82 +120,50 @@ export function deriveProOwnerEmail(ownerEmail: string): string {
   return `pro-${localPart}@${domain}`;
 }
 
-export function buildSeedCampaignDates(
-  now: Date,
-  scenario: SeedPurgeDemoScenarioKey,
-): SeedCampaignDates {
-  switch (scenario) {
-    case "FREE_ACTIVE": {
-      const responsesStartedAt = addDays(now, -2);
-      const acceptingResponsesUntil = addDays(responsesStartedAt, 7);
-      return {
-        responsesStartedAt,
-        acceptingResponsesUntil,
-        detailsVisibleUntil: acceptingResponsesUntil,
-        detailsPurgedAt: null,
-        unlockedUntil: null,
-      };
-    }
-    case "GRACE_ACTIVE": {
-      const responsesStartedAt = addDays(now, -10);
-      const acceptingResponsesUntil = addDays(responsesStartedAt, 7);
-      return {
-        responsesStartedAt,
-        acceptingResponsesUntil,
-        detailsVisibleUntil: acceptingResponsesUntil,
-        detailsPurgedAt: null,
-        unlockedUntil: null,
-      };
-    }
-    case "PURGEABLE": {
-      const responsesStartedAt = addDays(now, -45);
-      const acceptingResponsesUntil = addDays(responsesStartedAt, 7);
-      return {
-        responsesStartedAt,
-        acceptingResponsesUntil,
-        detailsVisibleUntil: acceptingResponsesUntil,
-        detailsPurgedAt: null,
-        unlockedUntil: null,
-      };
-    }
-    case "ALREADY_PURGED": {
-      const responsesStartedAt = addDays(now, -60);
-      const acceptingResponsesUntil = addDays(responsesStartedAt, 7);
-      return {
-        responsesStartedAt,
-        acceptingResponsesUntil,
-        detailsVisibleUntil: acceptingResponsesUntil,
-        detailsPurgedAt: addDays(now, -1),
-        unlockedUntil: null,
-      };
-    }
-    case "COINS_UNLOCKED": {
-      const responsesStartedAt = addDays(now, -45);
-      const unlockedUntil = addDays(now, 30);
-      return {
-        responsesStartedAt,
-        acceptingResponsesUntil: unlockedUntil,
-        detailsVisibleUntil: unlockedUntil,
-        detailsPurgedAt: null,
-        unlockedUntil,
-      };
-    }
-    case "PRO_OWNER": {
-      const responsesStartedAt = addDays(now, -60);
-      const acceptingResponsesUntil = addDays(responsesStartedAt, 7);
-      return {
-        responsesStartedAt,
-        acceptingResponsesUntil,
-        detailsVisibleUntil: acceptingResponsesUntil,
-        detailsPurgedAt: null,
-        unlockedUntil: null,
-      };
-    }
-    default: {
-      const exhaustive: never = scenario;
-      return exhaustive;
-    }
+export function buildSeedLastResponseAt(now: Date, ageDays: number): Date {
+  return addDays(now, -ageDays);
+}
+
+export function buildSeedLinkDates(now: Date): SeedLinkDates {
+  return {
+    responsesStartedAt: addDays(now, -60),
+    detailsPurgedAt: null,
+  };
+}
+
+export function buildAttemptSpecsForPurgeScenario(
+  scenario: SeedPurgeDemoScenarioDefinition,
+): AttemptSeedSpec[] {
+  const useAnonymous = scenario.skipAnswerDetails === true;
+  const specs: AttemptSeedSpec[] = [];
+
+  for (let index = 0; index < scenario.targetCompletedCount; index += 1) {
+    specs.push({
+      status: "COMPLETED",
+      score: 40 + (index % 5) * 12,
+      durationSeconds: 90 + index * 15,
+      participantName: useAnonymous ? null : `Purge Demo Joueur ${index + 1}`,
+      participantEmail: useAnonymous ? null : `purge-demo-${index + 1}@example.com`,
+      identityMode: useAnonymous ? "ANONYMOUS" : "NAME_EMAIL",
+      answerAllQuestions: !useAnonymous,
+      partialAnswerCount: 0,
+    });
   }
+
+  for (let index = 0; index < scenario.abandonedCount; index += 1) {
+    specs.push({
+      status: "ABANDONED",
+      score: null,
+      durationSeconds: 45 + index * 10,
+      participantName: useAnonymous ? null : `Purge Demo Abandon ${index + 1}`,
+      participantEmail: useAnonymous ? null : `purge-abandon-${index + 1}@example.com`,
+      identityMode: useAnonymous ? "ANONYMOUS" : "NAME_EMAIL",
+      answerAllQuestions: false,
+      partialAnswerCount: 2,
+    });
+  }
+
+  return specs;
 }
 
 export function generateSeedLinkToken(seedKey: string): string {
@@ -145,7 +171,6 @@ export function generateSeedLinkToken(seedKey: string): string {
   return hash.slice(0, 12);
 }
 
-/** Token scoped to a quiz row — unique across seed runs (unlike owner+scenario). */
 export function buildSeedLinkTokenForQuiz(quizId: string): string {
   return generateSeedLinkToken(`seed-purge-demo:link:${quizId}`);
 }
@@ -184,4 +209,14 @@ export function resolveSeedScenarios(
     return SEED_PURGE_DEMO_SCENARIOS;
   }
   return SEED_PURGE_DEMO_SCENARIOS.filter((scenario) => scenario.owner !== "pro");
+}
+
+export function findSeedPurgeScenario(
+  key: SeedPurgeDemoScenarioKey,
+): SeedPurgeDemoScenarioDefinition {
+  const scenario = SEED_PURGE_DEMO_SCENARIOS.find((item) => item.key === key);
+  if (scenario == null) {
+    throw new Error(`Unknown purge seed scenario: ${key}`);
+  }
+  return scenario;
 }

@@ -10,6 +10,8 @@ const ERROR_CODE_TO_I18N_KEY: Record<string, string> = {
     "dashboard.finishQuizBeforePublic",
   [QUIZ_ACTION_ERROR_CODE.NO_LONGER_ACCEPTING_RESPONSES]:
     "quiz.errors.noLongerAcceptingResponses",
+  [QUIZ_ACTION_ERROR_CODE.FREE_RESPONSE_LIMIT_REACHED]:
+    "quiz.errors.freeResponseLimitReached",
 };
 
 export function resolveQuizActionError(locale: Locale, error: string): string {

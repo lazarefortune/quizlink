@@ -29,7 +29,9 @@ import {
   type QuizDetailAttemptRow,
 } from "@/lib/dashboard/creator-response-attempts";
 import { getQuizAccessState } from "@/lib/quiz/getQuizAccessState";
-import { buildQuizDetailCampaignSnapshot } from "@/lib/quiz/quizLinkCampaign";
+import { buildQuizDetailResultAccessSnapshot } from "@/lib/quiz/quizLinkResultAccess";
+import { resolveQuizResponseQuotaStatus } from "@/lib/quiz/quizResponseQuotaStatus";
+import type { QuizResponseQuotaStatus } from "@/lib/quiz/quizResponseQuotaStatus";
 import { getQuizResponseAggregates } from "@/lib/quiz/quiz-response-aggregates";
 import { resolveQuizSimpleKpis } from "@/lib/quiz/resolveQuizSimpleKpis";
 import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
@@ -102,7 +104,8 @@ type GetQuizStatsResponse =
         hasPurgedDetails: boolean;
         detailsFullyPurged: boolean;
         attempts: QuizDetailAttemptRow[];
-        campaign: ReturnType<typeof buildQuizDetailCampaignSnapshot> | null;
+        resultAccess: ReturnType<typeof buildQuizDetailResultAccessSnapshot> | null;
+        quotaStatus: QuizResponseQuotaStatus;
       };
     }
   | { success: false; error: string };
@@ -452,9 +455,6 @@ export async function getQuizStats(
       where: { quizId, participantId: null },
       select: {
         responsesStartedAt: true,
-        acceptingResponsesUntil: true,
-        detailsVisibleUntil: true,
-        unlockedUntil: true,
         detailsPurgedAt: true,
       },
     });
@@ -465,13 +465,12 @@ export async function getQuizStats(
       now,
     });
 
-    const campaign = buildQuizDetailCampaignSnapshot(
+    const resultAccess = buildQuizDetailResultAccessSnapshot(
       publicQuizLink,
       accessState,
-      now,
     );
 
-    const detailedPreviewLimit = campaign?.detailedPreviewLimit ?? 3;
+    const detailedPreviewLimit = resultAccess?.detailedPreviewLimit ?? 3;
     const detailsFullyPurged = publicQuizLink?.detailsPurgedAt != null;
     const showAllAttemptsInList = accessState.isUnlocked || detailsFullyPurged;
 
@@ -539,6 +538,22 @@ export async function getQuizStats(
     const totalResponses = simpleKpis.totalResponses;
     const totalStarted = simpleKpis.totalStarted;
     const totalOpenCount = anonymousOpenCount;
+
+    const isProActive =
+      accessState.isUnlocked && accessState.unlockedBy === "SUBSCRIPTION";
+    const isQuizUnlockedWithCoins = accessState.isUnlocked && !isProActive;
+    const quotaStatus = resolveQuizResponseQuotaStatus({
+      completedResponses: totalResponses,
+      isProActive,
+      isQuizUnlockedWithCoins,
+      unlockedBy: isProActive
+        ? "SUBSCRIPTION"
+        : accessState.unlockedBy === "ADMIN"
+          ? "ADMIN"
+          : isQuizUnlockedWithCoins
+            ? "COINS"
+            : null,
+    });
 
     const globalScoreAverage = simpleKpis.globalScoreAverage;
     const globalBestScore = responseStats.bestScore;
@@ -656,7 +671,8 @@ export async function getQuizStats(
         hasPurgedDetails,
         detailsFullyPurged,
         attempts,
-        campaign,
+        resultAccess,
+        quotaStatus,
       },
     };
   } catch (error) {
@@ -817,9 +833,6 @@ export async function getAttemptDetails(
       where: { quizId, participantId: null },
       select: {
         responsesStartedAt: true,
-        acceptingResponsesUntil: true,
-        detailsVisibleUntil: true,
-        unlockedUntil: true,
       },
     });
 
@@ -832,7 +845,7 @@ export async function getAttemptDetails(
 
     if (!accessState.isUnlocked) {
       const detailedLimit = publicQuizLink
-        ? buildQuizDetailCampaignSnapshot(publicQuizLink, accessState, now)
+        ? buildQuizDetailResultAccessSnapshot(publicQuizLink, accessState)
             ?.detailedPreviewLimit ?? 3
         : 3;
       const visibleRows = await prisma.quizAttempt.findMany({

@@ -217,7 +217,7 @@ export type QuizUnlockGroupByOutputType = {
   source: $Enums.QuizUnlockSource
   coinsSpent: number | null
   startsAt: Date
-  expiresAt: Date
+  expiresAt: Date | null
   createdAt: Date
   updatedAt: Date
   _count: QuizUnlockCountAggregateOutputType | null
@@ -253,7 +253,7 @@ export type QuizUnlockWhereInput = {
   source?: Prisma.EnumQuizUnlockSourceFilter<"QuizUnlock"> | $Enums.QuizUnlockSource
   coinsSpent?: Prisma.IntNullableFilter<"QuizUnlock"> | number | null
   startsAt?: Prisma.DateTimeFilter<"QuizUnlock"> | Date | string
-  expiresAt?: Prisma.DateTimeFilter<"QuizUnlock"> | Date | string
+  expiresAt?: Prisma.DateTimeNullableFilter<"QuizUnlock"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"QuizUnlock"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"QuizUnlock"> | Date | string
   quiz?: Prisma.XOR<Prisma.QuizScalarRelationFilter, Prisma.QuizWhereInput>
@@ -268,7 +268,7 @@ export type QuizUnlockOrderByWithRelationInput = {
   source?: Prisma.SortOrder
   coinsSpent?: Prisma.SortOrderInput | Prisma.SortOrder
   startsAt?: Prisma.SortOrder
-  expiresAt?: Prisma.SortOrder
+  expiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   quiz?: Prisma.QuizOrderByWithRelationInput
@@ -287,7 +287,7 @@ export type QuizUnlockWhereUniqueInput = Prisma.AtLeast<{
   source?: Prisma.EnumQuizUnlockSourceFilter<"QuizUnlock"> | $Enums.QuizUnlockSource
   coinsSpent?: Prisma.IntNullableFilter<"QuizUnlock"> | number | null
   startsAt?: Prisma.DateTimeFilter<"QuizUnlock"> | Date | string
-  expiresAt?: Prisma.DateTimeFilter<"QuizUnlock"> | Date | string
+  expiresAt?: Prisma.DateTimeNullableFilter<"QuizUnlock"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"QuizUnlock"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"QuizUnlock"> | Date | string
   quiz?: Prisma.XOR<Prisma.QuizScalarRelationFilter, Prisma.QuizWhereInput>
@@ -302,7 +302,7 @@ export type QuizUnlockOrderByWithAggregationInput = {
   source?: Prisma.SortOrder
   coinsSpent?: Prisma.SortOrderInput | Prisma.SortOrder
   startsAt?: Prisma.SortOrder
-  expiresAt?: Prisma.SortOrder
+  expiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.QuizUnlockCountOrderByAggregateInput
@@ -323,7 +323,7 @@ export type QuizUnlockScalarWhereWithAggregatesInput = {
   source?: Prisma.EnumQuizUnlockSourceWithAggregatesFilter<"QuizUnlock"> | $Enums.QuizUnlockSource
   coinsSpent?: Prisma.IntNullableWithAggregatesFilter<"QuizUnlock"> | number | null
   startsAt?: Prisma.DateTimeWithAggregatesFilter<"QuizUnlock"> | Date | string
-  expiresAt?: Prisma.DateTimeWithAggregatesFilter<"QuizUnlock"> | Date | string
+  expiresAt?: Prisma.DateTimeNullableWithAggregatesFilter<"QuizUnlock"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"QuizUnlock"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"QuizUnlock"> | Date | string
 }
@@ -334,7 +334,7 @@ export type QuizUnlockCreateInput = {
   source: $Enums.QuizUnlockSource
   coinsSpent?: number | null
   startsAt?: Date | string
-  expiresAt: Date | string
+  expiresAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   quiz: Prisma.QuizCreateNestedOneWithoutUnlocksInput
@@ -349,7 +349,7 @@ export type QuizUnlockUncheckedCreateInput = {
   source: $Enums.QuizUnlockSource
   coinsSpent?: number | null
   startsAt?: Date | string
-  expiresAt: Date | string
+  expiresAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -360,7 +360,7 @@ export type QuizUnlockUpdateInput = {
   source?: Prisma.EnumQuizUnlockSourceFieldUpdateOperationsInput | $Enums.QuizUnlockSource
   coinsSpent?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   quiz?: Prisma.QuizUpdateOneRequiredWithoutUnlocksNestedInput
@@ -375,7 +375,7 @@ export type QuizUnlockUncheckedUpdateInput = {
   source?: Prisma.EnumQuizUnlockSourceFieldUpdateOperationsInput | $Enums.QuizUnlockSource
   coinsSpent?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -388,7 +388,7 @@ export type QuizUnlockCreateManyInput = {
   source: $Enums.QuizUnlockSource
   coinsSpent?: number | null
   startsAt?: Date | string
-  expiresAt: Date | string
+  expiresAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -399,7 +399,7 @@ export type QuizUnlockUpdateManyMutationInput = {
   source?: Prisma.EnumQuizUnlockSourceFieldUpdateOperationsInput | $Enums.QuizUnlockSource
   coinsSpent?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -412,7 +412,7 @@ export type QuizUnlockUncheckedUpdateManyInput = {
   source?: Prisma.EnumQuizUnlockSourceFieldUpdateOperationsInput | $Enums.QuizUnlockSource
   coinsSpent?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -578,7 +578,7 @@ export type QuizUnlockCreateWithoutUserInput = {
   source: $Enums.QuizUnlockSource
   coinsSpent?: number | null
   startsAt?: Date | string
-  expiresAt: Date | string
+  expiresAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   quiz: Prisma.QuizCreateNestedOneWithoutUnlocksInput
@@ -591,7 +591,7 @@ export type QuizUnlockUncheckedCreateWithoutUserInput = {
   source: $Enums.QuizUnlockSource
   coinsSpent?: number | null
   startsAt?: Date | string
-  expiresAt: Date | string
+  expiresAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -633,7 +633,7 @@ export type QuizUnlockScalarWhereInput = {
   source?: Prisma.EnumQuizUnlockSourceFilter<"QuizUnlock"> | $Enums.QuizUnlockSource
   coinsSpent?: Prisma.IntNullableFilter<"QuizUnlock"> | number | null
   startsAt?: Prisma.DateTimeFilter<"QuizUnlock"> | Date | string
-  expiresAt?: Prisma.DateTimeFilter<"QuizUnlock"> | Date | string
+  expiresAt?: Prisma.DateTimeNullableFilter<"QuizUnlock"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"QuizUnlock"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"QuizUnlock"> | Date | string
 }
@@ -644,7 +644,7 @@ export type QuizUnlockCreateWithoutQuizInput = {
   source: $Enums.QuizUnlockSource
   coinsSpent?: number | null
   startsAt?: Date | string
-  expiresAt: Date | string
+  expiresAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutQuizUnlocksInput
@@ -657,7 +657,7 @@ export type QuizUnlockUncheckedCreateWithoutQuizInput = {
   source: $Enums.QuizUnlockSource
   coinsSpent?: number | null
   startsAt?: Date | string
-  expiresAt: Date | string
+  expiresAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -695,7 +695,7 @@ export type QuizUnlockCreateManyUserInput = {
   source: $Enums.QuizUnlockSource
   coinsSpent?: number | null
   startsAt?: Date | string
-  expiresAt: Date | string
+  expiresAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -706,7 +706,7 @@ export type QuizUnlockUpdateWithoutUserInput = {
   source?: Prisma.EnumQuizUnlockSourceFieldUpdateOperationsInput | $Enums.QuizUnlockSource
   coinsSpent?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   quiz?: Prisma.QuizUpdateOneRequiredWithoutUnlocksNestedInput
@@ -719,7 +719,7 @@ export type QuizUnlockUncheckedUpdateWithoutUserInput = {
   source?: Prisma.EnumQuizUnlockSourceFieldUpdateOperationsInput | $Enums.QuizUnlockSource
   coinsSpent?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -731,7 +731,7 @@ export type QuizUnlockUncheckedUpdateManyWithoutUserInput = {
   source?: Prisma.EnumQuizUnlockSourceFieldUpdateOperationsInput | $Enums.QuizUnlockSource
   coinsSpent?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -743,7 +743,7 @@ export type QuizUnlockCreateManyQuizInput = {
   source: $Enums.QuizUnlockSource
   coinsSpent?: number | null
   startsAt?: Date | string
-  expiresAt: Date | string
+  expiresAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -754,7 +754,7 @@ export type QuizUnlockUpdateWithoutQuizInput = {
   source?: Prisma.EnumQuizUnlockSourceFieldUpdateOperationsInput | $Enums.QuizUnlockSource
   coinsSpent?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutQuizUnlocksNestedInput
@@ -767,7 +767,7 @@ export type QuizUnlockUncheckedUpdateWithoutQuizInput = {
   source?: Prisma.EnumQuizUnlockSourceFieldUpdateOperationsInput | $Enums.QuizUnlockSource
   coinsSpent?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -779,7 +779,7 @@ export type QuizUnlockUncheckedUpdateManyWithoutQuizInput = {
   source?: Prisma.EnumQuizUnlockSourceFieldUpdateOperationsInput | $Enums.QuizUnlockSource
   coinsSpent?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -836,7 +836,7 @@ export type $QuizUnlockPayload<ExtArgs extends runtime.Types.Extensions.Internal
     source: $Enums.QuizUnlockSource
     coinsSpent: number | null
     startsAt: Date
-    expiresAt: Date
+    expiresAt: Date | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["quizUnlock"]>
