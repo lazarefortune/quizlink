@@ -39,7 +39,9 @@ const defaultContext: BuilderNavigationGuardContextValue = {
   setBuilderHasUnsavedChanges: () => {},
   interceptLinkClick: () => false,
   requestNavigate: () => {},
-  requestAction: () => {},
+  requestAction: (action) => {
+    void Promise.resolve(action());
+  },
   runNavigationBypass: (fn) => fn(),
 };
 

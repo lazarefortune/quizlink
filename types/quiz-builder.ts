@@ -1,3 +1,5 @@
+import type { ParticipantIdentityMode } from "@/types/participant-identity";
+
 export type QuizVisibility = "PRIVATE" | "PUBLIC";
 
 export type QuestionType = "MULTIPLE_CHOICE" | "CHECKBOX" | "TRUE_FALSE";
@@ -24,6 +26,8 @@ export type Question = {
 };
 
 export type QuizSettings = {
+  /** How public quiz players identify themselves (V1 participants). */
+  participantIdentityMode?: ParticipantIdentityMode;
   /** Show correction right after answering each question. */
   showAnswerImmediately: boolean;
   /**

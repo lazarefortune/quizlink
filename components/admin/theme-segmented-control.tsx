@@ -57,7 +57,6 @@ export function ThemeSegmentedControl({ locale, className }: ThemeSegmentedContr
         "inline-flex items-center gap-0.5 rounded-full bg-muted p-1 dark:bg-zinc-900",
         className
       )}
-      onPointerDown={(event) => event.stopPropagation()}
     >
       {modes.map(({ value, icon: Icon, labelFr, labelEn }) => {
         const isActive = theme === value;

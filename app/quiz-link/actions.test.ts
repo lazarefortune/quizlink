@@ -1,9 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const mockAuth = vi.fn();
+const mockResolveQuizPlayAccess = vi.fn();
 
 vi.mock("@/lib/auth", () => ({
   auth: () => mockAuth(),
+}));
+
+vi.mock("@/lib/quiz/resolveQuizPlayAccess", () => ({
+  resolveQuizPlayAccess: (...args: unknown[]) => mockResolveQuizPlayAccess(...args),
+  getQuizPlayBlockErrorCode: (access: { canAcceptResponses: boolean }) =>
+    access.canAcceptResponses ? null : "QUIZ_FREE_RESPONSE_LIMIT_REACHED",
 }));
 
 const mockQuizFindUnique = vi.fn();
@@ -11,6 +18,9 @@ const mockQuizLinkFindFirst = vi.fn();
 const mockQuizLinkFindUnique = vi.fn();
 const mockQuizLinkCreate = vi.fn();
 const mockQuizLinkUpdate = vi.fn();
+const mockQuizAttemptCreate = vi.fn();
+const mockEnsureQuizLinkResponseActivityStarted = vi.fn();
+const mockIncrementQuizStartedAggregate = vi.fn();
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -21,7 +31,20 @@ vi.mock("@/lib/prisma", () => ({
       create: (...args: unknown[]) => mockQuizLinkCreate(...args),
       update: (...args: unknown[]) => mockQuizLinkUpdate(...args),
     },
+    quizAttempt: {
+      create: (...args: unknown[]) => mockQuizAttemptCreate(...args),
+    },
   },
+}));
+
+vi.mock("@/lib/quiz/quizLinkActivityPersistence", () => ({
+  ensureQuizLinkResponseActivityStarted: (...args: unknown[]) =>
+    mockEnsureQuizLinkResponseActivityStarted(...args),
+}));
+
+vi.mock("@/lib/quiz/quiz-response-aggregates", () => ({
+  incrementQuizStartedAggregate: (...args: unknown[]) =>
+    mockIncrementQuizStartedAggregate(...args),
 }));
 
 import { QUIZ_ACTION_ERROR_CODE } from "@/lib/quiz/quizActionErrorCodes";
@@ -32,6 +55,24 @@ import {
   getQuizLinkByToken,
   startQuizAttempt,
 } from "./actions";
+
+function quotaPlayAccess(overrides: {
+  canAcceptResponses: boolean;
+  completedResponses?: number;
+}) {
+  return {
+    completedResponses: overrides.completedResponses ?? 0,
+    freeLimit: 20,
+    remainingFreeResponses: overrides.canAcceptResponses ? 1 : 0,
+    hasReachedFreeLimit: !overrides.canAcceptResponses,
+    isProActive: false,
+    isQuizUnlockedWithCoins: false,
+    isUnlocked: false,
+    canAcceptResponses: overrides.canAcceptResponses,
+    canViewAllDetails: false,
+    canViewAdvancedStats: false,
+  };
+}
 
 describe("createOrGetQuizLink", () => {
   beforeEach(() => {
@@ -122,10 +163,12 @@ describe("getQuizLinkByToken", () => {
     revokedAt: null,
     expiresAt: null,
     allowMultipleAttempts: true,
+    responsesStartedAt: null,
     attempts: [],
     participant: null,
     quiz: {
       id: "quiz-1",
+      ownerId: "owner-1",
       name: "Quiz",
       visibility: "PUBLIC",
       settings: {},
@@ -136,10 +179,62 @@ describe("getQuizLinkByToken", () => {
 
   it("returns success for ACTIVE quiz", async () => {
     mockQuizLinkFindUnique.mockResolvedValue({ ...baseLink });
+    mockResolveQuizPlayAccess.mockResolvedValue(
+      quotaPlayAccess({ canAcceptResponses: true, completedResponses: 5 }),
+    );
 
     const result = await getQuizLinkByToken("tok1");
 
     expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.quizLink.isAcceptingResponses).toBe(true);
+    expect(mockResolveQuizPlayAccess).toHaveBeenCalledWith({
+      quizId: "quiz-1",
+      ownerId: "owner-1",
+    });
+  });
+
+  it("sets isAcceptingResponses false when free quota is reached", async () => {
+    mockQuizLinkFindUnique.mockResolvedValue({ ...baseLink });
+    mockResolveQuizPlayAccess.mockResolvedValue(
+      quotaPlayAccess({ canAcceptResponses: false, completedResponses: 20 }),
+    );
+
+    const result = await getQuizLinkByToken("tok1");
+
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.quizLink.isAcceptingResponses).toBe(false);
+  });
+
+  it("sets isAcceptingResponses true when quota reached but coin-unlocked", async () => {
+    mockQuizLinkFindUnique.mockResolvedValue({ ...baseLink });
+    mockResolveQuizPlayAccess.mockResolvedValue({
+      ...quotaPlayAccess({ canAcceptResponses: true, completedResponses: 20 }),
+      isQuizUnlockedWithCoins: true,
+      isUnlocked: true,
+    });
+
+    const result = await getQuizLinkByToken("tok1");
+
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.quizLink.isAcceptingResponses).toBe(true);
+  });
+
+  it("sets isAcceptingResponses true when quota reached but Pro is active", async () => {
+    mockQuizLinkFindUnique.mockResolvedValue({ ...baseLink });
+    mockResolveQuizPlayAccess.mockResolvedValue({
+      ...quotaPlayAccess({ canAcceptResponses: true, completedResponses: 20 }),
+      isProActive: true,
+      isUnlocked: true,
+    });
+
+    const result = await getQuizLinkByToken("tok1");
+
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.quizLink.isAcceptingResponses).toBe(true);
   });
 
   it("refuses DRAFT quiz", async () => {
@@ -154,6 +249,7 @@ describe("getQuizLinkByToken", () => {
     if (!result.success) {
       expect(result.error).toBe(QUIZ_ACTION_ERROR_CODE.PLAY_DRAFT);
     }
+    expect(mockResolveQuizPlayAccess).not.toHaveBeenCalled();
   });
 
   it("refuses ARCHIVED quiz", async () => {
@@ -196,16 +292,24 @@ describe("getOrCreatePublicQuizLink", () => {
 describe("startQuizAttempt", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockEnsureQuizLinkResponseActivityStarted.mockResolvedValue(undefined);
+    mockIncrementQuizStartedAggregate.mockResolvedValue(undefined);
   });
+
+  const baseQuizLinkRow = {
+    id: "link-1",
+    quizId: "quiz-1",
+    expiresAt: null,
+    participantId: null,
+    allowMultipleAttempts: true,
+    quiz: { id: "quiz-1", status: "ACTIVE", ownerId: "owner-1" },
+    attempts: [],
+  };
 
   it("refuses when quiz is DRAFT", async () => {
     mockQuizLinkFindUnique.mockResolvedValue({
-      id: "link-1",
-      expiresAt: null,
-      participantId: null,
-      allowMultipleAttempts: true,
-      quiz: { status: "DRAFT" },
-      attempts: [],
+      ...baseQuizLinkRow,
+      quiz: { ...baseQuizLinkRow.quiz, status: "DRAFT" },
     });
 
     const result = await startQuizAttempt("link-1", null);
@@ -214,5 +318,93 @@ describe("startQuizAttempt", () => {
     if (!result.success) {
       expect(result.error).toBe(QUIZ_ACTION_ERROR_CODE.PLAY_DRAFT);
     }
+  });
+
+  it("allows start at 19 completed responses", async () => {
+    mockQuizLinkFindUnique.mockResolvedValue(baseQuizLinkRow);
+    mockResolveQuizPlayAccess.mockResolvedValue(
+      quotaPlayAccess({ canAcceptResponses: true, completedResponses: 19 }),
+    );
+    mockQuizAttemptCreate.mockResolvedValue({
+      id: "att-1",
+      quizLinkId: "link-1",
+      participantId: null,
+    });
+
+    const result = await startQuizAttempt("link-1", null);
+
+    expect(result.success).toBe(true);
+    expect(mockQuizAttemptCreate).toHaveBeenCalled();
+  });
+
+  it("refuses start at 20 completed responses without unlock or Pro", async () => {
+    mockQuizLinkFindUnique.mockResolvedValue(baseQuizLinkRow);
+    mockResolveQuizPlayAccess.mockResolvedValue(
+      quotaPlayAccess({ canAcceptResponses: false, completedResponses: 20 }),
+    );
+
+    const result = await startQuizAttempt("link-1", null);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe(QUIZ_ACTION_ERROR_CODE.FREE_RESPONSE_LIMIT_REACHED);
+    }
+    expect(mockQuizAttemptCreate).not.toHaveBeenCalled();
+  });
+
+  it("allows start at 20 completed when coin-unlocked", async () => {
+    mockQuizLinkFindUnique.mockResolvedValue(baseQuizLinkRow);
+    mockResolveQuizPlayAccess.mockResolvedValue({
+      ...quotaPlayAccess({ canAcceptResponses: true, completedResponses: 20 }),
+      isQuizUnlockedWithCoins: true,
+      isUnlocked: true,
+    });
+    mockQuizAttemptCreate.mockResolvedValue({
+      id: "att-2",
+      quizLinkId: "link-1",
+      participantId: null,
+    });
+
+    const result = await startQuizAttempt("link-1", null);
+
+    expect(result.success).toBe(true);
+    expect(mockQuizAttemptCreate).toHaveBeenCalled();
+  });
+
+  it("allows start at 20 completed when Pro is active", async () => {
+    mockQuizLinkFindUnique.mockResolvedValue(baseQuizLinkRow);
+    mockResolveQuizPlayAccess.mockResolvedValue({
+      ...quotaPlayAccess({ canAcceptResponses: true, completedResponses: 20 }),
+      isProActive: true,
+      isUnlocked: true,
+    });
+    mockQuizAttemptCreate.mockResolvedValue({
+      id: "att-3",
+      quizLinkId: "link-1",
+      participantId: null,
+    });
+
+    const result = await startQuizAttempt("link-1", null);
+
+    expect(result.success).toBe(true);
+    expect(mockQuizAttemptCreate).toHaveBeenCalled();
+  });
+
+  it("allows start when Pro is active despite quota at limit", async () => {
+    mockResolveQuizPlayAccess.mockResolvedValue({
+      ...quotaPlayAccess({ canAcceptResponses: true, completedResponses: 25 }),
+      isProActive: true,
+      isUnlocked: true,
+    });
+    mockQuizAttemptCreate.mockResolvedValue({
+      id: "att-pro",
+      quizLinkId: "link-1",
+      participantId: null,
+    });
+
+    const result = await startQuizAttempt("link-1", null);
+
+    expect(result.success).toBe(true);
+    expect(mockQuizAttemptCreate).toHaveBeenCalled();
   });
 });

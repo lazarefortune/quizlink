@@ -1,4 +1,4 @@
-image: node:20-alpine
+image: node:22-alpine
 
 stages:
   - deploy
@@ -26,6 +26,39 @@ deploy_quizlink:
     # Récupération du code
     git reset --hard HEAD
     git pull origin main
+
+    ensure_node_for_prisma() {
+      if [ -s "$HOME/.nvm/nvm.sh" ]; then
+        # shellcheck disable=SC1090
+        . "$HOME/.nvm/nvm.sh"
+        if [ -f .nvmrc ]; then
+          nvm install
+          nvm use
+        else
+          nvm install 22
+          nvm use 22
+        fi
+      fi
+
+      echo "Node.js $(node --version)"
+      node <<'NODE'
+    const [major, minor] = process.versions.node.split(".").map(Number);
+    const isSupported =
+      (major === 20 && minor >= 19) ||
+      (major === 22 && minor >= 12) ||
+      major >= 24;
+
+    if (!isSupported) {
+      console.error(
+        `Node.js ${process.version} is too old for Prisma 7. Requires 20.19+, 22.12+, or 24.0+.`,
+      );
+      console.error("Install nvm on the server or upgrade Node.js, then redeploy.");
+      process.exit(1);
+    }
+    NODE
+    }
+
+    ensure_node_for_prisma
 
     # Installation des dépendances
     pnpm install --frozen-lockfile

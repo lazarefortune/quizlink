@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/toast";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { GoogleIcon } from "@/components/ui/google-icon";
 import { BrandQuizLinkText } from "@/components/BrandQuizLinkText";
 import {
   Dialog,
@@ -280,6 +281,7 @@ export default function DesignSystemPage() {
                 <Button variant="blue">Blue</Button>
                 <Button variant="secondary">Secondary</Button>
                 <Button variant="outline">Outline</Button>
+                <Button variant="white">White</Button>
                 <Button variant="destructive">Destructive</Button>
                 <Button variant="ghost">Ghost</Button>
                 <Button variant="link" asChild>
@@ -297,6 +299,14 @@ export default function DesignSystemPage() {
                   <Star className="h-4 w-4" />
                 </Button>
               </div>
+              <Separator />
+              <CardDescription className="font-bold">
+                White — toujours blanc, y compris en dark mode (OAuth, etc.)
+              </CardDescription>
+              <Button variant="white" size="lg" className="h-12 min-w-[min(100%,20rem)] gap-3 px-6 text-base font-semibold [&_svg]:!size-5">
+                <GoogleIcon className="shrink-0" />
+                Continuer avec Google
+              </Button>
               <Separator />
               <Button variant="hero" size="xl">
                 <Zap className="h-5 w-5" /> Commencer un quiz
@@ -783,6 +793,10 @@ export default function DesignSystemPage() {
                   {
                     label: "Blue",
                     cls: "btn-bouncy-blue bg-blue text-blue-foreground",
+                  },
+                  {
+                    label: "White",
+                    cls: "btn-bouncy-white border-2 border-[hsl(var(--white-button-border))] bg-[hsl(var(--white-button-bg))] text-[hsl(var(--white-button-fg))]",
                   },
                 ].map((s) => (
                   <button

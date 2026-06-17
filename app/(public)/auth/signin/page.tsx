@@ -111,9 +111,9 @@ function SignInForm() {
             <motion.div variants={authFormItemVariants} className="flex min-w-0 flex-col gap-3 sm:gap-4">
               <Button
                 type="button"
-                variant="outline"
+                variant="white"
                 size="lg"
-                className="h-12 w-full gap-3 text-sm sm:text-base"
+                className="h-12 w-full gap-3 text-sm font-semibold sm:text-base [&_svg]:!size-5"
                 onClick={() => nextAuthSignIn("google", { callbackUrl: postAuthRedirect })}
               >
                 <GoogleIcon className="h-5 w-5 shrink-0" />

@@ -7,6 +7,7 @@ import { initializeUserCoins } from "@/lib/coins";
 import { recordUserLifecycleEvent, USER_LIFECYCLE_EVENT_TYPES } from "@/lib/userLifecycleEvents";
 import { CURRENT_PRIVACY_VERSION, CURRENT_TERMS_VERSION } from "@/lib/legal-versions";
 import { t } from "@/lib/i18n";
+import { ensureDefaultUserAvatar } from "@/lib/user-avatar/ensureDefaultUserAvatar";
 
 function generateVerificationCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -98,6 +99,8 @@ export async function signUpAction(
 
     // Initialize coins for new user (4 free coins)
     await initializeUserCoins(user.id);
+
+    await ensureDefaultUserAvatar(user.id);
 
     // Recover anonymous quizzes from localStorage (if available client-side)
     // This will be handled client-side after signup, but we prepare the user account

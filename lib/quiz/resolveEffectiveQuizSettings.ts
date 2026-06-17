@@ -1,3 +1,9 @@
+import {
+  DEFAULT_PARTICIPANT_IDENTITY_MODE,
+  isParticipantIdentityMode,
+  type ParticipantIdentityMode,
+} from "@/types/participant-identity";
+
 import { resolveEffectiveShuffleSettings } from "./shuffleSettings";
 
 /**
@@ -13,6 +19,7 @@ import { resolveEffectiveShuffleSettings } from "./shuffleSettings";
  * - timeLimitPerQuestion: null
  */
 export type EffectiveQuizSettings = {
+  participantIdentityMode: ParticipantIdentityMode;
   showAnswerImmediately: boolean;
   showAnswersAtEnd: boolean;
   randomizeQuestions: boolean;
@@ -51,7 +58,14 @@ export function resolveEffectiveQuizSettings(raw: unknown): EffectiveQuizSetting
         : undefined,
   });
 
+  const participantIdentityMode = isParticipantIdentityMode(
+    settings.participantIdentityMode,
+  )
+    ? settings.participantIdentityMode
+    : DEFAULT_PARTICIPANT_IDENTITY_MODE;
+
   return {
+    participantIdentityMode,
     showAnswerImmediately: readBooleanWithDefault(settings.showAnswerImmediately, true),
     showAnswersAtEnd: readBooleanWithDefault(settings.showAnswersAtEnd, true),
     randomizeQuestions: shuffle.randomizeQuestions,

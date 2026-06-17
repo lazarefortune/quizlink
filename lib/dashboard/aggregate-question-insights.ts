@@ -11,6 +11,7 @@ export type QuestionInsight = {
   responseCount: number;
   successRate: number | null;
   averageTimeSeconds: number | null;
+  expiredCount: number;
   optionDistribution: QuestionInsightOption[];
 };
 
@@ -22,6 +23,7 @@ export type QuestionForInsights = {
 export type AnswerForInsights = {
   questionId: string;
   isCorrect: boolean;
+  expired: boolean;
   timeSpent: number | null;
   selectedOptionIds: string[];
 };
@@ -57,6 +59,8 @@ export function aggregateQuestionInsights(
         ? timeValues.reduce((sum, value) => sum + value, 0) / timeValues.length
         : null;
 
+    const expiredCount = questionAnswers.filter((answer) => answer.expired).length;
+
     const optionCounts = new Map<string, number>();
     for (const answer of questionAnswers) {
       for (const optionId of answer.selectedOptionIds) {
@@ -81,6 +85,7 @@ export function aggregateQuestionInsights(
       responseCount,
       successRate,
       averageTimeSeconds,
+      expiredCount,
       optionDistribution,
     };
   });

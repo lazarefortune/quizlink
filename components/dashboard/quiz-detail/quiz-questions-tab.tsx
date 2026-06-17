@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { motion, useReducedMotion } from "framer-motion";
 import { CheckCheck, CheckCircle2, Circle, CircleCheck, CircleCheckBig, CopyCheck, MessageCircleQuestionMark } from "lucide-react";
 
 import type { QuizContentQuestion } from "@/app/(app)/dashboard/quiz/[quizId]/actions";
@@ -13,6 +14,13 @@ import { richTextToPlainText } from "@/lib/rich-text/richTextToPlainText";
 
 type QuizQuestionsTabProps = {
   questions: QuizContentQuestion[];
+};
+
+const QUESTION_CARD_SPRING = {
+  type: "spring" as const,
+  stiffness: 420,
+  damping: 22,
+  mass: 0.85,
 };
 
 function questionTypeLabel(type: string, locale: Locale): string {
@@ -43,13 +51,23 @@ function questionTypeIcon(type: string): React.ReactNode {
 
 export function QuizQuestionsTab({ questions }: QuizQuestionsTabProps) {
   const { locale } = useLocale();
+  const prefersReducedMotion = useReducedMotion();
 
   return (
     <section className="space-y-4">
       {questions.map((question, index) => (
-        <article key={question.id} className="rounded-xl border border-border bg-card p-4 sm:p-5">
+        <motion.article
+          key={question.id}
+          initial={prefersReducedMotion ? false : { opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{
+            ...QUESTION_CARD_SPRING,
+            delay: prefersReducedMotion ? 0 : index * 0.07,
+          }}
+          className="rounded-xl border border-border bg-card p-4 sm:p-5"
+        >
           <div className="mb-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-            <span className="text-base font-medium text-primary">
+            <span className="text-lg font-bold text-primary">
               {t(locale, "dashboard.questionLabel")} {index + 1}
             </span>
             <Badge variant="secondary" className="inline-flex items-center gap-1.5">
@@ -114,7 +132,7 @@ export function QuizQuestionsTab({ questions }: QuizQuestionsTabProps) {
               {question.explanation.trim()}
             </div>
           ) : null}
-        </article>
+        </motion.article>
       ))}
     </section>
   );

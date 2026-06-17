@@ -1,11 +1,20 @@
 # PRD — QuizLink
 
-> **Note :** Ce document décrit la vision produit initiale. Certains éléments ont évolué depuis (ex : Stripe est intégré, les quiz n’ont pas de lien expirant en 24h par défaut). Pour l’état actuel de l’app, voir [STRUCTURE-APP.md](STRUCTURE-APP.md) et [ARCHITECTURE.md](ARCHITECTURE.md).
+> **Note :** Ce document mélange la vision produit initiale et l’état actuel. Pour le modèle business en vigueur (quota, déblocage, Pro, purge), voir [quiz-quota-model.md](quiz-quota-model.md). Pour l’architecture technique, voir [STRUCTURE-APP.md](STRUCTURE-APP.md) et [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ---
 
-QuizLink permet de générer automatiquement des quiz à partir de ressources (texte, PDF, audio…) et de les partager via un lien temporaire (24h).
-Pour conserver, modifier ou réutiliser les quiz, l’utilisateur crée un compte.
+QuizLink permet de générer automatiquement des quiz à partir de ressources (texte, PDF, audio…) et de les partager via un lien.
+
+**Message central actuel :**
+
+```txt
+Crée ton quiz gratuitement.
+Reçois tes 20 premières réponses.
+Débloque le quiz quand tu veux aller plus loin.
+```
+
+Pour conserver, analyser en profondeur ou dépasser la limite gratuite, l’utilisateur crée un compte et peut débloquer un quiz avec des coins ou souscrire à QuizLink Pro.
 
 1️⃣ Vision produit
 🎯 Problème
@@ -26,9 +35,9 @@ Une app ultra simple
 
 Input → Quiz → Lien partageable
 
-Sans compte obligatoire
+Sans friction à la création
 
-Conversion naturelle via l’expiration du lien
+Conversion naturelle via la limite gratuite de réponses et le déblocage
 
 2️⃣ Cible / Personas
 🎓 Étudiants
@@ -50,6 +59,9 @@ Tester la compréhension
 Partage interne rapide
 
 3️⃣ Périmètre fonctionnel
+
+> Les sections MVP ci-dessous décrivent la V1 initiale (lien 24h). Le modèle actuel est le quota — voir section 7 et [quiz-quota-model.md](quiz-quota-model.md).
+
 🔹 MVP (V1 – priorité absolue)
 A. Génération de quiz
 
@@ -81,7 +93,9 @@ C. Conversion compte
 
 Si l’utilisateur veut :
 
-prolonger le lien
+débloquer un quiz au-delà de la limite gratuite
+
+consulter toutes les parties détaillées et les stats avancées
 
 modifier le quiz
 
@@ -194,23 +208,69 @@ choices[]
 
 correctAnswer
 
-7️⃣ Règles métiers importantes
+7️⃣ Règles métiers QuizLink (modèle quota actuel)
 
-Un quiz sans owner expire toujours
+Une réponse gratuite correspond à une partie terminée (`COMPLETED`).
 
-L’expiration est automatique et irréversible
+Les parties abandonnées (`ABANDONED`) ne comptent pas dans la limite gratuite.
 
-Un quiz expiré :
+Un quiz gratuit accepte jusqu’à 20 réponses terminées.
 
-n’est plus accessible
+À 20 réponses, le quiz ne reçoit plus de nouvelles réponses tant qu’il n’est pas débloqué.
 
-propose la création de compte
+Débloquer un quiz avec 40 coins est définitif : toutes les parties détaillées et les stats avancées restent accessibles.
 
-Un quiz avec owner :
+Pro débloque tous les quiz tant que l’abonnement est actif.
 
-peut être dupliqué
+Quand Pro expire, les quiz non débloqués reviennent au plan gratuit.
 
-peut avoir un lien permanent
+Les quiz débloqués avec coins restent débloqués même après la fin de Pro.
+
+### Free
+
+- créer des quiz
+- recevoir jusqu’à 20 réponses terminées par quiz
+- consulter les stats simples
+- voir 3 parties détaillées
+
+### Déblocage avec coins (40 coins)
+
+- déblocage définitif du quiz
+- continuer à recevoir des réponses
+- voir toutes les parties détaillées
+- accéder aux stats avancées
+
+### Pro
+
+- débloque tous les quiz tant que l’abonnement est actif
+- inclut les avantages de déblocage sur tous les quiz
+- les quiz débloqués avec coins restent débloqués
+
+### Purge interne (conservation des données)
+
+Les statistiques globales restent disponibles grâce aux agrégats. Pour maîtriser le stockage et protéger les données personnelles, les réponses détaillées des quiz gratuits inactifs peuvent être nettoyées après une période de conservation.
+
+La purge :
+
+- ne supprime pas le quiz
+- ne supprime pas les stats globales
+- ne supprime pas les agrégats
+- peut supprimer les réponses détaillées et les informations participant
+- ne concerne pas les quiz Pro ou débloqués
+
+### `QuizLink.expiresAt`
+
+`QuizLink.expiresAt` concerne l’expiration technique d’un lien d’invitation ou d’accès participant. Ce champ est séparé du modèle business quota.
+
+---
+
+7️⃣-bis Règles métiers historiques (MVP initial, obsolètes)
+
+> Conservé pour contexte. Ne plus utiliser pour le produit actuel.
+
+Un quiz sans owner expire toujours (lien 24h — remplacé par le modèle quota)
+
+L’expiration automatique du lien comme levier de conversion (remplacée par la limite de 20 réponses)
 
 8️⃣ UX / Parcours utilisateur
 🟢 Parcours idéal
@@ -225,9 +285,9 @@ Génération (loader + feedback)
 
 Quiz prêt → lien partagé
 
-Message clair : “Expire dans 24h”
+Message clair : « 20 réponses gratuites — débloque pour continuer »
 
-CTA : “Créer un compte pour conserver”
+CTA : « Créer un compte pour débloquer et analyser »
 
 9️⃣ KPIs à suivre
 
@@ -256,7 +316,7 @@ Génération quiz (mock IA au début)
 
 Quiz public via lien
 
-Expiration
+Limite gratuite et déblocage
 
 Auth
 

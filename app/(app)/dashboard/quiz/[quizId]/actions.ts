@@ -1,13 +1,39 @@
 "use server";
 
-import type { QuizLinkAnonymousStats } from "@prisma/client";
+import type { Prisma, QuizLinkAnonymousStats } from "@/generated/prisma/client";
+import { revalidatePath } from "next/cache";
+
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { mergeParticipantIdentityIntoStoredSettings } from "@/lib/quiz/mergeParticipantIdentityIntoStoredSettings";
+import {
+  isParticipantIdentityMode,
+  type ParticipantIdentityMode,
+} from "@/types/participant-identity";
 import { creatorCountedAttemptWhere } from "@/lib/creator-quiz-attempt-filter";
 import {
   aggregateQuestionInsights,
   type QuestionInsight,
 } from "@/lib/dashboard/aggregate-question-insights";
+import {
+  ATTEMPT_DETAILS_ERROR,
+  buildCreatorResponseAttemptWhere,
+  computeCreatorResponseStats,
+  computeLockedAttemptCount,
+  creatorResponseAttemptListSelect,
+  formatAnonymousParticipantLabel,
+  mapPrismaAttemptToCreatorRecord,
+  buildAnonymousAttemptIndexMap,
+  mapAttemptsToDetailRows,
+  resolveAttemptDetailsPurged,
+  type QuizDetailAttemptRow,
+} from "@/lib/dashboard/creator-response-attempts";
+import { getQuizAccessState } from "@/lib/quiz/getQuizAccessState";
+import { buildQuizDetailResultAccessSnapshot } from "@/lib/quiz/quizLinkResultAccess";
+import { resolveQuizResponseQuotaStatus } from "@/lib/quiz/quizResponseQuotaStatus";
+import type { QuizResponseQuotaStatus } from "@/lib/quiz/quizResponseQuotaStatus";
+import { getQuizResponseAggregates } from "@/lib/quiz/quiz-response-aggregates";
+import { resolveQuizSimpleKpis } from "@/lib/quiz/resolveQuizSimpleKpis";
 import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
 
 type QuizSettings = {
@@ -71,17 +97,15 @@ type GetQuizStatsResponse =
           lastScore: number | null;
           lastAttemptDate: Date | null;
         }>;
-        attempts: Array<{
-          id: string;
-          participantName: string;
-          isAnonymous: boolean;
-          score: number | null;
-          duration: number | null;
-          status: string;
-          startedAt: Date;
-          finishedAt: Date | null;
-          questionsAnswered: number;
-        }>;
+        completionRatePercent: number;
+        totalAttemptCount: number;
+        lockedAttemptCount: number;
+        purgedAttemptCount: number;
+        hasPurgedDetails: boolean;
+        detailsFullyPurged: boolean;
+        attempts: QuizDetailAttemptRow[];
+        resultAccess: ReturnType<typeof buildQuizDetailResultAccessSnapshot> | null;
+        quotaStatus: QuizResponseQuotaStatus;
       };
     }
   | { success: false; error: string };
@@ -90,12 +114,13 @@ type GetQuizQuestionInsightsResponse =
   | { success: true; insights: QuestionInsight[] }
   | { success: false; error: string };
 
-type GetAttemptDetailsResponse =
+export type GetAttemptDetailsResponse =
   | {
       success: true;
       attempt: {
         id: string;
         participantName: string;
+        participantEmail: string | null;
         score: number | null;
         status: string;
         startedAt: Date;
@@ -108,12 +133,79 @@ type GetAttemptDetailsResponse =
           correctOptionIds: string[];
           correctOptions: Array<{ id: string; label: string }>;
           isCorrect: boolean;
+          expired: boolean;
           timeSpent: number | null;
         }>;
         questionOrder?: Array<{ id: string; order: number }>;
       };
     }
   | { success: false; error: string };
+
+export type UpdateQuizParticipantIdentityModeResult =
+  | { success: true; participantIdentityMode: ParticipantIdentityMode }
+  | { success: false; error: string };
+
+/**
+ * Updates only quiz.settings.participantIdentityMode (owner-only, no question touch).
+ */
+export async function updateQuizParticipantIdentityModeAction(
+  quizId: string,
+  participantIdentityMode: string,
+): Promise<UpdateQuizParticipantIdentityModeResult> {
+  try {
+    if (!prisma) {
+      return { success: false, error: "Database not initialized" };
+    }
+
+    if (!isParticipantIdentityMode(participantIdentityMode)) {
+      return { success: false, error: "Invalid participant identity mode" };
+    }
+
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const quiz = await prisma.quiz.findUnique({
+      where: { id: quizId },
+      select: { ownerId: true, settings: true },
+    });
+
+    if (!quiz) {
+      return { success: false, error: "Quiz not found" };
+    }
+
+    if (quiz.ownerId !== session.user.id) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const nextSettings = mergeParticipantIdentityIntoStoredSettings(
+      quiz.settings,
+      participantIdentityMode,
+    );
+
+    await prisma.quiz.update({
+      where: { id: quizId },
+      data: {
+        settings: nextSettings as Prisma.InputJsonValue,
+      },
+    });
+
+    revalidatePath(`/dashboard/quiz/${quizId}`);
+    revalidatePath(`/dashboard/quiz/${quizId}/success`);
+
+    return { success: true, participantIdentityMode };
+  } catch (error) {
+    console.error("updateQuizParticipantIdentityModeAction:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to update participant identity mode",
+    };
+  }
+}
 
 export type QuizContentQuestion = {
   id: string;
@@ -356,42 +448,118 @@ export async function getQuizStats(
     const anonymousLowestScore =
       anonymousLowestCandidates.length > 0 ? Math.min(...anonymousLowestCandidates) : null;
 
-    const totalResponses = anonymousCompletedCount + identifiedCompletedCount;
-    const totalStarted = anonymousStartedCount + identifiedAttemptsCount;
+    const responseWhere = buildCreatorResponseAttemptWhere(quizId);
+    const now = new Date();
+
+    const publicQuizLink = await prisma.quizLink.findFirst({
+      where: { quizId, participantId: null },
+      select: {
+        responsesStartedAt: true,
+        detailsPurgedAt: true,
+      },
+    });
+
+    const accessState = await getQuizAccessState({
+      quizId,
+      userId: session.user.id,
+      now,
+    });
+
+    const resultAccess = buildQuizDetailResultAccessSnapshot(
+      publicQuizLink,
+      accessState,
+    );
+
+    const detailedPreviewLimit = resultAccess?.detailedPreviewLimit ?? 3;
+    const detailsFullyPurged = publicQuizLink?.detailsPurgedAt != null;
+    const showAllAttemptsInList = accessState.isUnlocked || detailsFullyPurged;
+
+    // Attempt rows power preview list, audience breakdown and best/worst scores.
+    // Simple KPIs (totals, averages, completion rate) come from quiz_response_stats when available.
+    const [totalAttemptCount, statsAttemptRows, previewAttemptRows, anonymousIndexRows, responseAggregates] =
+      await Promise.all([
+        prisma.quizAttempt.count({ where: responseWhere }),
+        prisma.quizAttempt.findMany({
+          where: responseWhere,
+          select: creatorResponseAttemptListSelect,
+        }),
+        prisma.quizAttempt.findMany({
+          where: responseWhere,
+          select: creatorResponseAttemptListSelect,
+          orderBy: { startedAt: "asc" },
+          ...(showAllAttemptsInList ? {} : { take: detailedPreviewLimit }),
+        }),
+        prisma.quizAttempt.findMany({
+          where: {
+            ...responseWhere,
+            identityMode: "ANONYMOUS",
+          },
+          select: { id: true, startedAt: true },
+        }),
+        getQuizResponseAggregates(quizId),
+      ]);
+
+    const statsAttempts = statsAttemptRows.map(mapPrismaAttemptToCreatorRecord);
+    const responseStats = computeCreatorResponseStats(statsAttempts);
+    const purgedAttemptCount = statsAttempts.filter((attempt) =>
+      resolveAttemptDetailsPurged(
+        attempt.quizLinkDetailsPurgedAt,
+        attempt.questionsAnswered,
+      ),
+    ).length;
+    const hasPurgedDetails =
+      publicQuizLink?.detailsPurgedAt != null || purgedAttemptCount > 0;
+
+    const anonymousIndexMap = buildAnonymousAttemptIndexMap(anonymousIndexRows);
+    const previewAttempts = mapAttemptsToDetailRows(
+      previewAttemptRows.map(mapPrismaAttemptToCreatorRecord),
+      anonymousIndexMap,
+    );
+
+    const attempts = previewAttempts.sort(
+      (a, b) => a.startedAt.getTime() - b.startedAt.getTime(),
+    );
+
+    const isUnlocked = accessState.isUnlocked;
+    const lockedAttemptCount = detailsFullyPurged
+      ? 0
+      : computeLockedAttemptCount(
+          totalAttemptCount,
+          attempts.length,
+          isUnlocked,
+        );
+
+    const simpleKpis = resolveQuizSimpleKpis(
+      responseAggregates,
+      responseStats,
+      Math.max(anonymousStartedCount, identifiedAttemptsCount),
+    );
+
+    const totalResponses = simpleKpis.totalResponses;
+    const totalStarted = simpleKpis.totalStarted;
     const totalOpenCount = anonymousOpenCount;
 
-    const combinedScoreCount = anonymousScoreCount + identifiedScoreCount;
-    const combinedScoreSum = anonymousScoreSum + identifiedScoreSum;
-    const globalScoreAverage =
-      combinedScoreCount > 0 ? combinedScoreSum / combinedScoreCount : 0;
+    const isProActive =
+      accessState.isUnlocked && accessState.unlockedBy === "SUBSCRIPTION";
+    const isQuizUnlockedWithCoins = accessState.isUnlocked && !isProActive;
+    const quotaStatus = resolveQuizResponseQuotaStatus({
+      completedResponses: totalResponses,
+      isProActive,
+      isQuizUnlockedWithCoins,
+      unlockedBy: isProActive
+        ? "SUBSCRIPTION"
+        : accessState.unlockedBy === "ADMIN"
+          ? "ADMIN"
+          : isQuizUnlockedWithCoins
+            ? "COINS"
+            : null,
+    });
 
-    const globalBestCandidates = [anonymousBestScore, identifiedBestScore].filter(
-      (v): v is number => v != null && Number.isFinite(v)
-    );
-    const globalBestScore =
-      globalBestCandidates.length > 0 ? Math.max(...globalBestCandidates) : null;
-
-    const globalLowestCandidates = [anonymousLowestScore, identifiedLowestScore].filter(
-      (v): v is number => v != null && Number.isFinite(v)
-    );
-    const globalLowestScore =
-      globalLowestCandidates.length > 0 ? Math.min(...globalLowestCandidates) : null;
-
-    const completedDurations = completedAttempts
-      .map((attempt) => {
-        if (!attempt.finishedAt || !attempt.startedAt) {
-          return null;
-        }
-        return Math.floor(
-          (attempt.finishedAt.getTime() - attempt.startedAt.getTime()) / 1000,
-        );
-      })
-      .filter((value): value is number => value != null && value > 0);
-    const globalAverageDurationSeconds =
-      completedDurations.length > 0
-        ? completedDurations.reduce((sum, value) => sum + value, 0) /
-          completedDurations.length
-        : null;
+    const globalScoreAverage = simpleKpis.globalScoreAverage;
+    const globalBestScore = responseStats.bestScore;
+    const globalLowestScore = responseStats.lowestScore;
+    const globalAverageDurationSeconds = simpleKpis.globalAverageDurationSeconds;
+    const completionRatePercent = simpleKpis.completionRatePercent;
 
     // Calculate stats
     const totalInvitations = quizLinks.length;
@@ -408,10 +576,7 @@ export async function getQuizStats(
 
     const averageScore = globalScoreAverage;
 
-    const completionRate =
-      totalAttempts > 0
-        ? (identifiedCompletedCount / totalAttempts) * 100
-        : 0;
+    const completionRate = completionRatePercent;
 
     // Get participants with stats (creator stats: identified attempts only)
     const participantsMap = new Map<
@@ -460,34 +625,6 @@ export async function getQuizStats(
       };
     });
 
-    // Get attempts list (identified only; anonymous excluded from creator UI)
-    const attempts = identifiedAttempts
-      .map((attempt) => {
-        const duration =
-          attempt.finishedAt && attempt.startedAt
-            ? Math.floor(
-                (attempt.finishedAt.getTime() - attempt.startedAt.getTime()) /
-                  1000
-              )
-            : null;
-
-        return {
-          id: attempt.id,
-          participantName: attempt.participant?.name ?? "",
-          isAnonymous: false,
-          score: attempt.score,
-          duration,
-          status: attempt.status,
-          startedAt: attempt.startedAt,
-          finishedAt: attempt.finishedAt,
-          questionsAnswered: attempt.answers ? attempt.answers.length : 0,
-        };
-      })
-      .sort(
-        (a: { startedAt: Date }, b: { startedAt: Date }) =>
-          b.startedAt.getTime() - a.startedAt.getTime()
-      );
-
     const settings = (quiz.settings ?? {}) as QuizSettings;
 
     return {
@@ -501,13 +638,13 @@ export async function getQuizStats(
         averageScore,
         completionRate,
         totalQuestions: quiz._count.questions,
-        anonymousCompletedCount,
+        anonymousCompletedCount: responseStats.anonymousCompletedCount,
         anonymousStartedCount,
         anonymousOpenCount,
         anonymousScoreCount,
         anonymousBestScore,
         anonymousLowestScore,
-        identifiedCompletedCount,
+        identifiedCompletedCount: responseStats.identifiedCompletedCount,
         identifiedAttemptsCount,
         identifiedScoreCount,
         identifiedBestScore,
@@ -516,10 +653,11 @@ export async function getQuizStats(
         totalStarted,
         totalOpenCount,
         globalScoreAverage,
-        globalScoredCount: combinedScoreCount,
+        globalScoredCount: simpleKpis.globalScoredCount,
         globalBestScore,
         globalLowestScore,
         globalAverageDurationSeconds,
+        completionRatePercent,
         quizDetails: {
           visibility: quiz.visibility,
           status: quiz.status,
@@ -527,7 +665,14 @@ export async function getQuizStats(
           createdAt: quiz.createdAt,
         },
         participants,
+        totalAttemptCount,
+        lockedAttemptCount,
+        purgedAttemptCount,
+        hasPurgedDetails,
+        detailsFullyPurged,
         attempts,
+        resultAccess,
+        quotaStatus,
       },
     };
   } catch (error) {
@@ -578,15 +723,14 @@ export async function getQuizQuestionInsights(
     const attempts = await prisma.quizAttempt.findMany({
       where: {
         status: "COMPLETED",
-        participantId: { not: null },
-        quizLink: { quizId },
-        ...creatorCountedAttemptWhere,
+        ...buildCreatorResponseAttemptWhere(quizId),
       },
       select: {
         answers: {
           select: {
             questionId: true,
             isCorrect: true,
+            expired: true,
             timeSpent: true,
             selectedOptionIds: true,
           },
@@ -605,6 +749,7 @@ export async function getQuizQuestionInsights(
         return {
           questionId: answer.questionId,
           isCorrect: answer.isCorrect,
+          expired: answer.expired,
           timeSpent: answer.timeSpent,
           selectedOptionIds,
         };
@@ -674,8 +819,70 @@ export async function getAttemptDetails(
       return { success: false, error: "Unauthorized" };
     }
 
-    if (!attempt.participantId) {
-      return { success: false, error: "Unauthorized" };
+    if (
+      resolveAttemptDetailsPurged(
+        attempt.quizLink.detailsPurgedAt,
+        attempt.answers.length,
+      )
+    ) {
+      return { success: false, error: ATTEMPT_DETAILS_ERROR.PURGED };
+    }
+
+    const quizId = attempt.quizLink.quizId;
+    const publicQuizLink = await prisma.quizLink.findFirst({
+      where: { quizId, participantId: null },
+      select: {
+        responsesStartedAt: true,
+      },
+    });
+
+    const now = new Date();
+    const accessState = await getQuizAccessState({
+      quizId,
+      userId: session.user.id,
+      now,
+    });
+
+    if (!accessState.isUnlocked) {
+      const detailedLimit = publicQuizLink
+        ? buildQuizDetailResultAccessSnapshot(publicQuizLink, accessState)
+            ?.detailedPreviewLimit ?? 3
+        : 3;
+      const visibleRows = await prisma.quizAttempt.findMany({
+        where: buildCreatorResponseAttemptWhere(quizId),
+        orderBy: { startedAt: "asc" },
+        take: detailedLimit,
+        select: { id: true },
+      });
+      const isVisible = visibleRows.some((row) => row.id === attemptId);
+      if (!isVisible) {
+        return { success: false, error: ATTEMPT_DETAILS_ERROR.LOCKED };
+      }
+    }
+
+    let participantName = attempt.participant?.name ?? "Participant anonyme";
+    let participantEmail: string | null = attempt.participant?.email ?? null;
+
+    if (attempt.participantId == null) {
+      if (attempt.identityMode === "ANONYMOUS") {
+        const anonymousAttempts = await prisma.quizAttempt.findMany({
+          where: {
+            quizLink: { quizId: attempt.quizLink.quizId },
+            identityMode: "ANONYMOUS",
+          },
+          select: { id: true, startedAt: true },
+          orderBy: { startedAt: "asc" },
+        });
+        const index = buildAnonymousAttemptIndexMap(anonymousAttempts).get(attempt.id);
+        participantName = formatAnonymousParticipantLabel(index ?? 0);
+        participantEmail = null;
+      } else if (attempt.identityMode === "NAME_EMAIL") {
+        participantName = attempt.participantName?.trim() || "—";
+        participantEmail = attempt.participantEmail?.trim() || null;
+      } else if (attempt.identityMode === "PSEUDONYM") {
+        participantName = attempt.participantName?.trim() || "—";
+        participantEmail = null;
+      }
     }
 
     const answers = attempt.answers.map((answer) => {
@@ -714,18 +921,23 @@ export async function getAttemptDetails(
         correctOptionIds,
         correctOptions,
         isCorrect: answer.isCorrect,
+        expired: answer.expired,
         timeSpent: answer.timeSpent,
       };
     });
 
-    const quiz = attempt.quizLink.quiz as { ownerId: string; questions: Array<{ id: string; order: number }> };
+    const quiz = attempt.quizLink.quiz as {
+      ownerId: string;
+      questions: Array<{ id: string; order: number }>;
+    };
     const questionOrder = quiz.questions?.map((q) => ({ id: q.id, order: q.order })) ?? [];
 
     return {
       success: true,
       attempt: {
         id: attempt.id,
-        participantName: attempt.participant?.name ?? "",
+        participantName,
+        participantEmail,
         score: attempt.score,
         status: attempt.status,
         startedAt: attempt.startedAt,

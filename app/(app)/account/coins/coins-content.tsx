@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,16 +23,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Coins,
   ArrowUpCircle,
   ArrowDownCircle,
   ShoppingBag,
-  Check,
-  Loader2,
   Zap,
   History,
   FileText,
-  ZapIcon,
 } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
@@ -43,6 +40,11 @@ import {
 import { useToast } from "@/components/ui/toast";
 import { format } from "date-fns";
 import { fr, enUS } from "date-fns/locale";
+import { createProSubscriptionCheckoutAction } from "@/app/(app)/account/pro-subscription/actions";
+import type { ActiveUserSubscriptionAccess } from "@/lib/quiz/getActiveUserSubscriptionAccess";
+import { COINS_FACE_SRC } from "./coin-pack-coins-icon";
+import { CoinPackOfferCard } from "./coin-pack-offer-card";
+import { CoinsProSubscriptionCard } from "./coins-pro-subscription-card";
 
 type CoinPack = {
   id: string;
@@ -56,7 +58,17 @@ type CoinPack = {
   order: number;
 };
 
-export function CoinsContent() {
+type CoinsContentProps = {
+  proAccess: ActiveUserSubscriptionAccess;
+  isProAvailable: boolean;
+  subscriptionReturnStatus?: string;
+};
+
+export function CoinsContent({
+  proAccess,
+  isProAvailable,
+  subscriptionReturnStatus,
+}: CoinsContentProps) {
   const { locale } = useLocale();
   const { showToast } = useToast();
   const [transactions, setTransactions] = useState<CoinTransaction[]>([]);
@@ -67,6 +79,7 @@ export function CoinsContent() {
   const [isLoadingPacks, setIsLoadingPacks] = useState(true);
   const [loadingPackId, setLoadingPackId] = useState<string | null>(null);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  const [isStartingProCheckout, setIsStartingProCheckout] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -146,6 +159,29 @@ export function CoinsContent() {
     }
   };
 
+  const handleStartProCheckout = async () => {
+    if (isStartingProCheckout) return;
+    setIsStartingProCheckout(true);
+    try {
+      const result = await createProSubscriptionCheckoutAction();
+      if (result.success) {
+        window.location.assign(result.checkoutUrl);
+        return;
+      }
+
+      if (result.redirectTo) {
+        window.location.assign(result.redirectTo);
+        return;
+      }
+
+      showToast(t(locale, "account.subscription.checkoutError"), "error");
+    } catch {
+      showToast(t(locale, "account.subscription.checkoutError"), "error");
+    } finally {
+      setIsStartingProCheckout(false);
+    }
+  };
+
   const dateLocale = locale === "fr" ? fr : enUS;
   const isLowBalance = balance < 4;
 
@@ -166,9 +202,15 @@ export function CoinsContent() {
         <Card className="overflow-hidden border-2">
           <CardContent className="relative flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-6 sm:p-8">
             <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-blue/15 text-blue">
-                <Coins className="h-7 w-7" />
-              </div>
+              <Image
+                src={COINS_FACE_SRC}
+                alt=""
+                width={64}
+                height={64}
+                aria-hidden
+                className="h-14 w-14 shrink-0 object-contain sm:h-16 sm:w-16"
+                data-testid="coins-balance-icon"
+              />
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
                   {t(locale, "account.coins.currentBalance")}
@@ -207,7 +249,23 @@ export function CoinsContent() {
           </div>
         )}
 
-        {/* Nos offres — extensible pour d'autres produits plus tard */}
+        {/* Pro subscription card */}
+        <section id="pro-subscription">
+          <h2 className="h2 text-xl font-semibold text-foreground sm:text-2xl mb-1">
+            {t(locale, "account.coins.proTitle")}
+          </h2>
+          <p className="text-base text-muted-foreground mb-6">
+            {t(locale, "account.coins.proSubscriptionDescription")}
+          </p>
+          <CoinsProSubscriptionCard
+            proAccess={proAccess}
+            isProAvailable={isProAvailable}
+            isStartingProCheckout={isStartingProCheckout}
+            onStartProCheckout={() => void handleStartProCheckout()}
+          />
+        </section>
+
+        {/* Boutique de coins */}
         <section id="shop-offers" className="scroll-mt-8 space-y-6">
           <h2 className="h2 text-xl font-semibold text-foreground sm:text-2xl">
             {t(locale, "account.coins.ourOffers")}
@@ -236,73 +294,21 @@ export function CoinsContent() {
             </Card>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-              {packs.map((pack) => {
-                const isPopular = pack.isPopular;
-                return (
-                  <Card
-                    key={pack.id}
-                    variant="playful"
-                    className={`relative transition-all duration-200 ${
-                      isPopular
-                        ? "border-primary shadow-md ring-2 ring-primary/20"
-                        : "hover:border-primary/30 hover:shadow-md"
-                    }`}
-                  >
-                    {isPopular && (
-                      <Badge className="absolute -top-2.5 left-1/2 -translate-x-1/2 z-10 font-bold">
-                        {t(locale, "pricing.popular")}
-                      </Badge>
-                    )}
-                    <CardContent className="p-5 sm:p-6 space-y-4">
-                      <div>
-                        <p className="font-fredoka font-semibold text-foreground text-lg uppercase">
-                          {pack.displayName}
-                        </p>
-                        <div className="flex items-center gap-1.5 mt-1">
-                          <Coins className="h-5 w-5 text-primary" />
-                          <span className="text-base font-fredoka font-semibold text-muted-foreground">
-                            {pack.coins} {t(locale, "account.coins.coins")}
-                          </span>
-                        </div>
-                      </div>
-                      <p className="font-fredoka text-3xl font-black text-foreground">
-                        {pack.price}€
-                      </p>
-                      <ul className="space-y-1.5 text-sm text-muted-foreground">
-                        <li className="flex items-center gap-2">
-                          <Check className="h-4 w-4 text-primary shrink-0" />
-                          ~{Math.floor(pack.coins / 2)}{" "}
-                          {t(locale, "pricing.aiGenerations")}
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <Check className="h-4 w-4 text-primary shrink-0" />
-                          {t(locale, "pricing.unlimitedManual")}
-                        </li>
-                      </ul>
-                      <Button
-                        variant={isPopular ? "primary" : "secondary"}
-                        className="w-full font-bold"
-                        disabled={loadingPackId !== null}
-                        onClick={() => handlePurchase(pack.id)}
-                      >
-                        {loadingPackId === pack.id ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                            {t(locale, "pricing.loading")}
-                          </>
-                        ) : (
-                          <>
-                            <ZapIcon
-                              className="h-4 w-4"
-                            />
-                            {t(locale, "pricing.purchase")}
-                          </>
-                        )}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+              {packs.map((pack) => (
+                <CoinPackOfferCard
+                  key={pack.id}
+                  pack={{
+                    id: pack.id,
+                    displayName: pack.displayName,
+                    coins: pack.coins,
+                    price: pack.price,
+                    isPopular: pack.isPopular,
+                  }}
+                  isLoading={loadingPackId === pack.id}
+                  isAnyPackLoading={loadingPackId !== null}
+                  onPurchase={handlePurchase}
+                />
+              ))}
             </div>
           )}
         </section>

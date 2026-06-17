@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Star } from "lucide-react";
 
+import { FeedbackStarIcon } from "@/components/dashboard/dashboard-nav-icons";
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
@@ -76,15 +76,7 @@ export function StarRating({
                 }
               }}
             >
-              <Star
-                className={cn(
-                  "h-7 w-7 transition-colors",
-                  isSelected
-                    ? "fill-amber-400 text-amber-400"
-                    : "text-muted-foreground",
-                )}
-                aria-hidden
-              />
+              <FeedbackStarIcon isActive={isSelected} className="h-8 w-8 transition-opacity" />
             </button>
           );
         })}

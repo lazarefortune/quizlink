@@ -11,7 +11,7 @@ const nextConfig: NextConfig = {
    * event capture and session replay. See PostHog Next.js proxy docs.
    */
   skipTrailingSlashRedirect: true,
-  serverExternalPackages: ["pdf-parse"],
+  serverExternalPackages: ["pdf-parse", "mariadb", "@prisma/adapter-mariadb"],
   // Allow raw body for Stripe webhooks
   experimental: {
     serverActions: {

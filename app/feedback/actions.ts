@@ -14,7 +14,7 @@ import type {
   SubmitUserFeedbackInput,
 } from "@/lib/schemas/feedback.schema";
 import { sendSupportNotificationIfNeeded } from "@/lib/sendSupportNotificationIfNeeded";
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
 
 type ValidatedFeedbackInput = SubmitFeedbackInput;
 

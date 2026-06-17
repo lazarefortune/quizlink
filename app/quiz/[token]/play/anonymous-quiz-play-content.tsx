@@ -32,13 +32,17 @@ import {
   findQuestionIndexById,
 } from "@/lib/quiz/quizActiveTimedQuestion";
 import { useQuizQuestionTimer } from "@/lib/quiz/useQuizQuestionTimer";
-import {
-  validateAnonymousQuestionAnswer,
-  validateAnonymousQuizAnswers,
-  type AnonymousQuizDetailRow,
-  type AnonymousQuizQuestionPublic,
+import type {
+  AnonymousQuizQuestionPublic,
 } from "@/app/quiz-link/anonymous-quiz-actions";
-import { recordAnonymousQuizCompletion } from "@/app/quiz-link/anonymous-quiz-stats-actions";
+import {
+  abandonQuizAttemptAction,
+  startAttemptQuestionAction,
+  submitAttemptAnswerAction,
+  finishAnonymousQuizAttemptAction,
+  type RemainingAnswer,
+} from "@/app/quiz-link/anonymous-attempt-actions";
+import type { AnonymousQuizResultDetail } from "@/lib/anonymousQuizResultSession";
 import { track } from "@/lib/analytics/track";
 import { ANONYMOUS_QUIZ_COMPLETED } from "@/lib/analytics/events";
 import { buildCommonEventProps } from "@/lib/analytics/props";
@@ -47,6 +51,7 @@ import { AnonymousQuizFinishingScreen } from "./anonymous-quiz-finishing-screen"
 
 type AnonymousQuizPlayContentProps = {
   token: string;
+  attemptId: string;
   quizId: string;
   quizName: string;
   settings: {
@@ -74,6 +79,7 @@ type AnswerState = {
 
 export function AnonymousQuizPlayContent({
   token,
+  attemptId: initialAttemptId,
   quizId,
   quizName,
   settings: initialSettings,
@@ -88,8 +94,10 @@ export function AnonymousQuizPlayContent({
     null,
   );
   const [answers, setAnswers] = useState<AnswerState[]>([]);
+  const [attemptId] = useState(initialAttemptId);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showQuitConfirm, setShowQuitConfirm] = useState(false);
+  const [isQuitting, setIsQuitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isQuizFinished, setIsQuizFinished] = useState(false);
   const [isFinishing, setIsFinishing] = useState(false);
@@ -173,6 +181,16 @@ export function AnonymousQuizPlayContent({
   }, [currentQuestionIndex, questions.length, prefersReducedMotion]);
 
   usePrefetchQuestionImages(questions, currentQuestionIndex, { lookahead: 2 });
+
+  // Record server-side question start whenever the current question changes.
+  // Fire-and-forget: creates QuizAttemptQuestion with startedAt/deadlineAt so the
+  // server can verify deadlines on answer submission (anti-cheat).
+  useEffect(() => {
+    if (!attemptId || questions.length === 0) return;
+    const question = questions[currentQuestionIndex];
+    if (!question) return;
+    void startAttemptQuestionAction(attemptId, question.id);
+  }, [currentQuestionIndex, questions, attemptId]);
 
   const activeTimedAnswer = activeTimedQuestionId
     ? answers.find((answer) => answer.questionId === activeTimedQuestionId)
@@ -285,14 +303,10 @@ export function AnonymousQuizPlayContent({
       }
 
       recordTimeForQuestionId(questionId);
-      const timeSpent = timeSpentByQuestionIdRef.current[questionId] ?? 0;
 
-      const result = await validateAnonymousQuestionAnswer(
-        token,
-        questionId,
-        selectedOptionIds,
-        timeSpent
-      );
+      const result = attemptId
+        ? await submitAttemptAnswerAction(attemptId, questionId, selectedOptionIds)
+        : { success: false as const, error: "No attempt" };
 
       if (!result.success) {
         setError(resolveQuizActionError(locale, result.error));
@@ -310,7 +324,6 @@ export function AnonymousQuizPlayContent({
               isCorrect: result.isCorrect,
               correctOptionIds: result.correctOptionIds,
               explanation: result.explanation,
-              timeSpent,
             };
           }
           return a;
@@ -320,7 +333,7 @@ export function AnonymousQuizPlayContent({
       });
       setIsSubmitting(false);
     },
-    [token, locale, recordTimeForQuestionId]
+    [attemptId, locale, recordTimeForQuestionId]
   );
 
   const handleAnswerSelect = (optionId: string) => {
@@ -439,19 +452,18 @@ export function AnonymousQuizPlayContent({
         }
       }
 
-      const payload = questions.map((q) => {
-        const a = answersRef.current.find((x) => x.questionId === q.id);
-        return {
-          questionId: q.id,
-          selectedOptionIds: a?.selectedOptionIds ?? [],
-        };
-      });
+      // Build answers not yet submitted to the server (isVerified = false)
+      const remainingAnswers: RemainingAnswer[] = questions
+        .map((q) => {
+          const a = answersRef.current.find((x) => x.questionId === q.id);
+          if (a?.isVerified) return null;
+          return { questionId: q.id, selectedOptionIds: a?.selectedOptionIds ?? [] };
+        })
+        .filter((a): a is RemainingAnswer => a !== null);
 
-      const result = await validateAnonymousQuizAnswers(
-        token,
-        payload,
-        sessionStartedAtRef.current
-      );
+      const result = attemptId
+        ? await finishAnonymousQuizAttemptAction(attemptId, remainingAnswers)
+        : { success: false as const, error: "No attempt" };
 
       if (!result.success) {
         setError(resolveQuizActionError(locale, result.error));
@@ -460,18 +472,20 @@ export function AnonymousQuizPlayContent({
       }
 
       setFinishingStage("preparing");
-      const statsResult = await recordAnonymousQuizCompletion(token, result.score);
-      if (!statsResult.success) {
-        console.error("recordAnonymousQuizCompletion:", statsResult.error);
-      }
+      // QuizLinkAnonymousStats update is handled server-side in finishAnonymousQuizAttemptAction
 
-      const mergedDetails: (AnonymousQuizDetailRow & { timeSpent?: number })[] = result.details.map((row) => {
-        const trackedTime = timeSpentByQuestionIdRef.current[row.questionId];
-        return {
-          ...row,
-          timeSpent: trackedTime && trackedTime > 0 ? trackedTime : undefined,
-        };
-      });
+      const sessionDetails: AnonymousQuizResultDetail[] = result.details.map((row) => ({
+        questionId: row.questionId,
+        questionLabel: row.questionLabel,
+        questionImage: row.questionImage,
+        isCorrect: row.isCorrect,
+        selectedOptionIds: row.selectedOptionIds,
+        selectedOptionLabels: row.selectedOptionLabels,
+        correctOptionIds: row.correctOptionIds,
+        correctOptionLabels: row.correctOptionLabels,
+        explanation: row.explanation,
+        timeSpent: row.timeSpentSeconds ?? undefined,
+      }));
 
       setIsQuizFinished(true);
       saveAnonymousQuizResultToSession(token, {
@@ -480,10 +494,10 @@ export function AnonymousQuizPlayContent({
         score: result.score,
         totalQuestions: result.totalQuestions,
         correctAnswersCount: result.correctAnswersCount,
-        durationSec: result.durationSec,
+        durationSec: result.durationSec ?? undefined,
         showAnswerImmediately: settings?.showAnswerImmediately ?? true,
         showAnswersAtEnd: result.showAnswersAtEnd,
-        details: mergedDetails,
+        details: sessionDetails,
         savedAt: Date.now(),
       });
 
@@ -528,6 +542,7 @@ export function AnonymousQuizPlayContent({
     settings.showAnswerImmediately,
     recordTimeForQuestionId,
     prefersReducedMotion,
+    attemptId,
   ]);
 
   handleFinishRef.current = handleFinish;
@@ -547,10 +562,24 @@ export function AnonymousQuizPlayContent({
     setShowQuitConfirm(true);
   };
 
-  const confirmQuit = () => {
-    setIsQuizFinished(true);
-    setShowQuitConfirm(false);
-    router.push(`/quiz/${token}`);
+  const confirmQuit = async () => {
+    if (isQuitting) {
+      return;
+    }
+    setIsQuitting(true);
+    try {
+      const result = await abandonQuizAttemptAction(attemptId);
+      if (!result.success) {
+        console.warn("abandonQuizAttemptAction:", result.error);
+      }
+    } catch (err) {
+      console.warn("abandonQuizAttemptAction failed:", err);
+    } finally {
+      setIsQuizFinished(true);
+      setShowQuitConfirm(false);
+      router.push(`/quiz/${token}`);
+      setIsQuitting(false);
+    }
   };
 
   if (questions.length === 0) {
@@ -606,7 +635,7 @@ export function AnonymousQuizPlayContent({
           currentQuestionIndex={currentQuestionIndex}
           totalQuestions={questions.length}
           onQuit={handleQuit}
-          quitDisabled={isFinishing}
+          quitDisabled={isFinishing || isQuitting}
         />
 
         {isTimeUp && (
@@ -665,14 +694,24 @@ export function AnonymousQuizPlayContent({
         <Dialog open={showQuitConfirm} onOpenChange={setShowQuitConfirm}>
           <DialogContent className="sm:max-w-xl">
             <DialogHeader>
-              <DialogTitle>{t(locale, "quiz.quit")}</DialogTitle>
-              <DialogDescription>{t(locale, "quiz.quitConfirm")}</DialogDescription>
+              <DialogTitle>{t(locale, "quiz.quitConfirmTitle")}</DialogTitle>
+              <DialogDescription>
+                {t(locale, "quiz.quitConfirmDescription")}
+              </DialogDescription>
             </DialogHeader>
             <DialogFooter>
-              <Button variant="ghost" onClick={() => setShowQuitConfirm(false)}>
-                {t(locale, "common.cancel")}
+              <Button
+                variant="ghost"
+                onClick={() => setShowQuitConfirm(false)}
+                disabled={isQuitting}
+              >
+                {t(locale, "quiz.quitContinuePlaying")}
               </Button>
-              <Button variant="destructive" onClick={confirmQuit}>
+              <Button
+                variant="destructive"
+                onClick={() => void confirmQuit()}
+                disabled={isQuitting}
+              >
                 {t(locale, "quiz.quit")}
               </Button>
             </DialogFooter>

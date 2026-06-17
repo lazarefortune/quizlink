@@ -5,18 +5,18 @@ import type { ElementType } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  Library,
-  House,
-  Headset,
-  Star,
-  Menu,
-  Plus,
-  Shield,
-  User,
-} from "lucide-react";
+  DashboardCreateNavIcon,
+  DashboardFeedbackNavIcon,
+  DashboardHomeNavIcon,
+  DashboardQuizzesNavIcon,
+  DashboardSupportNavIcon,
+  dashboardNavIconClassName,
+} from "@/components/dashboard/dashboard-nav-icons";
+import { dashboardSidebarNavItemClassName } from "@/components/dashboard/dashboard-sidebar-nav-styles";
+import { Menu, Shield, User } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 
-import { ThemeSegmentedControl } from "@/components/admin/theme-segmented-control";
+import { DashboardUserPreferencesPanel } from "@/components/dashboard/dashboard-user-preferences-panel";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -60,19 +60,19 @@ export function DashboardMobileNavSheet() {
   }> = [
     {
       href: "/dashboard",
-      icon: House,
+      icon: DashboardHomeNavIcon,
       label: t(locale, "dashboard.sidebar.overview"),
       isActive: pathname === "/dashboard",
     },
     {
       href: "/dashboard/quizzes",
-      icon: Library,
+      icon: DashboardQuizzesNavIcon,
       label: t(locale, "dashboard.welcome.myQuizzes"),
       isActive: Boolean(pathname?.startsWith("/dashboard/quizzes")),
     },
     {
       href: "/dashboard/create",
-      icon: Plus,
+      icon: DashboardCreateNavIcon,
       label: t(locale, "dashboard.welcome.createQuiz"),
       isActive: Boolean(
         pathname?.startsWith("/dashboard/create") ||
@@ -98,9 +98,9 @@ export function DashboardMobileNavSheet() {
         </Button>
       </SheetTrigger>
       <SheetContent
-        side="right"
+        side="left"
         closeButtonClassName="right-3 top-[calc(env(safe-area-inset-top,0px)+0.875rem)] opacity-90 sm:right-4 sm:top-[calc(env(safe-area-inset-top,0px)+0.625rem)] [&_svg]:size-6"
-        className="flex h-full max-h-dvh w-[min(24rem,94vw)] max-w-none flex-col gap-0 overflow-hidden rounded-l-3xl border-border bg-card p-0 shadow-2xl sm:w-[min(26rem,92vw)] 2xl:w-[min(28rem,90vw)]"
+        className="flex h-full max-h-dvh w-[min(24rem,94vw)] max-w-none flex-col gap-0 overflow-hidden rounded-r-3xl border-border bg-card p-0 shadow-2xl sm:w-[min(26rem,92vw)] 2xl:w-[min(28rem,90vw)]"
       >
         <div className="flex min-h-0 flex-1 flex-col">
           <div
@@ -119,54 +119,39 @@ export function DashboardMobileNavSheet() {
             </Link>
           </SheetClose>
           <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-3 pb-4">
-            <div>
-              <p className="mb-2 px-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                Navigation
-              </p>
-              <nav className="flex flex-col gap-1" aria-label="Navigation">
-                {primaryNav.map((item) => (
-                  <DashboardMobileNavSheetLink
-                    key={item.href}
-                    href={item.href}
-                    icon={item.icon}
-                    label={item.label}
-                    isActive={item.isActive}
-                  />
-                ))}
-              </nav>
-            </div>
-
-            <Separator />
-
-            <div>
-              <p className="mb-2 px-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                {t(locale, "support.helpSection")}
-              </p>
-              <div className="flex flex-col gap-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOpen(false);
-                    openUserFeedback();
-                  }}
-                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-lg font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                >
-                  <Star className="h-5 w-5 shrink-0" />
-                  {t(locale, "userFeedback.navLabel")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOpen(false);
-                    openSupportFeedback();
-                  }}
-                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-lg font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                >
-                  <Headset className="h-5 w-5 shrink-0" />
-                  {t(locale, "support.navLabel")}
-                </button>
-              </div>
-            </div>
+            <nav className="flex flex-col gap-1" aria-label="Navigation">
+              {primaryNav.map((item) => (
+                <DashboardMobileNavSheetLink
+                  key={item.href}
+                  href={item.href}
+                  icon={item.icon}
+                  label={item.label}
+                  isActive={item.isActive}
+                />
+              ))}
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  openUserFeedback();
+                }}
+                className={dashboardSidebarNavItemClassName({})}
+              >
+                <DashboardFeedbackNavIcon className={dashboardNavIconClassName} />
+                {t(locale, "userFeedback.navLabel")}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  openSupportFeedback();
+                }}
+                className={dashboardSidebarNavItemClassName({})}
+              >
+                <DashboardSupportNavIcon className={dashboardNavIconClassName} />
+                {t(locale, "support.navLabel")}
+              </button>
+            </nav>
 
             <Separator />
 
@@ -200,14 +185,7 @@ export function DashboardMobileNavSheet() {
               </div>
             </div>
             <Separator />
-            <div className="flex flex-col gap-1">
-              <p className="mb-2 px-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                {t(locale, "userMenu.theme")}
-              </p>
-              <div>
-                <ThemeSegmentedControl locale={locale} />
-              </div>
-            </div>
+            <DashboardUserPreferencesPanel variant="sheet" />
             <Separator />
             <div className="flex flex-col gap-1">
               <Button variant="destructive" onClick={handleSignOut}>

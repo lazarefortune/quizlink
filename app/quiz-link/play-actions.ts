@@ -1,9 +1,15 @@
 "use server";
 
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
 
 import { prisma } from "@/lib/prisma";
+import { abandonQuizAttemptById } from "@/lib/quiz/abandon-quiz-attempt";
 import { playBlockedErrorCodeForQuizStatus } from "@/lib/quiz/quizActionErrorCodes";
+import {
+  incrementQuestionAnswerAggregates,
+  incrementQuizCompletedAggregate,
+  transitionAttemptToCompleted,
+} from "@/lib/quiz/quiz-response-aggregates";
 import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
 
 type SubmitAnswerResponse =
@@ -222,14 +228,31 @@ export async function finishQuizAttempt(
       (finishedAt.getTime() - new Date(attempt.startedAt).getTime()) / 1000
     );
 
-    await prisma.quizAttempt.update({
-      where: { id: attemptId },
-      data: {
-        status: "COMPLETED",
-        finishedAt,
-        score,
-      },
+    const transitioned = await transitionAttemptToCompleted(attemptId, {
+      finishedAt,
+      score,
+      durationSeconds: durationSec,
+      totalQuestions,
     });
+
+    if (transitioned) {
+      const quizId = attempt.quizLink.quizId;
+      await incrementQuizCompletedAggregate(quizId, {
+        score,
+        totalQuestions,
+        durationSeconds: durationSec,
+      });
+
+      await incrementQuestionAnswerAggregates(
+        quizId,
+        attempt.answers.map((answer) => ({
+          questionId: answer.questionId,
+          isCorrect: answer.isCorrect,
+          expired: answer.expired ?? false,
+          timeSpentSeconds: answer.timeSpent,
+        })),
+      );
+    }
 
     return {
       success: true,
@@ -251,21 +274,13 @@ export async function finishQuizAttempt(
  * Abandon a quiz attempt
  */
 export async function abandonQuizAttempt(
-  attemptId: string
+  attemptId: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    if (!prisma) {
-      return { success: false, error: "Database not initialized" };
+    const result = await abandonQuizAttemptById(attemptId);
+    if (!result.success) {
+      return { success: false, error: result.error };
     }
-
-    await prisma.quizAttempt.update({
-      where: { id: attemptId },
-      data: {
-        status: "ABANDONED",
-        finishedAt: new Date(),
-      },
-    });
-
     return { success: true };
   } catch (error) {
     console.error("Error abandoning quiz:", error);

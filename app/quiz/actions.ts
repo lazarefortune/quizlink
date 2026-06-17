@@ -11,7 +11,7 @@ import type {
   QuizSession,
 } from "@/lib/quiz-session/quiz-session-types";
 import type { Quiz } from "@/types/quiz";
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
 import { resolveEffectiveQuizSettings } from "@/lib/quiz/resolveEffectiveQuizSettings";
 
 // Convert Quiz to session format

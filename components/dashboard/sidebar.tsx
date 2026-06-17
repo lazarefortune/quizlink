@@ -1,15 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import type { ComponentType } from "react";
 import {
   ChevronsLeft,
   ChevronsRight,
   Coins,
-  House,
-  Plus,
-  Headset,
-  Library,
-  Star,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 
@@ -17,6 +13,15 @@ import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { BrandQuizLinkText } from "@/components/BrandQuizLinkText";
+import {
+  DashboardCreateNavIcon,
+  DashboardFeedbackNavIcon,
+  DashboardHomeNavIcon,
+  DashboardQuizzesNavIcon,
+  DashboardSupportNavIcon,
+  dashboardNavIconClassName,
+} from "@/components/dashboard/dashboard-nav-icons";
+import { dashboardSidebarNavItemClassName } from "@/components/dashboard/dashboard-sidebar-nav-styles";
 
 import { Button } from "@/components/ui/button";
 import { useBuilderNavigationGuard } from "@/components/dashboard/builder-navigation-guard-context";
@@ -43,7 +48,7 @@ function SidebarFeedbackNavButton({
   isCompact: boolean;
   label: string;
   ariaLabel: string;
-  icon: typeof Star;
+  icon: ComponentType<{ className?: string }>;
   onClick: () => void;
 }) {
   return (
@@ -53,14 +58,11 @@ function SidebarFeedbackNavButton({
         onClick();
         onNavClick?.();
       }}
-      className={cn(
-        "flex w-full items-center rounded-xl border-2 border-transparent text-lg font-medium text-muted-foreground transition-all hover:bg-muted hover:text-foreground",
-        isCompact ? "justify-center px-2 py-2.5" : "gap-3 px-3 py-2.5",
-      )}
+      className={dashboardSidebarNavItemClassName({ isCompact })}
       title={isCompact ? label : undefined}
       aria-label={ariaLabel}
     >
-      <Icon className="h-5 w-5 shrink-0" />
+      <Icon className={dashboardNavIconClassName} />
       {isCompact ? null : label}
     </button>
   );
@@ -130,21 +132,21 @@ export function Sidebar({ onNavClick, className }: SidebarProps) {
         <NavItem
           href="/dashboard"
           label={t(locale, "dashboard.sidebar.overview")}
-          icon={House}
+          icon={DashboardHomeNavIcon}
           onClick={onNavClick}
           isCompact={isCollapsed}
         />
         <NavItem
           href="/dashboard/quizzes"
           label={t(locale, "dashboard.welcome.myQuizzes")}
-          icon={Library}
+          icon={DashboardQuizzesNavIcon}
           onClick={onNavClick}
           isCompact={isCollapsed}
         />
         <NavItem
           href="/dashboard/create"
           label={t(locale, "nav.create")}
-          icon={Plus}
+          icon={DashboardCreateNavIcon}
           onClick={onNavClick}
           isCompact={isCollapsed}
         />
@@ -153,7 +155,7 @@ export function Sidebar({ onNavClick, className }: SidebarProps) {
           isCompact={isCollapsed}
           label={t(locale, "userFeedback.navLabel")}
           ariaLabel={t(locale, "userFeedback.navLabel")}
-          icon={Star}
+          icon={DashboardFeedbackNavIcon}
           onClick={openUserFeedback}
         />
         <SidebarFeedbackNavButton
@@ -161,7 +163,7 @@ export function Sidebar({ onNavClick, className }: SidebarProps) {
           isCompact={isCollapsed}
           label={t(locale, "support.navLabel")}
           ariaLabel={t(locale, "support.navLabel")}
-          icon={Headset}
+          icon={DashboardSupportNavIcon}
           onClick={openSupportFeedback}
         />
       </nav>
@@ -220,9 +222,6 @@ export function Sidebar({ onNavClick, className }: SidebarProps) {
                 </p>
               </div>
             </div>
-            <p className="mt-2 font-fredoka text-xs font-medium leading-snug text-[#4B4B4B]/85 dark:text-white/55">
-              {t(locale, "dashboard.sidebar.coinsHint")}
-            </p>
             <Button
               asChild
               variant="ghost"

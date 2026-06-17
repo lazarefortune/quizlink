@@ -5,6 +5,7 @@ import { resolveEffectiveQuizSettings } from "./resolveEffectiveQuizSettings";
 describe("resolveEffectiveQuizSettings", () => {
   it("returns safe defaults when settings is null", () => {
     expect(resolveEffectiveQuizSettings(null)).toEqual({
+      participantIdentityMode: "ANONYMOUS",
       showAnswerImmediately: true,
       showAnswersAtEnd: true,
       randomizeQuestions: false,
@@ -15,6 +16,7 @@ describe("resolveEffectiveQuizSettings", () => {
 
   it("returns safe defaults when settings is undefined", () => {
     expect(resolveEffectiveQuizSettings(undefined)).toEqual({
+      participantIdentityMode: "ANONYMOUS",
       showAnswerImmediately: true,
       showAnswersAtEnd: true,
       randomizeQuestions: false,
@@ -53,6 +55,18 @@ describe("resolveEffectiveQuizSettings", () => {
       randomizeQuestions: true,
       randomizeOptions: true,
     });
+  });
+
+  it("defaults participantIdentityMode to ANONYMOUS when missing or invalid", () => {
+    expect(resolveEffectiveQuizSettings({})).toMatchObject({
+      participantIdentityMode: "ANONYMOUS",
+    });
+    expect(
+      resolveEffectiveQuizSettings({ participantIdentityMode: "INVALID" }),
+    ).toMatchObject({ participantIdentityMode: "ANONYMOUS" });
+    expect(
+      resolveEffectiveQuizSettings({ participantIdentityMode: "PSEUDONYM" }),
+    ).toMatchObject({ participantIdentityMode: "PSEUDONYM" });
   });
 
   it("keeps timeLimitPerQuestion when finite, falls back to null otherwise", () => {

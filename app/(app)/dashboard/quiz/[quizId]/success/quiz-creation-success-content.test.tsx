@@ -31,6 +31,12 @@ vi.mock("@/components/user-feedback/quiz-creation-feedback-card", () => ({
   QuizCreationFeedbackCard: () => null,
 }));
 
+vi.mock("@/components/dashboard/participant-identity-mode-selector", () => ({
+  ParticipantIdentityModeSelector: () => (
+    <div data-testid="participant-mode-selector">participant-mode-selector</div>
+  ),
+}));
+
 describe("QuizCreationSuccessContent", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -49,7 +55,13 @@ describe("QuizCreationSuccessContent", () => {
       isFirstInviteForQuiz: true,
     });
 
-    render(<QuizCreationSuccessContent quizId="quiz_1" quizName="Mon quiz" />);
+    render(
+      <QuizCreationSuccessContent
+        quizId="quiz_1"
+        quizName="Mon quiz"
+        participantIdentityMode="ANONYMOUS"
+      />,
+    );
 
     expect(createOrGetQuizLinkMock).toHaveBeenCalledWith("quiz_1", true);
 
@@ -65,7 +77,15 @@ describe("QuizCreationSuccessContent", () => {
       isFirstInviteForQuiz: false,
     });
 
-    render(<QuizCreationSuccessContent quizId="quiz_42" quizName="Quiz final" />);
+    render(
+      <QuizCreationSuccessContent
+        quizId="quiz_42"
+        quizName="Quiz final"
+        participantIdentityMode="ANONYMOUS"
+      />,
+    );
+
+    expect(screen.getByTestId("participant-mode-selector")).toBeInTheDocument();
 
     const copyButton = await screen.findByRole("button", { name: "dashboard.copy" });
     const testQuizButton = screen.getByRole("button", { name: "dashboard.playQuiz" });
@@ -102,7 +122,13 @@ describe("QuizCreationSuccessContent", () => {
       error: "failed_to_create_link",
     });
 
-    render(<QuizCreationSuccessContent quizId="quiz_error" quizName="Quiz erreur" />);
+    render(
+      <QuizCreationSuccessContent
+        quizId="quiz_error"
+        quizName="Quiz erreur"
+        participantIdentityMode="ANONYMOUS"
+      />,
+    );
 
     expect(await screen.findByText("failed_to_create_link")).toBeInTheDocument();
 

@@ -1,6 +1,7 @@
 # QuizLink — Roadmap
 
 ## Général
+
 - [ ] Eviter le downtime lors du déploiement
 
 ## Phase 1 — Builder & création
@@ -12,7 +13,6 @@
 - [ ] Autofocus sur le champ nom du quiz lors d’une nouvelle création
 - [ ] Création IA : avertir avant de quitter si du contenu a été saisi, ou faire en async et prévenir l'utilisateur que la génération est en cours ou quand elle est terminée.
 - [ ] Pendant la création IA : afficher une animation de chargement propre
-- [ ] Rendre un lien de quiz temporaire (24h) par défaut
 - [ ] Ajouter une option pour rendre un lien de quiz permanent (infini)
 - [ ] Ajouter une option pour rendre un lien de quiz expirable (date)
 - [ ] Activer pour chaque question si elle est obligatoire ou non, par défaut non.
@@ -31,6 +31,7 @@
 
 ## Phase 2 — Expérience joueur
 
+- [ ] Harmoniser le flow identifié avec le cookie/session d’attempt
 - [ ] Améliorer le design de la page résultat
 - [ ] Ajouter une animation de chargement avant le début du quiz
 - [ ] Conserver la progression du quiz si l’utilisateur actualise la page
@@ -76,6 +77,7 @@
 
 ## Récemment livré
 
+- [x] Implémenter la déconnexion depuis l'espace admin
 - [x] Sur mobile, afficher le numéro des questions dans l’onglet Organiser
 - [x] Input “nombre maximum de questions” en génération IA : permettre de vider correctement le champ
 - [x] Ajouter Motion sur la page quiz

@@ -27,6 +27,8 @@ type QuizShareLinkDialogProps = {
   quizStatus: QuizLifecycleStatus;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  canAcceptResponses?: boolean;
+  onUnlock?: () => void;
 };
 
 export function QuizShareLinkDialog({
@@ -34,6 +36,8 @@ export function QuizShareLinkDialog({
   quizStatus,
   open,
   onOpenChange,
+  canAcceptResponses = true,
+  onUnlock,
 }: QuizShareLinkDialogProps) {
   const { locale } = useLocale();
   const [shareLink, setShareLink] = useState("");
@@ -42,6 +46,8 @@ export function QuizShareLinkDialog({
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const isShareable = canQuizBeShared(quizStatus);
+  const canCopyLink = isShareable && canAcceptResponses;
+  const hasReachedFreeLimit = isShareable && !canAcceptResponses;
 
   useEffect(() => {
     if (!open) {
@@ -50,7 +56,7 @@ export function QuizShareLinkDialog({
       setLinkCopied(false);
       return;
     }
-    if (!isShareable) {
+    if (!canCopyLink) {
       return;
     }
 
@@ -96,10 +102,10 @@ export function QuizShareLinkDialog({
     return () => {
       cancelled = true;
     };
-  }, [open, isShareable, quizId, locale]);
+  }, [open, canCopyLink, quizId, locale]);
 
   const handleCopyLink = async () => {
-    if (!shareLink) {
+    if (!shareLink || !canAcceptResponses) {
       return;
     }
     try {
@@ -119,25 +125,38 @@ export function QuizShareLinkDialog({
     setTimeout(() => setLinkCopied(false), 2000);
   };
 
+  const handleUnlock = () => {
+    onOpenChange(false);
+    onUnlock?.();
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>{t(locale, "dashboard.sharePlayLinkTitle")}</DialogTitle>
-          <DialogDescription>
-            {isShareable
-              ? t(locale, "dashboard.sharePlayLinkDescription")
-              : t(locale, "dashboard.shareRequiresActiveQuiz")}
+          <DialogTitle className="text-xl font-semibold leading-none tracking-tight">{t(locale, "dashboard.sharePlayLinkTitle")}</DialogTitle>
+          <DialogDescription className="text-base text-muted-foreground">
+            {hasReachedFreeLimit
+              ? t(locale, "dashboard.quizQuota.limitReached")
+              : isShareable
+                ? t(locale, "dashboard.sharePlayLinkDescription")
+                : t(locale, "dashboard.shareRequiresActiveQuiz")}
           </DialogDescription>
         </DialogHeader>
         {!isShareable ? (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-base text-muted-foreground">
             {t(locale, "dashboard.draftFinishToShareHint")}
           </p>
+        ) : hasReachedFreeLimit ? (
+          onUnlock ? (
+            <Button type="button" variant="blue" className="w-full" onClick={handleUnlock}>
+              {t(locale, "dashboard.quizQuota.unlockToShare")}
+            </Button>
+          ) : null
         ) : isLoadingLink ? (
-          <p className="text-sm text-muted-foreground">{t(locale, "common.loading")}</p>
+          <p className="text-base text-muted-foreground">{t(locale, "common.loading")}</p>
         ) : loadError ? (
-          <p className="text-sm text-destructive">{loadError}</p>
+          <p className="text-base text-destructive">{loadError}</p>
         ) : (
           <div className="flex flex-col gap-2 sm:flex-row">
             <Input

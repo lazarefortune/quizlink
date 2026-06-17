@@ -3,7 +3,46 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { useScrollBehavior } from "./useScrollBehavior";
+import {
+  isNearScrollBottom,
+  resolveHeaderVisibility,
+  useScrollBehavior,
+} from "./useScrollBehavior";
+
+describe("isNearScrollBottom", () => {
+  it("returns true when the viewport is within the bottom threshold", () => {
+    const root = document.createElement("div");
+    Object.defineProperties(root, {
+      scrollTop: { configurable: true, value: 900 },
+      clientHeight: { configurable: true, value: 100 },
+      scrollHeight: { configurable: true, value: 1000 },
+    });
+
+    expect(isNearScrollBottom(root)).toBe(true);
+  });
+});
+
+describe("resolveHeaderVisibility", () => {
+  it("does not force the header visible when near the bottom", () => {
+    expect(
+      resolveHeaderVisibility({
+        delta: -20,
+        currentY: 900,
+        isNearBottom: true,
+      }),
+    ).toBeNull();
+  });
+
+  it("shows the header again when scrolling up away from the bottom", () => {
+    expect(
+      resolveHeaderVisibility({
+        delta: -20,
+        currentY: 400,
+        isNearBottom: false,
+      }),
+    ).toBe(true);
+  });
+});
 
 describe("useScrollBehavior", () => {
   beforeEach(() => {
