@@ -93,9 +93,7 @@ export function PublicHeader() {
               className="inline-flex items-center gap-2 rounded-lg transition-opacity hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2"
               aria-label={locale === "fr" ? "Retour à l'accueil" : "Back to home"}
             >
-              <span className="font-fredoka text-xl font-black tracking-tight text-foreground">
-                <BrandQuizLinkText />
-              </span>
+              <BrandQuizLinkText size="md" />
             </Link>
           </div>
 

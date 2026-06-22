@@ -1953,7 +1953,7 @@ export const en = {
     about: {
       title: "About",
       descriptionAfterBrand:
-        " is a professional platform for creating and sharing quizzes.",
+        "QuizLink is a professional platform for creating and sharing quizzes.",
       author: "Created by",
     },
     legal: {

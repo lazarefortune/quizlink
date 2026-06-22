@@ -30,9 +30,9 @@ export function Footer() {
   return (
     <footer className="border-t-2 border-border bg-background py-8">
       <div className="mx-auto max-w-6xl px-4">
-        <span className="font-fredoka text-xl font-black tracking-tight text-foreground block text-center mb-8">
+        <div className="mb-8 flex justify-center">
           <BrandQuizLinkText />
-        </span>
+        </div>
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {/* About */}
           <div className="space-y-4">
@@ -40,7 +40,6 @@ export function Footer() {
               {t(locale, "footer.about.title")}
             </h3>
             <p className="text-sm text-muted-foreground">
-              <BrandQuizLinkText />
               {t(locale, "footer.about.descriptionAfterBrand")}
             </p>
             <div className="text-sm text-muted-foreground">

@@ -1964,7 +1964,7 @@ export const fr = {
     about: {
       title: "À propos",
       descriptionAfterBrand:
-        " est une plateforme professionnelle de création et de partage de quiz.",
+        "QuizLink est une plateforme professionnelle de création et de partage de quiz.",
       author: "Créé par",
     },
     legal: {
