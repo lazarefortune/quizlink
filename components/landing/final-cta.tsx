@@ -32,7 +32,7 @@ export function FinalCTA() {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-80px" }}
-          className="rounded-3xl bg-primary p-10 text-center relative overflow-hidden md:p-16"
+          className="rounded-3xl bg-primary p-6 text-center relative overflow-hidden sm:p-10 md:p-16"
           style={{ boxShadow: "0 6px 0 hsl(var(--primary-shadow))" }}
         >
           <span className="absolute top-6 left-8 opacity-30 animate-wiggle" aria-hidden>
@@ -66,9 +66,10 @@ export function FinalCTA() {
             <motion.p custom={1} variants={fadeUp} className="text-primary-foreground/80 mb-8 max-w-md mx-auto text-lg">
               {t(locale, "landing.finalCta.subtitle")}
             </motion.p>
-            <motion.div custom={2} variants={fadeUp}>
+            <motion.div custom={2} variants={fadeUp} className="mx-auto w-full max-w-sm sm:max-w-none">
               <Link
                 href="/auth/signup"
+                className="block w-full sm:inline-block sm:w-auto"
                 onClick={() =>
                   track(CTA_CLICK, {
                     ...buildCommonEventProps({
@@ -84,9 +85,9 @@ export function FinalCTA() {
                 <Button
                   variant="outline"
                   size="xl"
-                  className="bg-card text-foreground border-none text-lg normal-case tracking-normal font-extrabold"
+                  className="w-full bg-card px-6 text-base font-extrabold normal-case tracking-normal text-foreground border-none sm:w-auto sm:px-10 sm:text-lg"
                 >
-                  <Zap className="h-5 w-5" />
+                  <Zap className="h-5 w-5 shrink-0" />
                   {t(locale, "landing.finalCta.button")}
                 </Button>
               </Link>
