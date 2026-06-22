@@ -1,6 +1,7 @@
 import { Mail, Globe } from "lucide-react";
 
 import { BrandQuizLinkText } from "@/components/BrandQuizLinkText";
+import { SupportEmailLink } from "@/components/legal/support-email-link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export function LegalMentionsHeading() {
@@ -54,14 +55,15 @@ export function LegalMentionsCardSections() {
             <p className="text-muted-foreground">
               <strong className="text-foreground">TVA</strong>: non applicable – article 293 B du CGI
             </p>
+            <p className="text-muted-foreground">
+              <strong className="text-foreground">Responsable de publication</strong> : Lazare
+              Fortune
+            </p>
             <div className="flex flex-col gap-2 pt-2 sm:flex-row">
-              <a
-                href="mailto:lazarefortune@gmail.com"
-                className="flex items-center gap-2 text-primary hover:underline"
-              >
+              <span className="flex items-center gap-2 text-primary">
                 <Mail className="h-4 w-4" />
-                lazarefortune@gmail.com
-              </a>
+                <SupportEmailLink />
+              </span>
               <a
                 href="https://lazarefortune.com"
                 target="_blank"
@@ -133,9 +135,7 @@ export function LegalMentionsCardSections() {
           </p>
           <p className="text-muted-foreground">
             Pour exercer ce droit, tu peux nous contacter à l&apos;adresse suivante :{" "}
-            <a href="mailto:lazarefortune@gmail.com" className="text-primary hover:underline">
-              lazarefortune@gmail.com
-            </a>
+            <SupportEmailLink />
           </p>
         </CardContent>
       </Card>
@@ -147,10 +147,7 @@ export function LegalMentionsCardSections() {
         <CardContent>
           <p className="text-muted-foreground">
             Pour toute question concernant les mentions légales du site, tu peux contacter Lazare
-            Fortune à l&apos;adresse suivante :{" "}
-            <a href="mailto:lazarefortune@gmail.com" className="text-primary hover:underline">
-              lazarefortune@gmail.com
-            </a>
+            Fortune à l&apos;adresse suivante : <SupportEmailLink />.
           </p>
         </CardContent>
       </Card>

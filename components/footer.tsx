@@ -7,6 +7,7 @@ import { t } from "@/lib/i18n";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { useCookieConsent } from "@/components/cookie-consent/cookie-consent-context";
 import { BrandQuizLinkText } from "@/components/BrandQuizLinkText";
+import { SUPPORT_EMAIL } from "@/lib/contact/constants";
 
 export function Footer() {
   const pathname = usePathname();
@@ -19,7 +20,7 @@ export function Footer() {
     pathname?.startsWith("/auth") ||
     pathname?.startsWith("/generate") ||
     pathname?.startsWith("/builder") ||
-    pathname?.startsWith("/account") ||
+    (pathname?.startsWith("/account") && !pathname?.startsWith("/account/coins")) ||
     pathname?.startsWith("/preview/") ||
     pathname?.startsWith("/quiz/");
   if (hideFooter) {
@@ -131,10 +132,10 @@ export function Footer() {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
                 <a
-                  href="mailto:lazarefortune@gmail.com"
+                  href={`mailto:${SUPPORT_EMAIL}`}
                   className="hover:text-foreground transition-colors"
                 >
-                  lazarefortune@gmail.com
+                  {SUPPORT_EMAIL}
                 </a>
               </li>
               <li>

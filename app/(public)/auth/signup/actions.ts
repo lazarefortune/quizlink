@@ -6,7 +6,6 @@ import { sendVerificationEmail } from "@/lib/email";
 import { initializeUserCoins } from "@/lib/coins";
 import { recordUserLifecycleEvent, USER_LIFECYCLE_EVENT_TYPES } from "@/lib/userLifecycleEvents";
 import { CURRENT_PRIVACY_VERSION, CURRENT_TERMS_VERSION } from "@/lib/legal-versions";
-import { t } from "@/lib/i18n";
 import { ensureDefaultUserAvatar } from "@/lib/user-avatar/ensureDefaultUserAvatar";
 
 function generateVerificationCode(): string {
@@ -17,7 +16,6 @@ export async function signUpAction(
   name: string,
   email: string,
   password: string,
-  legalAccepted: boolean,
   locale: "fr" | "en" = "fr"
 ) {
   try {
@@ -25,13 +23,6 @@ export async function signUpAction(
       return {
         success: false,
         error: "Database not initialized. Please run 'pnpm prisma:generate' first.",
-      };
-    }
-
-    if (legalAccepted !== true) {
-      return {
-        success: false,
-        error: t(locale, "auth.signUp.legalRequiredError"),
       };
     }
 

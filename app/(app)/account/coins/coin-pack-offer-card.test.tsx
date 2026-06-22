@@ -69,6 +69,7 @@ describe("CoinPackOfferCard", () => {
       ),
     ).toBeTruthy();
     expect(screen.getByTestId("coin-pack-popular-badge")).toBeTruthy();
+    expect(screen.getByTestId("payment-legal-notice")).toBeTruthy();
   });
 
   it("uses the multiple coins asset for larger packs", () => {

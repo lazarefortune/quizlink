@@ -49,45 +49,9 @@ describe("signUpAction", () => {
     mockRecordUserLifecycleEvent.mockResolvedValue(undefined);
   });
 
-  it("returns error and does not create user when legalAccepted is false", async () => {
-    const result = await signUpAction("Jane", "jane@example.com", "password123", false, "fr");
-
-    expect(result.success).toBe(false);
-    if (result.success) {
-      return;
-    }
-    expect(result.error).toBe(
-      "Tu dois accepter les CGU et la politique de confidentialité pour créer un compte.",
-    );
-    expect(mockUserFindUnique).not.toHaveBeenCalled();
-    expect(mockUserCreate).not.toHaveBeenCalled();
-    expect(mockSendVerificationEmail).not.toHaveBeenCalled();
-    expect(mockInitializeUserCoins).not.toHaveBeenCalled();
-    expect(mockRecordUserLifecycleEvent).not.toHaveBeenCalled();
-  });
-
-  it("returns error when legalAccepted is not strictly true", async () => {
-    const result = await signUpAction(
-      "Jane",
-      "jane@example.com",
-      "password123",
-      undefined as unknown as boolean,
-      "en",
-    );
-
-    expect(result.success).toBe(false);
-    if (result.success) {
-      return;
-    }
-    expect(result.error).toBe(
-      "You must accept the Terms of Service and Privacy Policy to create an account.",
-    );
-    expect(mockUserCreate).not.toHaveBeenCalled();
-  });
-
-  it("persists legal acceptance versions when legalAccepted is true", async () => {
+  it("persists legal acceptance versions on signup", async () => {
     mockUserCreate.mockResolvedValue({ id: "new-user-id", email: "jane@example.com" });
-    const result = await signUpAction("Jane", "jane@example.com", "password123", true, "fr");
+    const result = await signUpAction("Jane", "jane@example.com", "password123", "fr");
 
     expect(result.success).toBe(true);
     if (!result.success) {
@@ -111,7 +75,7 @@ describe("signUpAction", () => {
   it("returns error when email is already used and does not initialize coins", async () => {
     mockUserFindUnique.mockResolvedValue({ id: "existing-user" });
 
-    const result = await signUpAction("Jane", "jane@example.com", "password123", true, "fr");
+    const result = await signUpAction("Jane", "jane@example.com", "password123", "fr");
 
     expect(result.success).toBe(false);
     if (result.success) {

@@ -126,6 +126,11 @@ export const fr = {
       error: "Échec de la création du compte",
       legalRequiredError:
         "Tu dois accepter les CGU et la politique de confidentialité pour créer un compte.",
+      legalNoticePrefix: "En t'inscrivant, tu acceptes nos",
+      legalNoticeTermsLink: "Conditions générales d'utilisation",
+      legalNoticeMid: "et notre",
+      legalNoticePrivacyLink: "Politique de confidentialité",
+      legalNoticeEnd: ".",
       legalIntro: "J'accepte les ",
       legalTermsLink: "CGU",
       legalMid: " et la ",
@@ -1942,6 +1947,15 @@ export const fr = {
     account: {
       rowTitle: "Cookies & confidentialité",
       rowHint: "Réglages modifiables à tout moment",
+    },
+  },
+
+  legal: {
+    paymentNotice: {
+      prefix: "En continuant, tu acceptes les",
+      salesLink: "CGV",
+      and: "et la",
+      privacyLink: "politique de confidentialité",
     },
   },
 
