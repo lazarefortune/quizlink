@@ -1,14 +1,12 @@
+import { QuizLinkLogo, type QuizLinkLogoSize } from "@/components/QuizLinkLogo";
+
 type BrandQuizLinkTextProps = {
   className?: string;
+  size?: QuizLinkLogoSize;
 };
 
-/**
- * Wordmark: “Quiz” in primary, “Link” inherits the parent text color.
- */
-export function BrandQuizLinkText({ className }: BrandQuizLinkTextProps) {
-  return (
-    <span className={className}>
-      <span className="text-primary">Quiz</span>Link
-    </span>
-  );
+export function BrandQuizLinkText({ className, size }: BrandQuizLinkTextProps) {
+  const resolvedSize = size ?? (className?.includes("inline") ? "xs" : "md");
+
+  return <QuizLinkLogo className={className} size={resolvedSize} />;
 }

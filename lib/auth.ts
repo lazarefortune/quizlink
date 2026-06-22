@@ -16,6 +16,7 @@ import { recordUserLifecycleEvent, USER_LIFECYCLE_EVENT_TYPES } from "@/lib/user
 import { sendUserSignupNotificationIfNeeded } from "@/lib/sendUserSignupNotificationIfNeeded";
 import { getCredentialsLoginRejection } from "@/lib/auth/validate-credentials-login";
 import { ensureDefaultUserAvatar } from "@/lib/user-avatar/ensureDefaultUserAvatar";
+import { CURRENT_PRIVACY_VERSION, CURRENT_TERMS_VERSION } from "@/lib/legal-versions";
 
 const CREDENTIALS_FAILURE_REASON = "CREDENTIALS_REJECTED";
 
@@ -116,6 +117,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth((req: NextRequest | 
           });
 
           if (!existingUser) {
+            const acceptedAt = new Date();
             const createdUser = await prisma.user.create({
               data: {
                 email: user.email,
@@ -123,6 +125,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth((req: NextRequest | 
                 passwordHash: null,
                 googleId: profile?.sub ?? null,
                 emailVerifiedAt: new Date(),
+                termsAcceptedAt: acceptedAt,
+                termsVersion: CURRENT_TERMS_VERSION,
+                privacyAcceptedAt: acceptedAt,
+                privacyVersion: CURRENT_PRIVACY_VERSION,
               },
             });
 

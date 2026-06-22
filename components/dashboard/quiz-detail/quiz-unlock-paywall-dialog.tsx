@@ -20,6 +20,7 @@ import { t } from "@/lib/i18n";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { UNLOCK_QUIZ_ERROR } from "@/lib/quiz/quizUnlockConstants";
 import { PRO_MONTHLY_PRICE_EUR } from "@/lib/subscription/proSubscriptionConstants";
+import { PaymentLegalNotice } from "@/components/legal/payment-legal-notice";
 import { cn } from "@/lib/utils";
 
 export type QuizUnlockPaywallDialogProps = {
@@ -189,6 +190,7 @@ export function QuizUnlockPaywallDialog({
             </Button>
           </PaywallOption>
         </div>
+        <PaymentLegalNotice />
       </DialogContent>
     </Dialog>
   );

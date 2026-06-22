@@ -45,6 +45,7 @@ import type { ActiveUserSubscriptionAccess } from "@/lib/quiz/getActiveUserSubsc
 import { COINS_FACE_SRC } from "./coin-pack-coins-icon";
 import { CoinPackOfferCard } from "./coin-pack-offer-card";
 import { CoinsProSubscriptionCard } from "./coins-pro-subscription-card";
+import { PaymentLegalNotice } from "@/components/legal/payment-legal-notice";
 
 type CoinPack = {
   id: string;
@@ -311,6 +312,7 @@ export function CoinsContent({
               ))}
             </div>
           )}
+          <PaymentLegalNotice className="pt-2" />
         </section>
 
         {/* Factures — placeholder pour intégration future */}

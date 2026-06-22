@@ -19,6 +19,7 @@ import {
 
 import { ProBenefitIcon } from "./coins-pro-benefit-icons";
 import { CoinsProCrownIcon } from "./coins-pro-crown-icon";
+import { PaymentLegalNotice } from "@/components/legal/payment-legal-notice";
 
 type CoinsProSubscriptionCardProps = {
   proAccess: ActiveUserSubscriptionAccess;
@@ -116,6 +117,7 @@ export function CoinsProSubscriptionCard({
               ) : null}
               {t(locale, "account.subscription.upgradeToPro")}
             </Button>
+            <PaymentLegalNotice className="text-white/70 [&_a]:text-white [&_a:hover]:text-white/90" />
           </div>
         ) : (
           <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">

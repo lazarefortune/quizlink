@@ -103,9 +103,7 @@ export function Sidebar({ onNavClick, className }: SidebarProps) {
             }}
             className="flex min-w-0 flex-1 items-center gap-2.5"
           >
-            <span className="truncate font-black text-lg text-foreground">
-              <BrandQuizLinkText />
-            </span>
+            <BrandQuizLinkText size="sm" className="min-w-0" />
           </Link>
         )}
         <Button

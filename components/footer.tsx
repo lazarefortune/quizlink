@@ -7,6 +7,7 @@ import { t } from "@/lib/i18n";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { useCookieConsent } from "@/components/cookie-consent/cookie-consent-context";
 import { BrandQuizLinkText } from "@/components/BrandQuizLinkText";
+import { SUPPORT_EMAIL } from "@/lib/contact/constants";
 
 export function Footer() {
   const pathname = usePathname();
@@ -19,7 +20,7 @@ export function Footer() {
     pathname?.startsWith("/auth") ||
     pathname?.startsWith("/generate") ||
     pathname?.startsWith("/builder") ||
-    pathname?.startsWith("/account") ||
+    (pathname?.startsWith("/account") && !pathname?.startsWith("/account/coins")) ||
     pathname?.startsWith("/preview/") ||
     pathname?.startsWith("/quiz/");
   if (hideFooter) {
@@ -29,9 +30,9 @@ export function Footer() {
   return (
     <footer className="border-t-2 border-border bg-background py-8">
       <div className="mx-auto max-w-6xl px-4">
-        <span className="font-fredoka text-xl font-black tracking-tight text-foreground block text-center mb-8">
+        <div className="mb-8 flex justify-center">
           <BrandQuizLinkText />
-        </span>
+        </div>
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {/* About */}
           <div className="space-y-4">
@@ -39,7 +40,6 @@ export function Footer() {
               {t(locale, "footer.about.title")}
             </h3>
             <p className="text-sm text-muted-foreground">
-              <BrandQuizLinkText />
               {t(locale, "footer.about.descriptionAfterBrand")}
             </p>
             <div className="text-sm text-muted-foreground">
@@ -131,10 +131,10 @@ export function Footer() {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
                 <a
-                  href="mailto:lazarefortune@gmail.com"
+                  href={`mailto:${SUPPORT_EMAIL}`}
                   className="hover:text-foreground transition-colors"
                 >
-                  lazarefortune@gmail.com
+                  {SUPPORT_EMAIL}
                 </a>
               </li>
               <li>

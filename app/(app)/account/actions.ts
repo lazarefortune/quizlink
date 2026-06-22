@@ -12,6 +12,7 @@ import {
   serializeUserAvatarConfig,
   userAvatarConfigSchema,
 } from "@/lib/user-avatar/userAvatarConfigSchema";
+import { deleteOwnedQuizzesForUserDeletion } from "@/lib/quiz/deleteOwnedQuizzesForUserDeletion";
 
 function generateVerificationCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -545,6 +546,7 @@ export async function deleteAccountGoogle(): Promise<DeleteAccountResponse> {
     }
 
     await prisma.$transaction(async (tx) => {
+      await deleteOwnedQuizzesForUserDeletion(tx, session.user.id);
       await recordUserLifecycleEvent(tx, session.user.id, USER_LIFECYCLE_EVENT_TYPES.ACCOUNT_DELETION);
       await tx.user.delete({
         where: { id: session.user.id },
@@ -594,8 +596,9 @@ export async function deleteAccount(
       return { success: false, error: "Password is incorrect" };
     }
 
-    // Delete user (cascade will delete all associated data)
+    // Delete user (cascade deletes remaining associated data)
     await prisma.$transaction(async (tx) => {
+      await deleteOwnedQuizzesForUserDeletion(tx, session.user.id);
       await recordUserLifecycleEvent(tx, session.user.id, USER_LIFECYCLE_EVENT_TYPES.ACCOUNT_DELETION);
       await tx.user.delete({
         where: { id: session.user.id },

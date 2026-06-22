@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { motion } from "framer-motion";
+import { QuizLinkLogo } from "@/components/QuizLinkLogo";
 import { Card, CardContent, type CardProps } from "@/components/ui/card";
 import { AUTH_FORM_PAGE_MIN_HEIGHT_CLASS } from "@/lib/layout/public-chrome";
 import { cn } from "@/lib/utils";
@@ -94,16 +94,6 @@ type AuthFormLogoProps = {
 };
 
 export function AuthFormLogo({ locale, size = "default" }: AuthFormLogoProps) {
-  const imageClassName =
-    size === "compact"
-      ? "h-12 w-auto object-contain sm:h-14"
-      : "h-14 w-auto object-contain sm:h-16 lg:h-20";
-
-  const imageSizes =
-    size === "compact"
-      ? "(max-width: 640px) 120px, 140px"
-      : "(max-width: 640px) 140px, 160px";
-
   return (
     <motion.div
       variants={authFormItemVariants}
@@ -122,13 +112,8 @@ export function AuthFormLogo({ locale, size = "default" }: AuthFormLogoProps) {
           animate={{ scale: 1 }}
           transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
         >
-          <Image
-            src="/logo-quizlink.png"
-            alt="QuizLink"
-            width={160}
-            height={64}
-            className={imageClassName}
-            sizes={imageSizes}
+          <QuizLinkLogo
+            size={size === "compact" ? "authCompact" : "auth"}
             priority
           />
         </motion.div>

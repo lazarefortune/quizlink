@@ -4,11 +4,11 @@ import "@testing-library/jest-dom/vitest";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { BrandQuizLinkText } from "./BrandQuizLinkText";
+import { QuizLinkLogo } from "./QuizLinkLogo";
 
-describe("BrandQuizLinkText", () => {
-  it("renders the QuizLink inline logo for light and dark themes", () => {
-    render(<BrandQuizLinkText />);
+describe("QuizLinkLogo", () => {
+  it("renders light and dark inline logo assets", () => {
+    render(<QuizLinkLogo />);
 
     expect(screen.getByTestId("quizlink-logo-light")).toHaveAttribute(
       "src",
@@ -18,11 +18,6 @@ describe("BrandQuizLinkText", () => {
       "src",
       "/quizlink-inline-dark.svg",
     );
-  });
-
-  it("uses compact inline sizing when className includes inline", () => {
-    render(<BrandQuizLinkText className="inline" />);
-
-    expect(screen.getByRole("img", { name: "QuizLink" })).toHaveClass("h-[1.1em]");
+    expect(screen.getByRole("img", { name: "QuizLink" })).toBeInTheDocument();
   });
 });

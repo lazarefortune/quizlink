@@ -126,6 +126,11 @@ export const en = {
       error: "Failed to create account",
       legalRequiredError:
         "You must accept the Terms of Service and Privacy Policy to create an account.",
+      legalNoticePrefix: "By signing up, you agree to our",
+      legalNoticeTermsLink: "Terms of Use",
+      legalNoticeMid: "and our",
+      legalNoticePrivacyLink: "Privacy Policy",
+      legalNoticeEnd: ".",
       legalIntro: "I accept the ",
       legalTermsLink: "Terms of Service",
       legalMid: " and the ",
@@ -1934,12 +1939,21 @@ export const en = {
     },
   },
 
+  legal: {
+    paymentNotice: {
+      prefix: "By continuing, you accept the",
+      salesLink: "Terms of sale",
+      and: "and the",
+      privacyLink: "Privacy policy",
+    },
+  },
+
   // Footer
   footer: {
     about: {
       title: "About",
       descriptionAfterBrand:
-        " is a professional platform for creating and sharing quizzes.",
+        "QuizLink is a professional platform for creating and sharing quizzes.",
       author: "Created by",
     },
     legal: {

@@ -9,6 +9,7 @@ import { t } from "@/lib/i18n";
 import { useLocale } from "@/lib/i18n/use-locale";
 
 import { CoinPackCoinsIcon } from "./coin-pack-coins-icon";
+import { PaymentLegalNotice } from "@/components/legal/payment-legal-notice";
 
 export type CoinPackOffer = {
   id: string;
@@ -129,6 +130,7 @@ export function CoinPackOfferCard({
             </>
           )}
         </Button>
+        <PaymentLegalNotice />
       </CardContent>
     </Card>
   );

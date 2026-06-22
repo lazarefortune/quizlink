@@ -51,9 +51,7 @@ export function Topbar({
             onClick={(event) => interceptLinkClick(event, "/dashboard")}
             className="flex min-w-0 items-center gap-2"
           >
-            <span className="truncate font-black text-xl text-foreground">
-              <BrandQuizLinkText />
-            </span>
+            <BrandQuizLinkText size="sm" className="min-w-0" />
           </Link>
         </div>
 
