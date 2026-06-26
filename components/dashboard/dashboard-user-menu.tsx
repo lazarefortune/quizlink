@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronDown, LogOut, Shield, User } from "lucide-react";
+import { ChevronDown, Shield, User } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState, type MouseEvent } from "react";
@@ -22,6 +22,8 @@ import { t } from "@/lib/i18n";
 import { getDisplayTitle } from "@/lib/userProfileDisplay";
 import { cn } from "@/lib/utils";
 import { useBuilderNavigationGuard } from "@/components/dashboard/builder-navigation-guard-context";
+import { Logout02Icon, Shield01Icon, User03Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 
 type DashboardUserMenuProps = {
   className?: string;
@@ -68,7 +70,7 @@ export function DashboardUserMenu({
           type="button"
           variant="ghost"
           className={cn(
-            "flex h-auto min-h-0 items-center rounded-2xl border border-border/80 bg-muted/25 py-2.5 text-left shadow-none ring-offset-background transition-colors hover:bg-muted/45 focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:bg-muted/50 data-[state=open]:[&_svg:last-child]:-rotate-180",
+            "flex h-auto min-h-0 items-center rounded-sm border border-border/80 bg-muted/25 py-2.5 text-left shadow-none ring-offset-background transition-colors hover:bg-muted/45 focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:bg-muted/50 data-[state=open]:[&_svg:last-child]:-rotate-180",
             isCompact ? "w-full justify-center px-2" : "w-full gap-3 px-3",
             className,
           )}
@@ -119,8 +121,8 @@ export function DashboardUserMenu({
               onClick={(event) => handleMenuLinkClick(event, "/admin")}
               className="flex cursor-pointer items-center gap-2"
             >
-              <Shield className="h-5 w-5" />
-              <span className="font-fredoka text-base font-medium">
+              <HugeiconsIcon icon={Shield01Icon} size={20} strokeWidth={2} />
+              <span className="font-fredoka text-lg font-medium">
                 {t(locale, "userMenu.admin")}
               </span>
             </Link>
@@ -132,8 +134,8 @@ export function DashboardUserMenu({
             onClick={(event) => handleMenuLinkClick(event, "/account")}
             className="flex cursor-pointer items-center gap-2"
           >
-            <User className="h-5 w-5" />
-            <span className="font-fredoka text-base font-medium">
+            <HugeiconsIcon icon={User03Icon} size={20} strokeWidth={2} />
+            <span className="font-fredoka text-lg font-medium">
               {t(locale, "userMenu.account")}
             </span>
           </Link>
@@ -141,10 +143,10 @@ export function DashboardUserMenu({
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onSelect={handleSignOut}
-          className="flex cursor-pointer items-center gap-2 text-destructive focus:text-destructive"
+          className="flex cursor-pointer items-center gap-2 text-destructive dark:text-red-400 focus:text-destructive"
         >
-          <LogOut className="h-5 w-5" />
-          <span className="font-fredoka text-base font-medium">
+          <HugeiconsIcon icon={Logout02Icon} size={20} strokeWidth={2} />
+          <span className="font-fredoka text-lg font-medium">
             {t(locale, "auth.signOut")}
           </span>
         </DropdownMenuItem>

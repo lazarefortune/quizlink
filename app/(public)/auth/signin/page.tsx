@@ -29,8 +29,10 @@ import {
   AuthFormPage,
 } from "@/components/auth/auth-form-layout";
 import { motion } from "framer-motion";
-import { ArrowRight, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { ArrowRight, Eye, EyeOff } from "lucide-react";
 import { GoogleIcon } from "@/components/ui/google-icon";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Mail01Icon, LockOpen, EyeIcon, EyeOffIcon } from "@hugeicons/core-free-icons";
 
 function SignInForm() {
   const searchParams = useSearchParams();
@@ -117,7 +119,7 @@ function SignInForm() {
                 onClick={() => nextAuthSignIn("google", { callbackUrl: postAuthRedirect })}
               >
                 <GoogleIcon className="h-5 w-5 shrink-0" />
-                <span className="min-w-0 truncate">{t(locale, "auth.googleSignIn")}</span>
+                <span className="min-w-0 truncate text-base sm:text-lg">{t(locale, "auth.googleSignIn")}</span>
               </Button>
 
               <AuthFormDivider>
@@ -141,7 +143,7 @@ function SignInForm() {
               <div className="form-group">
                 <Label htmlFor="signin-email">{t(locale, "auth.email")}</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <HugeiconsIcon icon={Mail01Icon} size={20} className="text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
                   <Input
                     id="signin-email"
                     type="email"
@@ -149,7 +151,7 @@ function SignInForm() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     placeholder={t(locale, "auth.emailPlaceholder")}
-                    className="form-input-lg form-input-with-icon-left w-full bg-secondary/50 border-border"
+                    className="form-input-lg form-input-with-icon-left text-lg w-full bg-secondary/50 border-border"
                   />
                 </div>
               </div>
@@ -167,7 +169,7 @@ function SignInForm() {
                   </Link>
                 </div>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <HugeiconsIcon icon={LockOpen} size={20} className="text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
                   <Input
                     id="signin-password"
                     type={showPassword ? "text" : "password"}
@@ -175,7 +177,7 @@ function SignInForm() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     placeholder={t(locale, "auth.passwordPlaceholder")}
-                    className="form-input-lg form-input-with-icon-left form-input-with-icon-right w-full bg-secondary/50 border-border"
+                    className="form-input-lg form-input-with-icon-left form-input-with-icon-right text-lg w-full bg-secondary/50 border-border"
                   />
                   <button
                     type="button"
@@ -184,9 +186,9 @@ function SignInForm() {
                     aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
                   >
                     {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
+                      <HugeiconsIcon icon={EyeOffIcon} size={20} className="text-muted-foreground absolute right-3 top-1/2 -translate-y-1/2" />
                     ) : (
-                      <Eye className="h-4 w-4" />
+                      <HugeiconsIcon icon={EyeIcon} size={20} className="text-muted-foreground absolute right-3 top-1/2 -translate-y-1/2" />
                     )}
                   </button>
                 </div>

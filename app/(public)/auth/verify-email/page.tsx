@@ -20,6 +20,7 @@ import { buildCommonEventProps } from "@/lib/analytics/props";
 import {
   buildSignInHref,
   buildSignUpHref,
+  buildSignupNameHref,
 } from "@/lib/auth/safe-callback-url";
 import { useToast } from "@/components/ui/toast";
 import { VerifyEmailSidePanel } from "@/components/auth/verify-email-side-panel";
@@ -33,6 +34,7 @@ import {
   AuthFormPage,
 } from "@/components/auth/auth-form-layout";
 import { ArrowRight } from "lucide-react";
+import { VERIFICATION_CODE_RESEND_COOLDOWN_SECONDS } from "@/lib/auth/pending-signup";
 
 function VerifyEmailForm() {
   const searchParams = useSearchParams();
@@ -48,18 +50,21 @@ function VerifyEmailForm() {
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [isAlreadyVerified, setIsAlreadyVerified] = useState(false);
+  const [isPendingSignup, setIsPendingSignup] = useState(false);
+  const [resendCooldownSeconds, setResendCooldownSeconds] = useState(0);
 
   const callbackUrl = searchParams.get("callbackUrl");
   const accountJustCreated = searchParams.get("created") === "true";
   const signInHref = buildSignInHref(callbackUrl, { verified: true, email: email || undefined });
   const signUpHref = buildSignUpHref(callbackUrl);
+  const signupNameHref = buildSignupNameHref(email, callbackUrl);
 
   useEffect(() => {
     if (!accountJustCreated || hasShownCreatedToast.current) {
       return;
     }
     hasShownCreatedToast.current = true;
-    showToast(t(locale, "auth.signUp.accountCreated"), "success");
+    showToast(t(locale, "auth.signUp.codeSent"), "success");
   }, [accountJustCreated, locale, showToast]);
 
   useEffect(() => {
@@ -72,6 +77,8 @@ function VerifyEmailForm() {
     getVerifyEmailStatusAction(email).then((status) => {
       if (!isCancelled) {
         setIsAlreadyVerified(status.isVerified);
+        setIsPendingSignup(status.isPendingSignup);
+        setResendCooldownSeconds(status.resendCooldownSeconds);
       }
     });
 
@@ -80,19 +87,33 @@ function VerifyEmailForm() {
     };
   }, [email]);
 
+  useEffect(() => {
+    if (resendCooldownSeconds <= 0) {
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      setResendCooldownSeconds((current) => (current > 0 ? current - 1 : 0));
+    }, 1000);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [resendCooldownSeconds]);
+
   const isVerifiedAccount = Boolean(email) && isAlreadyVerified;
 
   const pageDescription = (() => {
     if (!email) {
       return t(locale, "auth.verifyEmail.description");
     }
-    if (isVerifiedAccount) {
+    if (isVerifiedAccount && !isPendingSignup) {
       return t(locale, "auth.verifyEmail.alreadyVerified");
     }
     return t(locale, "auth.verifyEmail.codeSentTo").replace("{email}", email);
   })();
 
-  const redirectToSignIn = (redirectTo: string) => {
+  const redirectAfterVerify = (redirectTo: string) => {
     setIsRedirecting(true);
     setTimeout(() => {
       router.push(redirectTo);
@@ -129,7 +150,7 @@ function VerifyEmailForm() {
         });
       }
 
-      redirectToSignIn(result.redirectTo);
+      redirectAfterVerify(result.redirectTo);
     } catch {
       setError(t(locale, "auth.verifyEmail.error"));
     } finally {
@@ -153,7 +174,10 @@ function VerifyEmailForm() {
           setIsAlreadyVerified(true);
         } else {
           showToast(t(locale, "auth.verifyEmail.resendSuccess"), "success");
+          setResendCooldownSeconds(VERIFICATION_CODE_RESEND_COOLDOWN_SECONDS);
         }
+      } else if (result.error === "RESEND_COOLDOWN" && "retryAfterSeconds" in result) {
+        setResendCooldownSeconds(result.retryAfterSeconds ?? VERIFICATION_CODE_RESEND_COOLDOWN_SECONDS);
       } else {
         setError(result.error || t(locale, "auth.verifyEmail.resendError"));
       }
@@ -210,13 +234,17 @@ function VerifyEmailForm() {
                   size="lg"
                   className="h-12 w-full"
                   disabled={isBusy || !email}
-                  onClick={() => redirectToSignIn(signInHref)}
+                  onClick={() =>
+                    redirectAfterVerify(isPendingSignup ? signupNameHref : signInHref)
+                  }
                 >
                   {isRedirecting ? (
                     t(locale, "auth.verifyEmail.verifiedRedirecting")
                   ) : (
                     <>
-                      {t(locale, "auth.verifyEmail.continueToSignIn")}
+                      {isPendingSignup
+                        ? t(locale, "auth.signUp.continue")
+                        : t(locale, "auth.verifyEmail.continueToSignIn")}
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </>
                   )}
@@ -249,7 +277,7 @@ function VerifyEmailForm() {
                         : t(locale, "common.loading")
                     ) : (
                       <>
-                        {t(locale, "auth.verifyEmail.verify")}
+                        {t(locale, "auth.verifyEmail.verifyEmail")}
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </>
                     )}
@@ -259,12 +287,17 @@ function VerifyEmailForm() {
                     <button
                       type="button"
                       onClick={handleResend}
-                      disabled={isResending || !email || isBusy}
+                      disabled={isResending || !email || isBusy || resendCooldownSeconds > 0}
                       className="text-primary underline-offset-2 hover:underline disabled:opacity-50"
                     >
                       {isResending
                         ? t(locale, "common.loading")
-                        : t(locale, "auth.verifyEmail.resend")}
+                        : resendCooldownSeconds > 0
+                          ? t(locale, "auth.verifyEmail.resendCooldown").replace(
+                              "{seconds}",
+                              String(resendCooldownSeconds),
+                            )
+                          : t(locale, "auth.verifyEmail.resend")}
                     </button>
                   </p>
                 </form>

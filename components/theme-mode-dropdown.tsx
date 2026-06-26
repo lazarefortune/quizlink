@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MonitorCog, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 
 import { Button } from "@/components/ui/button";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { MonitorCog, Moon02Icon, Sun03Icon } from "@hugeicons/core-free-icons";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,12 +19,12 @@ type ThemeMode = "light" | "dark" | "system";
 
 const themeModes: Array<{
   value: ThemeMode;
-  icon: typeof Sun;
+  icon: typeof Sun03Icon;
   labelFr: string;
   labelEn: string;
 }> = [
-  { value: "light", icon: Sun, labelFr: "Clair", labelEn: "Light" },
-  { value: "dark", icon: Moon, labelFr: "Sombre", labelEn: "Dark" },
+  { value: "light", icon: Sun03Icon, labelFr: "Clair", labelEn: "Light" },
+  { value: "dark", icon: Moon02Icon, labelFr: "Sombre", labelEn: "Dark" },
   { value: "system", icon: MonitorCog, labelFr: "Système", labelEn: "System" },
 ];
 
@@ -63,7 +64,7 @@ export function ThemeModeDropdown({ locale, className }: ThemeModeDropdownProps)
           aria-label={triggerAriaLabel}
           suppressHydrationWarning
         >
-          <TriggerIcon className="h-5 w-5 shrink-0" aria-hidden />
+          <HugeiconsIcon icon={TriggerIcon} size={20} className="text-muted-foreground" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-[10rem]">
@@ -81,7 +82,7 @@ export function ThemeModeDropdown({ locale, className }: ThemeModeDropdownProps)
                 className="font-medium"
               >
                 <span className="flex items-center gap-2">
-                  <Icon className="h-4 w-4 shrink-0" aria-hidden />
+                  <HugeiconsIcon icon={Icon} size={20} className="text-muted-foreground" />
                   {label}
                 </span>
               </DropdownMenuRadioItem>

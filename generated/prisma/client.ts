@@ -72,6 +72,11 @@ export type PasswordResetToken = Prisma.PasswordResetTokenModel
  */
 export type EmailChangeToken = Prisma.EmailChangeTokenModel
 /**
+ * Model PendingSignup
+ * 
+ */
+export type PendingSignup = Prisma.PendingSignupModel
+/**
  * Model Quiz
  * 
  */

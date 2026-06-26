@@ -57,6 +57,7 @@ export const ModelName = {
   EmailVerificationToken: 'EmailVerificationToken',
   PasswordResetToken: 'PasswordResetToken',
   EmailChangeToken: 'EmailChangeToken',
+  PendingSignup: 'PendingSignup',
   Quiz: 'Quiz',
   Question: 'Question',
   Option: 'Option',
@@ -176,6 +177,24 @@ export const EmailChangeTokenScalarFieldEnum = {
 } as const
 
 export type EmailChangeTokenScalarFieldEnum = (typeof EmailChangeTokenScalarFieldEnum)[keyof typeof EmailChangeTokenScalarFieldEnum]
+
+
+export const PendingSignupScalarFieldEnum = {
+  id: 'id',
+  email: 'email',
+  codeHash: 'codeHash',
+  expiresAt: 'expiresAt',
+  verifiedAt: 'verifiedAt',
+  name: 'name',
+  completedAt: 'completedAt',
+  attempts: 'attempts',
+  lastCodeSentAt: 'lastCodeSentAt',
+  preferredLanguage: 'preferredLanguage',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PendingSignupScalarFieldEnum = (typeof PendingSignupScalarFieldEnum)[keyof typeof PendingSignupScalarFieldEnum]
 
 
 export const QuizScalarFieldEnum = {
@@ -559,6 +578,17 @@ export const EmailChangeTokenOrderByRelevanceFieldEnum = {
 } as const
 
 export type EmailChangeTokenOrderByRelevanceFieldEnum = (typeof EmailChangeTokenOrderByRelevanceFieldEnum)[keyof typeof EmailChangeTokenOrderByRelevanceFieldEnum]
+
+
+export const PendingSignupOrderByRelevanceFieldEnum = {
+  id: 'id',
+  email: 'email',
+  codeHash: 'codeHash',
+  name: 'name',
+  preferredLanguage: 'preferredLanguage'
+} as const
+
+export type PendingSignupOrderByRelevanceFieldEnum = (typeof PendingSignupOrderByRelevanceFieldEnum)[keyof typeof PendingSignupOrderByRelevanceFieldEnum]
 
 
 export const JsonNullValueFilter = {

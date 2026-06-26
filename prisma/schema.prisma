@@ -120,6 +120,24 @@ model EmailChangeToken {
   @@map("email_change_tokens")
 }
 
+model PendingSignup {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  codeHash          String    @map("code_hash") @db.VarChar(64)
+  expiresAt         DateTime  @map("expires_at")
+  verifiedAt        DateTime? @map("verified_at")
+  name              String?   @db.VarChar(255)
+  completedAt       DateTime? @map("completed_at")
+  attempts          Int       @default(0)
+  lastCodeSentAt    DateTime  @default(now()) @map("last_code_sent_at")
+  preferredLanguage String    @default("fr") @map("preferred_language")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  @@index([expiresAt])
+  @@map("pending_signups")
+}
+
 enum QuizStatus {
   DRAFT
   ACTIVE
