@@ -10,13 +10,13 @@ deploy_quizlink:
   before_script:
     - apk add --no-cache openssh git
     - mkdir -p ~/.ssh
-    - echo "$SSH_QUIZLINK_KEY" > ~/.ssh/id_rsa
-    - chmod 600 ~/.ssh/id_rsa
-    - ssh-keyscan -H "$SSH_QUIZLINK_HOST" >> ~/.ssh/known_hosts
+    - echo "$SSH_QUIZLINK_KEY" | base64 -d > ~/.ssh/id_deploy
+    - chmod 600 ~/.ssh/id_deploy
+    - ssh-keyscan -p "$SSH_QUIZLINK_PORT" -H "$SSH_QUIZLINK_HOST" >> ~/.ssh/known_hosts
 
   script:
   - |
-    ssh -p "$SSH_QUIZLINK_PORT" "$SSH_QUIZLINK_USER@$SSH_QUIZLINK_HOST" << 'EOF'
+    ssh -i ~/.ssh/id_deploy -p "$SSH_QUIZLINK_PORT" "$SSH_QUIZLINK_USER@$SSH_QUIZLINK_HOST" << 'EOF'
     set -e
 
     echo "Déploiement QuizLink"
@@ -72,13 +72,12 @@ deploy_quizlink:
 
     # PM2
     if pm2 list | grep -q quizlink; then
-      pm2 reload quizlink
+      pm2 reload quizlink --update-env
     else
       PORT=3002 pm2 start npm --name quizlink -- start
       pm2 save
     fi
 
-    pm2 list
     EOF
 
 
