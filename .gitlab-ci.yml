@@ -6,91 +6,19 @@ stages:
 deploy_quizlink:
   stage: deploy
   variables:
-    CI: "true"            # npm non-interactif
+    CI: "true"
+
   before_script:
-    - apk add --no-cache openssh git
+    - apk add --no-cache openssh
     - mkdir -p ~/.ssh
     - echo "$SSH_QUIZLINK_KEY" | base64 -d > ~/.ssh/id_deploy
     - chmod 600 ~/.ssh/id_deploy
     - ssh-keyscan -p "$SSH_QUIZLINK_PORT" -H "$SSH_QUIZLINK_HOST" >> ~/.ssh/known_hosts
 
   script:
-  - |
-    ssh -i ~/.ssh/id_deploy -p "$SSH_QUIZLINK_PORT" "$SSH_QUIZLINK_USER@$SSH_QUIZLINK_HOST" << 'EOF'
-    set -e
-
-    echo "Déploiement QuizLink"
-
-    cd /var/www/quizlink
-
-    # Récupération du code
-    git reset --hard HEAD
-    git pull origin main
-
-    ensure_node_for_prisma() {
-      if [ -s "$HOME/.nvm/nvm.sh" ]; then
-        # shellcheck disable=SC1090
-        . "$HOME/.nvm/nvm.sh"
-        if [ -f .nvmrc ]; then
-          nvm install
-          nvm use
-        else
-          nvm install 22
-          nvm use 22
-        fi
-      fi
-
-      echo "Node.js $(node --version)"
-      node <<'NODE'
-    const [major, minor] = process.versions.node.split(".").map(Number);
-    const isSupported =
-      (major === 20 && minor >= 19) ||
-      (major === 22 && minor >= 12) ||
-      major >= 24;
-
-    if (!isSupported) {
-      console.error(
-        `Node.js ${process.version} is too old for Prisma 7. Requires 20.19+, 22.12+, or 24.0+.`,
-      );
-      console.error("Install nvm on the server or upgrade Node.js, then redeploy.");
-      process.exit(1);
-    }
-    NODE
-    }
-
-    ensure_node_for_prisma
-
-    # Charger les variables d'environnement serveur pour Prisma
-    set -a
-    [ -f .env ] && . ./.env
-    [ -f .env.local ] && . ./.env.local
-    set +a
-
-    if [ -z "$DATABASE_URL" ]; then
-      echo "DATABASE_URL manquante"
-      exit 1
-    fi
-
-    # Installation des dépendances
-    pnpm install --frozen-lockfile
-
-    # Prisma
-    npx prisma generate
-    npx prisma migrate deploy
-
-    # Build
-    pnpm run build
-
-    # PM2
-    if pm2 list | grep -q quizlink; then
-      pm2 reload quizlink --update-env
-    else
-      PORT=3002 pm2 start npm --name quizlink -- start
-      pm2 save
-    fi
-
-    EOF
-
+    - |
+      ssh -i ~/.ssh/id_deploy -p "$SSH_QUIZLINK_PORT" "$SSH_QUIZLINK_USER@$SSH_QUIZLINK_HOST" \
+        "sudo -n -u fortune /usr/local/sbin/deploy-quizlink"
 
   only:
     - main
