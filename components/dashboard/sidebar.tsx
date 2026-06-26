@@ -30,6 +30,8 @@ import { useSupportFeedback } from "@/components/support/support-feedback-provid
 
 import { DashboardUserMenu } from "./dashboard-user-menu";
 import { NavItem } from "./nav-item";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Coins01Icon } from "@hugeicons/core-free-icons";
 
 type SidebarProps = {
   onNavClick?: () => void;
@@ -189,7 +191,7 @@ export function Sidebar({ onNavClick, className }: SidebarProps) {
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#1CB0F6]/20 text-[#0284c7] dark:bg-white/15 dark:text-white"
               aria-hidden
             >
-              <Coins className="h-5 w-5" strokeWidth={2.25} />
+              <HugeiconsIcon icon={Coins01Icon} size={20} strokeWidth={2} className="text-muted-foreground" />
             </div>
             <span className="font-black tabular-nums text-base leading-none tracking-tight text-[#4B4B4B] dark:text-white">
               {coinBalance}
@@ -209,7 +211,7 @@ export function Sidebar({ onNavClick, className }: SidebarProps) {
                 className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#1CB0F6]/20 text-[#0284c7] dark:bg-white/15 dark:text-white"
                 aria-hidden
               >
-                <Coins className="h-5 w-5" strokeWidth={2.25} />
+                <HugeiconsIcon icon={Coins01Icon} size={20} strokeWidth={2} />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-[10px] font-black uppercase tracking-wide text-[#4B4B4B] dark:text-white/70">

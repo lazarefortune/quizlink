@@ -2,6 +2,8 @@ import type { SVGProps } from "react";
 
 import { t, type Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { AnalyticsUpIcon, FileQuestionMarkIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 
 type QuizCardStatIconProps = {
   className?: string;
@@ -115,16 +117,16 @@ export function QuizCardStats({
 }: QuizCardStatsProps) {
   return (
     <div className={cn("flex items-center gap-4 text-sm text-muted-foreground", className)}>
-      <span className="inline-flex items-center">
-        <QuizCardQuestionCountIcon />
+      <span className="inline-flex items-center gap-1">
+        <HugeiconsIcon icon={FileQuestionMarkIcon} size={15} strokeWidth={2} />
         {questionCount}{" "}
         {questionCount === 1
           ? t(locale, "dashboard.question")
           : t(locale, "dashboard.questions")}
       </span>
       {showResults ? (
-        <span className="inline-flex items-center">
-          <QuizCardResultCountIcon />
+        <span className="inline-flex items-center gap-1">
+          <HugeiconsIcon icon={AnalyticsUpIcon} size={15} strokeWidth={2} />
           {attemptCount} {getResultLabel(locale, attemptCount)}
         </span>
       ) : null}

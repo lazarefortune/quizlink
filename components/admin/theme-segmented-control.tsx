@@ -1,16 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MonitorCog, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 
 import { cn } from "@/lib/utils";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Sun03Icon, Moon02Icon, MonitorCog } from "@hugeicons/core-free-icons";
 
 type ThemeMode = "light" | "dark" | "system";
 
-const modes: Array<{ value: ThemeMode; icon: typeof Sun; labelFr: string; labelEn: string }> = [
-  { value: "light", icon: Sun, labelFr: "Clair", labelEn: "Light" },
-  { value: "dark", icon: Moon, labelFr: "Sombre", labelEn: "Dark" },
+const modes: Array<{ value: ThemeMode; icon: typeof Sun03Icon; labelFr: string; labelEn: string }> = [
+  { value: "light", icon: Sun03Icon, labelFr: "Clair", labelEn: "Light" },
+  { value: "dark", icon: Moon02Icon, labelFr: "Sombre", labelEn: "Dark" },
   { value: "system", icon: MonitorCog, labelFr: "Système", labelEn: "System" },
 ];
 
@@ -42,7 +43,7 @@ export function ThemeSegmentedControl({ locale, className }: ThemeSegmentedContr
             disabled
             className="flex size-8 items-center justify-center rounded-full text-muted-foreground opacity-60"
           >
-            <Icon className="size-4" />
+            <HugeiconsIcon icon={Icon} size={20} className="text-muted-foreground" />
           </button>
         ))}
       </div>
@@ -78,7 +79,7 @@ export function ThemeSegmentedControl({ locale, className }: ThemeSegmentedContr
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
-            <Icon className="size-4 shrink-0" aria-hidden />
+            <HugeiconsIcon icon={Icon} size={20} strokeWidth={2} className="text-muted-foreground" />
           </button>
         );
       })}

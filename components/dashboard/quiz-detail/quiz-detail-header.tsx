@@ -56,6 +56,7 @@ import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
 import { cn } from "@/lib/utils";
 
 import { QuizShareLinkDialog } from "./quiz-share-link-dialog";
+import { QuizFreeResponsesGaugeCard } from "./quiz-free-responses-gauge-card";
 
 type QuizDetailHeaderProps = {
   quizId: string;
@@ -111,6 +112,11 @@ export function QuizDetailHeader({
 
     return formatQuizDetailHeaderQuotaLine(quotaStatus, locale);
   }, [locale, quotaStatus, quizStatus]);
+
+  const showFreeResponsesGauge =
+    quizStatus === "ACTIVE" &&
+    quotaStatus != null &&
+    (quotaStatus.label === "FREE_AVAILABLE" || quotaStatus.label === "FREE_LIMIT_REACHED");
 
   const handlePlay = async () => {
     setPlayLoading(true);
@@ -251,7 +257,7 @@ export function QuizDetailHeader({
               <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
                 {quizName}
               </h1>
-              {quotaLine ? (
+              {quotaLine && !showFreeResponsesGauge ? (
                 <p
                   className={cn(
                     "flex flex-wrap items-center gap-x-2 gap-y-1 text-base font-medium",
@@ -260,25 +266,6 @@ export function QuizDetailHeader({
                   data-testid="quiz-detail-quota-line"
                 >
                   <span>{quotaLine.label}</span>
-                  {quotaLine.showUnlockAction && onUnlock ? (
-                    <Button
-                      type="button"
-                      variant={
-                        quotaLine.unlockActionVariant === "primary" ? "blue" : "link"
-                      }
-                      size="sm"
-                      className={
-                        quotaLine.unlockActionVariant === "primary"
-                          ? "h-auto px-3"
-                          : "h-auto px-0 text-inherit underline-offset-4"
-                      }
-                      onClick={onUnlock}
-                    >
-                      {quotaLine.unlockActionVariant === "primary"
-                        ? t(locale, "dashboard.quizQuota.unlockQuiz")
-                        : t(locale, "dashboard.quizQuota.unlock")}
-                    </Button>
-                  ) : null}
                 </p>
               ) : null}
             </div>
@@ -350,6 +337,15 @@ export function QuizDetailHeader({
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
+
+          {showFreeResponsesGauge && quotaStatus ? (
+            <QuizFreeResponsesGaugeCard
+              className="mt-3"
+              quotaStatus={quotaStatus}
+              locale={locale}
+              onUnlock={onUnlock}
+            />
+          ) : null}
 
           <div className="mt-4 flex flex-wrap items-center gap-2">
             {primaryAction}

@@ -11,13 +11,11 @@ import { SignupLegalNotice } from "@/components/legal/signup-legal-notice";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { authFormItemVariants } from "@/lib/auth-motion-variants";
-import { signUpAction } from "./actions";
+import { startEmailSignupAction } from "./actions";
+import { SIGNUP_ERROR_CODES } from "@/lib/auth/signup-error-codes";
 import { SignupSidePanel } from "@/components/auth/signup-side-panel";
-import { track } from "@/lib/analytics/track";
-import { SIGNUP_COMPLETED } from "@/lib/analytics/events";
-import { buildCommonEventProps } from "@/lib/analytics/props";
 import { signIn as nextAuthSignIn } from "next-auth/react";
-import { buildVerifyEmailHref, resolveSafeCallbackUrl } from "@/lib/auth/safe-callback-url";
+import { resolveSafeCallbackUrl } from "@/lib/auth/safe-callback-url";
 import {
   AuthFormCard,
   AuthFormCardContent,
@@ -28,15 +26,14 @@ import {
   AuthFormLogo,
   AuthFormPage,
 } from "@/components/auth/auth-form-layout";
-import { Eye, EyeOff, ArrowRight, Mail, Lock, User, Check } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { GoogleIcon } from "@/components/ui/google-icon";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Mail01Icon } from "@hugeicons/core-free-icons";
 
 function SignUpForm() {
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -47,47 +44,33 @@ function SignUpForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
+    setEmailError(null);
 
-    if (!name.trim()) {
-      setError(t(locale, "auth.nameRequired"));
-      return;
-    }
-
-    if (password.length < 8) {
-      setError(t(locale, "auth.passwordTooShort"));
+    if (!email.trim()) {
+      setEmailError(t(locale, "auth.emailRequired"));
       return;
     }
 
     setIsLoading(true);
 
     try {
-      const result = await signUpAction(name.trim(), email, password, locale);
+      const result = await startEmailSignupAction(email, locale, callbackUrl);
       if (!result.success) {
-        setError(result.error || t(locale, "auth.signUp.error"));
+        if (result.error === SIGNUP_ERROR_CODES.EMAIL_ALREADY_IN_USE) {
+          setEmailError(t(locale, "auth.signUp.emailAlreadyInUse"));
+          return;
+        }
+        setEmailError(result.error || t(locale, "auth.signUp.error"));
         return;
       }
 
-      track(SIGNUP_COMPLETED, {
-        ...buildCommonEventProps({ preferredLanguage: locale }),
-        from_page: "signup",
-        language: locale === "fr" || locale === "en" ? locale : "fr",
-      });
-
-      const verifyEmailPath = buildVerifyEmailHref(
-        result.email ?? email,
-        callbackUrl,
-        { created: true },
-      );
-      router.push(verifyEmailPath);
+      router.push(result.redirectTo);
     } catch {
-      setError(t(locale, "auth.signUp.error"));
+      setEmailError(t(locale, "auth.signUp.error"));
     } finally {
       setIsLoading(false);
     }
   };
-
-  const passwordOk = password.length >= 8;
 
   return (
     <AuthFormPage sidePanel={<SignupSidePanel />}>
@@ -114,7 +97,7 @@ function SignUpForm() {
                 }
               >
                 <GoogleIcon className="h-5 w-5 shrink-0" />
-                <span className="min-w-0 truncate">{t(locale, "auth.googleSignUp")}</span>
+                <span className="min-w-0 truncate text-base sm:text-lg">{t(locale, "auth.googleSignIn")}</span>
               </Button>
 
               <AuthFormDivider>
@@ -129,84 +112,31 @@ function SignUpForm() {
               variants={authFormItemVariants}
               className="flex min-w-0 flex-col gap-4 sm:gap-5"
             >
-              {error && (
-                <div className="form-error" role="alert">
-                  {error}
-                </div>
-              )}
-
-              <div className="form-group">
-                <Label htmlFor="signup-name">
-                  {t(locale, "auth.name")}
-                </Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    id="signup-name"
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                    placeholder={t(locale, "auth.namePlaceholder")}
-                    className="form-input-lg text-base form-input-with-icon-left w-full bg-secondary/50 border-border"
-                  />
-                </div>
-              </div>
-
               <div className="form-group">
                 <Label htmlFor="signup-email">{t(locale, "auth.email")}</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <HugeiconsIcon icon={Mail01Icon} size={20} className="text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
                   <Input
                     id="signup-email"
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (emailError) {
+                        setEmailError(null);
+                      }
+                    }}
                     required
+                    aria-invalid={emailError ? true : undefined}
+                    aria-describedby={emailError ? "signup-email-error" : undefined}
                     placeholder={t(locale, "auth.emailPlaceholder")}
-                    className="form-input-lg form-input-with-icon-left w-full bg-secondary/50 border-border"
+                    className="form-input-lg form-input-with-icon-left text-lg w-full bg-secondary/50 border-border"
                   />
                 </div>
-              </div>
-
-              <div className="form-group">
-                <Label htmlFor="signup-password">{t(locale, "auth.password")}</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    id="signup-password"
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={8}
-                    placeholder={t(locale, "auth.passwordPlaceholder")}
-                    className="form-input-lg form-input-with-icon-left form-input-with-icon-right w-full bg-secondary/50 border-border"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
-                    aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
-                {password.length > 0 && (
-                  <div
-                    className={`form-hint flex items-center gap-1.5 ${
-                      passwordOk ? "text-primary" : ""
-                    }`}
-                  >
-                    <Check className={passwordOk ? "h-3.5 w-3.5" : "h-3.5 w-3.5 opacity-50"} />
-                    <span>
-                      {locale === "fr" ? "8 caractères minimum" : "At least 8 characters"}
-                    </span>
-                  </div>
+                {emailError && (
+                  <p id="signup-email-error" className="form-error mt-1.5" role="alert">
+                    {emailError}
+                  </p>
                 )}
               </div>
 
@@ -221,7 +151,7 @@ function SignUpForm() {
                   t(locale, "common.loading")
                 ) : (
                   <>
-                    {t(locale, "auth.signUp.button")}
+                    {t(locale, "auth.signUp.continue")}
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </>
                 )}

@@ -22,9 +22,18 @@ function createPrismaClient(): PrismaClient {
   });
 }
 
+function isPrismaClientOutdated(client: PrismaClient): boolean {
+  return typeof client.pendingSignup === "undefined";
+}
+
 function getPrismaClient(): PrismaClient {
   if (globalForPrisma.prisma) {
-    return globalForPrisma.prisma;
+    if (!isPrismaClientOutdated(globalForPrisma.prisma)) {
+      return globalForPrisma.prisma;
+    }
+
+    void globalForPrisma.prisma.$disconnect();
+    globalForPrisma.prisma = undefined;
   }
 
   const client = createPrismaClient();

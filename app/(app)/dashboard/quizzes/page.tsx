@@ -50,6 +50,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Plus } from "@hugeicons/core-free-icons";
 
 const PAGE_SIZE = 12;
 
@@ -87,7 +89,7 @@ function CreateQuizModalTrigger({
         className="gap-2 [&_svg]:!size-5 sm:[&_svg]:!size-6 items-center"
         onClick={() => setOpen(true)}
       >
-        <DashboardCreateNavIcon className="shrink-0" />
+        <HugeiconsIcon icon={Plus} size={20} strokeWidth={2} />
         <span className="sm:hidden">{t(locale, "nav.create")}</span>
         <span className="hidden sm:inline">{t(locale, "dashboard.welcome.createQuiz")}</span>
       </Button>

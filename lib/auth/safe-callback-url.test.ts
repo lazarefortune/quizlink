@@ -4,6 +4,9 @@ import {
   buildSignInHref,
   buildSignUpHref,
   buildVerifyEmailHref,
+  buildSignupVerifyEmailHref,
+  buildSignupNameHref,
+  buildSignupPasswordHref,
   resolveSafeCallbackUrl,
 } from "./safe-callback-url";
 
@@ -54,5 +57,25 @@ describe("buildSignUpHref", () => {
 
   it("rejects unsafe callbackUrl", () => {
     expect(buildSignUpHref("https://evil.example")).toBe("/auth/signup");
+  });
+});
+
+describe("signup flow href builders", () => {
+  it("builds verify-email, name and password hrefs with safe callbackUrl", () => {
+    expect(buildSignupVerifyEmailHref("user@example.com", "/dashboard")).toBe(
+      "/auth/verify-email?email=user%40example.com&callbackUrl=%2Fdashboard",
+    );
+    expect(buildSignupNameHref("user@example.com", "/dashboard")).toBe(
+      "/auth/signup/name?email=user%40example.com&callbackUrl=%2Fdashboard",
+    );
+    expect(buildSignupPasswordHref("user@example.com", "/dashboard")).toBe(
+      "/auth/signup/password?email=user%40example.com&callbackUrl=%2Fdashboard",
+    );
+  });
+
+  it("omits unsafe callbackUrl from signup flow hrefs", () => {
+    expect(buildSignupPasswordHref("user@example.com", "https://evil.example")).toBe(
+      "/auth/signup/password?email=user%40example.com",
+    );
   });
 });

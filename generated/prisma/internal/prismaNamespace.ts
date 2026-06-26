@@ -390,6 +390,7 @@ export const ModelName = {
   EmailVerificationToken: 'EmailVerificationToken',
   PasswordResetToken: 'PasswordResetToken',
   EmailChangeToken: 'EmailChangeToken',
+  PendingSignup: 'PendingSignup',
   Quiz: 'Quiz',
   Question: 'Question',
   Option: 'Option',
@@ -423,7 +424,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "userLifecycleEvent" | "userAuthEvent" | "emailVerificationToken" | "passwordResetToken" | "emailChangeToken" | "quiz" | "question" | "option" | "participant" | "quizLink" | "quizLinkAnonymousStats" | "quizAttempt" | "quizAnswer" | "quizAttemptQuestion" | "quizUnlock" | "coinTransaction" | "coinPack" | "feedback" | "appSetting" | "userSubscription" | "subscriptionCoinGrant" | "quizResponseStats" | "quizQuestionResponseStats"
+    modelProps: "user" | "userLifecycleEvent" | "userAuthEvent" | "emailVerificationToken" | "passwordResetToken" | "emailChangeToken" | "pendingSignup" | "quiz" | "question" | "option" | "participant" | "quizLink" | "quizLinkAnonymousStats" | "quizAttempt" | "quizAnswer" | "quizAttemptQuestion" | "quizUnlock" | "coinTransaction" | "coinPack" | "feedback" | "appSetting" | "userSubscription" | "subscriptionCoinGrant" | "quizResponseStats" | "quizQuestionResponseStats"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -820,6 +821,72 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.EmailChangeTokenCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.EmailChangeTokenCountAggregateOutputType> | number
+        }
+      }
+    }
+    PendingSignup: {
+      payload: Prisma.$PendingSignupPayload<ExtArgs>
+      fields: Prisma.PendingSignupFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PendingSignupFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PendingSignupPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PendingSignupFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PendingSignupPayload>
+        }
+        findFirst: {
+          args: Prisma.PendingSignupFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PendingSignupPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PendingSignupFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PendingSignupPayload>
+        }
+        findMany: {
+          args: Prisma.PendingSignupFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PendingSignupPayload>[]
+        }
+        create: {
+          args: Prisma.PendingSignupCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PendingSignupPayload>
+        }
+        createMany: {
+          args: Prisma.PendingSignupCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.PendingSignupDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PendingSignupPayload>
+        }
+        update: {
+          args: Prisma.PendingSignupUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PendingSignupPayload>
+        }
+        deleteMany: {
+          args: Prisma.PendingSignupDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PendingSignupUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.PendingSignupUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PendingSignupPayload>
+        }
+        aggregate: {
+          args: Prisma.PendingSignupAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePendingSignup>
+        }
+        groupBy: {
+          args: Prisma.PendingSignupGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PendingSignupGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PendingSignupCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PendingSignupCountAggregateOutputType> | number
         }
       }
     }
@@ -2135,6 +2202,24 @@ export const EmailChangeTokenScalarFieldEnum = {
 export type EmailChangeTokenScalarFieldEnum = (typeof EmailChangeTokenScalarFieldEnum)[keyof typeof EmailChangeTokenScalarFieldEnum]
 
 
+export const PendingSignupScalarFieldEnum = {
+  id: 'id',
+  email: 'email',
+  codeHash: 'codeHash',
+  expiresAt: 'expiresAt',
+  verifiedAt: 'verifiedAt',
+  name: 'name',
+  completedAt: 'completedAt',
+  attempts: 'attempts',
+  lastCodeSentAt: 'lastCodeSentAt',
+  preferredLanguage: 'preferredLanguage',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PendingSignupScalarFieldEnum = (typeof PendingSignupScalarFieldEnum)[keyof typeof PendingSignupScalarFieldEnum]
+
+
 export const QuizScalarFieldEnum = {
   id: 'id',
   ownerId: 'ownerId',
@@ -2516,6 +2601,17 @@ export const EmailChangeTokenOrderByRelevanceFieldEnum = {
 } as const
 
 export type EmailChangeTokenOrderByRelevanceFieldEnum = (typeof EmailChangeTokenOrderByRelevanceFieldEnum)[keyof typeof EmailChangeTokenOrderByRelevanceFieldEnum]
+
+
+export const PendingSignupOrderByRelevanceFieldEnum = {
+  id: 'id',
+  email: 'email',
+  codeHash: 'codeHash',
+  name: 'name',
+  preferredLanguage: 'preferredLanguage'
+} as const
+
+export type PendingSignupOrderByRelevanceFieldEnum = (typeof PendingSignupOrderByRelevanceFieldEnum)[keyof typeof PendingSignupOrderByRelevanceFieldEnum]
 
 
 export const JsonNullValueFilter = {
@@ -2927,6 +3023,7 @@ export type GlobalOmitConfig = {
   emailVerificationToken?: Prisma.EmailVerificationTokenOmit
   passwordResetToken?: Prisma.PasswordResetTokenOmit
   emailChangeToken?: Prisma.EmailChangeTokenOmit
+  pendingSignup?: Prisma.PendingSignupOmit
   quiz?: Prisma.QuizOmit
   question?: Prisma.QuestionOmit
   option?: Prisma.OptionOmit

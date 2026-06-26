@@ -16,6 +16,7 @@ import { recordUserLifecycleEvent, USER_LIFECYCLE_EVENT_TYPES } from "@/lib/user
 import { sendUserSignupNotificationIfNeeded } from "@/lib/sendUserSignupNotificationIfNeeded";
 import { getCredentialsLoginRejection } from "@/lib/auth/validate-credentials-login";
 import { ensureDefaultUserAvatar } from "@/lib/user-avatar/ensureDefaultUserAvatar";
+import { deriveNameFromEmail } from "@/lib/auth/pending-signup";
 import { CURRENT_PRIVACY_VERSION, CURRENT_TERMS_VERSION } from "@/lib/legal-versions";
 
 const CREDENTIALS_FAILURE_REASON = "CREDENTIALS_REJECTED";
@@ -118,10 +119,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth((req: NextRequest | 
 
           if (!existingUser) {
             const acceptedAt = new Date();
+            const googleName = user.name?.trim() || profile?.name?.trim();
+            const resolvedName = googleName || deriveNameFromEmail(user.email);
             const createdUser = await prisma.user.create({
               data: {
                 email: user.email,
-                name: user.name || profile?.name || "Utilisateur",
+                name: resolvedName,
                 passwordHash: null,
                 googleId: profile?.sub ?? null,
                 emailVerifiedAt: new Date(),

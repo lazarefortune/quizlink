@@ -34,7 +34,7 @@ export function UserAvatar({
 }: UserAvatarProps) {
   const sizeClass = sizeClasses[size];
   const initials = getUserInitials(name, email);
-  const shapeClass = variant === "circle" ? "rounded-full" : "rounded-3xl";
+  const shapeClass = variant === "circle" ? "rounded-sm" : "rounded-3xl";
   const frameColor = toCssHexColor(backgroundColor ?? DEFAULT_AVATAR_BACKGROUND_COLOR);
 
   if (avatar) {

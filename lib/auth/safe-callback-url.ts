@@ -61,6 +61,46 @@ export function buildSignUpHref(callbackUrl: string | null | undefined): string 
   return "/auth/signup";
 }
 
+type SignupFlowHrefOptions = {
+  callbackUrl?: string | null;
+};
+
+function buildSignupFlowHref(
+  path: string,
+  email: string,
+  options: SignupFlowHrefOptions = {},
+): string {
+  const params = new URLSearchParams({ email });
+
+  const safeCallback = getSafeCallbackPath(options.callbackUrl);
+  if (safeCallback) {
+    params.set("callbackUrl", safeCallback);
+  }
+
+  return `${path}?${params.toString()}`;
+}
+
+export function buildSignupVerifyEmailHref(
+  email: string,
+  callbackUrl: string | null | undefined,
+): string {
+  return buildSignupFlowHref("/auth/verify-email", email, { callbackUrl });
+}
+
+export function buildSignupNameHref(
+  email: string,
+  callbackUrl: string | null | undefined,
+): string {
+  return buildSignupFlowHref("/auth/signup/name", email, { callbackUrl });
+}
+
+export function buildSignupPasswordHref(
+  email: string,
+  callbackUrl: string | null | undefined,
+): string {
+  return buildSignupFlowHref("/auth/signup/password", email, { callbackUrl });
+}
+
 export type BuildSignInHrefOptions = {
   verified?: boolean;
   email?: string | null;
