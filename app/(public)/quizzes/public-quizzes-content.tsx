@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   FileQuestion,
-  Play,
   ArrowLeft,
   ChevronLeft,
   ChevronRight,
@@ -17,6 +16,8 @@ import { t } from "@/lib/i18n";
 import { resolveQuizActionError } from "@/lib/quiz/resolveQuizActionError";
 import type { PublicQuizItem } from "./actions";
 import { getOrCreatePublicQuizLink } from "@/app/quiz-link/actions";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Play } from "@hugeicons/core-free-icons";
 
 type PublicQuizzesContentProps = {
   quizzes: PublicQuizItem[];
@@ -145,7 +146,7 @@ export function PublicQuizzesContent({ quizzes }: PublicQuizzesContentProps) {
                         t(locale, "common.loading")
                       ) : (
                         <>
-                          <Play className="h-4 w-4" />
+                          <HugeiconsIcon icon={Play} size={15} strokeWidth={2} />
                           {t(locale, "publicQuizzes.play")}
                         </>
                       )}

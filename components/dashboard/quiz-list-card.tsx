@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Copy, Edit, Eye, MoreHorizontal, Play, Trash2 } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
 
 import { QuizQuotaBadge } from "@/components/dashboard/quiz-quota-badge";
 import { QuizCardStats } from "@/components/dashboard/quiz-card-stats-icons";
@@ -22,6 +22,8 @@ import {
   canQuizShowResponseInsights,
 } from "@/lib/quiz/quizStatusPolicy";
 import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Delete02Icon, Play, Copy01Icon, Edit, Eye} from "@hugeicons/core-free-icons";
 
 export type QuizListCardData = {
   id: string;
@@ -139,27 +141,27 @@ export function QuizListCard({
                   t(locale, "common.loading")
                 ) : (
                   <>
-                    <Play className="h-4 w-4" />
+                    <HugeiconsIcon icon={Play} size={16} strokeWidth={2} />
                     {t(locale, "dashboard.playQuiz")}
                   </>
                 )}
               </Button>
               <QuizListCardActionsMenu locale={locale}>
-                <DropdownMenuItem onClick={() => onView(quiz.id)} className="gap-2">
-                  <Eye className="h-4 w-4" />
+                <DropdownMenuItem onClick={() => onView(quiz.id)} className="gap-2 text-lg">
+                  <HugeiconsIcon icon={Eye} size={20} strokeWidth={1.7} />
                   {t(locale, "dashboard.viewQuizMenu")}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onEdit(quiz.id)} className="gap-2">
-                  <Edit className="h-4 w-4" />
+                <DropdownMenuItem onClick={() => onEdit(quiz.id)} className="gap-2 text-lg">
+                  <HugeiconsIcon icon={Edit} size={20} strokeWidth={1.7} />
                   {t(locale, "dashboard.edit")}
                 </DropdownMenuItem>
                 {canShare ? (
                   <DropdownMenuItem
                     onClick={() => onCopyLink(quiz.id)}
                     disabled={copyLoadingQuizId !== null}
-                    className="gap-2"
+                    className="gap-2 text-lg"
                   >
-                    <Copy className="h-4 w-4" />
+                    <HugeiconsIcon icon={Copy01Icon} size={20} strokeWidth={1.7} />
                     {copyLoadingQuizId === quiz.id
                       ? t(locale, "common.loading")
                       : t(locale, "dashboard.copyQuizLinkMenu")}
@@ -168,9 +170,9 @@ export function QuizListCard({
                 {onDelete ? (
                   <DropdownMenuItem
                     onClick={onDelete}
-                    className="gap-2 text-destructive focus:text-destructive"
+                    className="gap-2 text-lg text-destructive focus:text-destructive"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <HugeiconsIcon icon={Delete02Icon} size={20} strokeWidth={1.7} />
                     {t(locale, "dashboard.delete")}
                   </DropdownMenuItem>
                 ) : null}
@@ -188,7 +190,7 @@ export function QuizListCard({
                   asChild
                 >
                   <Link href={`/builder/${quiz.id}`}>
-                    <Edit className="h-4 w-4" />
+                    <HugeiconsIcon icon={Edit} size={20} strokeWidth={1.7} />
                     {t(locale, "dashboard.continueInBuilder")}
                   </Link>
                 </Button>
@@ -198,7 +200,7 @@ export function QuizListCard({
                       onClick={onDelete}
                       className="gap-2 text-destructive focus:text-destructive"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <HugeiconsIcon icon={Delete02Icon} size={20} strokeWidth={1.7} />
                       {t(locale, "dashboard.delete")}
                     </DropdownMenuItem>
                   </QuizListCardActionsMenu>
@@ -214,21 +216,21 @@ export function QuizListCard({
             <div className="flex items-center gap-2">
               <Button variant="blue" size="sm" className="flex-1 gap-2" asChild>
                 <Link href={`/dashboard/quiz/${quiz.id}?tab=questions`}>
-                  <Eye className="h-4 w-4" />
+                  <HugeiconsIcon icon={Eye} size={20} strokeWidth={1.7} />
                   {t(locale, "dashboard.viewArchivedQuiz")}
                 </Link>
               </Button>
               <QuizListCardActionsMenu locale={locale}>
-                <DropdownMenuItem onClick={() => onView(quiz.id)} className="gap-2">
-                  <Eye className="h-4 w-4" />
+                <DropdownMenuItem onClick={() => onView(quiz.id)} className="gap-2 text-lg font-medium">
+                  <HugeiconsIcon icon={Eye} size={20} strokeWidth={1.7} />
                   {t(locale, "dashboard.viewQuizMenu")}
                 </DropdownMenuItem>
                 {onDelete ? (
                   <DropdownMenuItem
                     onClick={onDelete}
-                    className="gap-2 text-destructive focus:text-destructive"
+                    className="gap-2 text-lg font-medium text-destructive focus:text-destructive"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <HugeiconsIcon icon={Delete02Icon} size={20} strokeWidth={1.7} />
                     {t(locale, "dashboard.delete")}
                   </DropdownMenuItem>
                 ) : null}
