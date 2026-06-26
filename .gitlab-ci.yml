@@ -60,6 +60,17 @@ deploy_quizlink:
 
     ensure_node_for_prisma
 
+    # Charger les variables d'environnement serveur pour Prisma
+    set -a
+    [ -f .env ] && . ./.env
+    [ -f .env.local ] && . ./.env.local
+    set +a
+
+    if [ -z "$DATABASE_URL" ]; then
+      echo "DATABASE_URL manquante"
+      exit 1
+    fi
+
     # Installation des dépendances
     pnpm install --frozen-lockfile
 
