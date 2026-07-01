@@ -106,7 +106,7 @@ export function CoinsProSubscriptionCard({
 
             <Button
               type="button"
-              variant="white"
+              variant="outline"
               size="lg"
               className="h-13 w-full font-fredoka text-base font-bold normal-case tracking-normal"
               disabled={!isProAvailable || isStartingProCheckout}

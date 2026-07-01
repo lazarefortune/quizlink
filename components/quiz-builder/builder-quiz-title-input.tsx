@@ -2,7 +2,7 @@
 
 import { useId, useLayoutEffect, useRef, useState } from "react";
 import { AlertCircle } from "lucide-react";
-import { textareaFieldClassName } from "@/components/ui/textarea";
+import { textareaVariants } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { QUIZ_NAME_MAX_LENGTH } from "@/lib/quiz-validation";
 
@@ -155,21 +155,20 @@ export function BuilderQuizTitleInput({
           "w-full min-w-0 max-w-full resize-none break-words scroll-m-0",
           isFieldVariant
             ? cn(
-                textareaFieldClassName,
-                "font-medium leading-snug",
-                isCompactField && "min-h-[2.75rem] shrink-0 py-2",
+                textareaVariants({ variant: "elevated", textareaSize: isCompactField ? "sm" : "default" }),
+                "resize-none font-medium leading-snug",
                 isFocused ? "max-h-36 overflow-y-auto" : "overflow-hidden",
                 nameError &&
-                  "border-destructive hover:border-destructive focus:border-destructive focus:ring-destructive/25",
+                  "border-destructive hover:border-destructive focus:border-destructive",
               )
             : cn(
-                "min-h-0 bg-transparent text-foreground outline-none transition-[box-shadow,border-color] placeholder:text-muted-foreground/80",
+                "min-h-0 bg-transparent text-foreground outline-none transition-[box-shadow,border-color] placeholder:text-muted-foreground/50",
                 "rounded-xs border border-transparent px-1 py-2 -mx-1",
-                "focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30",
+                "focus-visible:border-primary",
                 "text-base font-medium leading-snug lg:text-base lg:font-medium lg:leading-tight lg:tracking-tight",
                 isFocused ? "max-h-36 overflow-y-auto" : "overflow-y-hidden",
                 nameError &&
-                  "border-destructive/80 focus-visible:border-destructive focus-visible:ring-destructive/25",
+                  "border-destructive/80 focus-visible:border-destructive",
               ),
         )}
       />

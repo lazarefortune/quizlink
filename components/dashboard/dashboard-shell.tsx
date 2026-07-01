@@ -30,7 +30,7 @@ function DashboardShellInner({
   return (
     <div
       className={cn(
-        "flex h-dvh min-h-0 flex-col overflow-hidden bg-card",
+        "flex h-dvh min-h-0 flex-col overflow-hidden bg-white dark:bg-card",
         "transition-[padding-left] duration-200 ease-out",
         isCollapsed ? "lg:pl-[4.5rem]" : "lg:pl-72 2xl:pl-80",
       )}

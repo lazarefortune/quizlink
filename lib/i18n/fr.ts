@@ -1444,7 +1444,7 @@ export const fr = {
     correctAnswerLabel: "Bonne réponse",
     timeSpentLabel: "Temps passé",
     portalPublic: "Portail public",
-    portalPublicDescription: "Le participant peut voir ses quiz et sa progression via un lien public (style Duolingo).",
+    portalPublicDescription: "Le participant peut voir ses quiz et sa progression via un lien public.",
     portalEnabled: "Portail public activé",
     portalDisabled: "Portail public désactivé",
     portalToggleError: "Impossible de modifier le portail",

@@ -1436,7 +1436,7 @@ export const en = {
     startedAtLabel: "Started at",
     finishedAtLabel: "Finished at",
     portalPublic: "Public portal",
-    portalPublicDescription: "The participant can see their quizzes and progress via a public link (Duolingo-style).",
+    portalPublicDescription: "The participant can see their quizzes and progress via a public link.",
     portalEnabled: "Public portal enabled",
     portalDisabled: "Public portal disabled",
     portalToggleError: "Could not update portal",

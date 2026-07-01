@@ -116,7 +116,7 @@ export function QuizCardStats({
   className,
 }: QuizCardStatsProps) {
   return (
-    <div className={cn("flex items-center gap-4 text-sm text-muted-foreground", className)}>
+    <div className={cn("flex items-center gap-4 text-base text-muted-foreground", className)}>
       <span className="inline-flex items-center gap-1">
         <HugeiconsIcon icon={FileQuestionMarkIcon} size={15} strokeWidth={2} />
         {questionCount}{" "}

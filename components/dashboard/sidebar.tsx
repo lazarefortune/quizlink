@@ -143,13 +143,6 @@ export function Sidebar({ onNavClick, className }: SidebarProps) {
           onClick={onNavClick}
           isCompact={isCollapsed}
         />
-        <NavItem
-          href="/dashboard/create"
-          label={t(locale, "nav.create")}
-          icon={DashboardCreateNavIcon}
-          onClick={onNavClick}
-          isCompact={isCollapsed}
-        />
         <SidebarFeedbackNavButton
           onNavClick={onNavClick}
           isCompact={isCollapsed}

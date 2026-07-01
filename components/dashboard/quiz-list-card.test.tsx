@@ -85,7 +85,7 @@ describe("QuizListCard", () => {
       />,
     );
 
-    expect(screen.getByText("12/20 réponses")).toBeTruthy();
+    expect(screen.getByText("12 / 20")).toBeTruthy();
   });
 
   it("shows limit reached badge with unlock link", () => {
@@ -114,7 +114,7 @@ describe("QuizListCard", () => {
       />,
     );
 
-    expect(screen.getByText(t("fr", "dashboard.quizQuota.limitReached"))).toBeTruthy();
+    expect(screen.getByText("20 / 20")).toBeTruthy();
     const unlockCta = screen.getByText(t("fr", "dashboard.quizQuota.unlock"));
     expect(unlockCta.closest("a")?.getAttribute("href")).toBe(
       "/dashboard/quiz/quiz-1?unlock=1",

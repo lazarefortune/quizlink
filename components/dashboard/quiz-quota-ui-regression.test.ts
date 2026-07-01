@@ -14,7 +14,7 @@ const LEGACY_WORDING_PATTERNS = [
 ];
 
 const MAIN_QUOTA_UI_FILES = [
-  "components/dashboard/quiz-quota-badge.tsx",
+  "components/dashboard/quiz-quota-bar.tsx",
   "components/dashboard/quiz-list-card.tsx",
   "components/dashboard/quiz-detail/quiz-share-link-dialog.tsx",
   "components/dashboard/quiz-detail/quiz-unlock-paywall-dialog.tsx",

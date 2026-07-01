@@ -102,15 +102,33 @@ const ColorSwatch = ({
   name,
   variable,
   className,
+  variant = "bg",
+  hint,
 }: {
   name: string;
   variable: string;
   className: string;
+  variant?: "bg" | "text" | "border";
+  hint?: string;
 }) => (
   <div className="flex flex-col items-center gap-2">
-    <div className={`h-16 w-16 rounded-2xl border-2 border-border ${className}`} />
+    <div
+      className={
+        variant === "text"
+          ? `flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-border bg-card font-sans text-2xl font-extrabold ${className}`
+          : variant === "border"
+            ? `h-16 w-16 rounded-2xl border-4 bg-card ${className}`
+            : `h-16 w-16 rounded-2xl border-2 border-border ${className}`
+      }
+      aria-hidden={variant === "text"}
+    >
+      {variant === "text" ? "Aa" : null}
+    </div>
     <span className="text-xs font-bold text-foreground">{name}</span>
     <span className="text-[10px] text-muted-foreground">{variable}</span>
+    {hint ? (
+      <span className="max-w-[7rem] text-center text-[10px] text-muted-foreground">{hint}</span>
+    ) : null}
   </div>
 );
 
@@ -161,69 +179,154 @@ export default function DesignSystemPage() {
             <CardHeader>
               <CardTitle className="text-lg">Palette principale</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-6">
-                <ColorSwatch
-                  name="Primary"
-                  variable="--primary"
-                  className="bg-primary"
-                />
-                <ColorSwatch
-                  name="Secondary"
-                  variable="--secondary"
-                  className="bg-secondary"
-                />
-                <ColorSwatch
-                  name="Accent"
-                  variable="--accent"
-                  className="bg-accent"
-                />
-                <ColorSwatch
-                  name="Muted"
-                  variable="--muted"
-                  className="bg-muted"
-                />
-                <ColorSwatch
-                  name="Background"
-                  variable="--background"
-                  className="bg-background"
-                />
-                <ColorSwatch
-                  name="Foreground"
-                  variable="--foreground"
-                  className="bg-foreground"
-                />
+            <CardContent className="space-y-8">
+              <div>
+                <CardDescription className="mb-4 font-bold">
+                  Surfaces
+                </CardDescription>
+                <div className="flex flex-wrap gap-6">
+                  <ColorSwatch
+                    name="Background"
+                    variable="--background"
+                    className="bg-background"
+                    hint="Polar"
+                  />
+                  <ColorSwatch
+                    name="Card"
+                    variable="--card"
+                    className="bg-card"
+                    hint="Snow"
+                  />
+                  <ColorSwatch
+                    name="Secondary"
+                    variable="--secondary"
+                    className="bg-secondary"
+                  />
+                  <ColorSwatch
+                    name="Muted"
+                    variable="--muted"
+                    className="bg-muted"
+                  />
+                  <ColorSwatch
+                    name="Accent"
+                    variable="--accent"
+                    className="bg-accent"
+                    hint="Swan"
+                  />
+                  <ColorSwatch
+                    name="Border"
+                    variable="--border"
+                    variant="border"
+                    className="border-border"
+                    hint="Swan"
+                  />
+                </div>
               </div>
-              <Separator className="my-6" />
-              <CardDescription className="mb-4 font-bold">
-                Sémantiques
-              </CardDescription>
-              <div className="flex flex-wrap gap-6">
-                <ColorSwatch
-                  name="Destructive"
-                  variable="--destructive"
-                  className="bg-destructive"
-                />
-                <ColorSwatch
-                  name="Warning"
-                  variable="--warning"
-                  className="bg-warning"
-                />
-                <ColorSwatch
-                  name="Highlight"
-                  variable="--highlight"
-                  className="bg-highlight"
-                />
-                <ColorSwatch
-                  name="Blue"
-                  variable="--blue"
-                  className="bg-blue"
-                />
-                <ColorSwatch
-                  name="Purple"
-                  variable="--purple"
-                  className="bg-purple"
-                />
+
+              <Separator />
+
+              <div>
+                <CardDescription className="mb-4 font-bold">
+                  Texte — neutres
+                </CardDescription>
+                <div className="flex flex-wrap gap-6">
+                  <ColorSwatch
+                    name="Foreground"
+                    variable="--foreground"
+                    variant="text"
+                    className="text-foreground"
+                    hint="Eel · text-foreground"
+                  />
+                  <ColorSwatch
+                    name="Muted foreground"
+                    variable="--muted-foreground"
+                    variant="text"
+                    className="text-muted-foreground"
+                    hint="Wolf · text-muted-foreground"
+                  />
+                  <ColorSwatch
+                    name="Primary"
+                    variable="--primary"
+                    className="bg-primary"
+                  />
+                </div>
+                <p className="mt-4 text-sm text-muted-foreground">
+                  Dark mode : <code className="rounded bg-muted px-1 font-mono text-xs">muted-foreground</code>{" "}
+                  passe sur Hare (#AFAFAF).
+                </p>
+              </div>
+
+              <Separator />
+
+              <div>
+                <CardDescription className="mb-4 font-bold">
+                  Sémantiques
+                </CardDescription>
+                <div className="flex flex-wrap gap-6">
+                  <ColorSwatch
+                    name="Destructive"
+                    variable="--destructive"
+                    className="bg-destructive"
+                  />
+                  <ColorSwatch
+                    name="Warning"
+                    variable="--warning"
+                    className="bg-warning"
+                  />
+                  <ColorSwatch
+                    name="Highlight"
+                    variable="--highlight"
+                    className="bg-highlight"
+                  />
+                  <ColorSwatch
+                    name="Blue"
+                    variable="--blue"
+                    className="bg-blue"
+                    hint="#1CB0F6"
+                  />
+                  <ColorSwatch
+                    name="Cobalt"
+                    variable="--cobalt"
+                    className="bg-cobalt"
+                    hint="#2B70C9"
+                  />
+                  <ColorSwatch
+                    name="Purple"
+                    variable="--purple"
+                    className="bg-purple"
+                    hint="#CE82FF"
+                  />
+                </div>
+              </div>
+
+              <Separator />
+
+              <div>
+                <CardDescription className="mb-4 font-bold">
+                  Classes Tailwind
+                </CardDescription>
+                <div className="flex flex-wrap gap-3 text-sm">
+                  {[
+                    "text-foreground",
+                    "text-muted-foreground",
+                    "text-primary",
+                    "text-blue",
+                    "text-cobalt",
+                    "text-purple",
+                    "text-warning",
+                    "text-highlight",
+                    "border-border",
+                    "bg-muted",
+                    "bg-secondary",
+                  ].map((className) => (
+                    <code
+                      key={className}
+                      className="rounded-lg border border-border bg-muted px-2 py-1 font-mono text-xs text-foreground"
+                    >
+                      {className}
+                    </code>
+                  ))}
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -281,7 +384,6 @@ export default function DesignSystemPage() {
                 <Button variant="blue">Blue</Button>
                 <Button variant="secondary">Secondary</Button>
                 <Button variant="outline">Outline</Button>
-                <Button variant="white">White</Button>
                 <Button variant="destructive">Destructive</Button>
                 <Button variant="ghost">Ghost</Button>
                 <Button variant="link" asChild>
@@ -301,9 +403,9 @@ export default function DesignSystemPage() {
               </div>
               <Separator />
               <CardDescription className="font-bold">
-                White — toujours blanc, y compris en dark mode (OAuth, etc.)
+                Outline — OAuth, actions secondaires
               </CardDescription>
-              <Button variant="white" size="lg" className="h-12 min-w-[min(100%,20rem)] gap-3 px-6 text-base font-semibold [&_svg]:!size-5">
+              <Button variant="outline" size="lg" className="h-12 min-w-[min(100%,20rem)] gap-3 px-6 text-base font-semibold normal-case tracking-normal [&_svg]:!size-5">
                 <GoogleIcon className="shrink-0" />
                 Continuer avec Google
               </Button>
@@ -322,12 +424,16 @@ export default function DesignSystemPage() {
             <CardContent className="pt-6">
               <div className="grid max-w-sm gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="ds-input">Label</Label>
-                  <Input id="ds-input" placeholder="Placeholder…" />
+                  <Label htmlFor="ds-input-surface">Surface (fond page)</Label>
+                  <Input id="ds-input-surface" variant="surface" placeholder="Placeholder…" />
+                </div>
+                <div className="space-y-2 rounded-xl bg-primary/10 p-4">
+                  <Label htmlFor="ds-input-elevated">Elevated (fond carte / coloré)</Label>
+                  <Input id="ds-input-elevated" variant="elevated" placeholder="Placeholder…" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="ds-disabled">Désactivé</Label>
-                  <Input id="ds-disabled" placeholder="Disabled" disabled />
+                  <Input id="ds-disabled" variant="surface" placeholder="Disabled" disabled />
                 </div>
                 <div className="flex items-center gap-2">
                   <Checkbox id="ds-check" />
@@ -336,8 +442,12 @@ export default function DesignSystemPage() {
                   </Label>
                 </div>
                 <div className="space-y-2">
-                  <Label>Textarea</Label>
-                  <Textarea placeholder="Plusieurs lignes…" />
+                  <Label>Textarea surface</Label>
+                  <Textarea variant="surface" placeholder="Plusieurs lignes…" />
+                </div>
+                <div className="space-y-2 rounded-xl bg-primary/10 p-4">
+                  <Label>Textarea elevated</Label>
+                  <Textarea variant="elevated" placeholder="Sur fond coloré…" />
                 </div>
               </div>
             </CardContent>
@@ -524,22 +634,38 @@ export default function DesignSystemPage() {
         {/* Cards */}
         <section>
           <SectionTitle>Cards</SectionTitle>
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card variant="playful">
+          <div className="grid gap-6 md:grid-cols-3">
+            <Card variant="raised">
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <Trophy className="h-5 w-5 text-warning" />
-                  <CardTitle className="text-lg">Card playful</CardTitle>
+                  <CardTitle className="text-lg">Card raised</CardTitle>
                 </div>
-                <CardDescription>Hover + bordure 3D</CardDescription>
+                <CardDescription>Bordure 3D statique</CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Ajoute{" "}
+                  <code className="rounded bg-muted px-1 font-mono text-xs">
+                    variant=&quot;raised&quot;
+                  </code>{" "}
+                  — bordure fine + base épaisse, sans hover.
+                </p>
+              </CardContent>
+            </Card>
+            <Card variant="playful">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Star className="h-5 w-5 text-highlight" />
+                  <CardTitle className="text-lg">Card playful</CardTitle>
+                </div>
+                <CardDescription>Hover + lift</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
                   <code className="rounded bg-muted px-1 font-mono text-xs">
                     variant=&quot;playful&quot;
                   </code>{" "}
-                  au Card.
+                  — effet au survol (landing, communauté).
                 </p>
               </CardContent>
             </Card>
@@ -795,8 +921,8 @@ export default function DesignSystemPage() {
                     cls: "btn-bouncy-blue bg-blue text-blue-foreground",
                   },
                   {
-                    label: "White",
-                    cls: "btn-bouncy-white border-2 border-[hsl(var(--white-button-border))] bg-[hsl(var(--white-button-bg))] text-[hsl(var(--white-button-fg))]",
+                    label: "Outline",
+                    cls: "btn-bouncy-outline border-2 border-[hsl(var(--outline-button-border))] bg-card text-foreground",
                   },
                 ].map((s) => (
                   <button

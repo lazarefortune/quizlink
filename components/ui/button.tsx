@@ -6,22 +6,21 @@ import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl text-sm font-semibold uppercase tracking-wide ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none disabled:translate-y-0 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold uppercase tracking-wide ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none disabled:translate-y-0 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground btn-bouncy-primary",
         primary: "bg-primary text-primary-foreground btn-bouncy-primary",
         destructive: "bg-destructive text-destructive-foreground btn-bouncy-destructive",
-        outline: "border-2 border-border bg-card text-foreground btn-bouncy hover:bg-secondary",
+        outline:
+          "border-2 border-[hsl(var(--outline-button-border))] bg-card text-foreground btn-bouncy-outline hover:bg-zinc-100 dark:hover:bg-zinc-900",
         outlineBlue:
-          "border-2 border-blue bg-card text-blue btn-bouncy hover:bg-blue/10 dark:hover:bg-blue/15",
+          "border-2 border-blue bg-card text-blue btn-bouncy-outline-blue hover:bg-blue/10 dark:hover:bg-blue/15",
         secondary: "bg-secondary text-secondary-foreground btn-bouncy",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline h-auto min-h-0 px-0 py-0 rounded-none bg-transparent shadow-none font-black uppercase",
         blue: "bg-blue text-blue-foreground btn-bouncy-blue",
-        white:
-          "border-2 border-[hsl(var(--white-button-border))] bg-[hsl(var(--white-button-bg))] text-[hsl(var(--white-button-fg))] btn-bouncy-white normal-case tracking-normal hover:bg-[hsl(var(--white-button-bg))] dark:border-[hsl(var(--white-button-border))] dark:bg-[hsl(var(--white-button-bg))] dark:text-[hsl(var(--white-button-fg))] dark:hover:bg-[hsl(var(--white-button-bg))]",
         hero: "bg-primary text-primary-foreground btn-bouncy-primary text-base normal-case",
       },
       size: {

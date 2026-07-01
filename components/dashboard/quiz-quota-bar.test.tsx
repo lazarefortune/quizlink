@@ -3,14 +3,14 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { t, type Locale } from "@/lib/i18n";
+import { t } from "@/lib/i18n";
 
-import { QuizQuotaBadge } from "./quiz-quota-badge";
+import { QuizQuotaBar } from "./quiz-quota-bar";
 
-describe("QuizQuotaBadge", () => {
-  it("shows free progress for FREE_AVAILABLE", () => {
+describe("QuizQuotaBar", () => {
+  it("shows free progress in the bar for FREE_AVAILABLE", () => {
     render(
-      <QuizQuotaBadge
+      <QuizQuotaBar
         locale="fr"
         quotaStatus={{
           completedResponses: 12,
@@ -25,12 +25,13 @@ describe("QuizQuotaBadge", () => {
       />,
     );
 
-    expect(screen.getByText("12/20 réponses")).toBeTruthy();
+    expect(screen.getByText("12 / 20")).toBeTruthy();
+    expect(screen.getByTestId("quiz-quota-bar-flame")).toBeTruthy();
   });
 
-  it("shows limit reached label for FREE_LIMIT_REACHED", () => {
+  it("shows full progress and unlock link for FREE_LIMIT_REACHED", () => {
     render(
-      <QuizQuotaBadge
+      <QuizQuotaBar
         locale="fr"
         quotaStatus={{
           completedResponses: 20,
@@ -46,7 +47,7 @@ describe("QuizQuotaBadge", () => {
       />,
     );
 
-    expect(screen.getByText(t("fr", "dashboard.quizQuota.limitReached"))).toBeTruthy();
+    expect(screen.getByText("20 / 20")).toBeTruthy();
     expect(screen.getByRole("link", { name: t("fr", "dashboard.quizQuota.unlock") })).toBeTruthy();
   });
 });

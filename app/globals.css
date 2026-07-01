@@ -11,35 +11,40 @@
 }
 
 :root {
-  /* Colors - Light Mode (fond #FAF9F5, cards #fff) */
-  --background: 48 33% 97%;
-  --foreground: 0 0% 15%;
-  --card: 0 0% 100%;
-  --card-foreground: 0 0% 15%;
+  /* Colors - Light Mode — neutres (Eel → Snow) */
+  --background: 0 0% 97%; /* Polar #F7F7F7 */
+  --foreground: 0 0% 29%; /* Eel #4B4B4B */
+  --card: 0 0% 100%; /* Snow #FFFFFF */
+  --card-foreground: 0 0% 29%;
   --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 15%;
+  --popover-foreground: 0 0% 29%;
   --primary: 95 98% 35%;
   --primary-foreground: 0 0% 100%;
   --auth-panel-bg: 95 98% 32%;
-  --secondary: 48 30% 92%;
-  --secondary-foreground: 0 0% 20%;
-  --muted: 48 20% 94%;
-  --muted-foreground: 0 0% 45.1%;
-  --accent: 48 30% 92%;
-  --accent-foreground: 0 0% 20%;
+  --secondary: 0 0% 96%; /* léger remplissage (entre Polar et carte blanche) */
+  --secondary-foreground: 0 0% 29%;
+  --muted: 0 0% 93%; /* zones atténuées, skeletons */
+  --muted-foreground: 0 0% 47%; /* Wolf #777777 */
+  --accent: 0 0% 90%; /* Swan #E5E5E5 — hover / sélection */
+  --accent-foreground: 0 0% 29%;
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 0 0% 98%;
   /* Design system — usage bref */
-  --warning: 43 100% 56%; /* BANANA #FFB020 */
+  --warning: 47 100% 50%; /* BANANA #FFC800 */
   --warning-foreground: 0 0% 15%;
-  --highlight: 35 100% 50%; /* PUMPKIN #FF9400 */
+  --warning-shadow: 46 100% 39%; /* #C89800 */
+  --highlight: 35 100% 50%; /* PUMPKIN #FF9600 */
   --highlight-foreground: 0 0% 100%;
+  --highlight-shadow: 30 100% 38%; /* #C06000 */
   --blue: 199 92% 54%; /* BLUEBERRY #1CB0F6 */
   --blue-foreground: 0 0% 100%;
-  --purple: 270 70% 55%;
-  --purple-foreground: 0 0% 100%;
-  --border: 48 15% 88%;
-  --input: 48 15% 88%;
+  --cobalt: 214 65% 48%; /* COBALT #2B70C9 */
+  --cobalt-foreground: 0 0% 100%;
+  --cobalt-shadow: 215 66% 35%; /* #1E4F94 */
+  --purple: 276 100% 75%; /* #CE82FF */
+  --purple-foreground: 0 0% 15%;
+  --border: 0 0% 90%; /* Swan #E5E5E5 */
+  --input: 0 0% 90%;
   --ring: 0 0% 3.9%;
   --radius: 1rem;
   --radius-md: calc(var(--radius) - 2px);
@@ -62,7 +67,7 @@
   --shadow-bottom-subtle: 0 0 0 0;
   /* --shadow-outline-subtle: 0 -1px 2px rgba(0, 0, 0, 0.05), -2px 0 2px rgba(0, 0, 0, 0.04), 2px 0 2px rgba(0, 0, 0, 0.04); */
   --shadow-outline-depth: 0 4px 0 rgba(0, 0, 0, 0.2);
-  /* Colored shadows (Duolingo-style) — vert plus foncé */
+  /* Colored shadows — vert plus foncé */
   --primary-shadow: 95 98% 28%;
   --destructive-shadow: 0 84% 42%;
   --shadow-gaming-depth-primary: 0 4px 0 hsl(var(--primary-shadow));
@@ -72,24 +77,25 @@
   --blue-shadow: 199 92% 38%;
   --shadow-gaming-depth-blue: 0 4px 0 hsl(var(--blue-shadow));
   --shadow-gaming-depth-blue-pressed: 0 2px 0 hsl(var(--blue-shadow));
-  --purple-shadow: 270 70% 38%;
+  --purple-shadow: 271 81% 56%; /* #9333EA */
   --shadow-gaming-depth-purple: 0 4px 0 hsl(var(--purple-shadow));
   --shadow-gaming-depth-purple-pressed: 0 2px 0 hsl(var(--purple-shadow));
   /* Aliases for landing (raised colored blocks) */
   --shadow-raised-primary: 0 3px 0 hsl(var(--primary-shadow));
   --shadow-raised-destructive: 0 3px 0 hsl(var(--destructive-shadow));
-  --shadow-raised-highlight: 0 3px 0 hsl(35 100% 35%);
+  --shadow-raised-highlight: 0 3px 0 hsl(var(--highlight-shadow));
   --shadow-raised-blue: 0 3px 0 hsl(var(--blue-shadow));
-  --shadow-raised-warning: 0 3px 0 hsl(38 95% 40%);
+  --shadow-raised-warning: 0 3px 0 hsl(var(--warning-shadow));
+  --shadow-raised-cobalt: 0 3px 0 hsl(var(--cobalt-shadow));
   --shadow-raised-purple: 0 3px 0 hsl(var(--purple-shadow));
   /* Neutral raised shadow (btn-bouncy default) */
-  --shadow-raised: 0 3px 0 hsl(0 0% 82%);
-  /* Always-white CTA (OAuth, etc.) — unchanged in dark mode */
-  --white-button-bg: 0 0% 100%;
-  --white-button-fg: 0 0% 24%;
-  --white-button-border: 48 12% 78%;
-  --white-button-shadow: 48 10% 68%;
-  --shadow-raised-white: 0 4px 0 hsl(var(--white-button-shadow));
+  --shadow-raised: 0 2px 0 hsl(0 0% 82%);
+  /* Outline buttons — border and bottom shadow share the same tone */
+  --outline-button-border: 0 0% 90%; /* Swan */
+  --outline-button-border-hover: 0 0% 82%;
+  --shadow-raised-outline: 0 3px 0 hsl(var(--outline-button-border));
+  --shadow-raised-outline-hover: 0 3px 0 hsl(var(--outline-button-border-hover));
+  --shadow-raised-outline-blue: 0 3px 0 hsl(var(--blue));
 }
 
 @media (min-width: 640px) {
@@ -99,34 +105,39 @@
 }
 
 .dark {
-  /* Colors - Dark Mode (même fond que la ref: 220 20% 10%) */
+  /* Colors - Dark Mode — surfaces en paliers (fond → card → secondary → muted → accent) */
   --background: 220 20% 10%;
-  --foreground: 48 20% 92%;
+  --foreground: 0 0% 92%;
   --card: 220 18% 14%;
-  --card-foreground: 48 20% 92%;
+  --card-foreground: 0 0% 92%;
   --popover: 220 18% 14%;
-  --popover-foreground: 48 20% 92%;
+  --popover-foreground: 0 0% 92%;
   --primary: 95 75% 36%;
   --primary-foreground: 0 0% 100%;
   --auth-panel-bg: 95 75% 26%; /* vert plus foncé pour les side panels auth */
-  --secondary: 220 15% 18%;
-  --secondary-foreground: 48 20% 92%;
-  --muted: 220 15% 20%;
-  --muted-foreground: 220 10% 60%;
-  --accent: 220 15% 18%;
-  --accent-foreground: 48 20% 92%;
+  --secondary: 220 14% 20%;
+  --secondary-foreground: 0 0% 92%;
+  --muted: 220 12% 26%;
+  --muted-foreground: 0 0% 69%; /* Hare #AFAFAF */
+  --accent: 220 10% 32%;
+  --accent-foreground: 0 0% 92%;
   --destructive: 0 72% 55%;
   --destructive-foreground: 0 0% 98%;
-  --warning: 43 90% 58%;
+  --warning: 47 100% 52%;
   --warning-foreground: 0 0% 15%;
-  --highlight: 35 95% 52%;
+  --warning-shadow: 46 100% 32%;
+  --highlight: 35 100% 52%;
   --highlight-foreground: 0 0% 100%;
+  --highlight-shadow: 30 100% 30%;
   --blue: 199 80% 58%;
   --blue-foreground: 0 0% 15%;
-  --purple: 270 65% 60%;
-  --purple-foreground: 0 0% 100%;
-  --border: 220 15% 22%;
-  --input: 220 15% 22%;
+  --cobalt: 214 65% 55%;
+  --cobalt-foreground: 0 0% 100%;
+  --cobalt-shadow: 215 66% 28%;
+  --purple: 276 100% 78%;
+  --purple-foreground: 0 0% 15%;
+  --border: 220 10% 32%;
+  --input: 220 10% 32%;
   --ring: 82 72% 42%;
   --shadow-raised: 0 4px 0 hsl(220 15% 6%);
 
@@ -152,33 +163,53 @@
   --blue-shadow: 199 80% 38%;
   --shadow-gaming-depth-blue: 0 4px 0 hsl(var(--blue-shadow));
   --shadow-gaming-depth-blue-pressed: 0 2px 0 hsl(var(--blue-shadow));
-  --purple-shadow: 270 65% 35%;
+  --purple-shadow: 271 81% 45%;
   --shadow-gaming-depth-purple: 0 4px 0 hsl(var(--purple-shadow));
   --shadow-gaming-depth-purple-pressed: 0 2px 0 hsl(var(--purple-shadow));
   --shadow-raised-primary: 0 4px 0 hsl(var(--primary-shadow));
   --shadow-raised-destructive: 0 4px 0 hsl(var(--destructive-shadow));
-  --shadow-raised-highlight: 0 4px 0 hsl(35 95% 30%);
+  --shadow-raised-highlight: 0 4px 0 hsl(var(--highlight-shadow));
   --shadow-raised-blue: 0 4px 0 hsl(var(--blue-shadow));
-  --shadow-raised-warning: 0 4px 0 hsl(38 90% 38%);
+  --shadow-raised-warning: 0 4px 0 hsl(var(--warning-shadow));
+  --shadow-raised-cobalt: 0 4px 0 hsl(var(--cobalt-shadow));
   --shadow-raised-purple: 0 4px 0 hsl(var(--purple-shadow));
+  --outline-button-border: 220 10% 28%;
+  --outline-button-border-hover: 220 10% 24%;
+  --shadow-raised-outline: 0 3px 0 hsl(var(--outline-button-border));
+  --shadow-raised-outline-hover: 0 3px 0 hsl(var(--outline-button-border-hover));
+  --shadow-raised-outline-blue: 0 3px 0 hsl(var(--blue));
 }
 
 /* ——— QuizLink design system: playful cards & bouncy buttons (aligné ref) ——— */
+.card-raised {
+  border: 2px solid hsl(var(--outline-button-border));
+  border-radius: var(--radius);
+  box-shadow:
+    0 2px 0 hsl(var(--outline-button-border)),
+    0 8px 24px hsl(var(--outline-button-border) / 0.2);
+  background-color: hsl(var(--card));
+}
+.dark .card-raised {
+  box-shadow:
+    0 2px 0 hsl(var(--outline-button-border)),
+    0 8px 24px hsl(0 0% 0% / 0.4);
+}
 .card-playful {
-  box-shadow: 0 2px 0 hsl(var(--border)), 0 8px 24px hsl(var(--border) / 0.2);
-  border: 2px solid hsl(var(--border));
+  box-shadow: 0 2px 0 hsl(var(--outline-button-border)), 0 8px 24px hsl(var(--outline-button-border) / 0.2);
+  border: 2px solid hsl(var(--outline-button-border));
   border-radius: var(--radius);
   transition: all 0.2s ease;
 }
 .card-playful:hover {
   transform: translateY(-4px);
-  box-shadow: 0 6px 0 hsl(var(--border)), 0 12px 32px hsl(var(--border) / 0.3);
+  box-shadow: 0 6px 0 hsl(var(--outline-button-border-hover)), 0 12px 32px hsl(var(--outline-button-border) / 0.3);
+  border-color: hsl(var(--outline-button-border-hover));
 }
 .dark .card-playful {
-  box-shadow: 0 2px 0 hsl(220 15% 6%), 0 8px 24px hsl(0 0% 0% / 0.4);
+  box-shadow: 0 2px 0 hsl(var(--outline-button-border)), 0 8px 24px hsl(0 0% 0% / 0.4);
 }
 .dark .card-playful:hover {
-  box-shadow: 0 6px 0 hsl(220 15% 6%), 0 12px 32px hsl(0 0% 0% / 0.5);
+  box-shadow: 0 6px 0 hsl(var(--outline-button-border-hover)), 0 12px 32px hsl(0 0% 0% / 0.5);
 }
 
 /* Quiz detail KPI icons — brighter fills in dark mode for low-contrast SVG accents */
@@ -204,7 +235,7 @@
   --participant-mode-anonymous-solid: #d896ff;
   --participant-mode-pseudonym-soft: #6dcefa;
   --participant-mode-pseudonym-solid: #b8e8ff;
-  --participant-mode-name-email-soft: #ffc766;
+  --participant-mode-name-email-soft: #ffc800;
   --participant-mode-name-email-solid: #ff9600;
 }
 
@@ -260,17 +291,31 @@
   transform: translateY(4px);
 }
 
-.btn-bouncy-white {
-  box-shadow: var(--shadow-raised-white);
+.btn-bouncy-outline {
+  box-shadow: var(--shadow-raised-outline);
   transition: all 0.1s ease;
   transform: translateY(0);
 }
-.btn-bouncy-white:hover {
+.btn-bouncy-outline:hover {
+  border-color: hsl(var(--outline-button-border-hover));
+  box-shadow: var(--shadow-raised-outline-hover);
+}
+.btn-bouncy-outline:active {
+  box-shadow: none;
+  transform: translateY(3px);
+}
+
+.btn-bouncy-outline-blue {
+  box-shadow: var(--shadow-raised-outline-blue);
+  transition: all 0.1s ease;
+  transform: translateY(0);
+}
+.btn-bouncy-outline-blue:hover {
   filter: brightness(0.98);
 }
-.btn-bouncy-white:active {
+.btn-bouncy-outline-blue:active {
   box-shadow: none;
-  transform: translateY(4px);
+  transform: translateY(3px);
 }
 
 .text-gradient-fun {

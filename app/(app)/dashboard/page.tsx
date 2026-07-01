@@ -5,21 +5,17 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import {
-  FileText,
-  Coins,
-  Sparkles,
-  Plus,
-} from "lucide-react";
+import { Sparkles, Plus } from "lucide-react";
 
 import { QuizListCard, type QuizListCardData } from "@/components/dashboard/quiz-list-card";
 import { getDashboardStats, deleteQuiz } from "@/app/(app)/dashboard/actions";
 import { createOrGetQuizLink } from "@/app/quiz-link/actions";
 import { BuilderLocalDraftCard } from "@/components/builder/BuilderLocalDraftCard";
+import { CreateManualServerDraftButton } from "@/components/dashboard/create-manual-server-draft-button";
 import {
-  CreateManualServerDraftButton,
-  CreateManualServerDraftSurfaceButton,
-} from "@/components/dashboard/create-manual-server-draft-button";
+  DashboardWelcomeBanner,
+  DashboardWelcomeBannerSkeleton,
+} from "@/components/dashboard/DashboardWelcomeBanner";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/ui/toast";
@@ -220,25 +216,27 @@ export default function DashboardPage() {
   return (
     <div className="p-4 sm:p-5 md:p-6 lg:p-8">
       <div className="space-y-6 sm:space-y-8">
-        {/* Header */}
-        <motion.div
-          initial={fadeIn.initial}
-          animate={fadeIn.animate}
-          transition={fadeIn.transition(0)}
-        >
-          <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
-            {t(locale, welcomeGreetingKey)}
-            <span className="text-primary capitalize">{name}</span>
-          </h1>
-          <p className="mt-1 text-base text-muted-foreground">
-            {t(
-              locale,
-              showOnboarding
-                ? "dashboard.home.onboardingWelcomeSubtitle"
-                : "dashboard.home.subtitle"
-            )}
-          </p>
-        </motion.div>
+        {isLoading ? (
+          <DashboardWelcomeBannerSkeleton />
+        ) : (
+          <motion.div
+            initial={fadeIn.initial}
+            animate={fadeIn.animate}
+            transition={fadeIn.transition(0)}
+          >
+            <DashboardWelcomeBanner
+              name={name}
+              welcomeGreetingKey={welcomeGreetingKey}
+              subtitle={t(
+                locale,
+                showOnboarding
+                  ? "dashboard.home.onboardingWelcomeSubtitle"
+                  : "dashboard.home.subtitle",
+              )}
+              locale={locale}
+            />
+          </motion.div>
+        )}
 
         {session?.user?.id ? (
           <motion.div
@@ -252,22 +250,6 @@ export default function DashboardPage() {
             />
           </motion.div>
         ) : null}
-
-        {isLoading && (
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <div className="h-8 max-w-md animate-pulse rounded-lg bg-muted" />
-              <div className="h-4 max-w-sm animate-pulse rounded bg-muted/70" />
-            </div>
-            <Card>
-              <CardContent className="space-y-4 p-6">
-                <div className="h-6 max-w-xs animate-pulse rounded bg-muted" />
-                <div className="h-4 w-full max-w-lg animate-pulse rounded bg-muted/60" />
-                <div className="h-11 max-w-md animate-pulse rounded-2xl bg-muted" />
-              </CardContent>
-            </Card>
-          </div>
-        )}
 
         {showOnboarding && (
           <>
@@ -300,88 +282,6 @@ export default function DashboardPage() {
                       {t(locale, "dashboard.home.ctaCreateManually")}
                     </CreateManualServerDraftButton>
                   </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </>
-        )}
-
-        {showStandardDashboard && (
-          <>
-            <motion.div
-              initial={fadeIn.initial}
-              animate={fadeIn.animate}
-              transition={fadeIn.transition(0.1)}
-            >
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <Link href="/generate" className="block">
-                  <Card className="group border-2 transition-all hover:border-blue/30">
-                    <CardContent className="flex items-center gap-4 p-4">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue/10">
-                        <Sparkles className="h-5 w-5 text-blue" />
-                      </div>
-                      <p className="font-medium text-foreground">
-                        {t(locale, "dashboard.home.ctaCreateWithAi")}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </Link>
-
-                <CreateManualServerDraftSurfaceButton>
-                  <Card className="group border-2 transition-all hover:border-primary/30">
-                    <CardContent className="flex items-center gap-4 p-4">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-                        <Plus className="h-5 w-5 text-primary" />
-                      </div>
-                      <p className="font-medium text-foreground">
-                        {t(locale, "dashboard.home.ctaCreateManually")}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </CreateManualServerDraftSurfaceButton>
-
-                <Link href="/dashboard/quizzes" className="block">
-                  <Card className="group border-2 transition-all hover:border-blue/30">
-                    <CardContent className="flex items-center gap-4 p-4">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue/10">
-                        <FileText className="h-5 w-5 text-blue" />
-                      </div>
-                      <p className="font-medium text-foreground">
-                        {t(locale, "dashboard.home.ctaSeeMyQuizzes")}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </Link>
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={fadeIn.initial}
-              animate={fadeIn.animate}
-              transition={fadeIn.transition(0.2)}
-            >
-              <Card className="border border-border/70 lg:hidden">
-                <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted">
-                      <Coins className="h-6 w-6 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <p className="text-lg font-semibold text-foreground">
-                        {displayStats.coinBalance}{" "}
-                        {t(locale, "account.coins.coins")}
-                      </p>
-                      <p className="text-base text-muted-foreground">
-                        {t(locale, "dashboard.home.coinsDescription")}
-                      </p>
-                    </div>
-                  </div>
-                  <Link
-                    href="/account/coins"
-                    className="text-base font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-                  >
-                    {t(locale, "dashboard.home.manageCoins")}
-                  </Link>
                 </CardContent>
               </Card>
             </motion.div>

@@ -1,0 +1,30 @@
+import { dashboardNavPlayfulColors } from "@/components/dashboard/nav-icons/dashboard-nav-colors";
+import { DashboardNavSvg } from "@/components/dashboard/nav-icons/DashboardNavSvg";
+
+type DashboardHomeNavIconProps = {
+  className?: string;
+};
+
+export function DashboardHomeNavIcon({ className }: DashboardHomeNavIconProps) {
+  return (
+    <DashboardNavSvg className={className}>
+      <path
+        d="M12.5366 1.85671C12.2438 1.55193 11.7563 1.55193 11.4635 1.85671L3.19629 10.4625V21.2383C3.19629 21.841 3.68482 22.3295 4.28745 22.3295H19.7126C20.3152 22.3295 20.8037 21.841 20.8037 21.2383C20.8037 21.016 20.8037 10.9806 20.8037 10.4625L12.5366 1.85671Z"
+        fill={dashboardNavPlayfulColors.home}
+      />
+      <path
+        d="M9.05713 22.3296V17.8667C9.05713 16.2414 10.3747 14.9239 11.9999 14.9239C13.6252 14.9239 14.9428 16.2414 14.9428 17.8667V22.3296C14.6339 22.3296 9.39444 22.3296 9.05713 22.3296Z"
+        fill={dashboardNavPlayfulColors.homeAccent}
+      />
+      <path
+        d="M12.5366 1.85671C12.2438 1.55193 11.7563 1.55193 11.4636 1.85671L9.97241 3.40893C10.2032 3.37353 10.4474 3.44596 10.6222 3.62797L18.8894 12.2338V22.3295H19.7126C20.3152 22.3295 20.8038 21.841 20.8038 21.2384C20.8038 21.0161 20.8038 10.9806 20.8038 10.4625L12.5366 1.85671Z"
+        fill="#111111"
+        fillOpacity={0.08}
+      />
+      <path
+        d="M11.4635 5.22555L1.83583 13.2476C1.64336 13.4479 1.32386 13.4511 1.12746 13.2547L0.145285 12.2725C-0.0456838 12.0816 -0.0487776 11.7729 0.138301 11.5782L11.2846 1.97524C11.675 1.56888 12.325 1.56888 12.7153 1.97524L23.8617 11.5782C24.0488 11.773 24.0457 12.0816 23.8547 12.2725L22.8726 13.2547C22.6761 13.4511 22.3567 13.4479 22.1642 13.2476L12.5366 5.22555C12.2438 4.92077 11.7563 4.92077 11.4635 5.22555Z"
+        fill={dashboardNavPlayfulColors.homeAccent}
+      />
+    </DashboardNavSvg>
+  );
+}

@@ -12,10 +12,10 @@ import {
   getUserQuizzesPaginated,
   type UserQuizListItem,
 } from "@/app/(app)/builder/actions";
-import { useCreateManualServerDraft } from "@/components/dashboard/use-create-manual-server-draft";
+import { CreateQuizModalTrigger } from "@/components/dashboard/create-quiz-modal-trigger";
 import { deleteQuiz } from "@/app/(app)/dashboard/actions";
 import { useLocale } from "@/lib/i18n/use-locale";
-import { t, type Locale } from "@/lib/i18n";
+import { t } from "@/lib/i18n";
 import { resolveQuizActionError } from "@/lib/quiz/resolveQuizActionError";
 import {
   FileQuestion,
@@ -27,19 +27,9 @@ import {
 import { createOrGetQuizLink } from "@/app/quiz-link/actions";
 import { QuizListCard } from "@/components/dashboard/quiz-list-card";
 import { DashboardCreateNavIcon } from "@/components/dashboard/dashboard-nav-icons";
-import {
-  CreateQuizAiIcon,
-  CreateQuizManualIcon,
-} from "@/components/dashboard/create-quiz-modal-icons";
 import { track } from "@/lib/analytics/track";
 import { PARTICIPANT_INVITED } from "@/lib/analytics/events";
 import { buildCommonEventProps } from "@/lib/analytics/props";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -50,9 +40,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { Plus } from "@hugeicons/core-free-icons";
-
 const PAGE_SIZE = 12;
 
 const fadeUp = {
@@ -63,76 +50,6 @@ const fadeUp = {
     transition: { delay: i * 0.05, duration: 0.35 },
   }),
 };
-
-function CreateQuizModalTrigger({
-  locale,
-  variant = "primary",
-  size = "sm",
-}: {
-  locale: Locale;
-  variant?: "blue" | "primary";
-  size?: "sm" | "default";
-}) {
-  const [open, setOpen] = useState(false);
-  const { isCreatingManualDraft, createManualServerDraftAndGoToBuilder } =
-    useCreateManualServerDraft();
-
-  const handleOpenChange = (next: boolean) => {
-    setOpen(next);
-  };
-
-  return (
-    <>
-      <Button
-        variant={variant}
-        size={size}
-        className="gap-2 [&_svg]:!size-5 sm:[&_svg]:!size-6 items-center"
-        onClick={() => setOpen(true)}
-      >
-        <HugeiconsIcon icon={Plus} size={20} strokeWidth={2} />
-        <span className="sm:hidden">{t(locale, "nav.create")}</span>
-        <span className="hidden sm:inline">{t(locale, "dashboard.welcome.createQuiz")}</span>
-      </Button>
-      <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="w-[calc(100%-1.5rem)] max-w-sm rounded-2xl sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-center text-xl font-semibold sm:text-2xl">
-              {locale === "fr" ? "Crée ton quiz !" : "Create your quiz!"}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="grid grid-cols-2 gap-3 pt-1 pb-1">
-            <button
-              type="button"
-              disabled={isCreatingManualDraft}
-              onClick={() => {
-                handleOpenChange(false);
-                void createManualServerDraftAndGoToBuilder();
-              }}
-              className="group flex flex-col items-center gap-2.5 rounded-xl border-2 border-border bg-card p-4 transition-all hover:border-primary hover:shadow-md active:scale-[0.97] disabled:pointer-events-none disabled:opacity-60 sm:gap-3 sm:p-5"
-            >
-              <CreateQuizManualIcon className="h-12 w-12 sm:h-14 sm:w-14" />
-              <p className="text-center font-fredoka text-base font-semibold leading-snug sm:text-lg">
-                {isCreatingManualDraft
-                  ? t(locale, "common.loading")
-                  : t(locale, "nav.createManually")}
-              </p>
-            </button>
-            <Link
-              href="/generate"
-              onClick={() => setOpen(false)}
-              className="group flex flex-col items-center gap-2.5 rounded-xl border-2 border-border bg-card p-4 transition-all hover:border-blue hover:shadow-md active:scale-[0.97] sm:gap-3 sm:p-5"
-            >
-              <CreateQuizAiIcon className="h-12 w-12 sm:h-14 sm:w-14" />
-              <p className="text-center font-fredoka text-base font-semibold leading-snug sm:text-lg">
-                {t(locale, "nav.createWithAI")}
-              </p>
-            </Link>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </>
-  );
-}
 
 export default function DashboardQuizzesPage() {
   const router = useRouter();

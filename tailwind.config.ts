@@ -1,14 +1,65 @@
 import type { Config } from "tailwindcss";
 import tailwindcssAnimate from "tailwindcss-animate";
 
+/** Couleurs sémantiques du design system — utilisables via `text-cobalt`, `bg-warning`, etc. */
+const designSystemSemanticColors = [
+  "warning",
+  "highlight",
+  "blue",
+  "purple",
+  "cobalt",
+] as const;
+
+const designSystemColorNames = designSystemSemanticColors.join("|");
+
+const designSystemColorSafelist: NonNullable<Config["safelist"]> = [
+  {
+    pattern: new RegExp(
+      `^(bg|text|border|ring|fill|stroke|outline|decoration|divide|caret|accent)-(${designSystemColorNames})(-foreground)?$`
+    ),
+    variants: ["hover", "focus", "focus-visible", "active", "disabled", "dark", "group-hover"],
+  },
+  {
+    pattern: new RegExp(
+      `^(bg|text|border|ring|from|to|via)-(${designSystemColorNames})(-foreground)?/(\\d{1,3})$`
+    ),
+    variants: ["hover", "focus", "dark", "group-hover"],
+  },
+];
+
+const designSystemColors = {
+  warning: {
+    DEFAULT: "hsl(var(--warning))",
+    foreground: "hsl(var(--warning-foreground))",
+  },
+  highlight: {
+    DEFAULT: "hsl(var(--highlight))",
+    foreground: "hsl(var(--highlight-foreground))",
+  },
+  blue: {
+    DEFAULT: "hsl(var(--blue))",
+    foreground: "hsl(var(--blue-foreground))",
+  },
+  purple: {
+    DEFAULT: "hsl(var(--purple))",
+    foreground: "hsl(var(--purple-foreground))",
+  },
+  cobalt: {
+    DEFAULT: "hsl(var(--cobalt))",
+    foreground: "hsl(var(--cobalt-foreground))",
+  },
+} as const;
+
 export default {
   darkMode: "class",
   content: [
     "./pages/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
     "./app/**/*.{ts,tsx}",
+    "./lib/**/*.{ts,tsx}",
     "./src/**/*.{ts,tsx}",
   ],
+  safelist: designSystemColorSafelist,
   theme: {
     extend: {
       colors: {
@@ -45,22 +96,7 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        warning: {
-          DEFAULT: "hsl(var(--warning))",
-          foreground: "hsl(var(--warning-foreground))",
-        },
-        highlight: {
-          DEFAULT: "hsl(var(--highlight))",
-          foreground: "hsl(var(--highlight-foreground))",
-        },
-        blue: {
-          DEFAULT: "hsl(var(--blue))",
-          foreground: "hsl(var(--blue-foreground))",
-        },
-        purple: {
-          DEFAULT: "hsl(var(--purple))",
-          foreground: "hsl(var(--purple-foreground))",
-        },
+        ...designSystemColors,
       },
       fontFamily: {
         sans: ["var(--font-fredoka)", "ui-sans-serif", "system-ui", "sans-serif"],

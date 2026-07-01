@@ -148,7 +148,7 @@ export function HeroSection() {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.9, type: "spring", stiffness: 200 }}
                 className="absolute -top-2 -right-2 md:top-4 md:right-4 bg-warning text-warning-foreground rounded-2xl px-4 py-2 font-extrabold text-sm rotate-6"
-                style={{ boxShadow: "0 3px 0 hsl(38 95% 40%)" }}
+                style={{ boxShadow: "var(--shadow-raised-warning)" }}
               >
                 {t(locale, "landing.hero.mascotBadge1")}
               </motion.div>

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { MoreHorizontal } from "lucide-react";
 
-import { QuizQuotaBadge } from "@/components/dashboard/quiz-quota-badge";
+import { QuizQuotaBar } from "@/components/dashboard/quiz-quota-bar";
 import { QuizCardStats } from "@/components/dashboard/quiz-card-stats-icons";
 import { QuizStatusBadge } from "@/components/quiz/quiz-status-badge";
 import { Button } from "@/components/ui/button";
@@ -97,7 +97,7 @@ export function QuizListCard({
       <CardContent className="flex flex-1 flex-col p-5">
         <Link href={titleHref} className="mb-4 block flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="line-clamp-2 min-w-0 flex-1 text-lg font-medium leading-snug text-zinc-800 transition-colors hover:text-blue dark:text-zinc-200">
+            <h3 className="line-clamp-2 min-w-0 flex-1 text-xl font-medium leading-snug text-zinc-800 transition-colors hover:text-blue dark:text-zinc-200">
               {quiz.name}
             </h3>
             {quiz.status !== "ACTIVE" ? (
@@ -115,7 +115,7 @@ export function QuizListCard({
         />
 
         {quiz.quotaStatus ? (
-          <QuizQuotaBadge
+          <QuizQuotaBar
             quotaStatus={quiz.quotaStatus}
             locale={locale}
             className="mb-3"
@@ -127,13 +127,13 @@ export function QuizListCard({
           />
         ) : null}
 
-        <div className="mt-auto space-y-3 border-t border-border/60 pt-3">
+        <div className="mt-auto space-y-3 pt-3">
           {canQuizBePlayed(quiz.status) ? (
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                className="flex-1 gap-2"
+                className="flex-1 gap-2 text-blue"
                 onClick={() => onPlay(quiz.id)}
                 disabled={playLoadingQuizId !== null}
               >
@@ -141,17 +141,23 @@ export function QuizListCard({
                   t(locale, "common.loading")
                 ) : (
                   <>
-                    <HugeiconsIcon icon={Play} size={16} strokeWidth={2} />
+                    <HugeiconsIcon icon={Play} size={16} strokeWidth={2.5} />
                     {t(locale, "dashboard.playQuiz")}
                   </>
                 )}
               </Button>
               <QuizListCardActionsMenu locale={locale}>
-                <DropdownMenuItem onClick={() => onView(quiz.id)} className="gap-2 text-lg">
+                <DropdownMenuItem
+                  onClick={() => onView(quiz.id)}
+                  className="gap-2 text-lg"
+                >
                   <HugeiconsIcon icon={Eye} size={20} strokeWidth={1.7} />
                   {t(locale, "dashboard.viewQuizMenu")}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onEdit(quiz.id)} className="gap-2 text-lg">
+                <DropdownMenuItem
+                  onClick={() => onEdit(quiz.id)}
+                  className="gap-2 text-lg"
+                >
                   <HugeiconsIcon icon={Edit} size={20} strokeWidth={1.7} />
                   {t(locale, "dashboard.edit")}
                 </DropdownMenuItem>
@@ -161,7 +167,11 @@ export function QuizListCard({
                     disabled={copyLoadingQuizId !== null}
                     className="gap-2 text-lg"
                   >
-                    <HugeiconsIcon icon={Copy01Icon} size={20} strokeWidth={1.7} />
+                    <HugeiconsIcon
+                      icon={Copy01Icon}
+                      size={20}
+                      strokeWidth={1.7}
+                    />
                     {copyLoadingQuizId === quiz.id
                       ? t(locale, "common.loading")
                       : t(locale, "dashboard.copyQuizLinkMenu")}
@@ -172,7 +182,11 @@ export function QuizListCard({
                     onClick={onDelete}
                     className="gap-2 text-lg text-destructive focus:text-destructive"
                   >
-                    <HugeiconsIcon icon={Delete02Icon} size={20} strokeWidth={1.7} />
+                    <HugeiconsIcon
+                      icon={Delete02Icon}
+                      size={20}
+                      strokeWidth={1.7}
+                    />
                     {t(locale, "dashboard.delete")}
                   </DropdownMenuItem>
                 ) : null}
@@ -200,15 +214,16 @@ export function QuizListCard({
                       onClick={onDelete}
                       className="gap-2 text-destructive focus:text-destructive"
                     >
-                      <HugeiconsIcon icon={Delete02Icon} size={20} strokeWidth={1.7} />
+                      <HugeiconsIcon
+                        icon={Delete02Icon}
+                        size={20}
+                        strokeWidth={1.7}
+                      />
                       {t(locale, "dashboard.delete")}
                     </DropdownMenuItem>
                   </QuizListCardActionsMenu>
                 ) : null}
               </div>
-              <p className="text-xs text-muted-foreground">
-                {t(locale, "dashboard.draftFinishToShareHint")}
-              </p>
             </>
           ) : null}
 
@@ -221,7 +236,10 @@ export function QuizListCard({
                 </Link>
               </Button>
               <QuizListCardActionsMenu locale={locale}>
-                <DropdownMenuItem onClick={() => onView(quiz.id)} className="gap-2 text-lg font-medium">
+                <DropdownMenuItem
+                  onClick={() => onView(quiz.id)}
+                  className="gap-2 text-lg font-medium"
+                >
                   <HugeiconsIcon icon={Eye} size={20} strokeWidth={1.7} />
                   {t(locale, "dashboard.viewQuizMenu")}
                 </DropdownMenuItem>
@@ -230,7 +248,11 @@ export function QuizListCard({
                     onClick={onDelete}
                     className="gap-2 text-lg font-medium text-destructive focus:text-destructive"
                   >
-                    <HugeiconsIcon icon={Delete02Icon} size={20} strokeWidth={1.7} />
+                    <HugeiconsIcon
+                      icon={Delete02Icon}
+                      size={20}
+                      strokeWidth={1.7}
+                    />
                     {t(locale, "dashboard.delete")}
                   </DropdownMenuItem>
                 ) : null}

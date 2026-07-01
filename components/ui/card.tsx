@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-type CardVariant = "default" | "playful";
+type CardVariant = "default" | "raised" | "playful";
 
 export type CardProps = React.HTMLAttributes<HTMLDivElement> & {
   variant?: CardVariant;
@@ -13,7 +13,10 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
     <div
       ref={ref}
       className={cn(
-        "rounded-md border border-border bg-card text-card-foreground shadow-sm",
+        "bg-card text-card-foreground",
+        variant === "default" &&
+          "rounded-md border-2 border-[hsl(var(--outline-button-border))] shadow-sm",
+        variant === "raised" && "card-raised",
         variant === "playful" && "card-playful",
         className
       )}
