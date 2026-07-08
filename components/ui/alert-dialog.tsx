@@ -17,7 +17,7 @@ const AlertDialogOverlay = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Overlay>
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Overlay
-    className={cn("quizlink-dialog-overlay fixed inset-0 z-50 bg-black/80", className)}
+    className={cn("quizlink-dialog-overlay fixed inset-0 z-50 bg-black/60", className)}
     {...props}
     ref={ref}
   />
@@ -36,7 +36,7 @@ const AlertDialogContent = React.forwardRef<
       <AlertDialogPrimitive.Content
         ref={ref}
         className={cn(
-          "quizlink-dialog-content grid w-full min-w-0 max-w-full gap-4 border border-border bg-background p-4 shadow-lg rounded-lg opacity-0 sm:max-w-lg sm:p-6",
+          "quizlink-dialog-content grid w-full min-w-0 max-w-full gap-4 border border-border bg-background p-4 shadow-lg rounded-lg opacity-0 sm:max-w-lg sm:p-6 text-base",
           "max-h-[90vh] overflow-y-auto overflow-x-hidden",
           className
         )}
@@ -81,7 +81,7 @@ const AlertDialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Title
     ref={ref}
-    className={cn("text-lg font-semibold", className)}
+    className={cn("text-lg uppercase font-semibold", className)}
     {...props}
   />
 ));

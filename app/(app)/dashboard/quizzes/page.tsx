@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -18,7 +19,6 @@ import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
 import { resolveQuizActionError } from "@/lib/quiz/resolveQuizActionError";
 import {
-  FileQuestion,
   Search,
   ChevronLeft,
   ChevronRight,
@@ -341,33 +341,37 @@ export default function DashboardQuizzesPage() {
         {quizzes.length === 0 ? (
           <motion.div custom={1} variants={fadeUp}>
             <Card className="border-none">
-              <CardContent className="flex flex-col items-center justify-center py-12 sm:py-16 px-4">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted mb-4">
-                  {searchQuery ? (
+              <CardContent className="flex flex-col items-center justify-center px-4 py-12 text-center sm:py-16">
+                {searchQuery ? (
+                  <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
                     <Search className="h-8 w-8 text-muted-foreground" />
-                  ) : (
-                    <FileQuestion className="h-8 w-8 text-muted-foreground" />
-                  )}
-                </div>
-                <h3 className="text-lg font-black mb-1">
+                  </div>
+                ) : (
+                  <Image
+                    src="/empty-quizzes-light.png"
+                    alt=""
+                    width={320}
+                    height={280}
+                    className="mb-6 h-auto w-full max-w-[220px] sm:max-w-[280px]"
+                    priority
+                  />
+                )}
+                <h3 className="mb-2 text-xl font-semibold text-foreground">
                   {searchQuery
                     ? t(locale, "dashboard.noSearchResults")
-                    : t(locale, "dashboard.noQuizzes")}
+                    : t(locale, "dashboard.emptyQuizzesTitle")}
                 </h3>
-                <p className="text-sm text-muted-foreground text-center max-w-sm mb-6">
+                <p className="mb-6 max-w-md text-base text-muted-foreground">
                   {searchQuery
-                    ? (locale === "fr"
-                        ? "Modifie ta recherche ou réessaie avec d'autres mots."
-                        : "Try different search terms or clear the search.")
-                    : (locale === "fr"
-                        ? "Crée ton premier quiz manuellement ou avec l'IA pour commencer."
-                        : "Create your first quiz manually or with AI to get started.")}
+                    ? t(locale, "dashboard.emptySearchDescription")
+                    : t(locale, "dashboard.emptyQuizzesDescription")}
                 </p>
                 {!searchQuery && (
                   <CreateQuizModalTrigger
                     locale={locale}
                     variant="primary"
                     size="default"
+                    label={t(locale, "dashboard.createFirstQuiz")}
                   />
                 )}
               </CardContent>

@@ -645,7 +645,7 @@ export const en = {
     showCorrectionAfterEachQuestion: "Show correction after each question",
     showCorrectionAfterEachQuestionDescription:
       "The player sees the correction right after answering.",
-    showAnswersAtEnd: "Show answers at the end",
+    showAnswersAtEnd: "Show all answers at the end",
     showAnswersAtEndDescription:
       "The player can review their answers, the correct answers and explanations in the recap.",
     randomizeQuestions: "Shuffle question order",
@@ -700,6 +700,8 @@ export const en = {
     openQuizSettings: "Settings",
     addQuestion: "Add Question",
     noQuestions: "No questions yet.",
+    emptyQuestionsTitle: "You're almost there!",
+    emptyQuestionsDescription: "Add questions to make your quiz awesome.",
     viewModeEdit: "Edit",
     viewModeOrganize: "Organize",
     organizeQuestionsTitle: "Organize questions",
@@ -740,7 +742,7 @@ export const en = {
     savePayloadHeavyConfirm:
       "Your quiz is very large, mostly because of images. Saving may fail.\n\nDo you want to continue anyway?",
     questionImageTooLarge:
-      "This image is still too large after automatic optimization. Try a lighter image.",
+      "Ouch, this image is too large! Choose a lighter one to continue.",
     quizSaved: "Quiz saved successfully",
     quizCreated: "Quiz created successfully",
     localDraftModalTitle: "An unsaved local draft was found.",
@@ -797,7 +799,8 @@ export const en = {
     },
     explanationLabel: "Hint / Explanation",
     explanationPlaceholder: "Shown when the player gets the question wrong (optional)",
-    questionImage: "Question Image (Optional)",
+    questionImage: "Add an image",
+    optional: "Optional",
     replaceImage: "Replace",
     removeImage: "Remove image",
     imageLoading: "Loading image…",
@@ -1094,7 +1097,11 @@ export const en = {
     subtitle: "Manage and track your quizzes",
     createQuiz: "Create Quiz",
     noQuizzes: "You haven't created any quizzes yet",
+    emptyQuizzesTitle: "Your quiz box is empty… for now!",
+    emptyQuizzesDescription:
+      "Create your first quiz to get started.",
     noSearchResults: "No quizzes match your search.",
+    emptySearchDescription: "Try different search terms or clear the search.",
     createFirstQuiz: "Create your first quiz",
     searchPlaceholder: "Search quiz...",
     pageOf: "Page {current} of {total}",
@@ -1423,6 +1430,8 @@ export const en = {
     attemptProgressSummary: "{correct} correct, {incorrect} incorrect",
     questionLabel: "Question",
     yourAnswerLabel: "Your answer",
+    answerOf: "Answer of {name}",
+    herAnswerLabel: "Her answer",
     correctAnswerLabel: "Correct answer",
     timeSpentLabel: "Time spent",
     secondsLabel: "seconds",

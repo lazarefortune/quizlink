@@ -646,7 +646,7 @@ export const fr = {
     showCorrectionAfterEachQuestion: "Correction après chaque question",
     showCorrectionAfterEachQuestionDescription:
       "Le joueur voit la correction juste après avoir répondu.",
-    showAnswersAtEnd: "Afficher les réponses à la fin",
+    showAnswersAtEnd: "Afficher toutes les réponses à la fin",
     showAnswersAtEndDescription:
       "Le joueur peut revoir ses réponses, les bonnes réponses et les explications dans le récapitulatif.",
     randomizeQuestions: "Mélanger l'ordre des questions",
@@ -702,6 +702,9 @@ export const fr = {
     openQuizSettings: "Paramètres",
     addQuestion: "Ajouter une Question",
     noQuestions: "Aucune question pour le moment.",
+    emptyQuestionsTitle: "Tu y es presque !",
+    emptyQuestionsDescription:
+      "Ajoute des questions pour rendre ton quiz génial.",
     viewModeEdit: "Modifier",
     viewModeOrganize: "Organiser",
     organizeQuestionsTitle: "Organiser les questions",
@@ -742,7 +745,7 @@ export const fr = {
     savePayloadHeavyConfirm:
       "Ton quiz est très lourd, surtout à cause des images. L'enregistrement peut échouer.\n\nSouhaites-tu continuer quand même ?",
     questionImageTooLarge:
-      "Cette image est trop lourde, même après optimisation automatique. Essaie une image plus légère.",
+      "Aïe, cette image est trop lourde ! Choisis-en une plus légère pour continuer.",
     quizSaved: "Quiz sauvegardé avec succès",
     quizCreated: "Quiz créé avec succès",
     localDraftModalTitle: "Un brouillon non sauvegardé a été trouvé.",
@@ -800,7 +803,8 @@ export const fr = {
     },
     explanationLabel: "Indication / Explication",
     explanationPlaceholder: "Texte affiché si le joueur rate la question (optionnel)",
-    questionImage: "Image de la Question (Optionnel)",
+    questionImage: "Ajouter une image",
+    optional: "Optionnel",
     replaceImage: "Remplacer",
     removeImage: "Supprimer l'image",
     imageLoading: "Chargement de l'image…",
@@ -1097,7 +1101,12 @@ export const fr = {
     subtitle: "Gère et suis tes quiz",
     createQuiz: "Créer un Quiz",
     noQuizzes: "Tu n'as pas encore créé de quiz",
+    emptyQuizzesTitle: "Ta boîte à quiz est vide… pour l'instant !",
+    emptyQuizzesDescription:
+      "Crée ton premier quiz pour démarrer.",
     noSearchResults: "Aucun quiz ne correspond à ta recherche.",
+    emptySearchDescription:
+      "Modifie ta recherche ou réessaie avec d'autres mots.",
     createFirstQuiz: "Créer ton premier quiz",
     searchPlaceholder: "Rechercher un quiz...",
     pageOf: "Page {current} sur {total}",
@@ -1441,6 +1450,9 @@ export const fr = {
     startedAtLabel: "Démarré le",
     finishedAtLabel: "Terminé le",
     yourAnswerLabel: "Ta réponse",
+    answerOf: "La réponse de {name}",
+    herAnswer: "Sa réponse",
+    herAnswerLabel: "Sa réponse",
     correctAnswerLabel: "Bonne réponse",
     timeSpentLabel: "Temps passé",
     portalPublic: "Portail public",

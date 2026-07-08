@@ -112,7 +112,7 @@ export function RichTextQuestionEditor({
       <div
         role="toolbar"
         aria-label={t(locale, "builder.richText.toolbarLabel")}
-        className="flex flex-wrap items-center gap-0.5 sm:gap-1 p-1 sm:p-1.5 border-2 border-border/60 rounded-md bg-muted/30"
+        className="flex flex-wrap items-center gap-0.5 sm:gap-1 p-1 sm:p-1.5 border-2 border-border/60 rounded-sm bg-secondary/30"
       >
         <ToolbarButton
           ariaLabel={t(locale, "builder.richText.bold")}

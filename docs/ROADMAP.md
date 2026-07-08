@@ -9,6 +9,7 @@
 - [ ] Améliorer l’admin des feedbacks et adapter les notifications emails de l'admin
 - [ ] Ajouter un QR Code pour partager un quiz
 - [ ] Ajouter un système de parrainage et de récompenses pour les utilisateurs qui partagent leur quiz
+- [ ] Quand un utilisateur choisit de réinitialiser les stats d'un quiz, dans les stats il faut tout remettre à 0. Car actuellement on supprime juste les tentatives.
 
 - [ ] Autofocus sur le champ nom du quiz lors d’une nouvelle création
 - [ ] Création IA : avertir avant de quitter si du contenu a été saisi, ou faire en async et prévenir l'utilisateur que la génération est en cours ou quand elle est terminée.

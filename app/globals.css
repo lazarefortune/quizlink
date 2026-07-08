@@ -189,6 +189,11 @@
     0 8px 24px hsl(var(--outline-button-border) / 0.2);
   background-color: hsl(var(--card));
 }
+.shadow-raised {
+  box-shadow:
+    0 2px 0 hsl(var(--outline-button-border)),
+    0 8px 24px hsl(var(--outline-button-border) / 0.2);
+}
 .dark .card-raised {
   box-shadow:
     0 2px 0 hsl(var(--outline-button-border)),
@@ -350,9 +355,9 @@ p,
 
 /* ——— Form design system (modifier ici = impact partout) ——— */
 .form-label {
-  font-size: 0.875rem;
+  font-size: 1.0625rem; /* 17px */
   font-weight: 500;
-  text-transform: uppercase;
+  /* text-transform: uppercase; */
   line-height: 1;
   color: hsl(var(--foreground));
 }

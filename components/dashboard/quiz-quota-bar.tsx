@@ -90,7 +90,7 @@ export function QuizQuotaBar({
               data-testid="quiz-quota-bar-fill"
             />
           ) : null}
-          <span className="relative z-10 flex h-full items-center justify-center text-sm font-bold tabular-nums text-muted-foreground">
+          <span className="relative z-10 flex h-full items-center justify-center text-sm font-medium tabular-nums text-muted-foreground">
             {barLabel}
           </span>
         </div>

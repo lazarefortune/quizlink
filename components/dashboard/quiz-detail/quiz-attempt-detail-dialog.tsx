@@ -20,6 +20,8 @@ import { formatDurationShort } from "@/lib/dashboard/quiz-detail-stats";
 import { t } from "@/lib/i18n";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { cn } from "@/lib/utils";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { LoaderCircle } from "@hugeicons/core-free-icons";
 
 type QuizAttemptDetailDialogProps = {
   attemptId: string | null;
@@ -92,13 +94,21 @@ export function QuizAttemptDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto sm:max-w-xl">
-        <DialogHeader>
-          <DialogTitle>{t(locale, "dashboard.attemptDetailsStats")}</DialogTitle>
+      <DialogContent className="flex max-h-[85vh] max-w-lg flex-col overflow-hidden sm:max-w-4xl">
+        <DialogHeader className="shrink-0 border-b border-border pb-4 pr-8">
+          <DialogTitle>
+            {t(locale, "dashboard.attemptDetailsStats")}
+          </DialogTitle>
         </DialogHeader>
 
+        <div className="builder-scrollbar min-h-0 flex-1 overflow-y-auto pt-4">
         {isLoading ? (
-          <p className="text-sm text-muted-foreground">{t(locale, "common.loading")}</p>
+          <div className="flex flex-col items-center justify-center h-full">
+            <HugeiconsIcon icon={LoaderCircle} className="animate-spin" />
+            <p className="text-sm text-muted-foreground">
+              {t(locale, "common.loading")}
+            </p>
+          </div>
         ) : null}
 
         {error ? (
@@ -125,9 +135,13 @@ export function QuizAttemptDetailDialog({
           <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-2 text-sm">
               <div className="flex flex-col gap-0.5">
-                <span className="font-medium text-foreground">{attempt.participantName}</span>
+                <span className="font-medium text-foreground">
+                  {attempt.participantName}
+                </span>
                 {attempt.participantEmail ? (
-                  <span className="text-xs text-muted-foreground">{attempt.participantEmail}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {attempt.participantEmail}
+                  </span>
                 ) : null}
               </div>
               {attempt.status === "COMPLETED" && attempt.score != null ? (
@@ -136,7 +150,9 @@ export function QuizAttemptDetailDialog({
                 </Badge>
               ) : null}
               <Badge
-                variant={attempt.status === "ABANDONED" ? "destructive" : "secondary"}
+                variant={
+                  attempt.status === "ABANDONED" ? "destructive" : "secondary"
+                }
               >
                 {attempt.status === "COMPLETED"
                   ? t(locale, "dashboard.attemptStatus.completed")
@@ -156,44 +172,43 @@ export function QuizAttemptDetailDialog({
               {orderedAnswers.map((answer, index) => (
                 <li
                   key={answer.questionId}
-                  className="rounded-lg border border-border bg-muted/30 p-4"
+                  className="rounded-lg border-2 border-border p-4 relative"
                 >
                   <div className="mb-2 flex flex-wrap items-center gap-2">
-                    <Badge variant="outline" className="tabular-nums">
+                    <span className="text-base font-medium text-muted-foreground uppercase">
                       {t(locale, "dashboard.questionLabel")} {index + 1}
-                    </Badge>
+                    </span>
                     {answer.expired ? (
-                      <Badge variant="destructive">
+                      <Badge
+                        variant="destructive"
+                        className="absolute top-4 right-2"
+                      >
                         {t(locale, "dashboard.expiredQuestion")}
                       </Badge>
                     ) : answer.isCorrect ? (
-                      <Badge className="bg-green-600 text-white hover:bg-green-600">
+                      <Badge className="bg-green-600 text-white hover:bg-green-600 absolute top-4 right-2">
                         <Check className="mr-1 h-3 w-3" />
                         {t(locale, "dashboard.correctLabel")}
                       </Badge>
                     ) : (
-                      <Badge variant="destructive">
+                      <Badge
+                        variant="destructive"
+                        className="absolute top-4 right-2"
+                      >
                         <X className="mr-1 h-3 w-3" />
                         {t(locale, "dashboard.incorrectLabel")}
                       </Badge>
                     )}
-                    {answer.timeSpent != null ? (
-                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                        <Clock className="h-3 w-3" />
-                        {t(locale, "dashboard.timeSpentLabel")}:{" "}
-                        {formatDurationShort(answer.timeSpent)}
-                      </span>
-                    ) : null}
                   </div>
 
                   <QuizRichText
                     html={answer.questionLabel}
-                    className="text-sm font-medium text-foreground"
+                    className="text-lg font-medium text-foreground"
                   />
 
                   <div className="mt-3 space-y-1">
                     <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      {t(locale, "dashboard.yourAnswerLabel")}
+                      {t(locale, "dashboard.herAnswerLabel")}
                     </p>
                     {answer.selectedOptions.length > 0 ? (
                       answer.selectedOptions.map((option) => (
@@ -229,11 +244,20 @@ export function QuizAttemptDetailDialog({
                       ))}
                     </div>
                   ) : null}
+
+                  {answer.timeSpent != null ? (
+                    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                      <Clock className="h-3 w-3" />
+                      {t(locale, "dashboard.timeSpentLabel")}:{" "}
+                      {formatDurationShort(answer.timeSpent)}
+                    </span>
+                  ) : null}
                 </li>
               ))}
             </ol>
           </div>
         ) : null}
+        </div>
       </DialogContent>
     </Dialog>
   );

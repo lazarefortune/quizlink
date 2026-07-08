@@ -7,7 +7,7 @@ export const fieldControlBaseClassName = [
 ] as const;
 
 export const fieldControlSurfaceClassName =
-  "border-[hsl(var(--outline-button-border))] bg-secondary hover:border-[hsl(var(--outline-button-border-hover))] focus:border-primary disabled:bg-muted/60";
+  "border-[hsl(var(--outline-button-border))] bg-secondary/40 hover:border-[hsl(var(--outline-button-border-hover))] focus:border-primary disabled:bg-muted/60";
 
 export const fieldControlElevatedClassName =
   "border-[hsl(var(--outline-button-border))] bg-card hover:border-[hsl(var(--outline-button-border-hover))] focus:border-primary disabled:bg-muted/40";

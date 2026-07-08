@@ -107,7 +107,7 @@ export function GenerationOptionsModal({
               }
               disabled={isDisabled("questionType")}
             >
-              <SelectTrigger className="rounded-lg">
+              <SelectTrigger className="rounded-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -140,7 +140,7 @@ export function GenerationOptionsModal({
               type="number"
               min={1}
               max={maxQuestionsLimit}
-              className="rounded-lg"
+              className="rounded-sm"
               value={localOptions.maxQuestions}
               onChange={(e) => {
                 const raw = e.target.value;
@@ -192,7 +192,7 @@ export function GenerationOptionsModal({
               }
               disabled={isDisabled("language")}
             >
-              <SelectTrigger className="rounded-lg">
+              <SelectTrigger className="rounded-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

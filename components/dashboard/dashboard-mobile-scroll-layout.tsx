@@ -23,7 +23,7 @@ export function DashboardMobileScrollLayout({
       <Topbar isHeaderVisible={isHeaderVisible} isScrolledDown={isScrolledDown} />
       <main
         className={cn(
-          "flex min-h-0 flex-1 flex-col overflow-hidden bg-white dark:bg-card lg:rounded-none lg:border-[1.5px] lg:border-border dark:lg:border-border",
+          "flex min-h-0 flex-1 flex-col overflow-hidden bg-white dark:bg-card lg:rounded-none lg:border-l-[1.5px] lg:border-border dark:lg:border-border",
           "lg:pt-0",
           isHeaderVisible ? "pt-16 sm:pt-14" : "pt-0",
           "transition-[padding-top] duration-300 ease-in-out lg:transition-none",

@@ -1,0 +1,91 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Illustration liste de quiz vide</title>
+  <desc id="desc">Une illustration douce montrant une boîte bleue contenant des cartes de quiz avec un bouton plus vert, idéale pour un état vide sur une page de liste de quiz.</desc>
+
+  <defs>
+    <linearGradient id="boxGrad" x1="310" y1="430" x2="720" y2="770" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#CFE3FF"/>
+      <stop offset="1" stop-color="#8EB7FF"/>
+    </linearGradient>
+
+    <linearGradient id="boxInsideGrad" x1="392" y1="360" x2="758" y2="654" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#5EA2FF"/>
+      <stop offset="1" stop-color="#2C7BFF"/>
+    </linearGradient>
+
+    <linearGradient id="cardEdge" x1="415" y1="257" x2="724" y2="588" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#A9C8FF"/>
+      <stop offset="1" stop-color="#6AA7FF"/>
+    </linearGradient>
+
+    <linearGradient id="frontCardFill" x1="466" y1="212" x2="726" y2="575" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#F9FCFF"/>
+    </linearGradient>
+
+    <linearGradient id="plusGrad" x1="618" y1="658" x2="762" y2="796" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#59D607"/>
+      <stop offset="1" stop-color="#2FBC00"/>
+    </linearGradient>
+
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="20" stdDeviation="22" flood-color="#8CB7FF" flood-opacity="0.22"/>
+    </filter>
+
+    <filter id="smallShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#7AA7F8" flood-opacity="0.2"/>
+    </filter>
+  </defs>
+
+  <ellipse cx="514" cy="760" rx="305" ry="118" fill="#DDEAFE"/>
+  <ellipse cx="603" cy="762" rx="197" ry="95" fill="#CADDFB" opacity="0.95"/>
+  <ellipse cx="284" cy="846" rx="58" ry="36" fill="#DDEAFE"/>
+
+  <path d="M154 518C154 496.5 171.5 479 193 479C171.5 479 154 461.5 154 440C154 461.5 136.5 479 115 479C136.5 479 154 496.5 154 518Z" fill="#52D000"/>
+  <path d="M180 594C180 579.1 192.1 567 207 567C192.1 567 180 554.9 180 540C180 554.9 167.9 567 153 567C167.9 567 180 579.1 180 594Z" fill="#52D000"/>
+  <path d="M186 320C186 305.1 198.1 293 213 293C198.1 293 186 280.9 186 266C186 280.9 173.9 293 159 293C173.9 293 186 305.1 186 320Z" fill="#3C82FF"/>
+  <path d="M807 398C807 383.1 819.1 371 834 371C819.1 371 807 358.9 807 344C807 358.9 794.9 371 780 371C794.9 371 807 383.1 807 398Z" fill="#52D000"/>
+  <path d="M920 512C920 490.5 937.5 473 959 473C937.5 473 920 455.5 920 434C920 455.5 902.5 473 881 473C902.5 473 920 490.5 920 512Z" fill="#52D000"/>
+  <circle cx="136" cy="482" r="18" fill="#52D000"/>
+  <circle cx="863" cy="312" r="15" fill="#3C82FF"/>
+  <circle cx="364" cy="405" r="19" fill="#52D000"/>
+  <circle cx="353" cy="317" r="20" fill="#3C82FF"/>
+
+  <g filter="url(#smallShadow)">
+    <rect x="315" y="277" width="314" height="343" rx="34" transform="rotate(-8 315 277)" fill="#DDEBFF"/>
+    <rect x="339" y="316" width="251" height="245" rx="24" transform="rotate(-8 339 316)" fill="#F7FBFF" stroke="#C4D9FF" stroke-width="4"/>
+    <circle cx="378" cy="420" r="16" fill="#4F91FF"/>
+    <circle cx="391" cy="485" r="16" fill="#90D8FF"/>
+    <circle cx="403" cy="550" r="16" fill="#DBE7F7"/>
+    <path d="M430 386L560 368" stroke="#D3E0F5" stroke-width="12" stroke-linecap="round"/>
+    <path d="M440 444L570 426" stroke="#DCE7F7" stroke-width="12" stroke-linecap="round"/>
+  </g>
+
+  <g filter="url(#smallShadow)">
+    <rect x="352" y="335" width="314" height="343" rx="34" transform="rotate(-12 352 335)" fill="#5FA3FF" opacity="0.9"/>
+  </g>
+
+  <g filter="url(#smallShadow)">
+    <rect x="415" y="203" width="388" height="430" rx="42" transform="rotate(-7 415 203)" fill="url(#frontCardFill)" stroke="url(#cardEdge)" stroke-width="7"/>
+    <circle cx="487" cy="357" r="22" fill="#E2EEFF"/>
+    <path d="M546 336L666 321" stroke="#E1ECFA" stroke-width="20" stroke-linecap="round"/>
+    <rect x="491" y="410" width="313" height="281" rx="28" transform="rotate(-7 491 410)" stroke="#B8D1FB" stroke-width="10" stroke-linecap="round" stroke-dasharray="22 22"/>
+  </g>
+
+  <g filter="url(#softShadow)">
+    <path d="M296 509C296 492.431 309.431 479 326 479H680C696.569 479 710 492.431 710 509V679C710 733.124 666.124 777 612 777H394C339.876 777 296 733.124 296 679V509Z" fill="url(#boxInsideGrad)"/>
+    <path d="M278 490C278 468.461 295.461 451 317 451H681C702.539 451 720 468.461 720 490V683C720 739.333 674.333 785 618 785H380C323.667 785 278 739.333 278 683V490Z" fill="url(#boxGrad)"/>
+    <path d="M278 490C278 468.461 295.461 451 317 451H681C702.539 451 720 468.461 720 490V514H278V490Z" fill="#C6DCFF" opacity="0.95"/>
+    <path d="M278 514L328 608C336 623 351 633 368 633H631C648 633 663 623 671 608L720 514H278Z" fill="#2A77FF"/>
+    <path d="M286 514L332 598C338 609 349 616 362 616H638C651 616 662 609 668 598L714 514H286Z" fill="#F4F9FF" opacity="0.2"/>
+    <rect x="456" y="561" width="124" height="48" rx="18" fill="#2E7BFF"/>
+    <rect x="459" y="564" width="118" height="44" rx="16" fill="#327EFF"/>
+  </g>
+
+  <g filter="url(#softShadow)">
+    <circle cx="689" cy="655" r="94" fill="#F2F8FF"/>
+    <circle cx="689" cy="655" r="82" fill="url(#plusGrad)"/>
+    <rect x="671" y="611" width="36" height="88" rx="18" fill="white"/>
+    <rect x="645" y="637" width="88" height="36" rx="18" fill="white"/>
+  </g>
+</svg>

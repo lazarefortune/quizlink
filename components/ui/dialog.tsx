@@ -20,7 +20,7 @@ const DialogOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
     <DialogPrimitive.Overlay
       ref={ref}
-      className={cn("quizlink-dialog-overlay fixed inset-0 z-[101] bg-black/80", className)}
+      className={cn("quizlink-dialog-overlay fixed inset-0 z-[101] bg-black/60", className)}
       {...props}
     />
 ));
@@ -69,7 +69,7 @@ const DialogContent = React.forwardRef<
         <DialogPrimitive.Content
           ref={ref}
           className={cn(
-            "quizlink-dialog-content relative grid w-full min-w-0 max-w-full gap-4 border border-border bg-background p-4 shadow-lg sm:max-w-5xl sm:rounded-lg sm:p-6",
+            "quizlink-dialog-content relative grid w-full min-w-0 max-w-full gap-4 border border-border bg-background p-4 shadow-lg sm:max-w-5xl rounded-md sm:rounded-lg sm:p-6",
             "max-h-[90vh] overflow-y-auto overflow-x-hidden",
             "opacity-0",
             className,
@@ -143,7 +143,7 @@ const DialogTitle = React.forwardRef<
   <DialogPrimitive.Title
     ref={ref}
     className={cn(
-      "text-lg font-semibold leading-none tracking-tight",
+      "text-lg md:text-xl uppercase font-semibold leading-none tracking-tight",
       className
     )}
     {...props}

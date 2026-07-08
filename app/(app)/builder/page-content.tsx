@@ -11,6 +11,7 @@ import {
 } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -2464,7 +2465,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <div className="flex min-w-0 flex-col bg-background lg:min-h-0 lg:h-full lg:flex-1 lg:overflow-hidden">
+      <div className="flex min-w-0 flex-col bg-white dark:bg-card lg:min-h-0 lg:h-full lg:flex-1 lg:overflow-hidden">
         <header className="hidden shrink-0 border-b border-border/60 bg-muted/10 px-3 pb-2 pt-2 sm:px-4 sm:pb-3 sm:pt-3 md:px-6 lg:sticky lg:top-0 lg:z-20 lg:block">
           <div className="flex flex-col gap-2">
             <div className="flex flex-row items-end justify-between gap-4">
@@ -2582,9 +2583,20 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
                 className="px-3 pb-10 pt-3 sm:px-4 sm:pb-12 sm:pt-4 md:px-6 md:pb-16 md:pt-6 lg:builder-scrollbar lg:min-h-0 lg:flex-1 lg:overflow-x-hidden lg:overflow-y-auto lg:scroll-pt-4"
               >
                 <Card>
-                  <CardContent className="py-8 sm:py-12 text-center">
-                    <p className="text-base text-muted-foreground mb-4">
-                      {t(locale, "builder.noQuestions")}
+                  <CardContent className="flex flex-col items-center py-8 text-center sm:py-12">
+                    <Image
+                      src="/todo-illustration.svg"
+                      alt=""
+                      width={320}
+                      height={240}
+                      className="mb-6 h-auto w-full max-w-[220px] sm:max-w-[260px]"
+                      priority
+                    />
+                    <h2 className="mb-2 text-xl font-semibold text-foreground">
+                      {t(locale, "builder.emptyQuestionsTitle")}
+                    </h2>
+                    <p className="mb-6 max-w-md text-base text-muted-foreground">
+                      {t(locale, "builder.emptyQuestionsDescription")}
                     </p>
                     <Button
                       variant="primary"

@@ -27,11 +27,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  Trash2,
-  Image as ImageIcon,
-  ImageUp,
   Loader2,
-  Plus,
 } from "lucide-react";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t } from "@/lib/i18n";
@@ -48,6 +44,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Radio } from "@/components/ui/radio";
 import { RichTextQuestionEditor } from "@/components/quiz-builder/rich-text-question-editor";
+import { HugeiconsIcon } from "@hugeicons/react"
+import { ImageAdd02Icon, ImageUp, Delete02Icon, Plus } from "@hugeicons/core-free-icons"
+
 
 type QuestionEditorProps = {
   question: Question;
@@ -250,7 +249,7 @@ export function QuestionEditor({
     <Card
       data-has-error={hasAnyError ? "true" : undefined}
       className={cn(
-        "w-full max-w-none border-2 bg-card shadow-sm",
+        "w-full max-w-none border-2 bg-card shadow-raised",
         hasAnyError ? "border-destructive/55 dark:border-destructive/45" : "border-border",
       )}
     >
@@ -272,7 +271,7 @@ export function QuestionEditor({
           {/* Question Type */}
           <div className="space-y-1.5 sm:space-y-2">
             <Select value={question.type} onValueChange={handleTypeChange}>
-              <SelectTrigger className="w-full max-w-full text-sm sm:max-w-xs">
+              <SelectTrigger className="w-full max-w-full text-base sm:max-w-md rounded-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -303,14 +302,14 @@ export function QuestionEditor({
               onClick={() => setShowDeleteDialog(true)}
               className="h-8 w-8"
             >
-              <Trash2 className="h-4 w-4" />
+              <HugeiconsIcon icon={Delete02Icon} strokeWidth={2.5} className="h-4 w-4" aria-hidden size={24} />
             </Button>
           </div>
         </div>
 
         {/* Question label */}
         <div className="space-y-1.5 sm:space-y-2">
-          <h3 className="text-lg font-semibold">
+          <h3 className="text-lg uppercase font-semibold text-blue">
             {t(locale, "builder.questionNumber", {
               number: (index + 1).toString(),
             })}
@@ -378,7 +377,7 @@ export function QuestionEditor({
                       disabled={isImageLoading}
                       aria-label={t(locale, "builder.replaceImage")}
                     >
-                      <ImageUp className="h-4 w-4" aria-hidden />
+                      <HugeiconsIcon icon={ImageUp} strokeWidth={2.5} className="h-4 w-4" aria-hidden size={24} />
                     </Button>
                     <Button
                       type="button"
@@ -389,7 +388,7 @@ export function QuestionEditor({
                       disabled={isImageLoading}
                       aria-label={t(locale, "builder.removeImage")}
                     >
-                      <Trash2 className="h-4 w-4" aria-hidden />
+                      <HugeiconsIcon icon={Delete02Icon} strokeWidth={2.5} className="h-4 w-4" aria-hidden size={24} />
                     </Button>
                   </div>
                 </div>
@@ -414,9 +413,9 @@ export function QuestionEditor({
                   disabled={isImageLoading}
                   className="flex h-24 w-full touch-manipulation flex-col items-center justify-center rounded-md border-2 border-dashed border-border transition-colors hover:bg-muted/50 disabled:pointer-events-none disabled:opacity-60 sm:h-32 md:h-40"
                 >
-                  <ImageIcon className="mb-1 h-6 w-6 text-muted-foreground sm:mb-2 sm:h-8 sm:w-8" />
-                  <span className="px-2 text-center text-xs text-muted-foreground">
-                    {t(locale, "builder.questionImage")}
+                  <HugeiconsIcon icon={ImageAdd02Icon} className="h-6 w-6 text-muted-foreground sm:h-8 sm:w-8" size={24} />
+                  <span className="px-2 text-center text-sm font-medium text-foreground">
+                    {t(locale, "builder.questionImage")} <span className="text-xs font-normal text-muted-foreground">({t(locale, "builder.optional")})</span>
                   </span>
                 </button>
               )}
@@ -455,7 +454,7 @@ export function QuestionEditor({
               <div
                 key={option.id}
                 className={cn(
-                  "flex items-center gap-2 sm:gap-3transition-colors cursor-pointer",
+                  "flex items-center gap-2 transition-colors cursor-pointer border border-border rounded-xs px-4 py-3",
                 )}
                 onClick={() => {
                   if (question.type === "TRUE_FALSE") {
@@ -534,15 +533,15 @@ export function QuestionEditor({
                     }}
                     className="h-7 w-7 sm:h-8 sm:w-8 shrink-0 text-muted-foreground hover:text-white hover:bg-destructive"
                   >
-                    <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} className="h-4 w-4" aria-hidden size={24} />
                   </Button>
                 )}
               </div>
             ))}
           </div>
           {question.type !== "TRUE_FALSE" && (
-            <Button variant="ghost" size="sm" className="border-2 border-border border-dashed rounded-xs normal-case gap-1" onClick={handleAddOption}>
-              <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
+            <Button variant="ghost" className="border-2 border-border border-dashed rounded-xs normal-case gap-1 text-base font-medium" onClick={handleAddOption}>
+              <HugeiconsIcon icon={Plus} strokeWidth={2} className="h-3 w-3" aria-hidden size={24} />
               {t(locale, "builder.addOption")}
             </Button>
           )}

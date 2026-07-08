@@ -12,9 +12,9 @@ describe("resolveMobileQuizOptionsOpenAfterQuestionCountChange", () => {
     expect(resolveMobileQuizOptionsOpenAfterQuestionCountChange(4, 2)).toBeNull();
   });
 
-  it("returns true when all questions were removed", () => {
-    expect(resolveMobileQuizOptionsOpenAfterQuestionCountChange(1, 0)).toBe(true);
-    expect(resolveMobileQuizOptionsOpenAfterQuestionCountChange(5, 0)).toBe(true);
+  it("returns null when all questions were removed", () => {
+    expect(resolveMobileQuizOptionsOpenAfterQuestionCountChange(1, 0)).toBeNull();
+    expect(resolveMobileQuizOptionsOpenAfterQuestionCountChange(5, 0)).toBeNull();
   });
 
   it("returns false when the first question(s) appear from empty", () => {

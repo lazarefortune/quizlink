@@ -1,0 +1,51 @@
+<svg width="320" height="240" viewBox="0 0 320 240" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Illustration checklist Quizlink</title>
+  <desc id="desc">Illustration légère d'un clipboard bleu avec des validations vertes et des formes décoratives.</desc>
+
+  <!-- Decorative stars -->
+  <path d="M65 60C65 56.7 67.7 54 71 54C67.7 54 65 51.3 65 48C65 51.3 62.3 54 59 54C62.3 54 65 56.7 65 60Z" fill="#1CB0F6"/>
+  <path d="M254 58C254 53.6 257.6 50 262 50C257.6 50 254 46.4 254 42C254 46.4 250.4 50 246 50C250.4 50 254 53.6 254 58Z" fill="#58CC02"/>
+  <path d="M275 104C275 98.5 279.5 94 285 94C279.5 94 275 89.5 275 84C275 89.5 270.5 94 265 94C270.5 94 275 98.5 275 104Z" fill="#58CC02"/>
+  <circle cx="50" cy="126" r="4" fill="#1CB0F6"/>
+  <circle cx="238" cy="118" r="4" fill="#58CC02"/>
+
+  <!-- Soft base shadow -->
+  <ellipse cx="161" cy="191" rx="82" ry="26" fill="#DDF4FF"/>
+
+  <!-- Clipboard body shadow -->
+  <rect x="103" y="46" width="112" height="146" rx="18" transform="rotate(-12 103 46)" fill="#84D8FF" opacity="0.35"/>
+
+  <!-- Clipboard body -->
+  <rect x="95" y="42" width="118" height="150" rx="18" transform="rotate(-12 95 42)" fill="#74CFFF"/>
+  <rect x="111" y="56" width="88" height="118" rx="12" transform="rotate(-12 111 56)" fill="white"/>
+
+  <!-- Clipboard clip -->
+  <rect x="125" y="31" width="54" height="24" rx="10" transform="rotate(-12 125 31)" fill="#2F80ED"/>
+  <circle cx="150" cy="37" r="8" fill="#BFEFFF"/>
+
+  <!-- Checklist lines -->
+  <rect x="141" y="73" width="45" height="8" rx="4" transform="rotate(-12 141 73)" fill="#D7E1EA"/>
+  <rect x="145" y="96" width="42" height="8" rx="4" transform="rotate(-12 145 96)" fill="#D7E1EA"/>
+  <rect x="149" y="119" width="39" height="8" rx="4" transform="rotate(-12 149 119)" fill="#D7E1EA"/>
+
+  <!-- Check icons -->
+  <circle cx="125" cy="83" r="12" fill="#E7F8E0"/>
+  <path d="M119 83.5L123.2 87.7L132 78.8" stroke="#58CC02" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <circle cx="130" cy="106" r="12" fill="#E7F8E0"/>
+  <path d="M124 106.5L128.2 110.7L137 101.8" stroke="#58CC02" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <circle cx="135" cy="129" r="12" fill="#E7F8E0"/>
+  <path d="M129 129.5L133.2 133.7L142 124.8" stroke="#58CC02" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Pencil / progress element -->
+  <g transform="rotate(-14 190 146)">
+    <rect x="154" y="134" width="82" height="28" rx="14" fill="#58CC02"/>
+    <rect x="169" y="139" width="52" height="18" rx="9" fill="#89E219"/>
+    <path d="M230 134L250 148L230 162V134Z" fill="#FFC800"/>
+    <path d="M246 145L255 148L246 151V145Z" fill="#4B4B4B"/>
+  </g>
+
+  <!-- Small sparkle on clipboard -->
+  <path d="M205 82C205 78.7 207.7 76 211 76C207.7 76 205 73.3 205 70C205 73.3 202.3 76 199 76C202.3 76 205 78.7 205 82Z" fill="#1CB0F6"/>
+</svg>

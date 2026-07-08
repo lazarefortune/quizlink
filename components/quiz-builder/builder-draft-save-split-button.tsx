@@ -1,8 +1,9 @@
 "use client";
 
 import type { Dispatch, ReactNode, SetStateAction } from "react";
-import { CheckCircle2, ChevronDown, Loader2, Save } from "lucide-react";
-
+import { ChevronDown, Loader2 } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { CloudSavingDone01Icon, SaveIcon } from "@hugeicons/core-free-icons";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -71,7 +72,7 @@ export function BuilderDraftSaveSplitButton({
   isDestructiveStyled,
   centerPrimaryContent = false,
 }: BuilderDraftSaveSplitButtonProps) {
-  const iconClass = "pointer-events-none h-4 w-4 shrink-0";
+  const iconClass = "pointer-events-none shrink-0";
 
   const autoSaveEffective = resolveEffectiveAutoSaveEnabled(quiz.settings);
 
@@ -134,13 +135,13 @@ export function BuilderDraftSaveSplitButton({
           )}
         >
           {showPrimarySpinner ? (
-            <Loader2 strokeWidth={2} className={cn(iconClass, "animate-spin text-muted-foreground")} aria-hidden />
+            <Loader2 strokeWidth={2.2} className={cn(iconClass, "animate-spin text-muted-foreground")} aria-hidden />
           ) : savedLabel !== null ? (
-            <CheckCircle2 strokeWidth={2} className={cn(iconClass, "text-emerald-600 dark:text-emerald-400")} aria-hidden />
+            <HugeiconsIcon icon={CloudSavingDone01Icon} strokeWidth={2.2} className={iconClass} aria-hidden />
           ) : pendingLabel !== null ? (
-            <Loader2 strokeWidth={2} className={cn(iconClass, "animate-spin text-muted-foreground")} aria-hidden />
+            <Loader2 strokeWidth={2.2} className={cn(iconClass, "animate-spin text-muted-foreground")} aria-hidden />
           ) : (
-            <Save strokeWidth={2} className={iconClass} aria-hidden />
+            <HugeiconsIcon icon={SaveIcon} strokeWidth={2.2} className={iconClass} aria-hidden />
           )}
           <span
             className={cn(

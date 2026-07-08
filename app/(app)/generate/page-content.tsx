@@ -334,11 +334,11 @@ export function GeneratePage() {
   const hasEnoughCoins = session?.user ? (session.user.coinBalance || 0) >= 2 || session.user.role === "ADMIN" : false;
 
   return (
-    <div className="min-h-screen bg-background p-4 sm:p-8">
+    <div className="min-h-screen bg-white dark:bg-card p-4 sm:p-8">
       <div className="mx-auto max-w-4xl space-y-4 sm:space-y-6">
         <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="space-y-2">
-            <h1 className="text-2xl sm:text-4xl font-bold">
+            <h1 className="text-2xl sm:text-4xl font-semibold">
               {t(locale, "generate.title")}
             </h1>
             <p className="text-base text-muted-foreground">
@@ -368,10 +368,10 @@ export function GeneratePage() {
                 className="w-full"
               >
                 <TabsList className="flex w-full overflow-x-auto sm:grid sm:grid-cols-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                  <TabsTrigger value="TEXT" className="whitespace-nowrap">
+                  <TabsTrigger value="TEXT" className="whitespace-nowrap text-lg font-medium">
                     {t(locale, "generate.tabs.text")}
                   </TabsTrigger>
-                  <TabsTrigger value="DOCUMENT" className="whitespace-nowrap">
+                  <TabsTrigger value="DOCUMENT" className="whitespace-nowrap text-lg font-medium">
                     {t(locale, "generate.tabs.document")}
                   </TabsTrigger>
                 </TabsList>
@@ -439,13 +439,13 @@ export function GeneratePage() {
               <TabsList className="flex w-full overflow-x-auto sm:grid sm:grid-cols-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 <TabsTrigger
                   value="TEXT"
-                  className="whitespace-nowrap font-fredoka text-base font-black"
+                  className="whitespace-nowrap text-lg font-medium"
                 >
                   {t(locale, "generate.tabs.text")}
                 </TabsTrigger>
                 <TabsTrigger
                   value="DOCUMENT"
-                  className="whitespace-nowrap font-fredoka text-base font-black"
+                  className="whitespace-nowrap text-lg font-medium"
                 >
                   {t(locale, "generate.tabs.document")}
                 </TabsTrigger>

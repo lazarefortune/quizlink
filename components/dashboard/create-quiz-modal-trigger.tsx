@@ -51,18 +51,18 @@ export function CreateQuizModalTrigger({
         variant={variant}
         size={size}
         className={cn(
-          "gap-2 items-center text-lg [&_svg]:!size-5 sm:[&_svg]:!size-6",
+          "gap-2 items-center text-lg",
           className,
         )}
         onClick={() => setOpen(true)}
       >
-        {icon ?? <HugeiconsIcon icon={Plus} size={18} strokeWidth={2} />}
+        {icon ?? <HugeiconsIcon icon={Plus} strokeWidth={2.5} />}
         {label ? (
           label
         ) : (
           <>
             <span className="sm:hidden">{t(locale, "nav.create")}</span>
-            <span className="hidden sm:inline">
+            <span className="hidden sm:inline normal-case">
               {t(locale, "dashboard.welcome.createQuiz")}
             </span>
           </>
