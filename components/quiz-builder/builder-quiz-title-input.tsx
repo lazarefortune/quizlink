@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useLayoutEffect, useRef, useState } from "react";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, PencilLine } from "lucide-react";
 import { textareaVariants } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { QUIZ_NAME_MAX_LENGTH } from "@/lib/quiz-validation";
@@ -55,6 +55,13 @@ export type BuilderQuizTitleInputProps = {
    * Set to "quiz-name" on both the desktop header and the mobile card.
    */
   errorTargetId?: string;
+  /** Hides the label row (desktop header inline title). */
+  hideLabel?: boolean;
+  /** When value matches this sentinel, show untitled placeholder styling on desktop. */
+  untitledSentinel?: string;
+  /** Short hint shown under the field when the title is still the default. */
+  showUntitledHint?: boolean;
+  untitledHintText?: string;
 };
 
 export function BuilderQuizTitleInput({
@@ -67,10 +74,17 @@ export function BuilderQuizTitleInput({
   variant = "inline",
   compact = false,
   errorTargetId = "quiz-name",
+  hideLabel = false,
+  untitledSentinel,
+  showUntitledHint = false,
+  untitledHintText,
 }: BuilderQuizTitleInputProps) {
   const isFieldVariant = variant === "field";
   const isCompactField = isFieldVariant && compact;
   const nameError = getNameError();
+  const isUntitled =
+    value.trim().length === 0 ||
+    (untitledSentinel !== undefined && value.trim() === untitledSentinel.trim());
   const [isFocused, setIsFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fieldId = useId();
@@ -112,6 +126,7 @@ export function BuilderQuizTitleInput({
         isFieldVariant ? (isCompactField ? "gap-1.5" : "gap-2") : "flex-1 gap-0.5",
       )}
     >
+      {hideLabel ? null : (
       <div className="flex items-baseline justify-between gap-2">
         <label
           id={labelId}
@@ -136,10 +151,19 @@ export function BuilderQuizTitleInput({
           </span>
         ) : null}
       </div>
+      )}
+      <div className={cn("relative min-w-0", hideLabel && isUntitled && !isFocused ? "group" : null)}>
+        {hideLabel && isUntitled && !isFocused ? (
+          <PencilLine
+            className="pointer-events-none absolute left-0 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70"
+            aria-hidden
+          />
+        ) : null}
       <textarea
         ref={textareaRef}
         id={fieldId}
-        aria-labelledby={labelId}
+        aria-labelledby={hideLabel ? undefined : labelId}
+        aria-label={hideLabel ? labelText : undefined}
         aria-invalid={nameError !== null}
         data-builder-error-target={errorTargetId}
         title={value.trim().length > 0 ? value : undefined}
@@ -162,16 +186,23 @@ export function BuilderQuizTitleInput({
                   "border-destructive hover:border-destructive focus:border-destructive",
               )
             : cn(
-                "min-h-0 bg-transparent text-foreground outline-none transition-[box-shadow,border-color] placeholder:text-muted-foreground/50",
+                "min-h-0 bg-transparent text-foreground outline-none transition-[box-shadow,border-color,color] placeholder:text-muted-foreground/50",
                 "rounded-xs border border-transparent px-1 py-2 -mx-1",
                 "focus-visible:border-primary",
                 "text-base font-medium leading-snug lg:text-base lg:font-medium lg:leading-tight lg:tracking-tight",
+                hideLabel && isUntitled && !isFocused
+                  ? "pl-6 italic text-muted-foreground/75"
+                  : null,
                 isFocused ? "max-h-36 overflow-y-auto" : "overflow-y-hidden",
                 nameError &&
                   "border-destructive/80 focus-visible:border-destructive",
               ),
         )}
       />
+      </div>
+      {showUntitledHint && isUntitled && !isFocused ? (
+        <p className="text-sm text-muted-foreground">{untitledHintText}</p>
+      ) : null}
       {nameError ? (
         <p className="mt-1 flex items-center gap-1 text-xs text-destructive">
           <AlertCircle className="h-3 w-3 shrink-0" />

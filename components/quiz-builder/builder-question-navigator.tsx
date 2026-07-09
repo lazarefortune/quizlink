@@ -19,6 +19,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { Plus } from "lucide-react";
+import Image from "next/image";
 import { BuilderQuestionNavigatorDragPreview } from "@/components/quiz-builder/builder-question-navigator-drag-preview";
 import { BuilderQuestionNavigatorSortableRow } from "@/components/quiz-builder/builder-question-navigator-sortable-row";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,8 @@ type BuilderQuestionNavigatorProps = {
   onReorder: (nextQuestions: Question[]) => void;
   /** Question ids flagged by validation after a save attempt. */
   questionErrorIds?: ReadonlySet<string>;
+  /** Desktop sidebar: full empty state when there are no questions. */
+  showDesktopEmptyState?: boolean;
 };
 
 function questionTypeShortLabel(locale: Locale, type: QuestionType): string {
@@ -61,6 +64,7 @@ export function BuilderQuestionNavigator({
   onAddQuestion,
   onReorder,
   questionErrorIds,
+  showDesktopEmptyState = false,
 }: BuilderQuestionNavigatorProps) {
   const listScrollRef = useRef<HTMLElement | null>(null);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
@@ -150,16 +154,18 @@ export function BuilderQuestionNavigator({
               {t(locale, "builder.questions")} ({questions.length})
             </p>
           </div>
-          <Button
-            type="button"
-            variant="blue"
-            size="icon"
-            className="h-8 w-8 shrink-0"
-            onClick={() => onAddQuestion()}
-            aria-label={t(locale, "builder.questionNavigatorAddAria")}
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
+          {!(showDesktopEmptyState && questions.length === 0) ? (
+            <Button
+              type="button"
+              variant="blue"
+              size="icon"
+              className="h-8 w-8 shrink-0"
+              onClick={() => onAddQuestion()}
+              aria-label={t(locale, "builder.questionNavigatorAddAria")}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          ) : null}
         </div>
       </div>
       <nav
@@ -167,6 +173,33 @@ export function BuilderQuestionNavigator({
         className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain p-2 builder-scrollbar"
         aria-label={t(locale, "builder.questionNavigatorAria")}
       >
+        {showDesktopEmptyState && questions.length === 0 ? (
+          <div className="flex flex-col items-center px-2 py-4 text-center">
+            <Image
+              src="/todo-illustration.svg"
+              alt=""
+              width={320}
+              height={240}
+              className="mb-4 h-auto w-full max-w-[160px]"
+            />
+            <h3 className="mb-1.5 text-lg font-semibold text-foreground">
+              {t(locale, "builder.emptyQuestionsTitleDesktop")}
+            </h3>
+            <p className="mb-4 text-sm leading-snug text-muted-foreground">
+              {t(locale, "builder.emptyQuestionsDescriptionDesktop")}
+            </p>
+            <Button
+              type="button"
+              variant="primary"
+              size="default"
+              className="w-full text-sm"
+              onClick={() => onAddQuestion()}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              {t(locale, "builder.addQuestion")}
+            </Button>
+          </div>
+        ) : (
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -240,6 +273,7 @@ export function BuilderQuestionNavigator({
             ) : null}
           </DragOverlay>
         </DndContext>
+        )}
       </nav>
     </div>
   );

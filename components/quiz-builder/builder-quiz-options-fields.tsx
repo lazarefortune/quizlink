@@ -27,9 +27,10 @@ export type BuilderQuizOptionsFieldsProps = {
   locale: Locale;
   getTimeLimitError: () => string | null;
   setValidationErrors: Dispatch<SetStateAction<ValidationError[]>>;
-  /** When true, show the quiz name field (mobile sheet). Desktop keeps inline title in the builder header. */
+  /** When true, show the quiz name field (mobile sheet / desktop settings panel). */
   showNameField?: boolean;
   getNameError?: () => string | null;
+  nameFieldId?: string;
 };
 
 export function BuilderQuizOptionsFields({
@@ -42,6 +43,7 @@ export function BuilderQuizOptionsFields({
   setValidationErrors,
   showNameField = false,
   getNameError,
+  nameFieldId = "builder-quiz-name-sheet",
 }: BuilderQuizOptionsFieldsProps) {
   const nameError = showNameField && getNameError ? getNameError() : null;
   const applyTimeLimitParts = (minutes: number, seconds: number) => {
@@ -78,11 +80,12 @@ export function BuilderQuizOptionsFields({
       <div className="space-y-3 sm:space-y-4">
         {showNameField ? (
           <div className="space-y-2 border-b border-border/60 pb-4">
-            <label htmlFor="builder-quiz-name-sheet" className="text-base font-medium text-foreground">
+            <label htmlFor={nameFieldId} className="text-base font-medium text-foreground">
               {t(locale, "builder.quizNameCardLabel")}
             </label>
             <Input
-              id="builder-quiz-name-sheet"
+              id={nameFieldId}
+              data-builder-error-target="quiz-name"
               value={quiz.name}
               onChange={(e) => {
                 setQuiz((prev) => ({ ...prev, name: e.target.value }));

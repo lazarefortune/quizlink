@@ -1,22 +1,14 @@
 "use client";
 
 import type { Dispatch, ReactNode, SetStateAction } from "react";
-import { ChevronDown, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { CloudSavingDone01Icon, SaveIcon } from "@hugeicons/core-free-icons";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Switch } from "@/components/ui/switch";
 import type { Locale } from "@/lib/i18n";
 import { t } from "@/lib/i18n";
-import { resolveEffectiveAutoSaveEnabled } from "@/lib/builder/resolveEffectiveAutoSaveEnabled";
 import { cn } from "@/lib/utils";
 import type { QuizBuilder } from "@/types/quiz-builder";
+import { BuilderDraftSaveOptionsMenu } from "@/components/quiz-builder/builder-draft-save-options-menu";
 
 /**
  * Outline split control: outer shell carries the raised shadow (`--shadow-raised`, matching `.btn-bouncy`).
@@ -73,8 +65,6 @@ export function BuilderDraftSaveSplitButton({
   centerPrimaryContent = false,
 }: BuilderDraftSaveSplitButtonProps) {
   const iconClass = "pointer-events-none shrink-0";
-
-  const autoSaveEffective = resolveEffectiveAutoSaveEnabled(quiz.settings);
 
   const savedLabel =
     savedClean && !showPrimarySpinner
@@ -153,62 +143,19 @@ export function BuilderDraftSaveSplitButton({
           </span>
           {validationBadge}
         </button>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              disabled={isBusy}
-              aria-label={t(locale, "builder.draftSaveOptionsMenuAriaLabel")}
-              className={cn(
-                segmentTypo,
-                segmentFocus,
-                destructiveSegments,
-                "w-11 min-w-[2.75rem] shrink-0 cursor-pointer px-0",
-                isBusy ? "cursor-not-allowed opacity-50" : "opacity-100",
-              )}
-            >
-              <ChevronDown className={cn(iconClass, "transition-none")} aria-hidden />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="max-w-[min(100vw-2rem,20rem)]" sideOffset={6}>
-            <DropdownMenuLabel className="text-base uppercase font-semibold leading-snug">
-              {t(locale, "builder.draftSaveOptionsMenuTitle")}
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <div
-              role="presentation"
-              className="flex flex-col gap-2 px-2 py-2.5"
-              onPointerDown={(event) => {
-                event.stopPropagation();
-              }}
-            >
-              <div className="flex items-start gap-3">
-                <div className="flex min-w-0 flex-1 flex-col gap-1 pt-0.5 cursor-default select-none">
-                  <p className="text-base font-medium leading-snug text-foreground wrap-break-word">
-                    {t(locale, "builder.automaticSavingLabel")}
-                  </p>
-                  <p className="text-sm leading-snug text-muted-foreground">
-                    {t(locale, "builder.automaticSavingDescription")}
-                  </p>
-                </div>
-                <Switch
-                  checked={autoSaveEffective}
-                  onCheckedChange={(checked: boolean) =>
-                    setQuiz((prev) => ({
-                      ...prev,
-                      settings: {
-                        ...prev.settings,
-                        autoSaveEnabled: checked,
-                      },
-                    }))
-                  }
-                  className="mt-1 shrink-0"
-                  aria-label={t(locale, "builder.automaticSavingLabel")}
-                />
-              </div>
-            </div>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <BuilderDraftSaveOptionsMenu
+          locale={locale}
+          quiz={quiz}
+          setQuiz={setQuiz}
+          isBusy={isBusy}
+          triggerClassName={cn(
+            segmentTypo,
+            segmentFocus,
+            destructiveSegments,
+            "h-auto min-h-11 w-11 min-w-[2.75rem] shrink-0 rounded-none border-0 bg-transparent px-0 shadow-none",
+            isBusy ? "cursor-not-allowed opacity-50" : "cursor-pointer opacity-100",
+          )}
+        />
     </div>
   );
 }

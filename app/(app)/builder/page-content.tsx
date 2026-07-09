@@ -25,7 +25,6 @@ import {
   CheckCircle2,
   Loader2,
   ArrowLeft,
-  Settings,
   Eye,
 } from "lucide-react";
 import { QuizMenu } from "@/components/quiz-menu";
@@ -84,10 +83,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BuilderMobileOrganizeTabPanel } from "@/components/quiz-builder/builder-mobile-organize-tab-panel";
 import { BuilderMobileStickyTabsBar } from "@/components/quiz-builder/builder-mobile-sticky-tabs-bar";
 import { BuilderOrganizeQuestionsList } from "@/components/quiz-builder/builder-organize-questions-list";
-import { BuilderQuestionNavigator } from "@/components/quiz-builder/builder-question-navigator";
+import { BuilderDesktopSidebar } from "@/components/quiz-builder/builder-desktop-sidebar";
+import { BuilderQuizSettingsPanel } from "@/components/quiz-builder/builder-quiz-settings-panel";
 import { BuilderQuizSettingsSheet } from "@/components/quiz-builder/builder-quiz-settings-sheet";
 import { BuilderDraftSaveSplitButton } from "@/components/quiz-builder/builder-draft-save-split-button";
-import { BuilderQuizTitleInput } from "@/components/quiz-builder/builder-quiz-title-input";
+import { BuilderDraftAutosaveStatusPill } from "@/components/quiz-builder/builder-draft-autosave-status-pill";
 import { BuilderMobileQuizCard } from "@/components/quiz-builder/builder-mobile-quiz-card";
 import { BuilderSaveStatus } from "@/components/quiz-builder/builder-save-status";
 import { BuilderSaveErrorReportBanner } from "@/components/builder/builder-save-error-report-banner";
@@ -126,13 +126,22 @@ import {
 } from "@/lib/builder/serverAutosaveGate";
 import { shouldShowBuilderSaveStatusRow } from "@/lib/builder/builderSaveStatusRowVisibility";
 import { useBuilderSaveStatusDisplayKind } from "@/lib/builder/useBuilderSaveStatusDisplayKind";
+import { resolveBuilderDraftSaveSystemStatus } from "@/lib/builder/resolveBuilderDraftSaveSystemStatus";
+import { resolveEffectiveAutoSaveEnabled } from "@/lib/builder/resolveEffectiveAutoSaveEnabled";
+import {
+  type DesktopBuilderSelection,
+  isQuizUntitledForDesktopSelection,
+  resolveActiveQuestionIdAfterQuestionDelete,
+  resolveDesktopBuilderSelectionAfterQuestionDelete,
+  resolveInitialDesktopActiveQuestionId,
+  resolveInitialDesktopBuilderSelection,
+} from "@/lib/builder/desktopBuilderSelection";
 import {
   isCreateQuizButtonDisabledForNoQuestionsAndClean,
   isDraftServerManualSaveActionDisabled,
   isDraftServerManualSaveBusy,
   isActivePrimarySaveDisabled,
 } from "@/lib/builder/builderManualSaveButtonPolicy";
-import { resolveEffectiveAutoSaveEnabled } from "@/lib/builder/resolveEffectiveAutoSaveEnabled";
 import { computeQuizBuilderSnapshot } from "@/lib/builder/quizBuilderSnapshot";
 import { pickDominantVisibleQuestionId } from "@/lib/builder/pickDominantVisibleQuestionId";
 import { useMinWidthLg } from "@/lib/builder/useMinWidthLg";
@@ -221,6 +230,7 @@ type BuilderEditQuestionItemProps = {
   quizIdForImageUpload: string | null;
   isNewlyAdded?: boolean;
   isRemoving?: boolean;
+  isNavActive?: boolean;
   onAnimationEnd?: () => void;
   onRemoveAnimationEnd?: () => void;
 };
@@ -236,6 +246,7 @@ function BuilderEditQuestionItem({
   quizIdForImageUpload,
   isNewlyAdded = false,
   isRemoving = false,
+  isNavActive = false,
   onAnimationEnd,
   onRemoveAnimationEnd,
 }: BuilderEditQuestionItemProps) {
@@ -256,6 +267,7 @@ function BuilderEditQuestionItem({
         index % 2 === 0 ? "bg-background" : "bg-muted/30",
         isNewlyAdded && "animate-question-appear",
         isRemoving && "animate-question-remove pointer-events-none",
+        isNavActive && "ring-2 ring-inset ring-blue/45",
       )}
       onAnimationEnd={
         isRemoving
@@ -339,6 +351,9 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
   const [organizePanelAnimationKey, setOrganizePanelAnimationKey] = useState(0);
   const [scrollToQuestionId, setScrollToQuestionId] = useState<string | null>(null);
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
+  const [desktopBuilderSelection, setDesktopBuilderSelection] =
+    useState<DesktopBuilderSelection>({ view: "settings" });
+  const desktopSelectionQuizKeyRef = useRef<string | null>(null);
   const unsavedBaselineRef = useRef<string | null>(null);
   const baselinePlayableMultisetKeyRef = useRef<string | null>(null);
   const quizRef = useRef(quiz);
@@ -366,10 +381,18 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
   const pendingPreviewAfterSaveRef = useRef(false);
   const builderMainScrollRef = useRef<HTMLDivElement | null>(null);
   const intersectionRatiosRef = useRef<Map<string, number>>(new Map());
+  /** Pins activeQuestionId while a sidebar-driven smooth scroll is in flight. */
+  const navScrollLockQuestionIdRef = useRef<string | null>(null);
+  const navScrollUnlockTimerRef = useRef<number | null>(null);
   const finalizeNavigationStartedRef = useRef(false);
   const prefersReducedMotion = useReducedMotion();
   const isLargeViewport = useMinWidthLg();
-  const isEditorScrollTrackingActive = isLargeViewport || builderViewMode === "edit";
+  const isDesktopQuestionsCanvasActive =
+    isLargeViewport &&
+    desktopBuilderSelection.view === "questions" &&
+    quiz.questions.length > 0;
+  const isEditorScrollTrackingActive =
+    isDesktopQuestionsCanvasActive || (!isLargeViewport && builderViewMode === "edit");
   const { showToast } = useToast();
   const {
     setBuilderHasUnsavedChanges,
@@ -434,6 +457,28 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
     showToast(t(locale, "builder.localDraftRestoredToast"), "success");
   }, [localDraftPayload, clearCurrentLocalBuilderDraft, locale, showToast]);
 
+  const clearNavScrollLock = useCallback(() => {
+    navScrollLockQuestionIdRef.current = null;
+    if (navScrollUnlockTimerRef.current !== null) {
+      window.clearTimeout(navScrollUnlockTimerRef.current);
+      navScrollUnlockTimerRef.current = null;
+    }
+  }, []);
+
+  const beginDesktopNavScrollToQuestion = useCallback((questionId: string) => {
+    navScrollLockQuestionIdRef.current = questionId;
+    if (navScrollUnlockTimerRef.current !== null) {
+      window.clearTimeout(navScrollUnlockTimerRef.current);
+    }
+    navScrollUnlockTimerRef.current = window.setTimeout(() => {
+      navScrollLockQuestionIdRef.current = null;
+      navScrollUnlockTimerRef.current = null;
+    }, 900);
+    setDesktopBuilderSelection({ view: "questions" });
+    setActiveQuestionId(questionId);
+    setScrollToQuestionId(questionId);
+  }, []);
+
   const syncDirtyToGuard = useCallback(() => {
     if (unsavedBaselineRef.current === null) {
       setBuilderHasUnsavedChanges(false);
@@ -454,9 +499,37 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
       return;
     }
     if (hasQuizOptionsPanelErrors(validationErrors)) {
-      setQuizSettingsSheetOpen(true);
+      setDesktopBuilderSelection({ view: "settings" });
     }
   }, [isLargeViewport, validationErrors]);
+
+  const defaultDraftName = t(locale, "builder.defaultDraftName");
+
+  useEffect(() => {
+    if (!isLargeViewport || isLoading) {
+      return;
+    }
+    const quizKey = savedQuizId ?? urlQuizId ?? "new";
+    if (desktopSelectionQuizKeyRef.current === quizKey) {
+      return;
+    }
+    desktopSelectionQuizKeyRef.current = quizKey;
+    const initialSelection = resolveInitialDesktopBuilderSelection({
+      quizName: quiz.name,
+      questions: quiz.questions,
+      defaultDraftName,
+    });
+    setDesktopBuilderSelection(initialSelection);
+    setActiveQuestionId(resolveInitialDesktopActiveQuestionId(quiz.questions));
+  }, [
+    defaultDraftName,
+    isLargeViewport,
+    isLoading,
+    quiz.name,
+    quiz.questions,
+    savedQuizId,
+    urlQuizId,
+  ]);
 
   const questionErrorIds = useMemo(
     () => buildBuilderQuestionErrorIdSet(validationErrors, quiz.questions),
@@ -466,6 +539,16 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
     () => countBuilderValidationProblemAreas(validationErrors, quiz.questions),
     [validationErrors, quiz.questions],
   );
+
+  const builderSettingsPanelHasError = hasQuizOptionsPanelErrors(validationErrors);
+
+  const isHeaderTitleUntitled = isQuizUntitledForDesktopSelection(
+    quiz.name,
+    defaultDraftName,
+  );
+  const builderHeaderDisplayTitle = isHeaderTitleUntitled
+    ? defaultDraftName
+    : quiz.name.trim();
 
   const scrollToBuilderValidationTarget = useCallback(
     (target: BuilderValidationErrorTarget) => {
@@ -504,28 +587,36 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
         });
       };
 
-      if (target.type === "quiz-name") {
-        findAfterPaint(
-          () =>
-            document.querySelector<HTMLElement>(
-              '[data-builder-error-target="quiz-name"]',
-            ),
-          scrollToElement,
-        );
-        return;
-      }
-
-      if (target.type === "quiz-settings") {
+      if (target.type === "quiz-name" || target.type === "quiz-settings") {
+        if (isLargeViewport) {
+          setDesktopBuilderSelection({ view: "settings" });
+          findAfterPaint(
+            () =>
+              document.querySelector<HTMLElement>(
+                target.type === "quiz-name"
+                  ? '[data-builder-error-target="quiz-name"]'
+                  : '[data-builder-error-target="quiz-settings"]',
+              ),
+            scrollToElement,
+          );
+          return;
+        }
         setQuizSettingsSheetOpen(true);
-        // Sheet open animation: wait a bit before locating the field inside.
         findAfterPaint(
           () =>
             document.querySelector<HTMLElement>(
-              '[data-builder-error-target="quiz-settings"]',
+              target.type === "quiz-name"
+                ? '[data-builder-error-target="quiz-name"]'
+                : '[data-builder-error-target="quiz-settings"]',
             ),
           scrollToElement,
           { delayMs: 250 },
         );
+        return;
+      }
+
+      if (isLargeViewport) {
+        beginDesktopNavScrollToQuestion(target.questionId);
         return;
       }
 
@@ -534,7 +625,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
       // mode to mount the target card before calling scrollIntoView.
       setScrollToQuestionId(target.questionId);
     },
-    [],
+    [beginDesktopNavScrollToQuestion, isLargeViewport],
   );
 
   const handleValidationFailedSave = useCallback(
@@ -564,7 +655,8 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
   }, [shouldValidateBuilderLive, quiz, timeLimitUi]);
 
   useEffect(() => {
-    if (!isLargeViewport) {
+    if (isLargeViewport) {
+      previousQuestionCountRef.current = quiz.questions.length;
       return;
     }
     const prev = previousQuestionCountRef.current;
@@ -1050,6 +1142,21 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
   }, [isEditorScrollTrackingActive, scrollToQuestionId]);
 
   useEffect(() => {
+    if (!isDesktopQuestionsCanvasActive) {
+      return;
+    }
+    const root = builderMainScrollRef.current;
+    if (!root) {
+      return;
+    }
+    const onScrollEnd = () => {
+      clearNavScrollLock();
+    };
+    root.addEventListener("scrollend", onScrollEnd);
+    return () => root.removeEventListener("scrollend", onScrollEnd);
+  }, [clearNavScrollLock, isDesktopQuestionsCanvasActive]);
+
+  useEffect(() => {
     if (typeof IntersectionObserver === "undefined") {
       return;
     }
@@ -1075,6 +1182,9 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
           }
         }
         const next = pickDominantVisibleQuestionId(intersectionRatiosRef.current, orderedIds);
+        if (navScrollLockQuestionIdRef.current !== null) {
+          return;
+        }
         setActiveQuestionId(next);
       },
       {
@@ -1154,6 +1264,16 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
     gateProceedsForServerAutosave,
     isManualSaving: isSaving || isFinalizingDraft,
     lastServerAutosaveSuccessAt: isDirtyVersusBaseline ? null : lastServerAutosaveSuccessAt,
+  });
+
+  const effectiveAutoSaveEnabled = resolveEffectiveAutoSaveEnabled(quiz.settings);
+
+  const draftSaveSystemStatus = resolveBuilderDraftSaveSystemStatus({
+    isDirtyVersusBaseline,
+    builderSaveStatusKind,
+    serverSaveUiPhase,
+    isSaving,
+    effectiveAutoSaveEnabled,
   });
 
   const showSaveErrorReportBanner =
@@ -1824,16 +1944,34 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
       });
     }
     setBuilderViewMode("edit");
+    if (isLargeViewport) {
+      beginDesktopNavScrollToQuestion(newQuestion.id);
+    }
   };
 
   const handleEditQuestionFromOrganize = (questionId: string) => {
+    if (isLargeViewport) {
+      beginDesktopNavScrollToQuestion(questionId);
+      return;
+    }
     setBuilderViewMode("edit");
     setScrollToQuestionId(questionId);
   };
 
-  const handleNavigatorQuestionClick = useCallback((questionId: string) => {
-    setBuilderViewMode("edit");
-    setScrollToQuestionId(questionId);
+  const handleNavigatorQuestionClick = useCallback(
+    (questionId: string) => {
+      if (isLargeViewport) {
+        beginDesktopNavScrollToQuestion(questionId);
+        return;
+      }
+      setBuilderViewMode("edit");
+      setScrollToQuestionId(questionId);
+    },
+    [beginDesktopNavScrollToQuestion, isLargeViewport],
+  );
+
+  const handleDesktopSettingsClick = useCallback(() => {
+    setDesktopBuilderSelection({ view: "settings" });
   }, []);
 
   const builderTabsValue = isLargeViewport ? "edit" : builderViewMode;
@@ -1876,6 +2014,19 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
     setValidationErrors((prev) =>
       reindexValidationErrorsForQuestions(prev, previousQuestions, newQuestions),
     );
+    if (isLargeViewport) {
+      setDesktopBuilderSelection((current) =>
+        resolveDesktopBuilderSelectionAfterQuestionDelete(current, newQuestions),
+      );
+      setActiveQuestionId((current) =>
+        resolveActiveQuestionIdAfterQuestionDelete(
+          current,
+          questionId,
+          previousQuestions,
+          newQuestions,
+        ),
+      );
+    }
   };
 
   const handleMoveQuestion = (index: number, direction: "up" | "down") => {
@@ -2041,30 +2192,24 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
         );
       }
 
+      if (effectiveAutoSaveEnabled) {
+        return (
+          <BuilderDraftAutosaveStatusPill
+            locale={locale}
+            status={draftSaveSystemStatus}
+            quiz={quiz}
+            setQuiz={setQuiz}
+            isBusy={draftBusy}
+            onRetrySave={handleSave}
+            validationBadge={validationBadge}
+          />
+        );
+      }
+
       return (
-        <>
-          <div className="flex min-w-0 flex-1 items-end justify-end sm:flex-initial">
-            {draftSaveControl}
-          </div>
-          <Button
-            type="button"
-            variant="blue"
-            onClick={() => setFinalizeDraftConfirmOpen(true)}
-            disabled={
-              !canFinalizeDraftQuiz ||
-              isSaving ||
-              isFinalizingDraft ||
-              serverSaveUiPhase === "autosaving"
-            }
-            className="min-w-0 flex-1 self-start text-base gap-1.5 sm:flex-initial"
-            size="default"
-          >
-            <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4" />
-            {isFinalizingDraft
-              ? t(locale, "builder.finalizingQuiz")
-              : t(locale, "builder.finalizeQuiz")}
-          </Button>
-        </>
+        <div className="flex min-w-0 flex-1 items-end justify-end sm:flex-initial">
+          {draftSaveControl}
+        </div>
       );
     }
 
@@ -2230,7 +2375,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
       <Eye className="h-4 w-4 shrink-0" />
     );
     const previewLabel = isHeader ? (
-      <span className="hidden xl:inline">{t(locale, "builder.previewQuiz")}</span>
+      <span className="hidden lg:inline">{t(locale, "builder.previewQuiz")}</span>
     ) : (
       t(locale, "builder.previewQuiz")
     );
@@ -2286,19 +2431,27 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
   const builderHeaderPreviewButton = renderBuilderPreviewButton("header");
   const builderMobilePreviewButton = renderBuilderPreviewButton("mobile");
 
-  const builderHeaderSettingsButton = (
-    <Button
-      type="button"
-      variant="outline"
-      size="icon"
-      className="hidden h-10 w-10 shrink-0 lg:inline-flex"
-      aria-label={t(locale, "builder.quizSettingsIconAriaLabel")}
-      title={t(locale, "builder.quizSettingsIconAriaLabel")}
-      onClick={() => setQuizSettingsSheetOpen(true)}
-    >
-      <Settings className="h-4 w-4" />
-    </Button>
-  );
+  const builderDesktopFinalizeButton =
+    serverQuizStatus === "DRAFT" && savedQuizId ? (
+      <Button
+        type="button"
+        variant="blue"
+        onClick={() => setFinalizeDraftConfirmOpen(true)}
+        disabled={
+          !canFinalizeDraftQuiz ||
+          isSaving ||
+          isFinalizingDraft ||
+          serverSaveUiPhase === "autosaving"
+        }
+        className="hidden min-w-0 shrink-0 text-base gap-1.5 lg:inline-flex"
+        size="default"
+      >
+        <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4" />
+        {isFinalizingDraft
+          ? t(locale, "builder.finalizingQuiz")
+          : t(locale, "builder.finalizeQuiz")}
+      </Button>
+    ) : null;
 
   return (
     <>
@@ -2468,8 +2621,8 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
       <div className="flex min-w-0 flex-col bg-white dark:bg-card lg:min-h-0 lg:h-full lg:flex-1 lg:overflow-hidden">
         <header className="hidden shrink-0 border-b border-border/60 bg-muted/10 px-3 pb-2 pt-2 sm:px-4 sm:pb-3 sm:pt-3 md:px-6 lg:sticky lg:top-0 lg:z-20 lg:block">
           <div className="flex flex-col gap-2">
-            <div className="flex flex-row items-end justify-between gap-4">
-              <div className="flex min-w-0 flex-1 items-end gap-3">
+            <div className="flex flex-row items-center justify-between gap-3 lg:gap-4">
+              <div className="flex min-w-0 flex-1 items-center gap-3">
                 <Button
                   asChild
                   variant="outline"
@@ -2486,22 +2639,24 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
                     <ArrowLeft className="h-4 w-4" />
                   </Link>
                 </Button>
-                <div className="flex min-w-0 flex-1 flex-col gap-1">
-                  <BuilderQuizTitleInput
-                    variant="field"
-                    compact
-                    labelText={t(locale, "builder.quizNameCardLabel")}
-                    value={quiz.name}
-                    onChange={handleQuizTitleChange}
-                    placeholder={t(locale, "builder.quizNameInputPlaceholder")}
-                    getNameError={getNameError}
-                  />
+                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <p
+                    className={cn(
+                      "truncate text-base font-semibold leading-tight tracking-tight",
+                      isHeaderTitleUntitled
+                        ? "italic text-muted-foreground/75"
+                        : "text-foreground",
+                    )}
+                    title={builderHeaderDisplayTitle}
+                  >
+                    {builderHeaderDisplayTitle}
+                  </p>
                 </div>
               </div>
-              <div className="flex min-w-0 shrink-0 flex-wrap items-end justify-end gap-2">
+              <div className="flex min-w-0 shrink-0 flex-wrap items-center justify-end gap-2">
                 {builderHeaderSaveActions}
                 {builderHeaderPreviewButton}
-                {builderHeaderSettingsButton}
+                {builderDesktopFinalizeButton}
                 {builderHeaderQuizMenu}
               </div>
             </div>
@@ -2520,11 +2675,14 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
 
         <div className="flex min-h-0 flex-col lg:h-full lg:flex-1 lg:flex-row lg:items-stretch lg:overflow-hidden">
           <div className="relative z-10 hidden min-h-0 w-full shrink-0 border-r border-border/60 bg-muted/25 lg:flex lg:h-full lg:w-64 lg:flex-col lg:self-stretch lg:overflow-hidden 2xl:w-72">
-            <BuilderQuestionNavigator
+            <BuilderDesktopSidebar
               locale={locale}
+              isSettingsSelected={desktopBuilderSelection.view === "settings"}
+              settingsHasError={builderSettingsPanelHasError}
+              onSettingsClick={handleDesktopSettingsClick}
               questions={quiz.questions}
               activeQuestionId={
-                isEditorScrollTrackingActive && quiz.questions.length > 0 ? activeQuestionId : null
+                desktopBuilderSelection.view === "questions" ? activeQuestionId : null
               }
               onQuestionClick={handleNavigatorQuestionClick}
               onAddQuestion={() => {
@@ -2577,10 +2735,108 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
               ) : null}
               {saveErrorReportBanner}
             </div>
-            {quiz.questions.length === 0 ? (
+            {isLargeViewport ? (
               <div
                 ref={builderMainScrollRef}
-                className="px-3 pb-10 pt-3 sm:px-4 sm:pb-12 sm:pt-4 md:px-6 md:pb-16 md:pt-6 lg:builder-scrollbar lg:min-h-0 lg:flex-1 lg:overflow-x-hidden lg:overflow-y-auto lg:scroll-pt-4"
+                className="hidden min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto px-3 pb-10 pt-3 sm:px-4 sm:pb-12 sm:pt-4 md:px-6 md:pb-16 md:pt-6 lg:builder-scrollbar lg:flex lg:scroll-pt-4 lg:pt-6"
+              >
+                {desktopBuilderSelection.view === "settings" ? (
+                  <BuilderQuizSettingsPanel
+                    locale={locale}
+                    quiz={quiz}
+                    setQuiz={setQuiz}
+                    timeLimitUi={timeLimitUi}
+                    setTimeLimitUi={setTimeLimitUi}
+                    getTimeLimitError={getTimeLimitError}
+                    getNameError={getNameError}
+                    setValidationErrors={setValidationErrors}
+                  />
+                ) : quiz.questions.length === 0 ? (
+                  <Card>
+                    <CardContent className="flex flex-col items-center py-8 text-center sm:py-12">
+                      <Image
+                        src="/todo-illustration.svg"
+                        alt=""
+                        width={320}
+                        height={240}
+                        className="mb-6 h-auto w-full max-w-[220px] sm:max-w-[260px]"
+                        priority
+                      />
+                      <h2 className="mb-2 text-xl font-semibold text-foreground">
+                        {t(locale, "builder.emptyQuestionsTitleDesktop")}
+                      </h2>
+                      <p className="mb-6 max-w-md text-base text-muted-foreground">
+                        {t(locale, "builder.emptyQuestionsDescriptionDesktop")}
+                      </p>
+                      <Button
+                        variant="primary"
+                        onClick={() => handleAddQuestion()}
+                        size="default"
+                        className="text-base"
+                      >
+                        <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
+                        {t(locale, "builder.addQuestion")}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="w-full min-w-0 space-y-3">
+                    {quiz.questions.map((question, index) => (
+                      <div key={question.id}>
+                        {index > 0 && (
+                          <div className="relative z-20 -my-2 mb-2 flex h-4 items-center justify-center group/insert">
+                            <div className="pointer-events-none flex items-center justify-center gap-2 opacity-100 md:opacity-0 transition-opacity group-hover/insert:opacity-100">
+                              <div className="h-0.5 w-24 rounded-full bg-blue/60 shadow-sm" />
+                              <Button
+                                variant="blue"
+                                size="icon"
+                                className="z-30 h-7 w-7 shrink-0 rounded-full shadow-lg pointer-events-auto"
+                                onClick={() => handleAddQuestion(index)}
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                              <div className="h-0.5 w-24 rounded-full bg-blue/60 shadow-sm" />
+                            </div>
+                          </div>
+                        )}
+                        <div className="relative z-10">
+                          <BuilderEditQuestionItem
+                            question={question}
+                            index={index}
+                            totalQuestions={quiz.questions.length}
+                            onChange={(updatedQuestion) =>
+                              handleQuestionChange(index, updatedQuestion)
+                            }
+                            onDelete={() => handleDeleteQuestion(index)}
+                            errors={getQuestionErrors(index)}
+                            quizIdForImageUpload={quizIdForImageUpload}
+                            isNewlyAdded={newlyAddedQuestionId === question.id}
+                            isRemoving={removingQuestionId === question.id}
+                            isNavActive={activeQuestionId === question.id}
+                            onAnimationEnd={() => setNewlyAddedQuestionId(null)}
+                            onRemoveAnimationEnd={() => commitDeleteQuestion(question.id)}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                    <div className="mt-4 flex justify-center">
+                      <Button
+                        variant="blue"
+                        onClick={() => handleAddQuestion()}
+                        size="default"
+                        className="mb-10 text-base"
+                      >
+                        <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
+                        {t(locale, "builder.addQuestion")}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : quiz.questions.length === 0 ? (
+              <div
+                ref={builderMainScrollRef}
+                className="px-3 pb-10 pt-3 sm:px-4 sm:pb-12 sm:pt-4 md:px-6 md:pb-16 md:pt-6"
               >
                 <Card>
                   <CardContent className="flex flex-col items-center py-8 text-center sm:py-12">
@@ -2728,7 +2984,8 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
                 </div>
               </Tabs>
             )}
-            {quiz.questions.length > 0 ? (
+            {quiz.questions.length > 0 &&
+            (!isLargeViewport || desktopBuilderSelection.view === "questions") ? (
               <BuilderBackToTopButton
                 scrollContainerRef={builderMainScrollRef}
                 layoutKey={`${quiz.questions.length}-${builderViewMode}`}
