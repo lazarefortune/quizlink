@@ -11,11 +11,9 @@
 - [ ] Ajouter un système de parrainage et de récompenses pour les utilisateurs qui partagent leur quiz
 - [ ] Quand un utilisateur choisit de réinitialiser les stats d'un quiz, dans les stats il faut tout remettre à 0. Car actuellement on supprime juste les tentatives.
 
-- [ ] Autofocus sur le champ nom du quiz lors d’une nouvelle création
+- [x] Autofocus sur le champ nom du quiz lors d’une nouvelle création
 - [ ] Création IA : avertir avant de quitter si du contenu a été saisi, ou faire en async et prévenir l'utilisateur que la génération est en cours ou quand elle est terminée.
 - [ ] Pendant la création IA : afficher une animation de chargement propre
-- [ ] Ajouter une option pour rendre un lien de quiz permanent (infini)
-- [ ] Ajouter une option pour rendre un lien de quiz expirable (date)
 - [ ] Activer pour chaque question si elle est obligatoire ou non, par défaut non.
 - [ ] Dans la liste des questions dans le dashboard quand on clique sur jouer un quiz je veux que ça ouvre dans un nouvel onglet, pareil sur la page details d'un quiz
 - [x] Ajouter “Donner mon avis” avec étoiles
@@ -32,6 +30,7 @@
 
 ## Phase 2 — Expérience joueur
 
+- [ ] Quand on passe une question qui a une image et qu'on revient à la question précédente, l'image ne s'affiche pas.
 - [ ] Harmoniser le flow identifié avec le cookie/session d’attempt
 - [ ] Améliorer le design de la page résultat
 - [ ] Ajouter une animation de chargement avant le début du quiz

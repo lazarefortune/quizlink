@@ -1,6 +1,10 @@
 import type { QuizBuilder } from "@/types/quiz-builder";
 import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
-import { validateBuilderTimeLimit, validateQuiz } from "@/lib/quiz-validation";
+import {
+  canProceedWithSplitSave,
+  resolveBuilderSplitSavePlan,
+} from "@/lib/builder/builderSplitSave";
+import { validateQuizWithTimeLimitUi } from "@/lib/quiz-validation";
 import type { BuilderTimeLimitUi } from "@/lib/time-limit-seconds";
 import { resolveEffectiveAutoSaveEnabled } from "@/lib/builder/resolveEffectiveAutoSaveEnabled";
 
@@ -11,7 +15,6 @@ export type ServerAutosaveGateReason =
   | "not_draft"
   | "baseline_missing"
   | "clean"
-  | "no_questions"
   | "validation_errors"
   | "payload_over_autosave_limit"
   | "auto_save_disabled";
@@ -24,9 +27,7 @@ export function mergeBuilderSaveValidationErrors(
   quiz: QuizBuilder,
   timeLimitUi: BuilderTimeLimitUi,
 ) {
-  const timeLimitError = validateBuilderTimeLimit(timeLimitUi);
-  const errors = validateQuiz(quiz);
-  return timeLimitError ? [...errors, timeLimitError] : errors;
+  return validateQuizWithTimeLimitUi(quiz, timeLimitUi);
 }
 
 /** Matches finalize-draft preconditions: at least one question and zero merged save/finalize validation errors. */
@@ -65,13 +66,22 @@ export function evaluateServerAutosaveGate(input: {
   if (input.currentSnapshot === input.baselineSnapshot) {
     return { proceed: false, reason: "clean" };
   }
-  if (input.quizForValidation.questions.length === 0) {
-    return { proceed: false, reason: "no_questions" };
+
+  const plan = resolveBuilderSplitSavePlan({
+    quiz: input.quizForValidation,
+    timeLimitUi: input.timeLimitUi,
+    baselineSnapshot: input.baselineSnapshot,
+    currentSnapshot: input.currentSnapshot,
+  });
+
+  if (!plan.metadataDirty && !plan.questionsDirty) {
+    return { proceed: false, reason: "clean" };
   }
-  const merged = mergeBuilderSaveValidationErrors(input.quizForValidation, input.timeLimitUi);
-  if (merged.length > 0) {
+
+  if (!canProceedWithSplitSave(plan)) {
     return { proceed: false, reason: "validation_errors" };
   }
+
   if (input.estimatedPayloadBytes >= input.autosavePayloadMaxBytes) {
     return { proceed: false, reason: "payload_over_autosave_limit" };
   }

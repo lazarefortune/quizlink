@@ -86,7 +86,7 @@ describe("resolveBuilderDraftSaveSystemStatus", () => {
     ).toBe("error");
   });
 
-  it("returns hidden when dirty but not pending/saving/error and autosave on", () => {
+  it("returns dirty when dirty but not pending/saving/error and autosave on", () => {
     expect(
       resolveBuilderDraftSaveSystemStatus({
         isDirtyVersusBaseline: true,
@@ -95,6 +95,6 @@ describe("resolveBuilderDraftSaveSystemStatus", () => {
         isSaving: false,
         effectiveAutoSaveEnabled: true,
       }),
-    ).toBe("hidden");
+    ).toBe("dirty");
   });
 });

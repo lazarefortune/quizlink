@@ -24,7 +24,6 @@ vi.mock("@/lib/i18n/use-locale", () => ({
 }));
 
 import { useCreateManualServerDraft } from "./use-create-manual-server-draft";
-import { t } from "@/lib/i18n";
 
 describe("useCreateManualServerDraft", () => {
   beforeEach(() => {
@@ -46,7 +45,7 @@ describe("useCreateManualServerDraft", () => {
     expect(mockPush).toHaveBeenCalledWith("/builder/quiz-1");
   });
 
-  it("uses the default draft name when no name is provided", async () => {
+  it("creates a draft with an empty name when no name is provided", async () => {
     mockCreateDraftQuizAction.mockResolvedValue({ success: true, quizId: "quiz-2" });
 
     const { result } = renderHook(() => useCreateManualServerDraft());
@@ -55,14 +54,11 @@ describe("useCreateManualServerDraft", () => {
       await result.current.createManualServerDraftAndGoToBuilder();
     });
 
-    expect(mockCreateDraftQuizAction).toHaveBeenCalledWith(
-      "fr",
-      t("fr", "builder.defaultDraftName"),
-    );
+    expect(mockCreateDraftQuizAction).toHaveBeenCalledWith("fr", "");
     expect(mockPush).toHaveBeenCalledWith("/builder/quiz-2");
   });
 
-  it("uses the default draft name when the provided name is blank", async () => {
+  it("creates a draft with an empty name when the provided name is blank", async () => {
     mockCreateDraftQuizAction.mockResolvedValue({ success: true, quizId: "quiz-3" });
 
     const { result } = renderHook(() => useCreateManualServerDraft());
@@ -71,10 +67,7 @@ describe("useCreateManualServerDraft", () => {
       await result.current.createManualServerDraftAndGoToBuilder("   ");
     });
 
-    expect(mockCreateDraftQuizAction).toHaveBeenCalledWith(
-      "fr",
-      t("fr", "builder.defaultDraftName"),
-    );
+    expect(mockCreateDraftQuizAction).toHaveBeenCalledWith("fr", "");
   });
 
   it("returns false and does not navigate when draft creation fails", async () => {

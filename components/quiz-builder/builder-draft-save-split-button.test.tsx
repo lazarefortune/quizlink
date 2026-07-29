@@ -36,6 +36,8 @@ const baseQuiz = (overrides: Partial<QuizBuilder> = {}): QuizBuilder => ({
   ...overrides,
 });
 
+const hidden = { hidden: true } as const;
+
 describe("BuilderDraftSaveSplitButton", () => {
   it("updates autoSaveEnabled when the menu switch is toggled", () => {
     const setQuiz = vi.fn();
@@ -82,7 +84,9 @@ describe("BuilderDraftSaveSplitButton", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: /builder\.draftSavePrimaryAwaitingAutosave/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /builder\.draftSavePrimaryAwaitingAutosave/i, ...hidden }),
+    ).toBeInTheDocument();
   });
 
   it("shows saved label and check icon when clean and idle", () => {
@@ -102,7 +106,31 @@ describe("BuilderDraftSaveSplitButton", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: /builder\.saveStatus\.draftSavedShort/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /builder\.saveStatus\.draftSavedShort/i, ...hidden }),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the options menu enabled when primary is disabled because draft is saved clean", () => {
+    const { container } = render(
+      <BuilderDraftSaveSplitButton
+        locale="en"
+        quiz={baseQuiz({ settings: { ...DEFAULT_MANUAL_QUIZ_BUILDER_SETTINGS, autoSaveEnabled: true } })}
+        setQuiz={vi.fn()}
+        onPrimarySaveClick={vi.fn()}
+        primaryDisabled
+        isBusy={false}
+        showPrimarySpinner={false}
+        autosaveQueued={false}
+        savedClean
+        validationBadge={null}
+        isDestructiveStyled={false}
+      />,
+    );
+
+    const menuTrigger = container.querySelector('[data-slot="split-button-menu"]');
+    expect(menuTrigger).not.toBeDisabled();
+    expect(screen.getByRole("switch", { name: /builder\.automaticSavingLabel/i })).toBeInTheDocument();
   });
 
   it("centers primary segment content when centerPrimaryContent is true", () => {
@@ -123,7 +151,7 @@ describe("BuilderDraftSaveSplitButton", () => {
       />,
     );
 
-    const primaryButton = container.querySelector("button[aria-live='polite']");
+    const primaryButton = container.querySelector('[data-slot="split-button-action"]');
     expect(primaryButton?.className).toContain("justify-center");
     expect(primaryButton?.className).toContain("text-center");
   });

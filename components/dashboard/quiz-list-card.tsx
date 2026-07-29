@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { t, type Locale } from "@/lib/i18n";
+import { resolveQuizDisplayName } from "@/lib/quiz/quizNameValidation";
 import type { QuizResponseQuotaStatus } from "@/lib/quiz/quizResponseQuotaStatus";
 import {
   canQuizBePlayed,
@@ -88,6 +89,10 @@ export function QuizListCard({
   const isDraft = quiz.status === "DRAFT";
   const isArchived = quiz.status === "ARCHIVED";
   const canShare = canQuizBeShared(quiz.status) && onCopyLink != null;
+  const displayQuizName = resolveQuizDisplayName(
+    quiz.name,
+    t(locale, "dashboard.localDraft.untitledQuiz"),
+  );
   const titleHref = isDraft
     ? `/builder/${quiz.id}`
     : `/dashboard/quiz/${quiz.id}?tab=questions`;
@@ -98,7 +103,7 @@ export function QuizListCard({
         <Link href={titleHref} className="mb-4 block flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="line-clamp-2 min-w-0 flex-1 text-xl font-medium leading-snug text-zinc-800 transition-colors hover:text-blue dark:text-zinc-200">
-              {quiz.name}
+              {displayQuizName}
             </h3>
             {quiz.status !== "ACTIVE" ? (
               <QuizStatusBadge status={quiz.status} locale={locale} />

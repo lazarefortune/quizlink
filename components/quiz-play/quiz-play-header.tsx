@@ -1,11 +1,12 @@
 "use client";
 
-import { X } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { t } from "@/lib/i18n";
 import { useLocale } from "@/lib/i18n/use-locale";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { X } from "@hugeicons/core-free-icons";
 
 type QuizPlayHeaderProps = {
   quizName: string;
@@ -33,13 +34,13 @@ export function QuizPlayHeader({
         </h1>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           <Button
-            variant="ghost"
+            variant="outlineSimple"
             size="sm"
             onClick={onQuit}
             disabled={quitDisabled}
             className="text-muted-foreground hover:text-destructive"
           >
-            <X className="mr-1 h-4 w-4" />
+            <HugeiconsIcon icon={X} strokeWidth={2} />
             {t(locale, "quiz.quit")}
           </Button>
           <Badge variant="outline">

@@ -7,6 +7,7 @@ export type BuilderDraftSaveSystemStatus =
   | "draft_saved"
   | "pending"
   | "changes_to_save"
+  | "dirty"
   | "saving"
   | "error"
   | "hidden";
@@ -43,5 +44,5 @@ export function resolveBuilderDraftSaveSystemStatus(input: {
   if (input.builderSaveStatusKind === "server_pending") {
     return "pending";
   }
-  return "hidden";
+  return "dirty";
 }

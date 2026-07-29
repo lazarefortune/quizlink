@@ -17,6 +17,7 @@ const buttonVariants = cva(
           "border-2 border-[hsl(var(--outline-button-border))] bg-card text-foreground btn-bouncy-outline hover:bg-zinc-100 dark:hover:bg-zinc-900",
         outlineBlue:
           "border-2 border-blue bg-card text-blue btn-bouncy-outline-blue hover:bg-blue/10 dark:hover:bg-blue/15",
+        outlineSimple: "border-2 border-[hsl(var(--outline-button-border))] bg-card text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900",
         secondary: "bg-secondary text-secondary-foreground btn-bouncy",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline h-auto min-h-0 px-0 py-0 rounded-none bg-transparent shadow-none font-black uppercase",

@@ -182,8 +182,8 @@ describe("evaluateServerAutosaveGate", () => {
     ).toEqual({ proceed: false, reason: "clean" });
   });
 
-  it("blocks when there are no questions", () => {
-    const quiz = { ...baseQuiz(), questions: [] };
+  it("blocks metadata-only autosave when the quiz title is invalid", () => {
+    const quiz = { ...baseQuiz(), questions: [], name: "" };
     expect(
       evaluateServerAutosaveGate({
         savedQuizId: "clid",
@@ -195,11 +195,61 @@ describe("evaluateServerAutosaveGate", () => {
         estimatedPayloadBytes: 100,
         autosavePayloadMaxBytes: 1_000_000,
       }),
-    ).toEqual({ proceed: false, reason: "no_questions" });
+    ).toEqual({ proceed: false, reason: "validation_errors" });
   });
 
-  it("blocks when validation fails", () => {
-    const quiz = { ...baseQuiz(), name: "   " };
+  it("allows metadata-only autosave when the quiz has a valid title and no questions", () => {
+    const quiz = { ...baseQuiz(), questions: [], name: "Mon quiz" };
+    expect(
+      evaluateServerAutosaveGate({
+        savedQuizId: "clid",
+        quizLifecycleStatus: "DRAFT",
+        baselineSnapshot: baseline,
+        currentSnapshot: other,
+        quizForValidation: quiz,
+        timeLimitUi: baseTimeLimitUi(),
+        estimatedPayloadBytes: 100,
+        autosavePayloadMaxBytes: 1_000_000,
+      }),
+    ).toEqual({ proceed: true });
+  });
+
+  it("allows metadata-only autosave when questions are invalid but metadata is valid", () => {
+    const quiz = {
+      ...baseQuiz(),
+      name: "Valid title",
+      questions: [
+        {
+          ...baseQuiz().questions[0]!,
+          label: "",
+        },
+      ],
+    };
+    expect(
+      evaluateServerAutosaveGate({
+        savedQuizId: "clid",
+        quizLifecycleStatus: "DRAFT",
+        baselineSnapshot: baseline,
+        currentSnapshot: other,
+        quizForValidation: quiz,
+        timeLimitUi: baseTimeLimitUi(),
+        estimatedPayloadBytes: 100,
+        autosavePayloadMaxBytes: 1_000_000,
+      }),
+    ).toEqual({ proceed: true });
+  });
+
+  it("blocks when neither metadata nor questions can be saved", () => {
+    const quiz = {
+      ...baseQuiz(),
+      name: "   ",
+      questions: [
+        {
+          ...baseQuiz().questions[0]!,
+          label: "",
+        },
+      ],
+    };
     expect(
       evaluateServerAutosaveGate({
         savedQuizId: "clid",

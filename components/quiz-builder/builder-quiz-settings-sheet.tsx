@@ -1,6 +1,9 @@
 "use client";
 
 import type { Dispatch, SetStateAction } from "react";
+
+import { BuilderParticipantIdentityModeSection } from "@/components/quiz-builder/builder-participant-identity-mode-section";
+import { BuilderQuizOptionsFields } from "@/components/quiz-builder/builder-quiz-options-fields";
 import {
   Sheet,
   SheetContent,
@@ -13,7 +16,6 @@ import { cn } from "@/lib/utils";
 import type { BuilderTimeLimitUi } from "@/lib/time-limit-seconds";
 import type { ValidationError } from "@/lib/quiz-validation";
 import type { QuizBuilder } from "@/types/quiz-builder";
-import { BuilderQuizOptionsFields } from "@/components/quiz-builder/builder-quiz-options-fields";
 
 export type BuilderQuizSettingsSheetProps = {
   open: boolean;
@@ -65,7 +67,7 @@ export function BuilderQuizSettingsSheet({
               {t(locale, "builder.settingsSheetDescription")}
             </SheetDescription>
           </SheetHeader>
-          <div className="builder-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 pb-8 pt-4">
+          <div className="builder-scrollbar min-h-0 flex-1 space-y-8 overflow-y-auto overscroll-y-contain px-4 pb-8 pt-4">
             <BuilderQuizOptionsFields
               quiz={quiz}
               setQuiz={setQuiz}
@@ -76,6 +78,11 @@ export function BuilderQuizSettingsSheet({
               setValidationErrors={setValidationErrors}
               showNameField={showNameField}
               getNameError={getNameError}
+            />
+            <BuilderParticipantIdentityModeSection
+              locale={locale}
+              quiz={quiz}
+              setQuiz={setQuiz}
             />
           </div>
         </div>

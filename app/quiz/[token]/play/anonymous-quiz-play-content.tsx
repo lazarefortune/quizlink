@@ -695,13 +695,13 @@ export function AnonymousQuizPlayContent({
           <DialogContent className="sm:max-w-xl">
             <DialogHeader>
               <DialogTitle>{t(locale, "quiz.quitConfirmTitle")}</DialogTitle>
-              <DialogDescription>
+              <DialogDescription className="text-base">
                 {t(locale, "quiz.quitConfirmDescription")}
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
               <Button
-                variant="ghost"
+                variant="outline"
                 onClick={() => setShowQuitConfirm(false)}
                 disabled={isQuitting}
               >

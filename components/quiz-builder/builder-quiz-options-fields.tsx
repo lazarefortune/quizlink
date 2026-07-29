@@ -29,8 +29,17 @@ export type BuilderQuizOptionsFieldsProps = {
   setValidationErrors: Dispatch<SetStateAction<ValidationError[]>>;
   /** When true, show the quiz name field (mobile sheet / desktop settings panel). */
   showNameField?: boolean;
+  /** When false, hide switches and time limit (desktop settings panel title section). */
+  showOptionFields?: boolean;
+  /** Hide the inline label above the name input when a section heading is shown. */
+  hideNameFieldLabel?: boolean;
+  /** Links the name input to an external section heading via aria-labelledby. */
+  nameFieldLabelledBy?: string;
   getNameError?: () => string | null;
   nameFieldId?: string;
+  /** Overrides `quiz.name` for the input value (e.g. legacy sentinel → empty). */
+  nameFieldValue?: string;
+  autoFocusNameField?: boolean;
 };
 
 export function BuilderQuizOptionsFields({
@@ -42,10 +51,16 @@ export function BuilderQuizOptionsFields({
   getTimeLimitError,
   setValidationErrors,
   showNameField = false,
+  showOptionFields = true,
+  hideNameFieldLabel = false,
+  nameFieldLabelledBy,
   getNameError,
   nameFieldId = "builder-quiz-name-sheet",
+  nameFieldValue,
+  autoFocusNameField = false,
 }: BuilderQuizOptionsFieldsProps) {
   const nameError = showNameField && getNameError ? getNameError() : null;
+  const displayedQuizName = nameFieldValue ?? quiz.name;
   const applyTimeLimitParts = (minutes: number, seconds: number) => {
     const m = Math.min(Math.max(Math.trunc(minutes), 0), TIME_LIMIT_MINUTES_MAX);
     const s = Math.min(Math.max(Math.trunc(seconds), 0), 59);
@@ -77,37 +92,44 @@ export function BuilderQuizOptionsFields({
 
   return (
     <>
-      <div className="space-y-3 sm:space-y-4">
-        {showNameField ? (
-          <div className="space-y-2 border-b border-border/60 pb-4">
+      {showNameField ? (
+        <div className="space-y-2">
+          {hideNameFieldLabel ? null : (
             <label htmlFor={nameFieldId} className="text-base font-medium text-foreground">
               {t(locale, "builder.quizNameCardLabel")}
             </label>
-            <Input
-              id={nameFieldId}
-              data-builder-error-target="quiz-name"
-              value={quiz.name}
-              onChange={(e) => {
-                setQuiz((prev) => ({ ...prev, name: e.target.value }));
-                setValidationErrors((prev) => removeValidationErrorsForField(prev, "name"));
-              }}
-              placeholder={t(locale, "builder.quizNameInputPlaceholder")}
-              maxLength={QUIZ_NAME_MAX_LENGTH}
-              className={cn(
-                "text-base",
-                nameError ? "border-destructive focus-visible:border-destructive" : "",
-              )}
-              aria-invalid={nameError !== null}
-              autoComplete="off"
-            />
-            {nameError ? (
-              <p className="flex items-center gap-1 text-xs text-destructive">
-                <AlertCircle className="h-3 w-3 shrink-0" />
-                {nameError}
-              </p>
-            ) : null}
-          </div>
-        ) : null}
+          )}
+          <Input
+            id={nameFieldId}
+            data-builder-error-target="quiz-name"
+            value={displayedQuizName}
+            onChange={(e) => {
+              setQuiz((prev) => ({ ...prev, name: e.target.value }));
+              setValidationErrors((prev) => removeValidationErrorsForField(prev, "name"));
+            }}
+            placeholder={t(locale, "builder.quizNameInputPlaceholder")}
+            maxLength={QUIZ_NAME_MAX_LENGTH}
+            autoFocus={autoFocusNameField}
+            className={cn(
+              "text-base",
+              nameError ? "border-destructive focus-visible:border-destructive" : "",
+            )}
+            aria-invalid={nameError !== null}
+            aria-labelledby={
+              hideNameFieldLabel && nameFieldLabelledBy ? nameFieldLabelledBy : undefined
+            }
+            autoComplete="off"
+          />
+          {nameError ? (
+            <p className="flex items-center gap-1 text-xs text-destructive">
+              <AlertCircle className="h-3 w-3 shrink-0" />
+              {nameError}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+      {showOptionFields ? (
+      <div className="space-y-3 sm:space-y-4">
         <div className="flex items-start gap-2">
           <Switch
             checked={quiz.settings.showAnswerImmediately}
@@ -353,6 +375,7 @@ export function BuilderQuizOptionsFields({
           </div>
         )}
       </div>
+      ) : null}
     </>
   );
 }

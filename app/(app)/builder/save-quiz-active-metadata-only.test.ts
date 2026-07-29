@@ -93,6 +93,10 @@ describe("saveQuiz — ACTIVE quiz with recorded answers", () => {
     const result = await saveQuiz(matchingBuilder, "quiz-1");
 
     expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.savedMetadata).toBe(true);
+      expect(result.savedQuestions).toBe(false);
+    }
     expect(mockTransaction).not.toHaveBeenCalled();
     expect(mockQuizUpdate).toHaveBeenCalledTimes(1);
     const updateArg = mockQuizUpdate.mock.calls[0][0];

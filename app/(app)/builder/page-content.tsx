@@ -87,7 +87,6 @@ import { BuilderDesktopSidebar } from "@/components/quiz-builder/builder-desktop
 import { BuilderQuizSettingsPanel } from "@/components/quiz-builder/builder-quiz-settings-panel";
 import { BuilderQuizSettingsSheet } from "@/components/quiz-builder/builder-quiz-settings-sheet";
 import { BuilderDraftSaveSplitButton } from "@/components/quiz-builder/builder-draft-save-split-button";
-import { BuilderDraftAutosaveStatusPill } from "@/components/quiz-builder/builder-draft-autosave-status-pill";
 import { BuilderMobileQuizCard } from "@/components/quiz-builder/builder-mobile-quiz-card";
 import { BuilderSaveStatus } from "@/components/quiz-builder/builder-save-status";
 import { BuilderSaveErrorReportBanner } from "@/components/builder/builder-save-error-report-banner";
@@ -126,8 +125,13 @@ import {
 } from "@/lib/builder/serverAutosaveGate";
 import { shouldShowBuilderSaveStatusRow } from "@/lib/builder/builderSaveStatusRowVisibility";
 import { useBuilderSaveStatusDisplayKind } from "@/lib/builder/useBuilderSaveStatusDisplayKind";
-import { resolveBuilderDraftSaveSystemStatus } from "@/lib/builder/resolveBuilderDraftSaveSystemStatus";
 import { resolveEffectiveAutoSaveEnabled } from "@/lib/builder/resolveEffectiveAutoSaveEnabled";
+import {
+  isValidQuizName,
+  isUntitledQuizName,
+  resolveBuilderQuizNameForEditing,
+  resolveQuizDisplayName,
+} from "@/lib/quiz/quizNameValidation";
 import {
   type DesktopBuilderSelection,
   isQuizUntitledForDesktopSelection,
@@ -161,7 +165,9 @@ import { mergeQuizSettingsFromStored } from "@/lib/quiz/mergeQuizSettingsFromSto
 import type { BuilderServerSaveUiPhase } from "@/lib/builder/builderSaveStatusDisplay";
 import {
   buildQuizToSaveFromBuilderState,
+  canProceedWithBuilderSave,
   collectBuilderSaveValidationErrors,
+  mergeBaselineAfterPartialSave,
 } from "@/lib/builder/builderQuizSavePrep";
 import { buildQuizPreviewPath } from "@/lib/quiz/quiz-preview-routes";
 
@@ -424,6 +430,29 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
     baselinePlayableMultisetKeyRef.current = buildPlayableContentMultisetKey(quizForPlayable);
   }, []);
 
+  const applyServerSaveBaseline = useCallback(
+    (
+      quizState: QuizBuilder,
+      previousBaseline: string | null,
+      saveFlags: { savedMetadata: boolean; savedQuestions: boolean },
+    ): BuilderTimeLimitUi => {
+      const normalizedTimeLimitUi = deriveTimeLimitUiFromSettings(quizState.settings);
+      const nextBaseline =
+        previousBaseline !== null
+          ? mergeBaselineAfterPartialSave({
+              previousBaselineSnapshot: previousBaseline,
+              currentQuiz: quizState,
+              currentTimeLimitUi: normalizedTimeLimitUi,
+              savedMetadata: saveFlags.savedMetadata,
+              savedQuestions: saveFlags.savedQuestions,
+            })
+          : computeQuizBuilderSnapshot(quizState, normalizedTimeLimitUi);
+      assignBaselineSnapshot(nextBaseline, quizState);
+      return normalizedTimeLimitUi;
+    },
+    [assignBaselineSnapshot],
+  );
+
   const clearServerAutosaveDebounceTimer = useCallback(() => {
     if (serverAutosaveDebounceTimerRef.current !== null) {
       window.clearTimeout(serverAutosaveDebounceTimerRef.current);
@@ -503,7 +532,12 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
     }
   }, [isLargeViewport, validationErrors]);
 
-  const defaultDraftName = t(locale, "builder.defaultDraftName");
+  const untitledQuizDisplayName = t(locale, "builder.defaultDraftName");
+  const hasValidQuizTitle = isValidQuizName(quiz.name);
+  const isQuizTitleUntitled = isUntitledQuizName(quiz.name);
+  const quizNameForEditing = resolveBuilderQuizNameForEditing(quiz.name);
+  const shouldAutoFocusQuizNameField =
+    isLargeViewport && desktopBuilderSelection.view === "settings" && isQuizTitleUntitled;
 
   useEffect(() => {
     if (!isLargeViewport || isLoading) {
@@ -517,12 +551,10 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
     const initialSelection = resolveInitialDesktopBuilderSelection({
       quizName: quiz.name,
       questions: quiz.questions,
-      defaultDraftName,
     });
     setDesktopBuilderSelection(initialSelection);
     setActiveQuestionId(resolveInitialDesktopActiveQuestionId(quiz.questions));
   }, [
-    defaultDraftName,
     isLargeViewport,
     isLoading,
     quiz.name,
@@ -542,13 +574,11 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
 
   const builderSettingsPanelHasError = hasQuizOptionsPanelErrors(validationErrors);
 
-  const isHeaderTitleUntitled = isQuizUntitledForDesktopSelection(
+  const isHeaderTitleUntitled = isQuizUntitledForDesktopSelection(quiz.name);
+  const builderHeaderDisplayTitle = resolveQuizDisplayName(
     quiz.name,
-    defaultDraftName,
+    untitledQuizDisplayName,
   );
-  const builderHeaderDisplayTitle = isHeaderTitleUntitled
-    ? defaultDraftName
-    : quiz.name.trim();
 
   const scrollToBuilderValidationTarget = useCallback(
     (target: BuilderValidationErrorTarget) => {
@@ -627,6 +657,36 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
     },
     [beginDesktopNavScrollToQuestion, isLargeViewport],
   );
+
+  const focusQuizNameField = useCallback(() => {
+    const focusElement = (element: HTMLElement) => {
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (
+        element instanceof HTMLInputElement ||
+        element instanceof HTMLTextAreaElement ||
+        element instanceof HTMLSelectElement
+      ) {
+        element.focus({ preventScroll: true });
+      }
+    };
+
+    if (isLargeViewport) {
+      setDesktopBuilderSelection({ view: "settings" });
+    }
+
+    const findAndFocus = () => {
+      const element =
+        document.getElementById("builder-quiz-name-panel") ??
+        document.querySelector<HTMLElement>('[data-builder-error-target="quiz-name"]');
+      if (element) {
+        focusElement(element);
+      }
+    };
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(findAndFocus);
+    });
+  }, [isLargeViewport]);
 
   const handleValidationFailedSave = useCallback(
     (errors: ValidationError[]) => {
@@ -1012,7 +1072,6 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
 
           const mergedQuizResult: QuizBuilder =
             result.quizId !== undefined ? { ...mergedQuiz, id: result.quizId } : mergedQuiz;
-          const normalizedTimeLimitUi = deriveTimeLimitUiFromSettings(mergedQuizResult.settings);
           const snapshotAfterEdit = computeQuizBuilderSnapshot(
             quizRef.current,
             timeLimitUiRef.current,
@@ -1022,9 +1081,13 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
             return;
           }
 
-          assignBaselineSnapshot(
-            computeQuizBuilderSnapshot(mergedQuizResult, normalizedTimeLimitUi),
+          const normalizedTimeLimitUi = applyServerSaveBaseline(
             mergedQuizResult,
+            baselineAtFire,
+            {
+              savedMetadata: result.savedMetadata,
+              savedQuestions: result.savedQuestions,
+            },
           );
           setQuiz(mergedQuizResult);
           setTimeLimitUi(normalizedTimeLimitUi);
@@ -1090,6 +1153,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
     clearServerAutosaveDebounceTimer,
     syncDirtyToGuard,
     assignBaselineSnapshot,
+    applyServerSaveBaseline,
     serverQuizStatus,
   ]);
 
@@ -1266,16 +1330,6 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
     lastServerAutosaveSuccessAt: isDirtyVersusBaseline ? null : lastServerAutosaveSuccessAt,
   });
 
-  const effectiveAutoSaveEnabled = resolveEffectiveAutoSaveEnabled(quiz.settings);
-
-  const draftSaveSystemStatus = resolveBuilderDraftSaveSystemStatus({
-    isDirtyVersusBaseline,
-    builderSaveStatusKind,
-    serverSaveUiPhase,
-    isSaving,
-    effectiveAutoSaveEnabled,
-  });
-
   const showSaveErrorReportBanner =
     saveErrorReport !== null || serverSaveUiPhase === "autosaveError";
 
@@ -1399,21 +1453,28 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
   );
 
   const applyManualSaveSuccessState = useCallback(
-    (quizToSave: QuizBuilder, resultQuizId: string | undefined) => {
+    (
+      quizToSave: QuizBuilder,
+      resultQuizId: string | undefined,
+      saveFlags: { savedMetadata: boolean; savedQuestions: boolean } = {
+        savedMetadata: true,
+        savedQuestions: true,
+      },
+    ) => {
       const mergedQuiz: QuizBuilder =
         resultQuizId !== undefined ? { ...quizToSave, id: resultQuizId } : quizToSave;
-      const normalizedTimeLimitUi = deriveTimeLimitUiFromSettings(mergedQuiz.settings);
 
       if (resultQuizId) {
         setSavedQuizId(resultQuizId);
       }
 
+      const normalizedTimeLimitUi = applyServerSaveBaseline(
+        mergedQuiz,
+        unsavedBaselineRef.current,
+        saveFlags,
+      );
       setQuiz(mergedQuiz);
       setTimeLimitUi(normalizedTimeLimitUi);
-      assignBaselineSnapshot(
-        computeQuizBuilderSnapshot(mergedQuiz, normalizedTimeLimitUi),
-        mergedQuiz,
-      );
       syncDirtyToGuard();
 
       if (userId) {
@@ -1440,7 +1501,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
       clearSaveErrorReport();
     },
     [
-      assignBaselineSnapshot,
+      applyServerSaveBaseline,
       clearSaveErrorReport,
       resetBuilderValidationState,
       savedQuizId,
@@ -1530,7 +1591,10 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
         });
       }
 
-      applyManualSaveSuccessState(quizToSave, result.quizId ?? finalQuizId);
+      applyManualSaveSuccessState(quizToSave, result.quizId ?? finalQuizId, {
+        savedMetadata: result.savedMetadata,
+        savedQuestions: result.savedQuestions,
+      });
       showPreviewReadyDialog(finalQuizId);
     } catch (error) {
       console.error("Error preparing preview:", error);
@@ -1554,9 +1618,21 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
   };
 
   const handleSave = async () => {
-    const mergedErrors = collectBuilderSaveValidationErrors(quiz, timeLimitUi);
-    if (mergedErrors.length > 0) {
-      handleValidationFailedSave(mergedErrors);
+    const snapshotNow = computeQuizBuilderSnapshot(quiz, timeLimitUi);
+    const baselineNow = unsavedBaselineRef.current;
+    const isDirtyVersusBaselineNow =
+      baselineNow !== null && snapshotNow !== baselineNow;
+
+    if (
+      isDirtyVersusBaselineNow &&
+      !canProceedWithBuilderSave({
+        quiz,
+        timeLimitUi,
+        baselineSnapshot: baselineNow,
+        currentSnapshot: snapshotNow,
+      })
+    ) {
+      handleValidationFailedSave(collectBuilderSaveValidationErrors(quiz, timeLimitUi));
       return;
     }
 
@@ -1612,7 +1688,6 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
 
         const mergedQuiz: QuizBuilder =
           result.quizId !== undefined ? { ...quizToSave, id: result.quizId } : quizToSave;
-        const normalizedTimeLimitUi = deriveTimeLimitUiFromSettings(mergedQuiz.settings);
 
         if (result.quizId) {
           setSavedQuizId(result.quizId);
@@ -1640,17 +1715,17 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
                 settings.randomizeQuestions || settings.randomizeOptions,
             });
             setQuiz({ ...quizToSave, id: result.quizId });
-            setTimeLimitUi(normalizedTimeLimitUi);
+            setTimeLimitUi(deriveTimeLimitUiFromSettings(mergedQuiz.settings));
             if (
               shouldRedirectToQuizSuccess({
                 isExistingQuiz,
                 quizId: result.quizId,
               })
             ) {
-              assignBaselineSnapshot(
-                computeQuizBuilderSnapshot(mergedQuiz, normalizedTimeLimitUi),
-                mergedQuiz,
-              );
+              applyServerSaveBaseline(mergedQuiz, unsavedBaselineRef.current, {
+                savedMetadata: result.savedMetadata,
+                savedQuestions: result.savedQuestions,
+              });
               clearLocalDraftsAfterServerSuccess(result.quizId);
               setLastServerAutosaveSuccessAt(Date.now());
               setServerSaveUiPhase("idle");
@@ -1666,12 +1741,16 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
           }
         }
 
+        const normalizedTimeLimitUi = applyServerSaveBaseline(
+          mergedQuiz,
+          unsavedBaselineRef.current,
+          {
+            savedMetadata: result.savedMetadata,
+            savedQuestions: result.savedQuestions,
+          },
+        );
         setQuiz(mergedQuiz);
         setTimeLimitUi(normalizedTimeLimitUi);
-        assignBaselineSnapshot(
-          computeQuizBuilderSnapshot(mergedQuiz, normalizedTimeLimitUi),
-          mergedQuiz,
-        );
         syncDirtyToGuard();
 
         const message = isQuizSaved
@@ -1927,6 +2006,11 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
   };
 
   const handleAddQuestion = (insertIndex?: number) => {
+    if (isQuizTitleUntitled) {
+      focusQuizNameField();
+      return;
+    }
+
     const newQuestion = createEmptyQuestion();
     setNewlyAddedQuestionId(newQuestion.id);
 
@@ -2163,6 +2247,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
           validationBadge={validationBadge}
           isDestructiveStyled={builderSaveStatusKind === "server_error"}
           centerPrimaryContent={isMobileLayout}
+          size={isMobileLayout ? "default" : "sm"}
         />
       );
 
@@ -2176,6 +2261,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
               onClick={() => setFinalizeDraftConfirmOpen(true)}
               disabled={
                 !canFinalizeDraftQuiz ||
+                !hasValidQuizTitle ||
                 isSaving ||
                 isFinalizingDraft ||
                 serverSaveUiPhase === "autosaving"
@@ -2192,25 +2278,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
         );
       }
 
-      if (effectiveAutoSaveEnabled) {
-        return (
-          <BuilderDraftAutosaveStatusPill
-            locale={locale}
-            status={draftSaveSystemStatus}
-            quiz={quiz}
-            setQuiz={setQuiz}
-            isBusy={draftBusy}
-            onRetrySave={handleSave}
-            validationBadge={validationBadge}
-          />
-        );
-      }
-
-      return (
-        <div className="flex min-w-0 flex-1 items-end justify-end sm:flex-initial">
-          {draftSaveControl}
-        </div>
-      );
+      return draftSaveControl;
     }
 
     if (
@@ -2343,7 +2411,10 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
   const isPreviewActionBusy = isPreparingPreview || isSaving || isFinalizingDraft;
   const previewQuizId = savedQuizId ?? urlQuizId ?? null;
   const canOpenPreviewViaLink =
-    Boolean(previewQuizId) && isQuizSaved && !isDirtyVersusBaseline;
+    Boolean(previewQuizId) &&
+    isQuizSaved &&
+    !isDirtyVersusBaseline &&
+    hasValidQuizTitle;
 
   const handleDirectPreviewLinkClick = useCallback(
     (event: MouseEvent<HTMLAnchorElement>) => {
@@ -2391,7 +2462,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
               ? "hidden h-10 shrink-0 gap-1.5 text-base lg:inline-flex"
               : "h-10 w-full gap-2 text-base lg:hidden"
           }
-          disabled={isPreviewActionBusy || isLoading}
+          disabled={isPreviewActionBusy || isLoading || !hasValidQuizTitle}
           title={t(locale, "builder.previewQuiz")}
         >
           <Link
@@ -2418,7 +2489,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
             : "h-10 w-full gap-2 text-base lg:hidden"
         }
         onClick={() => void handlePreviewQuiz()}
-        disabled={isPreviewActionBusy || isLoading}
+        disabled={isPreviewActionBusy || isLoading || !hasValidQuizTitle}
         aria-busy={isPreparingPreview}
         title={t(locale, "builder.previewQuiz")}
       >
@@ -2439,6 +2510,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
         onClick={() => setFinalizeDraftConfirmOpen(true)}
         disabled={
           !canFinalizeDraftQuiz ||
+          !hasValidQuizTitle ||
           isSaving ||
           isFinalizingDraft ||
           serverSaveUiPhase === "autosaving"
@@ -2579,17 +2651,17 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
           }
         }}
       >
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>{t(locale, "builder.activeSaveStatsModal.title")}</DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-base">
               {t(locale, "builder.activeSaveStatsModal.description")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-end">
             <Button
               type="button"
-              variant="secondary"
+              variant="outline"
               className="w-full sm:w-auto"
               onClick={handleActiveSaveStatsModalCancel}
             >
@@ -2597,7 +2669,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
             </Button>
             <Button
               type="button"
-              variant="outline"
+              variant="blue"
               className="w-full sm:w-auto"
               onClick={() => void handleActiveSaveStatsModalSaveAsDraftCopy()}
               disabled={isStatsModalDraftCopyBusy || isSaving}
@@ -2619,10 +2691,10 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
         </DialogContent>
       </Dialog>
       <div className="flex min-w-0 flex-col bg-white dark:bg-card lg:min-h-0 lg:h-full lg:flex-1 lg:overflow-hidden">
-        <header className="hidden shrink-0 border-b border-border/60 bg-muted/10 px-3 pb-2 pt-2 sm:px-4 sm:pb-3 sm:pt-3 md:px-6 lg:sticky lg:top-0 lg:z-20 lg:block">
+        <header className="hidden shrink-0 border-b border-border/50 bg-background/95 px-3 pb-2.5 pt-2.5 backdrop-blur-sm sm:px-4 sm:pb-3 sm:pt-3 md:px-6 lg:sticky lg:top-0 lg:z-20 lg:block">
           <div className="flex flex-col gap-2">
-            <div className="flex flex-row items-center justify-between gap-3 lg:gap-4">
-              <div className="flex min-w-0 flex-1 items-center gap-3">
+            <div className="flex flex-row items-center justify-between gap-3 lg:gap-5">
+              <div className="flex min-w-0 flex-1 items-center gap-2.5 lg:gap-3">
                 <Button
                   asChild
                   variant="outline"
@@ -2653,7 +2725,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
                   </p>
                 </div>
               </div>
-              <div className="flex min-w-0 shrink-0 flex-wrap items-center justify-end gap-2">
+              <div className="flex min-w-0 shrink-0 flex-wrap items-center justify-end gap-2 lg:gap-2.5">
                 {builderHeaderSaveActions}
                 {builderHeaderPreviewButton}
                 {builderDesktopFinalizeButton}
@@ -2750,6 +2822,8 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
                     getTimeLimitError={getTimeLimitError}
                     getNameError={getNameError}
                     setValidationErrors={setValidationErrors}
+                    nameFieldValue={quizNameForEditing}
+                    autoFocusNameField={shouldAutoFocusQuizNameField}
                   />
                 ) : quiz.questions.length === 0 ? (
                   <Card>

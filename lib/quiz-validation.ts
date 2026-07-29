@@ -1,3 +1,4 @@
+import { isValidQuizName, normalizeQuizName } from "@/lib/quiz/quizNameValidation";
 import { richTextToPlainText } from "@/lib/rich-text/richTextToPlainText";
 import {
   totalSecondsFromMinutesSeconds,
@@ -23,21 +24,42 @@ export function hasQuizOptionsPanelErrors(errors: ValidationError[]): boolean {
   );
 }
 
-export function validateQuiz(quiz: QuizBuilder): ValidationError[] {
-  const errors: ValidationError[] = [];
-
-  if (!quiz.name.trim()) {
-    errors.push({
+export function validateQuizNameField(name: string): ValidationError | null {
+  const normalizedName = normalizeQuizName(name);
+  if (!isValidQuizName(normalizedName)) {
+    return {
       field: "name",
       translationKey: "builder.validation.quizNameRequired",
-    });
-  } else if (quiz.name.length > QUIZ_NAME_MAX_LENGTH) {
-    errors.push({
+    };
+  }
+  if (normalizedName.length > QUIZ_NAME_MAX_LENGTH) {
+    return {
       field: "name",
       translationKey: "builder.validation.quizNameMaxLength",
       params: { max: QUIZ_NAME_MAX_LENGTH },
-    });
+    };
   }
+  return null;
+}
+
+export function validateQuizMetadata(
+  quiz: Pick<QuizBuilder, "name">,
+  timeLimitUi: BuilderTimeLimitUi,
+): ValidationError[] {
+  const errors: ValidationError[] = [];
+  const nameError = validateQuizNameField(quiz.name);
+  if (nameError) {
+    errors.push(nameError);
+  }
+  const timeLimitError = validateBuilderTimeLimit(timeLimitUi);
+  if (timeLimitError) {
+    errors.push(timeLimitError);
+  }
+  return errors;
+}
+
+export function validateQuizQuestions(quiz: Pick<QuizBuilder, "questions">): ValidationError[] {
+  const errors: ValidationError[] = [];
 
   quiz.questions.forEach((question, index) => {
     const questionPrefix = `questions[${index}]`;
@@ -97,6 +119,35 @@ export function validateQuiz(quiz: QuizBuilder): ValidationError[] {
   });
 
   return errors;
+}
+
+export function validateQuiz(quiz: QuizBuilder): ValidationError[] {
+  return [
+    ...validateQuizMetadata(quiz, deriveTimeLimitUiFromSettingsForValidation(quiz)),
+    ...validateQuizQuestions(quiz),
+  ];
+}
+
+export function validateQuizWithTimeLimitUi(
+  quiz: QuizBuilder,
+  timeLimitUi: BuilderTimeLimitUi,
+): ValidationError[] {
+  return [...validateQuizMetadata(quiz, timeLimitUi), ...validateQuizQuestions(quiz)];
+}
+
+function deriveTimeLimitUiFromSettingsForValidation(
+  quiz: Pick<QuizBuilder, "settings">,
+): BuilderTimeLimitUi {
+  const seconds = quiz.settings.timeLimitPerQuestion;
+  if (seconds == null || seconds <= 0) {
+    return { enabled: false, minutes: 0, seconds: 0 };
+  }
+  const minutes = Math.floor(seconds / 60);
+  return {
+    enabled: true,
+    minutes,
+    seconds: seconds % 60,
+  };
 }
 
 export function validateBuilderTimeLimit(ui: BuilderTimeLimitUi): ValidationError | null {

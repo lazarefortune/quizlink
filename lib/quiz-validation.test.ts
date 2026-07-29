@@ -3,6 +3,8 @@ import {
   hasQuizOptionsPanelErrors,
   validateBuilderTimeLimit,
   validateQuiz,
+  validateQuizMetadata,
+  validateQuizQuestions,
   QUIZ_NAME_MAX_LENGTH,
   type ValidationError,
 } from "./quiz-validation";
@@ -75,6 +77,29 @@ describe("validateBuilderTimeLimit", () => {
   });
 });
 
+describe("validateQuizMetadata", () => {
+  it("validates only quiz name and time limit", () => {
+    expect(validateQuizMetadata(minimalValidQuiz, { enabled: false, minutes: 0, seconds: 0 })).toEqual(
+      [],
+    );
+    expect(validateQuizMetadata({ ...minimalValidQuiz, name: "" }, { enabled: false, minutes: 0, seconds: 0 })).not.toEqual(
+      [],
+    );
+  });
+});
+
+describe("validateQuizQuestions", () => {
+  it("validates only questions", () => {
+    expect(validateQuizQuestions(minimalValidQuiz)).toEqual([]);
+    expect(
+      validateQuizQuestions({
+        ...minimalValidQuiz,
+        questions: [{ ...minimalValidQuiz.questions[0]!, label: "" }],
+      }),
+    ).not.toEqual([]);
+  });
+});
+
 describe("validateQuiz", () => {
   it("passes for minimal valid quiz", () => {
     expect(validateQuiz(minimalValidQuiz)).toHaveLength(0);
@@ -91,6 +116,32 @@ describe("validateQuiz", () => {
           params: { max: QUIZ_NAME_MAX_LENGTH },
         }),
       ]),
+    );
+  });
+
+  it("returns an error when quiz name is empty", () => {
+    const errors = validateQuiz({ ...minimalValidQuiz, name: "" });
+    expect(errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          field: "name",
+          translationKey: "builder.validation.quizNameRequired",
+        }),
+      ]),
+    );
+  });
+
+  it("returns an error when quiz name is whitespace only", () => {
+    const errors = validateQuiz({ ...minimalValidQuiz, name: "   " });
+    expect(errors.some((e) => e.field === "name")).toBe(true);
+  });
+
+  it("returns an error for legacy sentinel titles", () => {
+    expect(validateQuiz({ ...minimalValidQuiz, name: "Quiz sans titre" }).some((e) => e.field === "name")).toBe(
+      true,
+    );
+    expect(validateQuiz({ ...minimalValidQuiz, name: "Untitled quiz" }).some((e) => e.field === "name")).toBe(
+      true,
     );
   });
 

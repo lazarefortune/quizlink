@@ -3,6 +3,16 @@
 import * as React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import {
+  SplitButton,
+  SplitButtonAction,
+  SplitButtonMenu,
+} from "@/components/ui/split-button";
+import {
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -413,6 +423,161 @@ export default function DesignSystemPage() {
               <Button variant="hero" size="xl">
                 <Zap className="h-5 w-5" /> Commencer un quiz
               </Button>
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* Split Button */}
+        <section>
+          <SectionTitle>Split Button</SectionTitle>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Action + menu options</CardTitle>
+              <CardDescription>
+                Shell unique avec ombre bouncy. API déclarative ou composition.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <CardDescription className="font-bold">
+                Variants (API déclarative)
+              </CardDescription>
+              <div className="flex flex-wrap gap-3">
+                {(
+                  [
+                    "primary",
+                    "blue",
+                    "secondary",
+                    "outline",
+                    "outlineBlue",
+                    "destructive",
+                  ] as const
+                ).map((variant) => (
+                  <SplitButton
+                    key={variant}
+                    variant={variant}
+                    label={variant}
+                    menuAriaLabel={`Options ${variant}`}
+                    onClick={() => showToast(`${variant} — action`, "info")}
+                    options={[
+                      {
+                        label: "Action principale",
+                        onClick: () =>
+                          showToast(`${variant} — principale`, "success"),
+                      },
+                      {
+                        label: "Action secondaire",
+                        onClick: () =>
+                          showToast(`${variant} — secondaire`, "info"),
+                      },
+                      { type: "separator" },
+                      {
+                        label: "Supprimer",
+                        destructive: true,
+                        onClick: () => showToast("Supprimé", "error"),
+                      },
+                    ]}
+                  />
+                ))}
+              </div>
+
+              <Separator />
+
+              <CardDescription className="font-bold">Tailles</CardDescription>
+              <div className="flex flex-wrap items-center gap-3">
+                <SplitButton
+                  size="sm"
+                  label="Small"
+                  onClick={() => showToast("Small", "info")}
+                  options={[
+                    {
+                      label: "Option A",
+                      onClick: () => showToast("A", "info"),
+                    },
+                    {
+                      label: "Option B",
+                      onClick: () => showToast("B", "info"),
+                    },
+                  ]}
+                />
+                <SplitButton
+                  size="default"
+                  label="Default"
+                  onClick={() => showToast("Default", "info")}
+                  options={[
+                    {
+                      label: "Option A",
+                      onClick: () => showToast("A", "info"),
+                    },
+                    {
+                      label: "Option B",
+                      onClick: () => showToast("B", "info"),
+                    },
+                  ]}
+                />
+                <SplitButton
+                  size="lg"
+                  label="Large"
+                  onClick={() => showToast("Large", "info")}
+                  options={[
+                    {
+                      label: "Option A",
+                      onClick: () => showToast("A", "info"),
+                    },
+                    {
+                      label: "Option B",
+                      onClick: () => showToast("B", "info"),
+                    },
+                  ]}
+                />
+              </div>
+
+              <Separator />
+
+              <CardDescription className="font-bold">
+                États — disabled / loading
+              </CardDescription>
+              <div className="flex flex-wrap items-center gap-3">
+                <SplitButton
+                  label="Disabled"
+                  disabled
+                  onClick={() => undefined}
+                  options={[{ label: "Option", onClick: () => undefined }]}
+                />
+                <SplitButton
+                  label="Loading"
+                  isLoading
+                  onClick={() => undefined}
+                  options={[{ label: "Option", onClick: () => undefined }]}
+                />
+              </div>
+
+              <Separator />
+
+              <CardDescription className="font-bold">
+                Composition (menu custom)
+              </CardDescription>
+              <SplitButton variant="outline" menuAriaLabel="Options d’export">
+                <SplitButtonAction
+                  onClick={() => showToast("Export PDF", "success")}
+                >
+                  Exporter
+                </SplitButtonAction>
+                <SplitButtonMenu>
+                  <DropdownMenuLabel>Formats</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => showToast("Export PDF", "success")}
+                  >
+                    PDF
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => showToast("Export CSV", "info")}
+                  >
+                    CSV
+                  </DropdownMenuItem>
+                  <DropdownMenuItem disabled>Excel (bientôt)</DropdownMenuItem>
+                </SplitButtonMenu>
+              </SplitButton>
             </CardContent>
           </Card>
         </section>

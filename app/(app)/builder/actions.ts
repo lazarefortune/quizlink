@@ -17,8 +17,11 @@ import {
   type SaveModifiedQuizAsDraftCopyResult,
 } from "@/lib/builder/saveModifiedQuizAsDraftCopy";
 import { buildPlayableContentMultisetKey } from "@/lib/builder/quizContentChangeDetection";
+import { questionsSnapshotsEqual } from "@/lib/builder/builderSplitSave";
 import { mergeBuilderSaveValidationErrors } from "@/lib/builder/serverAutosaveGate";
 import { prisma } from "@/lib/prisma";
+import { normalizeQuizName } from "@/lib/quiz/quizNameValidation";
+import { validateQuizNameField, validateQuizMetadata, validateQuizQuestions } from "@/lib/quiz-validation";
 import { t, type Locale } from "@/lib/i18n";
 import { sanitizeQuizRichText } from "@/lib/rich-text/sanitizeQuizRichText";
 import {
@@ -35,6 +38,51 @@ import { getUserQuizCreationVisibility } from "./user-quiz-visibility";
 function normalizeBuilderActionLocale(locale: unknown): Locale {
   return locale === "en" ? "en" : "fr";
 }
+
+function tryResolvePersistedQuizName(name: unknown): string | null {
+  if (typeof name !== "string") {
+    return null;
+  }
+  if (validateQuizNameField(name) !== null) {
+    return null;
+  }
+  return normalizeQuizName(name);
+}
+
+function mapPersistedQuestionsToBuilder(
+  questions: Array<{
+    id: string;
+    type: string;
+    label: string;
+    image: string | null;
+    imageKey: string | null;
+    explanation: string | null;
+    options: Array<{ id: string; label: string; isCorrect: boolean }>;
+  }>,
+): QuizBuilder["questions"] {
+  return questions.map((question) => ({
+    id: question.id,
+    type: question.type as QuestionType,
+    label: question.label,
+    image: question.image ?? undefined,
+    imageKey: question.imageKey ?? undefined,
+    explanation: question.explanation ?? undefined,
+    options: question.options.map((option) => ({
+      id: option.id,
+      label: option.label,
+      isCorrect: option.isCorrect,
+    })),
+  }));
+}
+
+export type SaveQuizSuccessResult = {
+  success: true;
+  quizId: string;
+  savedMetadata: boolean;
+  savedQuestions: boolean;
+};
+
+export type SaveQuizResult = SaveQuizSuccessResult | { success: false; error: string };
 
 export type SaveQuizOptions = {
   resetRecordedResponsesBeforeUpdate?: boolean;
@@ -236,7 +284,7 @@ export async function saveQuiz(
   quiz: QuizBuilder,
   quizId?: string,
   options?: SaveQuizOptions,
-) {
+): Promise<SaveQuizResult> {
   try {
     if (!prisma) {
       return {
@@ -253,6 +301,9 @@ export async function saveQuiz(
         error: "You must be logged in to save a quiz",
       };
     }
+
+    const persistedQuizName = tryResolvePersistedQuizName(quiz.name);
+    const timeLimitUi = deriveTimeLimitUiFromSettings(quiz.settings);
 
     // If quizId is provided, update existing quiz
     if (quizId) {
@@ -323,10 +374,17 @@ export async function saveQuiz(
             };
           }
 
+          if (persistedQuizName === null || validateQuizMetadata(quiz, timeLimitUi).length > 0) {
+            return {
+              success: false,
+              error: "Quiz name is required",
+            };
+          }
+
           await prisma.quiz.update({
             where: { id: quizId },
             data: {
-              name: quiz.name,
+              name: persistedQuizName,
               visibility: quiz.visibility,
               settings: quiz.settings as Prisma.InputJsonValue,
             },
@@ -338,86 +396,164 @@ export async function saveQuiz(
           return {
             success: true,
             quizId,
+            savedMetadata: true,
+            savedQuestions: false,
           };
         }
       }
 
-      await prisma.$transaction(async (tx) => {
-        if (options?.resetRecordedResponsesBeforeUpdate) {
-          const linkIds = (
-            await tx.quizLink.findMany({
-              where: { quizId },
-              select: { id: true },
-            })
-          ).map((row) => row.id);
+      const persistedQuiz = await prisma.quiz.findUnique({
+        where: { id: quizId },
+        include: {
+          questions: {
+            include: { options: true },
+            orderBy: { order: "asc" },
+          },
+        },
+      });
 
-          if (linkIds.length > 0) {
-            const attemptIds = (
-              await tx.quizAttempt.findMany({
-                where: { quizLinkId: { in: linkIds } },
+      if (!persistedQuiz) {
+        return {
+          success: false,
+          error: "You don't have permission to update this quiz",
+        };
+      }
+
+      const persistedBuilderQuestions = mapPersistedQuestionsToBuilder(persistedQuiz.questions);
+      const questionsChanged = !questionsSnapshotsEqual(
+        { questions: persistedBuilderQuestions },
+        quiz,
+      );
+      const clientNameForComparison =
+        typeof quiz.name === "string" ? normalizeQuizName(quiz.name) : "";
+      const metadataChanged =
+        persistedQuiz.visibility !== quiz.visibility ||
+        JSON.stringify(persistedQuiz.settings) !== JSON.stringify(quiz.settings) ||
+        persistedQuiz.name !== clientNameForComparison;
+
+      const metadataErrors = validateQuizMetadata(quiz, timeLimitUi);
+      const questionErrors = validateQuizQuestions(quiz);
+      const canSaveMetadata = metadataChanged && metadataErrors.length === 0;
+      const canSaveQuestions = questionsChanged && questionErrors.length === 0;
+
+      if (!canSaveMetadata && !canSaveQuestions) {
+        if (metadataChanged || questionsChanged) {
+          return {
+            success: false,
+            error: "Quiz validation failed",
+          };
+        }
+        return {
+          success: true,
+          quizId,
+          savedMetadata: false,
+          savedQuestions: false,
+        };
+      }
+
+      if (canSaveQuestions) {
+        const nameToPersist = canSaveMetadata ? persistedQuizName! : persistedQuiz.name;
+        const visibilityToPersist = canSaveMetadata ? quiz.visibility : persistedQuiz.visibility;
+        const settingsToPersist = canSaveMetadata
+          ? (quiz.settings as Prisma.InputJsonValue)
+          : (persistedQuiz.settings as Prisma.InputJsonValue);
+
+        await prisma.$transaction(async (tx) => {
+          if (options?.resetRecordedResponsesBeforeUpdate) {
+            const linkIds = (
+              await tx.quizLink.findMany({
+                where: { quizId },
                 select: { id: true },
               })
-            ).map((a) => a.id);
+            ).map((row) => row.id);
 
-            if (attemptIds.length > 0) {
-              await tx.quizAnswer.deleteMany({
-                where: { attemptId: { in: attemptIds } },
+            if (linkIds.length > 0) {
+              const attemptIds = (
+                await tx.quizAttempt.findMany({
+                  where: { quizLinkId: { in: linkIds } },
+                  select: { id: true },
+                })
+              ).map((a) => a.id);
+
+              if (attemptIds.length > 0) {
+                await tx.quizAnswer.deleteMany({
+                  where: { attemptId: { in: attemptIds } },
+                });
+              }
+
+              await tx.quizAttempt.deleteMany({
+                where: { quizLinkId: { in: linkIds } },
+              });
+
+              await tx.quizLinkAnonymousStats.deleteMany({
+                where: { quizLinkId: { in: linkIds } },
               });
             }
-
-            await tx.quizAttempt.deleteMany({
-              where: { quizLinkId: { in: linkIds } },
-            });
-
-            await tx.quizLinkAnonymousStats.deleteMany({
-              where: { quizLinkId: { in: linkIds } },
-            });
           }
-        }
 
-        const remainingAnswers = await tx.quizAnswer.count({
-          where: { question: { quizId } },
-        });
-        if (remainingAnswers > 0) {
-          throw new Error("QUIZ_SAVE_BLOCKED_BY_ANSWERS");
-        }
+          const remainingAnswers = await tx.quizAnswer.count({
+            where: { question: { quizId } },
+          });
+          if (remainingAnswers > 0) {
+            throw new Error("QUIZ_SAVE_BLOCKED_BY_ANSWERS");
+          }
 
-        await tx.option.deleteMany({
-          where: {
-            question: {
-              quizId,
+          await tx.option.deleteMany({
+            where: {
+              question: {
+                quizId,
+              },
             },
-          },
-        });
+          });
 
-        await tx.question.deleteMany({
-          where: { quizId },
-        });
+          await tx.question.deleteMany({
+            where: { quizId },
+          });
 
-        await tx.quiz.update({
-          where: { id: quizId },
-          data: {
-            name: quiz.name,
-            visibility: quiz.visibility,
-            settings: quiz.settings as Prisma.InputJsonValue,
-            questions: {
-              create: quiz.questions.map((q, index) => ({
-                type: q.type,
-                label: sanitizeQuizRichText(q.label),
-                image: q.imageKey ? null : (q.image || null),
-                imageKey: q.imageKey || null,
-                explanation: q.explanation?.trim() || null,
-                order: index,
-                options: {
-                  create: q.options.map((opt) => ({
-                    label: opt.label,
-                    isCorrect: opt.isCorrect,
-                  })),
-                },
-              })),
+          await tx.quiz.update({
+            where: { id: quizId },
+            data: {
+              name: nameToPersist,
+              visibility: visibilityToPersist,
+              settings: settingsToPersist,
+              questions: {
+                create: quiz.questions.map((q, index) => ({
+                  type: q.type,
+                  label: sanitizeQuizRichText(q.label),
+                  image: q.imageKey ? null : (q.image || null),
+                  imageKey: q.imageKey || null,
+                  explanation: q.explanation?.trim() || null,
+                  order: index,
+                  options: {
+                    create: q.options.map((opt) => ({
+                      label: opt.label,
+                      isCorrect: opt.isCorrect,
+                    })),
+                  },
+                })),
+              },
             },
-          },
+          });
         });
+
+        revalidatePath("/dashboard");
+        revalidatePath(`/builder/${quizId}`);
+
+        return {
+          success: true,
+          quizId,
+          savedMetadata: canSaveMetadata,
+          savedQuestions: true,
+        };
+      }
+
+      await prisma.quiz.update({
+        where: { id: quizId },
+        data: {
+          name: persistedQuizName!,
+          visibility: quiz.visibility,
+          settings: quiz.settings as Prisma.InputJsonValue,
+        },
       });
 
       revalidatePath("/dashboard");
@@ -426,6 +562,15 @@ export async function saveQuiz(
       return {
         success: true,
         quizId,
+        savedMetadata: true,
+        savedQuestions: false,
+      };
+    }
+
+    if (persistedQuizName === null || validateQuizQuestions(quiz).length > 0) {
+      return {
+        success: false,
+        error: "Quiz validation failed",
       };
     }
 
@@ -433,7 +578,7 @@ export async function saveQuiz(
     const savedQuiz = await prisma.quiz.create({
       data: {
         ownerId: session.user.id,
-        name: quiz.name,
+        name: persistedQuizName,
         visibility: getUserQuizCreationVisibility(),
         settings: quiz.settings as Prisma.InputJsonValue,
         questions: {
@@ -471,6 +616,8 @@ export async function saveQuiz(
     return {
       success: true,
       quizId: savedQuiz.id,
+      savedMetadata: true,
+      savedQuestions: true,
     };
   } catch (error) {
     console.error("Error saving quiz:", error);
@@ -597,7 +744,7 @@ export async function getUserQuizzes() {
       success: true,
       quizzes: quizzes.map((quiz) => ({
         id: quiz.id,
-        name: quiz.name,
+        name: persistedQuizName,
         visibility: quiz.visibility as "PRIVATE" | "PUBLIC",
         status: quiz.status,
         publishedAt:

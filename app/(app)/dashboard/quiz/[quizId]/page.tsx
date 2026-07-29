@@ -1,9 +1,9 @@
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
+
 import { QuizDetailContent } from "./quiz-detail-content";
 import { getQuizContent, getQuizQuestionInsights, getQuizStats } from "./actions";
-import { resolveEffectiveQuizSettings } from "@/lib/quiz/resolveEffectiveQuizSettings";
 import { auth } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import { getUserCoinBalance } from "@/lib/coins";
 import { prisma } from "@/lib/prisma";
 
@@ -104,10 +104,6 @@ export default async function QuizStatsPage({ params }: PageProps) {
         questionInsights={
           questionInsightsResult.success ? questionInsightsResult.insights : []
         }
-        participantIdentityMode={resolveEffectiveQuizSettings(
-          statsResult.stats.quizDetails.settings,
-        ).participantIdentityMode}
-        hasExistingResponses={statsResult.stats.totalAttemptCount > 0}
         coinBalance={coinBalance}
         isProAvailable={Boolean(process.env.STRIPE_PRO_PRICE_ID)}
       />

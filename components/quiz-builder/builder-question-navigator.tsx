@@ -154,18 +154,16 @@ export function BuilderQuestionNavigator({
               {t(locale, "builder.questions")} ({questions.length})
             </p>
           </div>
-          {!(showDesktopEmptyState && questions.length === 0) ? (
             <Button
-              type="button"
-              variant="blue"
-              size="icon"
-              className="h-8 w-8 shrink-0"
-              onClick={() => onAddQuestion()}
-              aria-label={t(locale, "builder.questionNavigatorAddAria")}
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0"
+                onClick={() => onAddQuestion()}
+                aria-label={t(locale, "builder.questionNavigatorAddAria")}
             >
-              <Plus className="h-4 w-4" />
+                <Plus className="h-4 w-4" />
             </Button>
-          ) : null}
         </div>
       </div>
       <nav

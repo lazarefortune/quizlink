@@ -144,6 +144,36 @@ describe("finalizeDraftQuizAction", () => {
     expect(mockUpdateMany).not.toHaveBeenCalled();
   });
 
+  it("returns VALIDATION_FAILED when the quiz name is empty", async () => {
+    mockFindUnique.mockResolvedValue({
+      ...validDraftRow,
+      name: "",
+    });
+
+    const result = await finalizeDraftQuizAction("quiz-1");
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe(FINALIZE_DRAFT_QUIZ_ERROR_CODE.VALIDATION_FAILED);
+    }
+    expect(mockUpdateMany).not.toHaveBeenCalled();
+  });
+
+  it("returns VALIDATION_FAILED when the quiz uses a legacy sentinel title", async () => {
+    mockFindUnique.mockResolvedValue({
+      ...validDraftRow,
+      name: "Quiz sans titre",
+    });
+
+    const result = await finalizeDraftQuizAction("quiz-1");
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe(FINALIZE_DRAFT_QUIZ_ERROR_CODE.VALIDATION_FAILED);
+    }
+    expect(mockUpdateMany).not.toHaveBeenCalled();
+  });
+
   it("returns VALIDATION_FAILED when a question label is empty", async () => {
     mockFindUnique.mockResolvedValue({
       ...validDraftRow,

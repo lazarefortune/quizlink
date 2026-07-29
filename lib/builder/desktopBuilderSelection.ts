@@ -1,24 +1,17 @@
+import { isUntitledQuizName } from "@/lib/quiz/quizNameValidation";
 import type { Question } from "@/types/quiz-builder";
 
 export type DesktopBuilderSelection = { view: "settings" } | { view: "questions" };
 
-export function isQuizUntitledForDesktopSelection(
-  quizName: string,
-  defaultDraftName: string,
-): boolean {
-  const trimmed = quizName.trim();
-  return trimmed.length === 0 || trimmed === defaultDraftName.trim();
+export function isQuizUntitledForDesktopSelection(quizName: string): boolean {
+  return isUntitledQuizName(quizName);
 }
 
 export function resolveInitialDesktopBuilderSelection(input: {
   quizName: string;
   questions: Question[];
-  defaultDraftName: string;
 }): DesktopBuilderSelection {
-  if (
-    input.questions.length === 0 ||
-    isQuizUntitledForDesktopSelection(input.quizName, input.defaultDraftName)
-  ) {
+  if (input.questions.length === 0) {
     return { view: "settings" };
   }
   return { view: "questions" };

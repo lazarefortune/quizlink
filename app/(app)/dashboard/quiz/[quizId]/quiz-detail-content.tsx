@@ -2,12 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { MessageCircleQuestionMark, Users } from "lucide-react";
 
 import type { QuizContentQuestion } from "./actions";
-import { ParticipantIdentityModeSummaryCard } from "@/components/dashboard/participant-identity-mode-summary-card";
 import { QuizDetailHeader } from "@/components/dashboard/quiz-detail/quiz-detail-header";
 import { QuizQuestionsTab } from "@/components/dashboard/quiz-detail/quiz-questions-tab";
-import { MessageCircleQuestionMark, Users } from "lucide-react";
 import { QuizResultsTab } from "@/components/dashboard/quiz-detail/quiz-results-tab";
 import { QuizShareLinkDialog } from "@/components/dashboard/quiz-detail/quiz-share-link-dialog";
 import {
@@ -22,7 +21,6 @@ import type { QuizDetailStatsInput } from "@/lib/dashboard/quiz-detail-stats";
 import { t } from "@/lib/i18n";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { QUIZ_UNLOCK_COIN_COST } from "@/lib/quiz/quizUnlockConstants";
-import type { ParticipantIdentityMode } from "@/types/participant-identity";
 import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
 
 type QuizDetailContentProps = {
@@ -32,8 +30,6 @@ type QuizDetailContentProps = {
   questions: QuizContentQuestion[];
   stats: QuizDetailStatsInput;
   questionInsights: QuestionInsight[];
-  participantIdentityMode: ParticipantIdentityMode;
-  hasExistingResponses: boolean;
   coinBalance: number;
   isProAvailable: boolean;
 };
@@ -45,8 +41,6 @@ export function QuizDetailContent({
   questions,
   stats,
   questionInsights,
-  participantIdentityMode,
-  hasExistingResponses,
   coinBalance,
   isProAvailable,
 }: QuizDetailContentProps) {
@@ -71,8 +65,6 @@ export function QuizDetailContent({
     paywall.setOpen(true);
   }, [paywall]);
 
-  const freePreviewLimit = 3;
-  const visibleGamesCount = Math.min(stats.attempts.length, freePreviewLimit);
   const canOpenUnlockPaywall =
     quizStatus === "ACTIVE" && !(quotaStatus?.isUnlocked ?? false);
 
@@ -103,13 +95,6 @@ export function QuizDetailContent({
           quotaStatus={quizStatus === "ACTIVE" && quotaStatus != null ? quotaStatus : undefined}
           onUnlock={canOpenUnlockPaywall ? openPaywall : undefined}
           onShare={() => setShowShareDialog(true)}
-        />
-
-        <ParticipantIdentityModeSummaryCard
-          quizId={quizId}
-          value={participantIdentityMode}
-          locale={locale}
-          hasExistingResponses={hasExistingResponses}
         />
 
         <Tabs

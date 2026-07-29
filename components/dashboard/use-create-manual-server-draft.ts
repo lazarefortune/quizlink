@@ -19,9 +19,7 @@ export function useCreateManualServerDraft(): {
 
   const createManualServerDraftAndGoToBuilder = useCallback(
     async (nameInput?: string) => {
-      const trimmedInput = typeof nameInput === "string" ? nameInput.trim() : "";
-      const name =
-        trimmedInput.length > 0 ? trimmedInput : t(locale, "builder.defaultDraftName");
+      const name = typeof nameInput === "string" ? nameInput.trim() : "";
 
       setIsCreatingManualDraft(true);
       try {

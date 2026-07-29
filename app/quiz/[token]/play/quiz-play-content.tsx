@@ -725,7 +725,7 @@ export function QuizPlayContent({ attempt, token }: QuizPlayContentProps) {
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>{t(locale, "quiz.quitConfirmTitle")}</DialogTitle>
-              <DialogDescription>
+              <DialogDescription className="text-base">
                 {t(locale, "quiz.quitConfirmDescription")}
               </DialogDescription>
             </DialogHeader>
