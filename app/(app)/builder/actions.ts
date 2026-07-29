@@ -744,7 +744,7 @@ export async function getUserQuizzes() {
       success: true,
       quizzes: quizzes.map((quiz) => ({
         id: quiz.id,
-        name: persistedQuizName,
+        name: quiz.name,
         visibility: quiz.visibility as "PRIVATE" | "PUBLIC",
         status: quiz.status,
         publishedAt:
