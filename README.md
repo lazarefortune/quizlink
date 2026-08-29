@@ -1,79 +1,64 @@
+<p align="center">
+  <img src="./public/logo-quizlink.png" alt="QuizLink" width="120" />
+</p>
+
 # QuizLink
 
-Application web de création et partage de quiz, avec génération automatique par IA.
+Create, share, and analyze quizzes — with optional AI generation.
 
-## Démarrage rapide
+**Stack:** Next.js 16 · React 19 · TypeScript · Prisma · MySQL · pnpm · Docker · NextAuth · Stripe · PostHog
+
+**Prerequisites (Docker workflow):** Git · Docker · Make — no host Node/pnpm required.
+
+## Quick start
 
 ```bash
-pnpm install
-cp .env.example .env   # remplir les variables (voir docs/SETUP.md)
-pnpm prisma:migrate
-pnpm dev               # http://localhost:3000
+git clone <repo-url>
+cd quizlink
+make install
+make start
+make fixtures
 ```
 
-> Instructions complètes → [docs/SETUP.md](docs/SETUP.md)
+| Service | URL |
+|---------|-----|
+| QuizLink | http://localhost:3000 |
+| Mailpit | http://localhost:8025 |
+| Health | http://localhost:3000/api/health |
 
----
+DEV admin credentials are printed by `make install` and stored only in gitignored `.env.docker`.
 
-## Fonctionnalités principales
+## Frequent commands
 
-- **Génération IA** — coller un texte ou importer un PDF, obtenir un quiz en quelques secondes
-- **Builder manuel** — créer et éditer des quiz question par question (QCM, Vrai/Faux, cases à cocher)
-- **Partage via lien** — token public ou liens personnalisés envoyés par email à des participants nommés
-- **Suivi participants** — tentatives, scores, rapport IA détaillé (forces/faiblesses, plan de révision 7 jours)
-- **Système de coins** — chaque action IA consomme des coins ; achat via Stripe
-- **Admin** — gestion des utilisateurs, crédits manuels, packs de coins, feedbacks
-
----
-
-## Stack technique
-
-| Couche | Technologie |
-|--------|-------------|
-| Framework | Next.js (App Router) + TypeScript |
-| UI | Tailwind CSS + shadcn/ui + Radix UI |
-| Base de données | MySQL + Prisma ORM |
-| Auth | NextAuth v5 (beta) |
-| IA | OpenAI (gpt-4o-mini) |
-| Paiement | Stripe |
-| Email | Nodemailer (Mailpit en local) |
-| Analytics | PostHog |
-| Tests | Vitest |
-
----
+```bash
+make help
+make start
+make stop
+make logs
+make test
+make fixtures
+make build                # production Docker image
+```
 
 ## Documentation
 
-| Document | Contenu |
-|----------|---------|
-| [docs/SETUP.md](docs/SETUP.md) | Installation, variables d'env, BDD, troubleshooting |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Structure des dossiers, conventions, patterns clés |
-| [docs/STRUCTURE-APP.md](docs/STRUCTURE-APP.md) | Routes, pages, redirections, contrôles d'accès |
-| [docs/QUIZ_REPORT_GENERATION.md](docs/QUIZ_REPORT_GENERATION.md) | Génération de rapports IA pour participants |
-| [docs/PRD.md](docs/PRD.md) | Vision produit et périmètre fonctionnel |
-| [docs/ROADMAP.md](docs/ROADMAP.md) | Backlog et fonctionnalités à venir |
+| Doc | Purpose |
+|-----|---------|
+| [docs/SETUP.md](docs/SETUP.md) | First-time setup |
+| [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | Day-to-day workflow |
+| [docs/DOCKER.md](docs/DOCKER.md) | Docker architecture |
+| [docs/FIXTURES.md](docs/FIXTURES.md) | Dev fixtures & admin |
+| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Deployment status |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | App structure |
+| [docs/STRUCTURE-APP.md](docs/STRUCTURE-APP.md) | Routes & access |
 
----
+## Environment files
 
-## Commandes utiles
+| File | Role | Git |
+|------|------|-----|
+| `.env.example` | App variable catalogue | tracked |
+| `.env.local` | Local Next.js / host tooling | ignored |
+| `.env.docker.example` | Docker Compose catalogue | tracked |
+| `.env.docker` | Docker Compose local config | ignored |
 
-```bash
-# Développement
-pnpm dev                  # Serveur de dev
-pnpm build                # Build production
-pnpm start                # Démarrer en mode production
-
-# Tests
-pnpm test:run             # Lancer les tests une fois
-pnpm test                 # Mode watch
-
-# Base de données
-pnpm prisma:migrate       # Appliquer les migrations
-pnpm prisma:generate      # Régénérer le client Prisma
-pnpm prisma:studio        # Interface Prisma Studio
-
-# Utilitaires
-pnpm promote:admin        # Promouvoir un utilisateur en ADMIN
-pnpm seed:coin-packs      # Initialiser les packs de coins
-pnpm seed:dev-users       # Créer des utilisateurs de test
-```
+Make always uses `docker compose --env-file .env.docker`.

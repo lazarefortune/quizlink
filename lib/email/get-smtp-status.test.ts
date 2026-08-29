@@ -21,6 +21,8 @@ describe("get-smtp-status", () => {
 
   it("returns development defaults when SMTP_HOST is unset", () => {
     delete process.env.SMTP_HOST;
+    delete process.env.SMTP_FROM;
+    delete process.env.SMTP_PORT;
     setNodeEnv("production");
 
     expect(getSmtpStatus()).toEqual({
