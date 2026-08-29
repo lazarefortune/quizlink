@@ -1,0 +1,116 @@
+# QuizLink development stack.
+# Prefer: make start  (uses --env-file .env.docker)
+# Production: compose.prod.yaml (separate file, not merged).
+
+name: quizlink
+
+services:
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-quizlink}
+      MYSQL_USER: ${MYSQL_USER:-quizlink}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-quizlink}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-quizlink_root_dev}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "${MYSQL_HOST_PORT:-3307}:3306"
+    volumes:
+      - quizlink_mysql_data:/var/lib/mysql
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "127.0.0.1",
+          "-uroot",
+          "-p$$MYSQL_ROOT_PASSWORD",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    networks:
+      - quizlink
+
+  mailpit:
+    image: axllent/mailpit:v1.27.10
+    restart: unless-stopped
+    ports:
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"
+      - "${MAILPIT_UI_PORT:-8025}:8025"
+    networks:
+      - quizlink
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    ports:
+      - "${APP_PUBLISH_PORT:-3000}:3000"
+    env_file:
+      - path: .env.docker
+        required: false
+    environment:
+      NODE_ENV: development
+      HOSTNAME: 0.0.0.0
+      PORT: 3000
+      # Service DNS — never use localhost / MYSQL_HOST_PORT here.
+      DATABASE_URL: mysql://${MYSQL_USER:-quizlink}:${MYSQL_PASSWORD:-quizlink}@db:3306/${MYSQL_DATABASE:-quizlink}
+      AUTH_SECRET: ${AUTH_SECRET:-dev-only-change-me-use-openssl-rand}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL:-http://localhost:3000}
+      SMTP_HOST: mailpit
+      SMTP_PORT: "1025"
+      SMTP_SECURE: "false"
+      SMTP_FROM: ${SMTP_FROM:-noreply@quizlink.local}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-QuizLink}
+      QUESTION_IMAGE_STORAGE: local
+      QUESTION_IMAGE_UPLOAD_DIR: /app/storage/question-images
+      WATCHPACK_POLLING: ${WATCHPACK_POLLING:-true}
+      CHOKIDAR_USEPOLLING: ${CHOKIDAR_USEPOLLING:-true}
+      DEV_ADMIN_EMAIL: ${DEV_ADMIN_EMAIL:-admin@quizlink.local}
+      DEV_ADMIN_PASSWORD: ${DEV_ADMIN_PASSWORD:-}
+      DEV_ADMIN_NAME: ${DEV_ADMIN_NAME:-QuizLink Dev Admin}
+    volumes:
+      - .:/app
+      - quizlink_node_modules:/app/node_modules
+      - quizlink_next:/app/.next
+      - quizlink_question_images:/app/storage/question-images
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "-fsS",
+          "http://127.0.0.1:3000/api/health",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 120s
+    networks:
+      - quizlink
+
+networks:
+  quizlink:
+    driver: bridge
+
+volumes:
+  quizlink_mysql_data:
+  quizlink_node_modules:
+  quizlink_next:
+  quizlink_question_images:

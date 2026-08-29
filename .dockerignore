@@ -1,0 +1,38 @@
+# Dependencies & build artifacts
+node_modules
+.next
+out
+build
+coverage
+*.tsbuildinfo
+
+# Git / IDE
+.git
+.github
+.gitlab-ci.yml
+.cursor
+.claude
+.idea
+.vscode
+.DS_Store
+
+# Env & secrets — never bake into the image
+.env
+.env.*
+!.env.example
+!.env.docker.example
+
+# Local uploads & caches
+storage/question-images
+.pnpm-store
+
+# Docs / tests not needed in production image
+docs
+**/*.test.ts
+**/*.test.tsx
+vitest.config.ts
+
+# Misc
+README.md
+TODO.md
+agent-transcripts

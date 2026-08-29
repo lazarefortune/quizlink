@@ -8,6 +8,12 @@ const posthogProxyBase = getPosthogProxyBasePath();
 
 const nextConfig: NextConfig = {
   /**
+   * Required for compact Docker production images. Standalone traces runtime deps
+   * (including Prisma adapter / mariadb / pdf-parse via serverExternalPackages).
+   * Does not change local `pnpm dev` / `pnpm start` outside Docker.
+   */
+  output: "standalone",
+  /**
    * Required for PostHog (and similar) reverse proxies: the API uses paths like `/e/`
    * with a trailing slash. Without this, Next.js responds with 308 redirects that break
    * event capture and session replay. See PostHog Next.js proxy docs.
