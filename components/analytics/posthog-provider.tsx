@@ -32,7 +32,8 @@ const posthogApiHost = getPosthogProxyBasePath();
  */
 const POSTHOG_JS_DEFAULTS = "2026-01-30" as const;
 
-function buildSharedInitOptions(): Pick<
+/** Shared PostHog init options (exported for unit tests). */
+export function buildSharedInitOptions(): Pick<
   PostHogClientConfig,
   | "api_host"
   | "ui_host"
@@ -40,6 +41,7 @@ function buildSharedInitOptions(): Pick<
   | "external_scripts_inject_target"
   | "capture_pageview"
   | "capture_pageleave"
+  | "capture_performance"
   | "autocapture"
   | "person_profiles"
 > {
@@ -48,8 +50,9 @@ function buildSharedInitOptions(): Pick<
     ui_host: "https://eu.posthog.com",
     defaults: POSTHOG_JS_DEFAULTS,
     external_scripts_inject_target: "head",
-    capture_pageview: false,
+    capture_pageview: "history_change",
     capture_pageleave: true,
+    capture_performance: true,
     autocapture: false,
     person_profiles: "identified_only",
   };
