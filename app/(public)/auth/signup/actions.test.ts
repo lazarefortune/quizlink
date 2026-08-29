@@ -61,6 +61,28 @@ vi.mock("@/lib/sendUserSignupNotificationIfNeeded", () => ({
     mockSendUserSignupNotificationIfNeeded(...args),
 }));
 
+vi.mock("@/lib/analytics/track-server", () => ({
+  trackServer: vi.fn(async () => undefined),
+  captureServerException: vi.fn(async () => undefined),
+}));
+
+vi.mock("@/lib/analytics/posthog-distinct-id-server", () => ({
+  getPostHogDistinctIdFromCookies: vi.fn(async () => "test-distinct"),
+}));
+
+vi.mock("@/lib/observability/logger", () => ({
+  logger: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    flush: vi.fn(async () => undefined),
+  },
+}));
+
+vi.mock("@/lib/observability/flush", () => ({
+  scheduleObservabilityFlush: vi.fn(),
+}));
+
 import {
   startEmailSignupAction,
   saveSignupNameAction,

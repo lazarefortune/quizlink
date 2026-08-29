@@ -65,6 +65,13 @@ STRIPE_WEBHOOK_SECRET="whsec_..."
 
 # Analytics
 NEXT_PUBLIC_POSTHOG_KEY="phc_..."
+# Optional proxy path (default /qk/ph)
+# NEXT_PUBLIC_POSTHOG_PROXY_PATH="/qk/ph"
+
+# PostHog Error Tracking source maps (build only — Personal API Key phx_…, NEVER NEXT_PUBLIC_)
+# POSTHOG_API_KEY="phx_..."
+# POSTHOG_PROJECT_ID="12345"
+# NEXT_PUBLIC_POSTHOG_HOST="https://eu.posthog.com"
 
 # Sécurité — pepper pour le hachage d'IP dans les logs d'audit (défaut : AUTH_SECRET)
 AUTH_IP_ADDRESS_PEPPER="..."

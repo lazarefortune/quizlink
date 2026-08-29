@@ -19,6 +19,15 @@ import {
   normalizeSignupEmail,
   PENDING_SIGNUP_MAX_CODE_ATTEMPTS,
 } from "@/lib/auth/pending-signup";
+import {
+  EMAIL_VERIFICATION_SENT,
+  EMAIL_VERIFIED,
+  SIGNUP_FAILED,
+} from "@/lib/analytics/events";
+import { trackServer } from "@/lib/analytics/track-server";
+import { getPostHogDistinctIdFromCookies } from "@/lib/analytics/posthog-distinct-id-server";
+import { logger } from "@/lib/observability/logger";
+import { scheduleObservabilityFlush } from "@/lib/observability/flush";
 
 export type VerifyEmailActionSuccess = {
   success: true;
@@ -150,6 +159,15 @@ async function verifyLegacyUserEmail(
   await sendWelcomeEmailIfNeeded(user.id);
   await sendUserSignupNotificationIfNeeded(user.id, "email");
 
+  const distinctId = (await getPostHogDistinctIdFromCookies()) ?? user.id;
+  logger.info("auth.email_verified", {
+    "auth.method": "email",
+    outcome: "verified",
+    "user.id": user.id,
+    posthogDistinctId: distinctId,
+  });
+  await trackServer(user.id, EMAIL_VERIFIED, { method: "email" });
+
   return {
     success: true,
     redirectTo: signInRedirect,
@@ -194,6 +212,13 @@ async function verifyPendingSignupEmail(
       data: { attempts: nextAttempts },
     });
 
+    const distinctId = (await getPostHogDistinctIdFromCookies()) ?? "anonymous";
+    await trackServer(distinctId, SIGNUP_FAILED, {
+      method: "email",
+      stage: "verification",
+      error_code: "invalid_verification_token",
+    });
+
     return {
       success: false,
       error: GENERIC_VERIFY_ERROR,
@@ -209,6 +234,15 @@ async function verifyPendingSignupEmail(
     },
   });
 
+  const distinctId = (await getPostHogDistinctIdFromCookies()) ?? "anonymous";
+  logger.info("auth.email_verified", {
+    "auth.method": "email",
+    outcome: "verified",
+    "pending.id": pendingSignup.id,
+    posthogDistinctId: distinctId,
+  });
+  await trackServer(distinctId, EMAIL_VERIFIED, { method: "email" });
+
   return {
     success: true,
     redirectTo: buildSignupNameHref(email, callbackUrl),
@@ -220,6 +254,9 @@ export async function verifyEmailAction(
   code: string,
   callbackUrl?: string | null,
 ): Promise<VerifyEmailActionResult> {
+  scheduleObservabilityFlush();
+  const distinctId = (await getPostHogDistinctIdFromCookies()) ?? "anonymous";
+
   try {
     if (!prisma) {
       return {
@@ -230,6 +267,11 @@ export async function verifyEmailAction(
 
     const normalizedEmail = normalizeSignupEmail(email);
     if (!normalizedEmail || code.length !== 6) {
+      await trackServer(distinctId, SIGNUP_FAILED, {
+        method: "email",
+        stage: "verification",
+        error_code: "invalid_input",
+      });
       return { success: false, error: GENERIC_VERIFY_ERROR };
     }
 
@@ -239,6 +281,18 @@ export async function verifyEmailAction(
 
     if (pendingSignup && !pendingSignup.completedAt) {
       if (pendingSignup.expiresAt <= new Date()) {
+        logger.warn("auth.email_verification.failed", {
+          "auth.method": "email",
+          "auth.stage": "verification",
+          outcome: "failed",
+          "error.code": "expired_verification_token",
+          posthogDistinctId: distinctId,
+        });
+        await trackServer(distinctId, SIGNUP_FAILED, {
+          method: "email",
+          stage: "verification",
+          error_code: "expired_verification_token",
+        });
         return { success: false, error: GENERIC_VERIFY_ERROR, canResend: true };
       }
 
@@ -248,6 +302,18 @@ export async function verifyEmailAction(
     return verifyLegacyUserEmail(normalizedEmail, code, callbackUrl);
   } catch (error) {
     console.error("Error verifying email:", error);
+    logger.error("auth.email_verification.failed", {
+      "auth.method": "email",
+      "auth.stage": "verification",
+      outcome: "failed",
+      "error.code": "unknown",
+      posthogDistinctId: distinctId,
+    });
+    await trackServer(distinctId, SIGNUP_FAILED, {
+      method: "email",
+      stage: "verification",
+      error_code: "unknown",
+    });
     return {
       success: false,
       error: "Failed to verify email. Please try again.",
@@ -259,6 +325,9 @@ export async function resendVerificationCodeAction(
   email: string,
   locale: "fr" | "en" = "fr",
 ) {
+  scheduleObservabilityFlush();
+  const distinctId = (await getPostHogDistinctIdFromCookies()) ?? "anonymous";
+
   try {
     if (!prisma) {
       return {
@@ -305,7 +374,29 @@ export async function resendVerificationCodeAction(
         },
       });
 
-      await sendVerificationEmail(normalizedEmail, code, locale);
+      const emailResult = await sendVerificationEmail(normalizedEmail, code, locale);
+      if (emailResult.success) {
+        logger.info("auth.email_verification.sent", {
+          "auth.method": "email",
+          outcome: "resent",
+          "pending.id": pendingSignup.id,
+          posthogDistinctId: distinctId,
+        });
+        await trackServer(distinctId, EMAIL_VERIFICATION_SENT, { method: "email" });
+      } else {
+        logger.error("auth.email_verification.failed", {
+          "auth.method": "email",
+          "auth.stage": "verification_email",
+          outcome: "failed",
+          "error.code": "verification_email_failed",
+          posthogDistinctId: distinctId,
+        });
+        await trackServer(distinctId, SIGNUP_FAILED, {
+          method: "email",
+          stage: "verification_email",
+          error_code: "verification_email_failed",
+        });
+      }
       return { success: true };
     }
 
@@ -358,13 +449,29 @@ export async function resendVerificationCodeAction(
       }),
     ]);
 
-    await sendVerificationEmail(normalizedEmail, verificationCode, locale);
+    const emailResult = await sendVerificationEmail(normalizedEmail, verificationCode, locale);
+    if (emailResult.success) {
+      logger.info("auth.email_verification.sent", {
+        "auth.method": "email",
+        outcome: "resent",
+        "user.id": user.id,
+        posthogDistinctId: distinctId,
+      });
+      await trackServer(user.id, EMAIL_VERIFICATION_SENT, { method: "email" });
+    }
 
     return {
       success: true,
     };
   } catch (error) {
     console.error("Error resending verification code:", error);
+    logger.error("auth.email_verification.failed", {
+      "auth.method": "email",
+      "auth.stage": "verification_email",
+      outcome: "failed",
+      "error.code": "unknown",
+      posthogDistinctId: distinctId,
+    });
     return {
       success: false,
       error: "Failed to resend code. Please try again.",

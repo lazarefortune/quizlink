@@ -26,6 +26,16 @@ import {
   normalizeSignupEmail,
 } from "@/lib/auth/pending-signup";
 import { SIGNUP_ERROR_CODES } from "@/lib/auth/signup-error-codes";
+import {
+  EMAIL_VERIFICATION_SENT,
+  SIGNUP_COMPLETED,
+  SIGNUP_EXISTING_USER,
+  SIGNUP_FAILED,
+} from "@/lib/analytics/events";
+import { trackServer } from "@/lib/analytics/track-server";
+import { getPostHogDistinctIdFromCookies } from "@/lib/analytics/posthog-distinct-id-server";
+import { logger } from "@/lib/observability/logger";
+import { scheduleObservabilityFlush } from "@/lib/observability/flush";
 
 export type SignupActionSuccess = {
   success: true;
@@ -85,13 +95,40 @@ export async function startEmailSignupAction(
   locale: "fr" | "en" = "fr",
   callbackUrl?: string | null,
 ): Promise<SignupActionResult> {
+  scheduleObservabilityFlush();
+  const distinctId = (await getPostHogDistinctIdFromCookies()) ?? "anonymous";
+
   try {
     if (!prisma) {
+      logger.error("auth.signup.failed", {
+        "auth.method": "email",
+        "auth.stage": "account_creation",
+        outcome: "failed",
+        "error.code": "database_error",
+        posthogDistinctId: distinctId,
+      });
+      await trackServer(distinctId, SIGNUP_FAILED, {
+        method: "email",
+        stage: "account_creation",
+        error_code: "database_error",
+      });
       return { success: false, error: GENERIC_SIGNUP_ERROR };
     }
 
     const normalizedEmail = normalizeSignupEmail(email);
     if (!normalizedEmail) {
+      logger.warn("auth.signup.failed", {
+        "auth.method": "email",
+        "auth.stage": "validation",
+        outcome: "failed",
+        "error.code": "invalid_input",
+        posthogDistinctId: distinctId,
+      });
+      await trackServer(distinctId, SIGNUP_FAILED, {
+        method: "email",
+        stage: "validation",
+        error_code: "invalid_input",
+      });
       return { success: false, error: "Email is required" };
     }
 
@@ -101,16 +138,43 @@ export async function startEmailSignupAction(
     });
 
     if (existingUser) {
+      logger.info("auth.signup.existing_user", {
+        "auth.method": "email",
+        outcome: "existing_user",
+        "user.id": existingUser.id,
+        posthogDistinctId: distinctId,
+      });
+      await trackServer(distinctId, SIGNUP_EXISTING_USER, { method: "email" });
       return {
         success: false,
         error: SIGNUP_ERROR_CODES.EMAIL_ALREADY_IN_USE,
       };
     }
 
-    const { code } = await createOrRefreshPendingSignup(normalizedEmail, locale);
+    const { id: pendingId, code } = await createOrRefreshPendingSignup(normalizedEmail, locale);
     const emailResult = await sendVerificationEmail(normalizedEmail, code, locale);
     if (!emailResult.success) {
-      console.error("Failed to send signup verification email:", emailResult.error);
+      logger.error("auth.email_verification.failed", {
+        "auth.method": "email",
+        "auth.stage": "verification_email",
+        outcome: "failed",
+        "error.code": "verification_email_failed",
+        "pending.id": pendingId,
+        posthogDistinctId: distinctId,
+      });
+      await trackServer(distinctId, SIGNUP_FAILED, {
+        method: "email",
+        stage: "verification_email",
+        error_code: "verification_email_failed",
+      });
+    } else {
+      logger.info("auth.email_verification.sent", {
+        "auth.method": "email",
+        outcome: "sent",
+        "pending.id": pendingId,
+        posthogDistinctId: distinctId,
+      });
+      await trackServer(distinctId, EMAIL_VERIFICATION_SENT, { method: "email" });
     }
 
     return {
@@ -120,6 +184,18 @@ export async function startEmailSignupAction(
     };
   } catch (error) {
     console.error("Error starting email signup:", error);
+    logger.error("auth.signup.failed", {
+      "auth.method": "email",
+      "auth.stage": "account_creation",
+      outcome: "failed",
+      "error.code": "unknown",
+      posthogDistinctId: distinctId,
+    });
+    await trackServer(distinctId, SIGNUP_FAILED, {
+      method: "email",
+      stage: "account_creation",
+      error_code: "unknown",
+    });
     return { success: false, error: GENERIC_SIGNUP_ERROR };
   }
 }
@@ -225,22 +301,53 @@ export async function completeSignupAction(
   password: string,
   callbackUrl?: string | null,
 ): Promise<SignupActionResult | CompleteSignupActionSuccess> {
+  scheduleObservabilityFlush();
+  const cookieDistinctId = await getPostHogDistinctIdFromCookies();
+  const distinctId = cookieDistinctId ?? "anonymous";
+
   try {
     if (!prisma) {
+      logger.error("auth.signup.failed", {
+        "auth.method": "email",
+        "auth.stage": "account_creation",
+        outcome: "failed",
+        "error.code": "database_error",
+        posthogDistinctId: distinctId,
+      });
+      await trackServer(distinctId, SIGNUP_FAILED, {
+        method: "email",
+        stage: "account_creation",
+        error_code: "database_error",
+      });
       return { success: false, error: "Failed to create account. Please try again." };
     }
 
     const normalizedEmail = normalizeSignupEmail(email);
     if (!normalizedEmail) {
+      await trackServer(distinctId, SIGNUP_FAILED, {
+        method: "email",
+        stage: "validation",
+        error_code: "invalid_input",
+      });
       return { success: false, error: "Email is required" };
     }
 
     if (!isValidSignupPassword(password)) {
+      await trackServer(distinctId, SIGNUP_FAILED, {
+        method: "email",
+        stage: "validation",
+        error_code: "invalid_input",
+      });
       return { success: false, error: "Password must be at least 8 characters" };
     }
 
     const access = await getSignupStepAccessAction(normalizedEmail, "password", callbackUrl);
     if (!access.allowed) {
+      await trackServer(distinctId, SIGNUP_FAILED, {
+        method: "email",
+        stage: "account_creation",
+        error_code: "signup_session_invalid",
+      });
       return { success: false, error: "Signup session is invalid. Please start again." };
     }
 
@@ -255,6 +362,11 @@ export async function completeSignupAction(
       pendingSignup.completedAt ||
       isPendingSignupExpired(pendingSignup)
     ) {
+      await trackServer(distinctId, SIGNUP_FAILED, {
+        method: "email",
+        stage: "account_creation",
+        error_code: "signup_session_invalid",
+      });
       return { success: false, error: "Signup session is invalid. Please start again." };
     }
 
@@ -264,6 +376,13 @@ export async function completeSignupAction(
     });
 
     if (existingUser) {
+      logger.info("auth.signup.existing_user", {
+        "auth.method": "email",
+        outcome: "existing_user",
+        "user.id": existingUser.id,
+        posthogDistinctId: distinctId,
+      });
+      await trackServer(distinctId, SIGNUP_EXISTING_USER, { method: "email" });
       return { success: false, error: SIGNUP_ERROR_CODES.EMAIL_ALREADY_IN_USE };
     }
 
@@ -299,6 +418,20 @@ export async function completeSignupAction(
     await sendWelcomeEmailIfNeeded(user.id);
     await sendUserSignupNotificationIfNeeded(user.id, "email");
 
+    const language = pendingSignup.preferredLanguage === "en" ? "en" : "fr";
+    logger.info("auth.signup.completed", {
+      "auth.method": "email",
+      outcome: "completed",
+      "user.id": user.id,
+      posthogDistinctId: distinctId,
+    });
+    await trackServer(user.id, SIGNUP_COMPLETED, {
+      method: "email",
+      from_page: "signup_password",
+      language,
+      ...(cookieDistinctId ? { $anon_distinct_id: cookieDistinctId } : {}),
+    });
+
     return {
       success: true,
       email: normalizedEmail,
@@ -306,6 +439,18 @@ export async function completeSignupAction(
     };
   } catch (error) {
     console.error("Error completing signup:", error);
+    logger.error("auth.signup.failed", {
+      "auth.method": "email",
+      "auth.stage": "account_creation",
+      outcome: "failed",
+      "error.code": "unknown",
+      posthogDistinctId: distinctId,
+    });
+    await trackServer(distinctId, SIGNUP_FAILED, {
+      method: "email",
+      stage: "account_creation",
+      error_code: "unknown",
+    });
     return { success: false, error: "Failed to create account. Please try again." };
   }
 }

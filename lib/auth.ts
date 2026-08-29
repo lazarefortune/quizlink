@@ -18,6 +18,15 @@ import { getCredentialsLoginRejection } from "@/lib/auth/validate-credentials-lo
 import { ensureDefaultUserAvatar } from "@/lib/user-avatar/ensureDefaultUserAvatar";
 import { deriveNameFromEmail } from "@/lib/auth/pending-signup";
 import { CURRENT_PRIVACY_VERSION, CURRENT_TERMS_VERSION } from "@/lib/legal-versions";
+import { consumeSignupIntentFromRequest } from "@/lib/observability/signup-intent-server";
+import { logger } from "@/lib/observability/logger";
+import { trackServer, captureServerException } from "@/lib/analytics/track-server";
+import { parsePostHogDistinctIdFromCookieHeader } from "@/lib/analytics/parse-posthog-cookie";
+import {
+  SIGNUP_COMPLETED,
+  SIGNUP_EXISTING_USER,
+  SIGNUP_FAILED,
+} from "@/lib/analytics/events";
 
 const CREDENTIALS_FAILURE_REASON = "CREDENTIALS_REJECTED";
 
@@ -113,63 +122,115 @@ export const { handlers, auth, signIn, signOut } = NextAuth((req: NextRequest | 
         if (account?.provider === "google") {
           if (!user.email || !prisma) return false;
 
-          const existingUser = await prisma.user.findUnique({
-            where: { email: user.email },
-          });
-
-          if (!existingUser) {
-            const acceptedAt = new Date();
-            const googleName = user.name?.trim() || profile?.name?.trim();
-            const resolvedName = googleName || deriveNameFromEmail(user.email);
-            const createdUser = await prisma.user.create({
-              data: {
-                email: user.email,
-                name: resolvedName,
-                passwordHash: null,
-                googleId: profile?.sub ?? null,
-                emailVerifiedAt: new Date(),
-                termsAcceptedAt: acceptedAt,
-                termsVersion: CURRENT_TERMS_VERSION,
-                privacyAcceptedAt: acceptedAt,
-                privacyVersion: CURRENT_PRIVACY_VERSION,
-              },
-            });
-
-            await recordUserLifecycleEvent(prisma, createdUser.id, USER_LIFECYCLE_EVENT_TYPES.SIGNUP);
-
-            await initializeUserCoins(createdUser.id);
-
-            await sendUserSignupNotificationIfNeeded(createdUser.id, "google");
-
-            await ensureDefaultUserAvatar(createdUser.id);
-          } else if (!existingUser.googleId && profile?.sub) {
-            await prisma.user.update({
-              where: { email: user.email },
-              data: {
-                googleId: profile.sub,
-                emailVerifiedAt: existingUser.emailVerifiedAt ?? new Date(),
-              },
-            });
-          }
+          const signupIntent = await consumeSignupIntentFromRequest(req);
+          const cookieDistinctId = parsePostHogDistinctIdFromCookieHeader(
+            req?.headers.get("cookie"),
+          );
 
           try {
-            const dbUser = await prisma.user.findUnique({
+            const existingUser = await prisma.user.findUnique({
               where: { email: user.email },
-              select: { id: true },
             });
 
-            if (dbUser) {
-              await persistSuccessfulLogin(prisma, {
-                userId: dbUser.id,
-                authProvider: USER_AUTH_PROVIDERS.GOOGLE,
-                audit: auditFromRoute,
+            if (!existingUser) {
+              const acceptedAt = new Date();
+              const googleName = user.name?.trim() || profile?.name?.trim();
+              const resolvedName = googleName || deriveNameFromEmail(user.email);
+              const createdUser = await prisma.user.create({
+                data: {
+                  email: user.email,
+                  name: resolvedName,
+                  passwordHash: null,
+                  googleId: profile?.sub ?? null,
+                  emailVerifiedAt: new Date(),
+                  termsAcceptedAt: acceptedAt,
+                  termsVersion: CURRENT_TERMS_VERSION,
+                  privacyAcceptedAt: acceptedAt,
+                  privacyVersion: CURRENT_PRIVACY_VERSION,
+                },
               });
-            }
-          } catch (error) {
-            console.error("Failed to record Google login success:", error);
-          }
 
-          return true;
+              await recordUserLifecycleEvent(prisma, createdUser.id, USER_LIFECYCLE_EVENT_TYPES.SIGNUP);
+
+              await initializeUserCoins(createdUser.id);
+
+              await sendUserSignupNotificationIfNeeded(createdUser.id, "google");
+
+              await ensureDefaultUserAvatar(createdUser.id);
+
+              logger.info("auth.signup.completed", {
+                "auth.method": "google",
+                outcome: "completed",
+                "user.id": createdUser.id,
+                posthogDistinctId: cookieDistinctId,
+              });
+              await trackServer(createdUser.id, SIGNUP_COMPLETED, {
+                method: "google",
+                ...(cookieDistinctId ? { $anon_distinct_id: cookieDistinctId } : {}),
+              });
+            } else {
+              if (!existingUser.googleId && profile?.sub) {
+                await prisma.user.update({
+                  where: { email: user.email },
+                  data: {
+                    googleId: profile.sub,
+                    emailVerifiedAt: existingUser.emailVerifiedAt ?? new Date(),
+                  },
+                });
+              }
+
+              if (signupIntent) {
+                logger.info("auth.signup.existing_user", {
+                  "auth.method": "google",
+                  outcome: "existing_user",
+                  "user.id": existingUser.id,
+                  posthogDistinctId: cookieDistinctId,
+                });
+                await trackServer(
+                  cookieDistinctId ?? existingUser.id,
+                  SIGNUP_EXISTING_USER,
+                  { method: "google" },
+                );
+              }
+            }
+
+            try {
+              const dbUser = await prisma.user.findUnique({
+                where: { email: user.email },
+                select: { id: true },
+              });
+
+              if (dbUser) {
+                await persistSuccessfulLogin(prisma, {
+                  userId: dbUser.id,
+                  authProvider: USER_AUTH_PROVIDERS.GOOGLE,
+                  audit: auditFromRoute,
+                });
+              }
+            } catch (error) {
+              console.error("Failed to record Google login success:", error);
+            }
+
+            return true;
+          } catch (error) {
+            console.error("Google signIn callback failed:", error);
+            logger.error("auth.google.callback.failed", {
+              "auth.method": "google",
+              "auth.stage": "oauth_callback",
+              outcome: "failed",
+              "error.code": "oauth_callback_error",
+              posthogDistinctId: cookieDistinctId,
+            });
+            await trackServer(cookieDistinctId ?? "anonymous", SIGNUP_FAILED, {
+              method: "google",
+              stage: "oauth_callback",
+              error_code: "oauth_callback_error",
+            });
+            await captureServerException(error, cookieDistinctId, {
+              $exception_source: "auth_google_signIn",
+            });
+            return false;
+          }
         }
 
         if (account?.provider === "credentials" && user?.id && prisma) {

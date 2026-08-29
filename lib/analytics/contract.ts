@@ -1,12 +1,16 @@
 /**
  * Single source of truth for PostHog event names and allowed properties.
- * Use with track() and merge buildCommonEventProps() for consistent analytics.
+ * Use with track() / trackServer() and merge buildCommonEventProps() for consistent analytics.
  */
 
 export const EVENTS = {
   landing_view: "landing_view",
   cta_click: "cta_click",
+  signup_started: "signup_started",
   signup_completed: "signup_completed",
+  signup_existing_user: "signup_existing_user",
+  signup_failed: "signup_failed",
+  email_verification_sent: "email_verification_sent",
   email_verified: "email_verified",
   quiz_created: "quiz_created",
   participant_invited: "participant_invited",
@@ -26,11 +30,42 @@ export type EventName = keyof typeof EVENTS;
 export type EventPropsMap = {
   landing_view: { page: "landing" };
   cta_click: {
-    cta_type: "create_quiz" | "generate_ai" | "pricing" | "signup" | "signin";
+    cta_type:
+      | "create_quiz"
+      | "generate_ai"
+      | "pricing"
+      | "signup"
+      | "signin"
+      | "register";
     page: string;
   };
-  signup_completed: { from_page: string; language: "fr" | "en" };
-  email_verified: { method: "code"; minutes_since_signup?: number };
+  signup_started: { method: "email" | "google" };
+  signup_completed: {
+    method: "email" | "google";
+    from_page?: string;
+    language?: "fr" | "en";
+  };
+  signup_existing_user: { method: "email" | "google" };
+  signup_failed: {
+    method: "email" | "google";
+    stage:
+      | "validation"
+      | "account_creation"
+      | "verification_email"
+      | "verification"
+      | "oauth_callback";
+    error_code:
+      | "invalid_input"
+      | "database_error"
+      | "oauth_callback_error"
+      | "verification_email_failed"
+      | "invalid_verification_token"
+      | "expired_verification_token"
+      | "signup_session_invalid"
+      | "unknown";
+  };
+  email_verification_sent: { method: "email" };
+  email_verified: { method: "email"; minutes_since_signup?: number };
   quiz_created: {
     quiz_id: string;
     source: "builder" | "ai";

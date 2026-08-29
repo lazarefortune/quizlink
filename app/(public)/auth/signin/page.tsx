@@ -33,6 +33,7 @@ import { ArrowRight, Eye, EyeOff } from "lucide-react";
 import { GoogleIcon } from "@/components/ui/google-icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Mail01Icon, LockOpen, EyeIcon, EyeOffIcon } from "@hugeicons/core-free-icons";
+import { clearSignupIntentCookie } from "@/lib/observability/signup-intent-client";
 
 function SignInForm() {
   const searchParams = useSearchParams();
@@ -47,6 +48,11 @@ function SignInForm() {
 
   const callbackUrl = searchParams.get("callbackUrl");
   const postAuthRedirect = resolveSafeCallbackUrl(callbackUrl);
+
+  useEffect(() => {
+    // Avoid misclassifying a later Google login after an abandoned signup OAuth.
+    clearSignupIntentCookie();
+  }, []);
 
   useEffect(() => {
     const emailParam = searchParams.get("email");

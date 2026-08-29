@@ -98,6 +98,12 @@ Les images sont stockées côté serveur (voir `lib/storage/`). Le builder encod
 
 PostHog est proxifié via Next.js rewrites pour contourner les bloqueurs. Le proxy path est configurable via `NEXT_PUBLIC_POSTHOG_PROXY_PATH` (défaut : `/qk/ph`).
 
+Observabilité production :
+- Error Tracking navigateur (`capture_exceptions` + `app/global-error.tsx`) et serveur (`instrumentation.ts` / `onRequestError` + `posthog-node`)
+- Source maps via `@posthog/nextjs-config` (Personal API Key `POSTHOG_API_KEY` — build only, jamais `NEXT_PUBLIC_`)
+- Logs structurés OTLP → PostHog Logs EU (`lib/observability/logger.ts`, auth avec project token `phc_…`)
+- Funnel inscription instrumenté (`signup_started` → …) — le parcours email réel est : start → email de vérification → verify → name → password → `signup_completed`
+
 ---
 
 ## Flux de données clés

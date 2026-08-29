@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -30,17 +30,31 @@ import { ArrowRight } from "lucide-react";
 import { GoogleIcon } from "@/components/ui/google-icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Mail01Icon } from "@hugeicons/core-free-icons";
+import { track } from "@/lib/analytics/track";
+import { SIGNUP_STARTED } from "@/lib/analytics/events";
+import { markSignupIntentForGoogleOAuth } from "@/lib/observability/signup-intent-client";
 
 function SignUpForm() {
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const emailSignupStartedRef = useRef(false);
+  const googleSignupStartedRef = useRef(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { locale } = useLocale();
 
   const callbackUrl = searchParams.get("callbackUrl");
   const postAuthRedirect = resolveSafeCallbackUrl(callbackUrl);
+
+  const handleGoogleSignUp = () => {
+    if (!googleSignupStartedRef.current) {
+      googleSignupStartedRef.current = true;
+      markSignupIntentForGoogleOAuth();
+      track(SIGNUP_STARTED, { method: "google" });
+    }
+    void nextAuthSignIn("google", { callbackUrl: postAuthRedirect });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,6 +63,11 @@ function SignUpForm() {
     if (!email.trim()) {
       setEmailError(t(locale, "auth.emailRequired"));
       return;
+    }
+
+    if (!emailSignupStartedRef.current) {
+      emailSignupStartedRef.current = true;
+      track(SIGNUP_STARTED, { method: "email" });
     }
 
     setIsLoading(true);
@@ -92,9 +111,7 @@ function SignUpForm() {
                 variant="outline"
                 size="lg"
                 className="h-12 w-full gap-3 text-sm font-semibold normal-case tracking-normal sm:text-base [&_svg]:!size-5"
-                onClick={() =>
-                  nextAuthSignIn("google", { callbackUrl: postAuthRedirect })
-                }
+                onClick={handleGoogleSignUp}
               >
                 <GoogleIcon className="h-5 w-5 shrink-0" />
                 <span className="min-w-0 truncate text-base sm:text-lg">{t(locale, "auth.googleSignIn")}</span>

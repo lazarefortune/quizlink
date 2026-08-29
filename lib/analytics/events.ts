@@ -6,7 +6,11 @@
 export { EVENTS } from "./contract";
 export const LANDING_VIEW = "landing_view";
 export const CTA_CLICK = "cta_click";
+export const SIGNUP_STARTED = "signup_started";
 export const SIGNUP_COMPLETED = "signup_completed";
+export const SIGNUP_EXISTING_USER = "signup_existing_user";
+export const SIGNUP_FAILED = "signup_failed";
+export const EMAIL_VERIFICATION_SENT = "email_verification_sent";
 export const EMAIL_VERIFIED = "email_verified";
 export const QUIZ_CREATED = "quiz_created";
 export const PARTICIPANT_INVITED = "participant_invited";

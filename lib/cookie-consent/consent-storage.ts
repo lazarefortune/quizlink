@@ -1,6 +1,10 @@
 import type { CookieConsentStored } from "./cookie-consent-stored.schema";
 import { cookieConsentStoredSchema } from "./cookie-consent-stored.schema";
 import type { CookieConsentValue } from "./types";
+import {
+  clearAnalyticsConsentCookie,
+  syncAnalyticsConsentCookie,
+} from "./analytics-consent-cookie";
 
 export const COOKIE_CONSENT_STORAGE_KEY = "quizsnap-cookie-consent-v1";
 
@@ -55,6 +59,7 @@ export function writeConsentToStorage(consent: CookieConsentValue): void {
       sessionReplay: consent.analytics ? consent.sessionReplay : false,
     };
     window.localStorage.setItem(COOKIE_CONSENT_STORAGE_KEY, JSON.stringify(payload));
+    syncAnalyticsConsentCookie(consent.analytics);
   } catch {
     // First-party storage unavailable (private mode, blocked)
   }
@@ -66,4 +71,13 @@ export function defaultPendingConsent(): CookieConsentValue {
     analytics: false,
     sessionReplay: false,
   };
+}
+
+/** Sync the server-readable mirror cookie from a known consent value (e.g. on hydrate). */
+export function syncConsentMirrorCookie(consent: CookieConsentValue): void {
+  if (!consent.hasRecordedChoice) {
+    clearAnalyticsConsentCookie();
+    return;
+  }
+  syncAnalyticsConsentCookie(consent.analytics);
 }

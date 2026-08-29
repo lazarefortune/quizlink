@@ -5,6 +5,7 @@ import {
   defaultPendingConsent,
   readConsentFromStorage,
   writeConsentToStorage,
+  syncConsentMirrorCookie,
 } from "@/lib/cookie-consent/consent-storage";
 import type { CookieConsentValue } from "@/lib/cookie-consent/types";
 import { CookieConsentBanner } from "./CookieConsentBanner";
@@ -24,8 +25,10 @@ export function CookieConsentProvider({ children }: { children: ReactNode }) {
     const stored = readConsentFromStorage();
     if (stored === null) {
       setConsent(defaultPendingConsent());
+      syncConsentMirrorCookie(defaultPendingConsent());
     } else {
       setConsent(stored);
+      syncConsentMirrorCookie(stored);
     }
     setIsHydrated(true);
   }, []);

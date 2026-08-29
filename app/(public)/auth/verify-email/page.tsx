@@ -14,9 +14,6 @@ import {
   resendVerificationCodeAction,
   getVerifyEmailStatusAction,
 } from "./actions";
-import { track } from "@/lib/analytics/track";
-import { EMAIL_VERIFIED } from "@/lib/analytics/events";
-import { buildCommonEventProps } from "@/lib/analytics/props";
 import {
   buildSignInHref,
   buildSignUpHref,
@@ -141,13 +138,6 @@ function VerifyEmailForm() {
       if (!result.success) {
         setError(result.error || t(locale, "auth.verifyEmail.error"));
         return;
-      }
-
-      if (!result.alreadyVerified) {
-        track(EMAIL_VERIFIED, {
-          ...buildCommonEventProps({ preferredLanguage: locale }),
-          method: "code",
-        });
       }
 
       redirectAfterVerify(result.redirectTo);

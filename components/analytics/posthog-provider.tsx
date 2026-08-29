@@ -42,6 +42,7 @@ export function buildSharedInitOptions(): Pick<
   | "capture_pageview"
   | "capture_pageleave"
   | "capture_performance"
+  | "capture_exceptions"
   | "autocapture"
   | "person_profiles"
 > {
@@ -53,6 +54,7 @@ export function buildSharedInitOptions(): Pick<
     capture_pageview: "history_change",
     capture_pageleave: true,
     capture_performance: true,
+    capture_exceptions: true,
     autocapture: false,
     person_profiles: "identified_only",
   };

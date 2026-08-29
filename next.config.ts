@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
+import { withPostHogConfig } from "@posthog/nextjs-config";
 import { getPosthogProxyBasePath } from "./lib/analytics/posthog-proxy-path";
 import { QUIZ_SAVE_SERVER_ACTION_BODY_SIZE_LIMIT } from "./lib/builder/quizPayloadLimits";
+import { getServiceVersion } from "./lib/observability/release";
 
 const posthogProxyBase = getPosthogProxyBasePath();
 
@@ -46,4 +48,26 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+const personalApiKey = process.env.POSTHOG_API_KEY?.trim();
+const projectId = process.env.POSTHOG_PROJECT_ID?.trim();
+const canUploadSourcemaps =
+  process.env.NODE_ENV === "production" &&
+  Boolean(personalApiKey) &&
+  Boolean(projectId) &&
+  process.env.POSTHOG_SOURCEMAPS_DISABLED !== "1";
+
+const configWithPostHog = personalApiKey && projectId
+  ? withPostHogConfig(nextConfig, {
+      personalApiKey,
+      projectId,
+      host: process.env.NEXT_PUBLIC_POSTHOG_HOST?.trim() || "https://eu.posthog.com",
+      sourcemaps: {
+        enabled: canUploadSourcemaps,
+        releaseName: process.env.POSTHOG_RELEASE_NAME?.trim() || "quizlink-web",
+        releaseVersion: getServiceVersion(),
+        deleteAfterUpload: true,
+      },
+    })
+  : nextConfig;
+
+export default configWithPostHog;

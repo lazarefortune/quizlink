@@ -13,9 +13,6 @@ import { authFormItemVariants } from "@/lib/auth-motion-variants";
 import { completeSignupAction, getSignupStepAccessAction } from "../actions";
 import { SIGNUP_ERROR_CODES } from "@/lib/auth/signup-error-codes";
 import { SignupSidePanel } from "@/components/auth/signup-side-panel";
-import { track } from "@/lib/analytics/track";
-import { SIGNUP_COMPLETED } from "@/lib/analytics/events";
-import { buildCommonEventProps } from "@/lib/analytics/props";
 import {
   AuthFormCard,
   AuthFormCardContent,
@@ -84,12 +81,6 @@ function SignupPasswordForm() {
         setError(result.error || t(locale, "auth.signUp.error"));
         return;
       }
-
-      track(SIGNUP_COMPLETED, {
-        ...buildCommonEventProps({ preferredLanguage: locale }),
-        from_page: "signup_password",
-        language: locale === "fr" || locale === "en" ? locale : "fr",
-      });
 
       const signInResult = await nextAuthSignIn("credentials", {
         email: result.email,
