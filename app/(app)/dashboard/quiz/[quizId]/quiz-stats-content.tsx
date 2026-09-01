@@ -41,6 +41,7 @@ import { richTextToPlainText } from "@/lib/rich-text/richTextToPlainText";
 import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
 import { QuizStatusBadge } from "@/components/quiz/quiz-status-badge";
 import { formatScoreFraction } from "@/lib/formatScore";
+import { formatDateTimeOrDash } from "@/lib/formatDateTime";
 import { ParticipantAvatar } from "@/components/participant-avatar";
 import { getAttemptDetails } from "./actions";
 import { cn } from "@/lib/utils";
@@ -154,16 +155,7 @@ export function QuizStatsContent({
     return `${mins}m ${secs}s`;
   };
 
-  const formatDate = (date: Date | null) => {
-    if (!date) return "-";
-    return new Date(date).toLocaleDateString(locale, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+  const formatDate = (date: Date | null) => formatDateTimeOrDash(date, locale);
 
   const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
   const getDisplayStatus = (status: string, startedAt: Date | null): string => {

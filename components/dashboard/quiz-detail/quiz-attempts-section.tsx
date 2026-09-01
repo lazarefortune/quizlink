@@ -20,6 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatDurationShort } from "@/lib/dashboard/quiz-detail-stats";
+import { formatDateTime } from "@/lib/formatDateTime";
 import { t } from "@/lib/i18n";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { QuizAttemptDetailDialog } from "./quiz-attempt-detail-dialog";
@@ -41,16 +42,6 @@ type QuizAttemptsSectionProps = {
   isUnlocked: boolean;
   onUnlockClick: () => void;
 };
-
-function formatAttemptDate(date: Date, locale: string): string {
-  return date.toLocaleString(locale === "fr" ? "fr-FR" : "en-US", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 function statusLabel(
   status: string,
@@ -259,7 +250,7 @@ export function QuizAttemptsSection({
                     {formatQuestionsCell(attempt, locale)}
                   </TableCell>
                   <TableCell className="text-muted-foreground text-base">
-                    {formatAttemptDate(
+                    {formatDateTime(
                       attempt.finishedAt ?? attempt.startedAt,
                       locale,
                     )}

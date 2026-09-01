@@ -1,5 +1,7 @@
 "use client";
 
+import { formatDateTime } from "@/lib/formatDateTime";
+
 type FormattedDateProps = {
   date: Date | string | null;
   locale: string;
@@ -7,8 +9,8 @@ type FormattedDateProps = {
 };
 
 /**
- * Renders a localized date with suppressHydrationWarning to avoid React #418
- * when server and client disagree on locale/timezone.
+ * Renders a localized date+time in the app timezone.
+ * suppressHydrationWarning remains as a safety net for rare locale edge cases.
  */
 export function FormattedDate({
   date,
@@ -18,17 +20,9 @@ export function FormattedDate({
   if (date == null) {
     return <span className={className}>-</span>;
   }
-  const d = typeof date === "string" ? new Date(date) : date;
-  const formatted = d.toLocaleDateString(locale, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
   return (
     <span className={className} suppressHydrationWarning>
-      {formatted}
+      {formatDateTime(date, locale)}
     </span>
   );
 }

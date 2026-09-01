@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
 import { t } from "@/lib/i18n";
+import { formatDateTimeOrDash } from "@/lib/formatDateTime";
 import { useLocale } from "@/lib/i18n/use-locale";
 
 import { creditCoinsAction, getUsersPageAction, searchUsers } from "../actions";
@@ -62,19 +63,6 @@ type AdminUsersContentProps = {
   pageSize: number;
   totalUsers: number;
 };
-
-function formatDate(date: Date | null, locale: string): string {
-  if (!date) {
-    return "-";
-  }
-  return new Date(date).toLocaleDateString(locale, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 const pageSizeOptions = [10, 25, 50, 100];
 const sectionMotion = {
@@ -371,10 +359,10 @@ export function AdminUsersContent({
                           })}
                         </TableCell>
                         <TableCell className="text-muted-foreground text-base whitespace-nowrap">
-                          {formatDate(user.verifiedAt, locale)}
+                          {formatDateTimeOrDash(user.verifiedAt, locale)}
                         </TableCell>
                         <TableCell className="text-muted-foreground text-base whitespace-nowrap">
-                          {formatDate(user.lastLoginAt, locale)}
+                          {formatDateTimeOrDash(user.lastLoginAt, locale)}
                         </TableCell>
                         <TableCell className="text-right whitespace-nowrap">
                           <div className="flex items-center justify-end gap-1">
@@ -480,7 +468,7 @@ export function AdminUsersContent({
                         {t(locale, "admin.dashboard.verifiedAt")}
                       </p>
                       <p className="font-medium">
-                        {formatDate(user.verifiedAt, locale)}
+                        {formatDateTimeOrDash(user.verifiedAt, locale)}
                       </p>
                     </div>
                     <div>
@@ -488,7 +476,7 @@ export function AdminUsersContent({
                         {t(locale, "admin.dashboard.lastLoginAt")}
                       </p>
                       <p className="font-medium">
-                        {formatDate(user.lastLoginAt, locale)}
+                        {formatDateTimeOrDash(user.lastLoginAt, locale)}
                       </p>
                     </div>
                     <div>

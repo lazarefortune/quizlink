@@ -14,20 +14,11 @@ import {
   CalendarClock,
 } from "lucide-react";
 import { formatScoreFraction } from "@/lib/formatScore";
+import { formatDateTime } from "@/lib/formatDateTime";
 
 type PageProps = {
   params: Promise<{ participantToken: string }>;
 };
-
-function formatDate(date: Date) {
-  return new Intl.DateTimeFormat("fr-FR", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
-}
 
 export default async function ParticipantPortalPage({ params }: PageProps) {
   const { participantToken } = await params;
@@ -168,7 +159,7 @@ export default async function ParticipantPortalPage({ params }: PageProps) {
                         {q.lastAttemptAt && (
                           <p className="flex items-center gap-1.5 text-base text-muted-foreground">
                             <Calendar className="h-3.5 w-3.5" />
-                            Dernière tentative : {formatDate(q.lastAttemptAt)}
+                            Dernière tentative : {formatDateTime(q.lastAttemptAt, "fr")}
                           </p>
                         )}
                       </div>

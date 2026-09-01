@@ -80,8 +80,12 @@ import { createParticipantLink } from "../actions";
 import { getUserQuizzes } from "@/app/(app)/builder/actions";
 import { ParticipantAvatar } from "@/components/participant-avatar";
 import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { formatScoreFraction } from "@/lib/formatScore";
+import {
+  formatDateOrDash,
+  formatDateTimeOrDash,
+} from "@/lib/formatDateTime";
+import { cn } from "@/lib/utils";
 
 type Participant = {
   id: string;
@@ -430,25 +434,9 @@ export function ParticipantDetailsContent({
     }
   };
 
-  const formatDate = (date: Date | null) => {
-    if (!date) return "-";
-    return new Date(date).toLocaleDateString(locale, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+  const formatDate = (date: Date | null) => formatDateTimeOrDash(date, locale);
 
-  const formatDateShort = (date: Date | null) => {
-    if (!date) return "-";
-    return new Date(date).toLocaleDateString(locale, {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
+  const formatDateShort = (date: Date | null) => formatDateOrDash(date, locale);
 
   const _getStatusBadge = (status: string) => {
     switch (status) {
