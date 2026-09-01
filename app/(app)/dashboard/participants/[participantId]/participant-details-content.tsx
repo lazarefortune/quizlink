@@ -84,7 +84,8 @@ import { formatScoreFraction } from "@/lib/formatScore";
 import {
   formatDateOrDash,
   formatDateTimeOrDash,
-} from "@/lib/formatDateTime";
+} from "@/lib/date-time/format";
+import { useTimeZone } from "@/lib/date-time/timezone-provider";
 import { cn } from "@/lib/utils";
 
 type Participant = {
@@ -125,6 +126,7 @@ export function ParticipantDetailsContent({
 }: ParticipantDetailsContentProps) {
   const router = useRouter();
   const { locale } = useLocale();
+  const { timeZone } = useTimeZone();
   const { showToast } = useToast();
 
   // Dialog states
@@ -434,9 +436,11 @@ export function ParticipantDetailsContent({
     }
   };
 
-  const formatDate = (date: Date | null) => formatDateTimeOrDash(date, locale);
+  const formatDate = (date: Date | null) =>
+    formatDateTimeOrDash(date, locale, timeZone);
 
-  const formatDateShort = (date: Date | null) => formatDateOrDash(date, locale);
+  const formatDateShort = (date: Date | null) =>
+    formatDateOrDash(date, locale, timeZone);
 
   const _getStatusBadge = (status: string) => {
     switch (status) {

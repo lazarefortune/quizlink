@@ -1,7 +1,7 @@
 "use client";
 
-import { format } from "date-fns";
-import { fr, enUS } from "date-fns/locale";
+import { formatDate } from "@/lib/date-time/format";
+import { useTimeZone } from "@/lib/date-time/timezone-provider";
 import { Loader2 } from "lucide-react";
 
 import { ManageProSubscriptionButton } from "@/app/(app)/account/manage-pro-subscription-button";
@@ -67,7 +67,7 @@ export function CoinsProSubscriptionCard({
   onStartProCheckout,
 }: CoinsProSubscriptionCardProps) {
   const { locale } = useLocale();
-  const dateLocale = locale === "fr" ? fr : enUS;
+  const { timeZone } = useTimeZone();
   const isUpsell = !proAccess.isActive;
 
   return (
@@ -139,9 +139,7 @@ export function CoinsProSubscriptionCard({
                 {proAccess.currentPeriodEnd ? (
                   <p>
                     {t(locale, "account.subscription.renewalDate", {
-                      date: format(proAccess.currentPeriodEnd, "PP", {
-                        locale: dateLocale,
-                      }),
+                      date: formatDate(proAccess.currentPeriodEnd, locale, timeZone),
                     })}
                   </p>
                 ) : null}

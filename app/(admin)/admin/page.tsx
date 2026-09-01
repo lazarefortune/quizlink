@@ -2,31 +2,34 @@ import { auth } from "@/lib/auth";
 import { buildDailySignupSeries } from "@/lib/adminMetrics";
 import { prisma } from "@/lib/prisma";
 import { getTotalSignupsEver } from "@/lib/userLifecycleEvents";
+import { formatLongDate } from "@/lib/date-time/format";
+import { getRequestTimeZone } from "@/lib/date-time/server";
+import { resolveDashboardWelcomeGreetingKey } from "@/lib/dashboardWelcomeGreeting";
 import { AdminDashboardContent } from "./admin-dashboard-content";
 
 export default async function AdminDashboardPage() {
   const session = await auth();
   const locale = "fr";
+  const timeZone = await getRequestTimeZone();
   const now = new Date();
-  const headerDate = now.toLocaleDateString(locale === "fr" ? "fr-FR" : "en-US", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-  const hour = now.getHours();
+  const headerDate = formatLongDate(now, locale, timeZone);
+  const greetingKey = resolveDashboardWelcomeGreetingKey(now, timeZone);
   const greeting =
-    hour < 12
+    greetingKey === "dashboard.welcome.titleGreetingMorning"
       ? locale === "fr"
         ? "Bonjour"
         : "Good morning"
-      : hour < 18
+      : greetingKey === "dashboard.welcome.titleGreetingAfternoon"
         ? locale === "fr"
           ? "Bon après-midi"
           : "Good afternoon"
-        : locale === "fr"
-          ? "Bonsoir"
-          : "Good evening";
+        : greetingKey === "dashboard.welcome.titleGreetingEvening"
+          ? locale === "fr"
+            ? "Bonsoir"
+            : "Good evening"
+          : locale === "fr"
+            ? "Bonsoir"
+            : "Good evening";
 
   const signupsLast365DaysStart = new Date();
   signupsLast365DaysStart.setHours(0, 0, 0, 0);
@@ -71,7 +74,8 @@ export default async function AdminDashboardPage() {
   const signupTrend = buildDailySignupSeries(
     signupEventsLast365Days.map((event: { createdAt: Date }) => event.createdAt),
     365,
-    "fr"
+    "fr",
+    timeZone,
   );
 
   return (

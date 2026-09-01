@@ -1,4 +1,6 @@
 import nodemailer from "nodemailer";
+import { DEFAULT_TIME_ZONE } from "@/lib/date-time/constants";
+import { formatDateTime } from "@/lib/date-time/format";
 
 // Create transporter based on environment
 const getTransporter = () => {
@@ -178,10 +180,7 @@ export async function sendSupportFeedbackNotificationEmail({
   }
   const userLine = userDisplayParts.length > 0 ? userDisplayParts.join(" — ") : "Anonyme";
 
-  const dateLine = createdAt.toLocaleString("fr-FR", {
-    dateStyle: "long",
-    timeStyle: "short",
-  });
+  const dateLine = formatDateTime(createdAt, "fr", DEFAULT_TIME_ZONE);
 
   const safeMessage = escapeHtmlForEmail(message);
   const safePage = escapeHtmlForEmail(page);
@@ -262,10 +261,7 @@ export async function sendUserSignupNotificationEmail({
   const subject = "[QuizLink] Nouvel utilisateur inscrit";
   const providerLabel = SIGNUP_PROVIDER_LABELS_FR[provider];
 
-  const dateLine = createdAt.toLocaleString("fr-FR", {
-    dateStyle: "long",
-    timeStyle: "short",
-  });
+  const dateLine = formatDateTime(createdAt, "fr", DEFAULT_TIME_ZONE);
 
   const safeName = escapeHtmlForEmail(userName);
   const safeEmail = escapeHtmlForEmail(userEmail);

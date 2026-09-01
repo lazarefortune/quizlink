@@ -20,7 +20,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatDurationShort } from "@/lib/dashboard/quiz-detail-stats";
-import { formatDateTime } from "@/lib/formatDateTime";
+import { formatDateTime } from "@/lib/date-time/format";
+import { useTimeZone } from "@/lib/date-time/timezone-provider";
 import { t } from "@/lib/i18n";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { QuizAttemptDetailDialog } from "./quiz-attempt-detail-dialog";
@@ -148,6 +149,7 @@ export function QuizAttemptsSection({
   onUnlockClick,
 }: QuizAttemptsSectionProps) {
   const { locale } = useLocale();
+  const { timeZone } = useTimeZone();
   const prefersReducedMotion = useReducedMotion();
   const [selectedAttemptId, setSelectedAttemptId] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -253,6 +255,7 @@ export function QuizAttemptsSection({
                     {formatDateTime(
                       attempt.finishedAt ?? attempt.startedAt,
                       locale,
+                      timeZone,
                     )}
                   </TableCell>
                   <TableCell className="tabular-nums text-muted-foreground text-base">

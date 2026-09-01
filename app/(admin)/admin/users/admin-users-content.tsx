@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { format } from "date-fns";
-import { enUS, fr } from "date-fns/locale";
 import { AnimatePresence, motion } from "framer-motion";
 import { Coins, Eye, FileText, Minus, Plus, Search, X } from "lucide-react";
 
@@ -37,7 +35,11 @@ import {
 } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
 import { t } from "@/lib/i18n";
-import { formatDateTimeOrDash } from "@/lib/formatDateTime";
+import {
+  formatDateTimeOrDash,
+  formatMediumDate,
+} from "@/lib/date-time/format";
+import { useTimeZone } from "@/lib/date-time/timezone-provider";
 import { useLocale } from "@/lib/i18n/use-locale";
 
 import { creditCoinsAction, getUsersPageAction, searchUsers } from "../actions";
@@ -77,8 +79,8 @@ export function AdminUsersContent({
   totalUsers,
 }: AdminUsersContentProps) {
   const { locale } = useLocale();
+  const { timeZone } = useTimeZone();
   const { showToast } = useToast();
-  const dateLocale = locale === "fr" ? fr : enUS;
 
   const [selectedUser, setSelectedUser] = useState<UserRow | null>(null);
   const [coinAmount, setCoinAmount] = useState("");
@@ -354,15 +356,13 @@ export function AdminUsersContent({
                           </Badge>
                         </TableCell>
                         <TableCell className="text-muted-foreground text-base whitespace-nowrap">
-                          {format(new Date(user.createdAt), "dd MMM yyyy", {
-                            locale: dateLocale,
-                          })}
+                          {formatMediumDate(user.createdAt, locale, timeZone)}
                         </TableCell>
                         <TableCell className="text-muted-foreground text-base whitespace-nowrap">
-                          {formatDateTimeOrDash(user.verifiedAt, locale)}
+                          {formatDateTimeOrDash(user.verifiedAt, locale, timeZone)}
                         </TableCell>
                         <TableCell className="text-muted-foreground text-base whitespace-nowrap">
-                          {formatDateTimeOrDash(user.lastLoginAt, locale)}
+                          {formatDateTimeOrDash(user.lastLoginAt, locale, timeZone)}
                         </TableCell>
                         <TableCell className="text-right whitespace-nowrap">
                           <div className="flex items-center justify-end gap-1">
@@ -468,7 +468,7 @@ export function AdminUsersContent({
                         {t(locale, "admin.dashboard.verifiedAt")}
                       </p>
                       <p className="font-medium">
-                        {formatDateTimeOrDash(user.verifiedAt, locale)}
+                        {formatDateTimeOrDash(user.verifiedAt, locale, timeZone)}
                       </p>
                     </div>
                     <div>
@@ -476,7 +476,7 @@ export function AdminUsersContent({
                         {t(locale, "admin.dashboard.lastLoginAt")}
                       </p>
                       <p className="font-medium">
-                        {formatDateTimeOrDash(user.lastLoginAt, locale)}
+                        {formatDateTimeOrDash(user.lastLoginAt, locale, timeZone)}
                       </p>
                     </div>
                     <div>
@@ -484,9 +484,7 @@ export function AdminUsersContent({
                         {t(locale, "admin.dashboard.createdAt")}
                       </p>
                       <p className="font-medium">
-                        {format(new Date(user.createdAt), "dd MMM yyyy", {
-                          locale: dateLocale,
-                        })}
+                        {formatMediumDate(user.createdAt, locale, timeZone)}
                       </p>
                     </div>
                     <div>

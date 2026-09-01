@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
@@ -34,21 +34,11 @@ import { track } from "@/lib/analytics/track";
 import { buildCommonEventProps } from "@/lib/analytics/props";
 import {
   resolveDashboardWelcomeGreetingKey,
-  type DashboardWelcomeGreetingKey,
 } from "@/lib/dashboardWelcomeGreeting";
 import { t } from "@/lib/i18n";
 import { useLocale } from "@/lib/i18n/use-locale";
+import { useTimeZone } from "@/lib/date-time/timezone-provider";
 import { resolveQuizActionError } from "@/lib/quiz/resolveQuizActionError";
-
-const noopSubscribe = (): (() => void) => () => {};
-
-function getWelcomeGreetingClientSnapshot(): DashboardWelcomeGreetingKey {
-  return resolveDashboardWelcomeGreetingKey();
-}
-
-function getWelcomeGreetingServerSnapshot(): DashboardWelcomeGreetingKey {
-  return "dashboard.welcome.titleGreetingMorning";
-}
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -67,6 +57,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const { data: session } = useSession();
   const { locale } = useLocale();
+  const { timeZone } = useTimeZone();
   const { showToast } = useToast();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -74,10 +65,9 @@ export default function DashboardPage() {
   const [copyLoadingQuizId, setCopyLoadingQuizId] = useState<string | null>(null);
   const [quizPendingDelete, setQuizPendingDelete] = useState<QuizListCardData | null>(null);
   const [isDeletingQuiz, setIsDeletingQuiz] = useState(false);
-  const welcomeGreetingKey = useSyncExternalStore(
-    noopSubscribe,
-    getWelcomeGreetingClientSnapshot,
-    getWelcomeGreetingServerSnapshot
+  const welcomeGreetingKey = useMemo(
+    () => resolveDashboardWelcomeGreetingKey(new Date(), timeZone),
+    [timeZone],
   );
 
   const name =

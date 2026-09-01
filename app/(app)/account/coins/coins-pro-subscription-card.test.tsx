@@ -7,6 +7,10 @@ vi.mock("@/lib/i18n/use-locale", () => ({
   useLocale: () => ({ locale: "fr" as const }),
 }));
 
+vi.mock("@/lib/date-time/timezone-provider", () => ({
+  useTimeZone: () => ({ timeZone: "Europe/Paris", setTimeZone: vi.fn() }),
+}));
+
 vi.mock("@/app/(app)/account/manage-pro-subscription-button", () => ({
   ManageProSubscriptionButton: () => (
     <button type="button" data-testid="manage-pro-subscription-button">

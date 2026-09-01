@@ -14,7 +14,9 @@ import {
   CalendarClock,
 } from "lucide-react";
 import { formatScoreFraction } from "@/lib/formatScore";
-import { formatDateTime } from "@/lib/formatDateTime";
+import { formatDateTime } from "@/lib/date-time/format";
+import { getRequestLocale } from "@/lib/i18n/request-locale";
+import { getRequestTimeZone } from "@/lib/date-time/server";
 
 type PageProps = {
   params: Promise<{ participantToken: string }>;
@@ -22,7 +24,11 @@ type PageProps = {
 
 export default async function ParticipantPortalPage({ params }: PageProps) {
   const { participantToken } = await params;
-  const result = await getParticipantPortal(participantToken);
+  const [result, locale, timeZone] = await Promise.all([
+    getParticipantPortal(participantToken),
+    getRequestLocale(),
+    getRequestTimeZone(),
+  ]);
 
   if (!result.success) {
     return (
@@ -159,7 +165,7 @@ export default async function ParticipantPortalPage({ params }: PageProps) {
                         {q.lastAttemptAt && (
                           <p className="flex items-center gap-1.5 text-base text-muted-foreground">
                             <Calendar className="h-3.5 w-3.5" />
-                            Dernière tentative : {formatDateTime(q.lastAttemptAt, "fr")}
+                            Dernière tentative : {formatDateTime(q.lastAttemptAt, locale, timeZone)}
                           </p>
                         )}
                       </div>

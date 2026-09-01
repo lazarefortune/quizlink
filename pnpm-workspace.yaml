@@ -1,5 +1,13 @@
 packages:
   - .
+allowBuilds:
+  '@posthog/cli': false
+  '@prisma/engines': false
+  core-js: false
+  prisma: false
+  protobufjs: false
+  sharp: false
+  unrs-resolver: false
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver

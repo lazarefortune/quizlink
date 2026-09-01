@@ -71,6 +71,8 @@ import {
   type BuilderTimeLimitUi,
 } from "@/lib/time-limit-seconds";
 import { useLocale } from "@/lib/i18n/use-locale";
+import { formatDateTime } from "@/lib/date-time/format";
+import { useTimeZone } from "@/lib/date-time/timezone-provider";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { buildQuizSuccessPath, shouldRedirectToQuizSuccess } from "@/lib/quiz-success";
@@ -320,6 +322,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
   const searchParams = useSearchParams();
   const urlQuizId = initialQuizId ?? searchParams.get("quizId");
   const { locale } = useLocale();
+  const { timeZone } = useTimeZone();
   const { openSupportFeedback } = useSupportFeedback();
   const { data: session } = useSession();
   const userId = session?.user?.id;
@@ -2159,10 +2162,7 @@ export function BuilderPageContent({ initialQuizId }: BuilderPageContentProps = 
 
   const localDraftFormattedSavedAt =
     localDraftPayload !== null
-      ? new Intl.DateTimeFormat(locale === "fr" ? "fr-FR" : "en-US", {
-          dateStyle: "medium",
-          timeStyle: "short",
-        }).format(new Date(localDraftPayload.savedAt))
+      ? formatDateTime(localDraftPayload.savedAt, locale, timeZone)
       : "";
 
   const builderBackHref = useMemo(() => {

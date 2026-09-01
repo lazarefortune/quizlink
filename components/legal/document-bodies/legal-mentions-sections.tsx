@@ -1,6 +1,7 @@
 import { Mail, Globe } from "lucide-react";
 
 import { BrandQuizLinkText } from "@/components/BrandQuizLinkText";
+import { LegalLastUpdatedDate } from "@/components/legal/legal-last-updated-date";
 import { SupportEmailLink } from "@/components/legal/support-email-link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -11,12 +12,7 @@ export function LegalMentionsHeading() {
         Mentions légales
       </h2>
       <p className="mb-8 text-muted-foreground">
-        Dernière mise à jour :{" "}
-        {new Date().toLocaleDateString("fr-FR", {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        })}
+        Dernière mise à jour : <LegalLastUpdatedDate />
       </p>
     </>
   );

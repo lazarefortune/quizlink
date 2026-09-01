@@ -16,14 +16,13 @@ describe("adminMetrics", () => {
     expect(normalizePage(undefined)).toBe(1);
   });
 
-  it("builds a daily series with zero-filled gaps", () => {
-    const emptyPoints = buildDailySignupSeries([], 3, "fr");
+  it("builds a daily series with zero-filled gaps in the requested timezone", () => {
+    const emptyPoints = buildDailySignupSeries([], 3, "fr", "UTC");
     expect(emptyPoints).toHaveLength(3);
     expect(emptyPoints.every((point) => point.signups === 0)).toBe(true);
 
-    const now = new Date();
-    now.setHours(12, 0, 0, 0);
-    const points = buildDailySignupSeries([now, now], 3, "fr");
+    const now = new Date("2026-08-31T12:00:00.000Z");
+    const points = buildDailySignupSeries([now, now], 3, "fr", "UTC");
     expect(points.reduce((sum, point) => sum + point.signups, 0)).toBe(2);
   });
 });

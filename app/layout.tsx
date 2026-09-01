@@ -7,6 +7,9 @@ import { ToastProvider } from "@/components/ui/toast";
 import { Providers } from "@/app/providers";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { getRequestTimeZone } from "@/lib/date-time/server";
+import { TimeZoneProvider } from "@/lib/date-time/timezone-provider";
+import { TimeZoneSync } from "@/lib/date-time/timezone-sync";
 import "./globals.css";
 
 const capriola = Capriola({
@@ -55,34 +58,39 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const timeZone = await getRequestTimeZone();
+
   return (
     <html lang="fr" suppressHydrationWarning className={`${capriola.variable} ${sofiaSans.variable} ${fredoka.variable}`}>
       <body className="antialiased font-sans">
-        <LocaleProvider>
-          <SessionProvider>
-            <Providers>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="system"
-              enableSystem
-              disableTransitionOnChange
-            >
-              <ToastProvider>
-                <div className="flex min-h-dvh flex-col">
-                  <Header />
-                  <main className="flex min-h-0 flex-1 flex-col">{children}</main>
-                  <Footer />
-                </div>
-              </ToastProvider>
-            </ThemeProvider>
-            </Providers>
-          </SessionProvider>
-        </LocaleProvider>
+        <TimeZoneProvider key={timeZone} initialTimeZone={timeZone}>
+          <LocaleProvider>
+            <SessionProvider>
+              <Providers>
+              <ThemeProvider
+                attribute="class"
+                defaultTheme="system"
+                enableSystem
+                disableTransitionOnChange
+              >
+                <ToastProvider>
+                  <TimeZoneSync initialTimeZone={timeZone} />
+                  <div className="flex min-h-dvh flex-col">
+                    <Header />
+                    <main className="flex min-h-0 flex-1 flex-col">{children}</main>
+                    <Footer />
+                  </div>
+                </ToastProvider>
+              </ThemeProvider>
+              </Providers>
+            </SessionProvider>
+          </LocaleProvider>
+        </TimeZoneProvider>
       </body>
     </html>
   );

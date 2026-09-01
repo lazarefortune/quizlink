@@ -22,8 +22,8 @@ import {
 import { useLocale } from "@/lib/i18n/use-locale";
 import { t, type Locale } from "@/lib/i18n";
 import { useToast } from "@/components/ui/toast";
-import { format } from "date-fns";
-import { fr, enUS } from "date-fns/locale";
+import { formatMediumDate } from "@/lib/date-time/format";
+import { useTimeZone } from "@/lib/date-time/timezone-provider";
 import type {
   AdminQuizDetail,
   AdminParticipant,
@@ -50,8 +50,8 @@ export function AdminUserQuizzesContent({
   participants,
 }: AdminUserQuizzesContentProps) {
   const { locale } = useLocale();
+  const { timeZone } = useTimeZone();
   const { showToast } = useToast();
-  const dateLocale = locale === "fr" ? fr : enUS;
 
   const totalResponses = quizzes.reduce((s, q) => s + q.totalResponsesCount, 0);
   const baseUrl =
@@ -142,7 +142,7 @@ export function AdminUserQuizzesContent({
                 key={quiz.id}
                 quiz={quiz}
                 locale={locale}
-                dateLocale={dateLocale}
+                timeZone={timeZone}
                 baseUrl={baseUrl}
                 onCopy={handleCopy}
               />
@@ -171,7 +171,7 @@ export function AdminUserQuizzesContent({
                 key={p.id}
                 participant={p}
                 locale={locale}
-                dateLocale={dateLocale}
+                timeZone={timeZone}
                 baseUrl={baseUrl}
                 onCopy={handleCopy}
               />
@@ -208,13 +208,13 @@ function StatMini({
 function QuizExpandable({
   quiz,
   locale,
-  dateLocale,
+  timeZone,
   baseUrl,
   onCopy,
 }: {
   quiz: AdminQuizDetail;
   locale: Locale;
-  dateLocale: typeof fr;
+  timeZone: string;
   baseUrl: string;
   onCopy: (text: string) => void;
 }) {
@@ -251,9 +251,7 @@ function QuizExpandable({
                 {quiz.totalResponsesCount}
               </span>
               <span>
-                {format(new Date(quiz.createdAt), "dd MMM yyyy", {
-                  locale: dateLocale,
-                })}
+                {formatMediumDate(quiz.createdAt, locale, timeZone)}
               </span>
             </div>
           </div>
@@ -436,13 +434,13 @@ function QuizExpandable({
 function ParticipantExpandable({
   participant,
   locale,
-  dateLocale: _dateLocale,
+  timeZone: _timeZone,
   baseUrl,
   onCopy,
 }: {
   participant: AdminParticipant;
   locale: Locale;
-  dateLocale: typeof fr;
+  timeZone: string;
   baseUrl: string;
   onCopy: (text: string) => void;
 }) {

@@ -41,7 +41,8 @@ import { richTextToPlainText } from "@/lib/rich-text/richTextToPlainText";
 import type { QuizLifecycleStatus } from "@/types/quiz-lifecycle";
 import { QuizStatusBadge } from "@/components/quiz/quiz-status-badge";
 import { formatScoreFraction } from "@/lib/formatScore";
-import { formatDateTimeOrDash } from "@/lib/formatDateTime";
+import { formatDateTimeOrDash } from "@/lib/date-time/format";
+import { useTimeZone } from "@/lib/date-time/timezone-provider";
 import { ParticipantAvatar } from "@/components/participant-avatar";
 import { getAttemptDetails } from "./actions";
 import { cn } from "@/lib/utils";
@@ -112,6 +113,7 @@ export function QuizStatsContent({
 }: QuizStatsContentProps) {
   const router = useRouter();
   const { locale } = useLocale();
+  const { timeZone } = useTimeZone();
   const [selectedAttemptId, setSelectedAttemptId] = useState<string | null>(null);
   const [attemptDetails, setAttemptDetails] = useState<{
     participantName: string;
@@ -155,7 +157,8 @@ export function QuizStatsContent({
     return `${mins}m ${secs}s`;
   };
 
-  const formatDate = (date: Date | null) => formatDateTimeOrDash(date, locale);
+  const formatDate = (date: Date | null) =>
+    formatDateTimeOrDash(date, locale, timeZone);
 
   const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
   const getDisplayStatus = (status: string, startedAt: Date | null): string => {

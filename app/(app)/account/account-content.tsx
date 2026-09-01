@@ -64,8 +64,8 @@ import {
 import { AccountProfileAvatarBanner } from "@/components/user-avatar/account-profile-avatar-banner";
 import { UserAvatarEditorDialog } from "@/components/user-avatar/user-avatar-editor-dialog";
 import { GoogleIcon } from "@/components/ui/google-icon";
-import { format } from "date-fns";
-import { fr as frLocale, enUS } from "date-fns/locale";
+import { formatMonthYear } from "@/lib/date-time/format";
+import { useTimeZone } from "@/lib/date-time/timezone-provider";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { useCookieConsent } from "@/components/cookie-consent/cookie-consent-context";
@@ -214,6 +214,7 @@ export function AccountContent({
   const { openConsentPanel } = useCookieConsent();
   const router = useRouter();
   const { locale, setLocale } = useLocale();
+  const { timeZone } = useTimeZone();
   const toast = useToast();
   const session = useSession();
 
@@ -279,9 +280,7 @@ export function AccountContent({
     initialUser.notifyMarketing,
   ]);
 
-  const memberSince = format(new Date(initialUser.createdAt), "MMMM yyyy", {
-    locale: locale === "fr" ? frLocale : enUS,
-  });
+  const memberSince = formatMonthYear(initialUser.createdAt, locale, timeZone);
 
   // --- Handlers ---
   const handleUpdateProfile = async () => {

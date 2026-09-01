@@ -38,8 +38,8 @@ import {
   type CoinTransaction,
 } from "./actions";
 import { useToast } from "@/components/ui/toast";
-import { format } from "date-fns";
-import { fr, enUS } from "date-fns/locale";
+import { formatDateTime } from "@/lib/date-time/format";
+import { useTimeZone } from "@/lib/date-time/timezone-provider";
 import { createProSubscriptionCheckoutAction } from "@/app/(app)/account/pro-subscription/actions";
 import type { ActiveUserSubscriptionAccess } from "@/lib/quiz/getActiveUserSubscriptionAccess";
 import { COINS_FACE_SRC } from "./coin-pack-coins-icon";
@@ -71,6 +71,7 @@ export function CoinsContent({
   subscriptionReturnStatus,
 }: CoinsContentProps) {
   const { locale } = useLocale();
+  const { timeZone } = useTimeZone();
   const { showToast } = useToast();
   const [transactions, setTransactions] = useState<CoinTransaction[]>([]);
   const [balance, setBalance] = useState<number>(0);
@@ -183,7 +184,6 @@ export function CoinsContent({
     }
   };
 
-  const dateLocale = locale === "fr" ? fr : enUS;
   const isLowBalance = balance < 4;
 
   return (
@@ -379,9 +379,7 @@ export function CoinsContent({
                         return (
                           <TableRow key={tx.id}>
                             <TableCell className="whitespace-nowrap text-sm">
-                              {format(new Date(tx.createdAt), "PPp", {
-                                locale: dateLocale,
-                              })}
+                              {formatDateTime(tx.createdAt, locale, timeZone)}
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
@@ -418,9 +416,7 @@ export function CoinsContent({
                         <CardContent className="p-4 space-y-2">
                           <div className="flex items-center justify-between">
                             <p className="text-xs text-muted-foreground">
-                              {format(new Date(tx.createdAt), "PPp", {
-                                locale: dateLocale,
-                              })}
+                              {formatDateTime(tx.createdAt, locale, timeZone)}
                             </p>
                             <div className="flex items-center gap-1.5">
                               {isCredit ? (

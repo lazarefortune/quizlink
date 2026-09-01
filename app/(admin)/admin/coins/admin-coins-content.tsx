@@ -19,8 +19,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { format } from "date-fns";
-import { fr, enUS } from "date-fns/locale";
+import { formatDateTime } from "@/lib/date-time/format";
+import { useTimeZone } from "@/lib/date-time/timezone-provider";
 import Link from "next/link";
 
 type User = {
@@ -39,6 +39,7 @@ type Transaction = {
 
 export function AdminCoinsContent() {
   const { locale } = useLocale();
+  const { timeZone } = useTimeZone();
   const { showToast } = useToast();
   const [searchEmail, setSearchEmail] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -48,8 +49,6 @@ export function AdminCoinsContent() {
   const [isCrediting, setIsCrediting] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoadingTransactions, setIsLoadingTransactions] = useState(false);
-
-  const dateLocale = locale === "fr" ? fr : enUS;
 
   const handleSearch = async () => {
     if (!searchEmail.trim()) {
@@ -305,9 +304,7 @@ export function AdminCoinsContent() {
                           return (
                             <TableRow key={tx.id}>
                               <TableCell className="whitespace-nowrap text-sm">
-                                {format(new Date(tx.createdAt), "PPp", {
-                                  locale: dateLocale,
-                                })}
+                                {formatDateTime(tx.createdAt, locale, timeZone)}
                               </TableCell>
                               <TableCell>
                                 <div className="flex items-center gap-1.5">
@@ -347,9 +344,7 @@ export function AdminCoinsContent() {
                         <CardContent className="p-3 space-y-1.5">
                           <div className="flex items-center justify-between">
                             <p className="text-xs text-muted-foreground">
-                              {format(new Date(tx.createdAt), "PPp", {
-                                locale: dateLocale,
-                              })}
+                              {formatDateTime(tx.createdAt, locale, timeZone)}
                             </p>
                             <div className="flex items-center gap-1">
                               {isCredit ? (

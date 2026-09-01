@@ -32,8 +32,11 @@ import {
 } from "@/components/ui/dialog";
 import { ArrowLeft, Eye, MessageSquare } from "lucide-react";
 import { getFeedbacksAction, updateFeedbackStatusAction } from "./actions";
-import { format } from "date-fns";
-import { fr, enUS } from "date-fns/locale";
+import {
+  formatCompactDateTime,
+  formatDateTime,
+} from "@/lib/date-time/format";
+import { useTimeZone } from "@/lib/date-time/timezone-provider";
 import type { FeedbackStatus } from "@/lib/schemas/feedback.schema";
 import Link from "next/link";
 
@@ -82,6 +85,7 @@ export function AdminFeedbackContent({
 }: AdminFeedbackContentProps) {
   const { showToast } = useToast();
   const { locale } = useLocale();
+  const { timeZone } = useTimeZone();
   const [feedbacks, setFeedbacks] = useState<Feedback[]>(initialFeedbacks);
   const [selectedType, setSelectedType] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
@@ -91,8 +95,6 @@ export function AdminFeedbackContent({
   );
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-
-  const dateLocale = locale === "fr" ? fr : enUS;
 
   useEffect(() => {
     setFeedbacks(initialFeedbacks);
@@ -315,9 +317,7 @@ export function AdminFeedbackContent({
                     {feedbacks.map((fb) => (
                       <TableRow key={fb.id}>
                         <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
-                          {format(new Date(fb.createdAt), "dd/MM HH:mm", {
-                            locale: dateLocale,
-                          })}
+                          {formatCompactDateTime(fb.createdAt, locale, timeZone)}
                         </TableCell>
                         <TableCell>
                           {fb.user ? (
@@ -392,9 +392,7 @@ export function AdminFeedbackContent({
                             t(locale, "admin.feedback.table.userDeleted")}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {format(new Date(fb.createdAt), "dd/MM HH:mm", {
-                            locale: dateLocale,
-                          })}
+                          {formatCompactDateTime(fb.createdAt, locale, timeZone)}
                         </p>
                       </div>
                       <div className="flex gap-1.5 shrink-0">
@@ -516,11 +514,7 @@ export function AdminFeedbackContent({
                       {t(locale, "admin.feedback.details.date")}
                     </Label>
                     <p className="text-sm">
-                      {format(
-                        new Date(selectedFeedback.createdAt),
-                        "PPp",
-                        { locale: dateLocale }
-                      )}
+                      {formatDateTime(selectedFeedback.createdAt, locale, timeZone)}
                     </p>
                   </div>
                 </div>

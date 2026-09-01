@@ -13,6 +13,9 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { Quiz } from "@/types/quiz";
+import { formatDate } from "@/lib/date-time/format";
+import { useTimeZone } from "@/lib/date-time/timezone-provider";
+import { useLocale } from "@/lib/i18n/use-locale";
 
 function getClientQuizSnapshot(): Quiz | null {
   if (typeof window === "undefined") return null;
@@ -29,6 +32,8 @@ function getClientQuizSnapshot(): Quiz | null {
 
 export default function QuizPreviewPage() {
   const router = useRouter();
+  const { locale } = useLocale();
+  const { timeZone } = useTimeZone();
   const quiz = useSyncExternalStore(
     () => () => {},
     getClientQuizSnapshot,
@@ -73,7 +78,7 @@ export default function QuizPreviewPage() {
                 <CardTitle>{quiz.title}</CardTitle>
                 <CardDescription>
                   Source: {quiz.sourceType} • Created:{" "}
-                  {new Date(quiz.createdAt).toLocaleDateString()}
+                  {formatDate(quiz.createdAt, locale, timeZone)}
                 </CardDescription>
               </div>
               <Badge variant="outline">{quiz.questions.length} questions</Badge>
